@@ -1,0 +1,81 @@
+[versions]
+####### START: Android target specific #######
+agp = "8.5.2"
+android-compileSdk = "34"
+android-minSdk = "26"
+android-targetSdk = "34"
+uiTooling = "1.6.8"
+startupRuntime = "1.1.1"
+androidx-activityCompose = "1.9.1"
+####### END:   Android target specific #######
+
+# Compose & Kotlin
+compose-plugin = "1.6.11"
+kotlin = "2.0.0"
+# KSP version should follow Kotlin version
+ksp = "2.0.0-1.0.21"
+
+# Dependency Injection
+kotlinInject = "0.7.1"
+
+# Local storage
+datastore = "1.1.1"
+
+# Navigation
+navigationCompose = "2.7.0-alpha07"
+
+[libraries]
+# Testing
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+# Coroutines
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.9.0-RC" }
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version = "1.9.0-RC" }
+
+# Navigation
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+
+# ViewModel
+jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.8.0" }
+
+####### START: Android target specific #######
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startupRuntime" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
+
+# This exists mainly to replace the default dependency added by Jetbrains compose 1.6.11 and replace it with a beta version to
+# fix: https://issuetracker.google.com/issues/274872542
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version = "1.3.0-beta05" }
+####### END:   Android target specific #######
+
+# This is here to make sure the material version on Android and other platforms is equal, and to fix an iOS bug:
+# Fix: https://github.com/JetBrains/compose-multiplatform-core/commit/d9c3ce5f2900c1ad27f72b5089082790aa8d9fa4
+jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version = "1.7.0-alpha02" }
+
+# Graphs & Plots
+koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.6.0" }
+
+# Dependency Injection
+kotlinInject-compilerKsp = { module = "me.tatarka.inject:kotlin-inject-compiler-ksp", version.ref = "kotlinInject" }
+kotlinInject-runtimeKmp = { module = "me.tatarka.inject:kotlin-inject-runtime-kmp", version.ref = "kotlinInject" }
+
+# Local storage
+androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# File IO
+okio = { module = "com.squareup.okio:okio", version = "3.9.0" }
+
+# User data folder access
+appdirs = { module = "ca.gosyer:kotlin-multiplatform-appdirs", version = "1.1.1" }
+
+markdown-parser = { module = "org.jetbrains:markdown", version = "0.7.3" }
+markdown-render = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.25.0" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

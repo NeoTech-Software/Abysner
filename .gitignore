@@ -1,0 +1,36 @@
+# Kotlin, Gradle, IntelliJ and Android Studio related ignores
+*.iml
+.kotlin
+.gradle
+/local.properties
+/.idea/
+/captures
+captures
+local.properties
+
+# Ignore build folders
+**/build/
+/build
+# Avoid ignoring folders named `build` that are located a source folder
+!src/**/build/
+
+# OS specific ignores
+.DS_Store
+
+# XCode and iOS development ignores
+xcuserdata
+.externalNativeBuild
+.cxx
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+
+# Storage file created by the app when running on desktop
+composeApp/configuration.preferences_pb
+composeApp/release/
+keystore.properties
+release-keystore
+.idea/gradle.xml
