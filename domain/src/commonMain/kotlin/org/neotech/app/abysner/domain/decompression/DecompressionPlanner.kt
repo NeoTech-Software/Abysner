@@ -16,7 +16,7 @@ import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.findBestDecoGas
-import org.neotech.app.abysner.domain.decompression.algorithm.Model
+import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.SnapshotScope
 import org.neotech.app.abysner.domain.decompression.algorithm.SnapshotScopeImpl
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
@@ -33,7 +33,7 @@ import kotlin.math.round
  * model.
  */
 class DecompressionPlanner(
-    val model: Model,
+    val model: DecompressionModel,
     val environment: Environment,
     val maxPpO2: Double,
     val maxEquivalentNarcoticDepth: Double,
