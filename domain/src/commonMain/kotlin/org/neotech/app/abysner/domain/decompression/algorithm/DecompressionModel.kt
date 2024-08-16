@@ -18,7 +18,7 @@ import org.neotech.app.abysner.domain.core.model.Gas
  * A decompression model is allows adding dive sections to load tissues, and a method that returns
  * the current ceiling.
  */
-interface Model: Snapshotable {
+interface DecompressionModel: Snapshotable {
 
     /**
      * Add a flat section of the dive to the tissues, this is the same as calling [addDepthChange]

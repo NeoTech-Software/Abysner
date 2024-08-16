@@ -12,7 +12,7 @@
 
 package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
-import org.neotech.app.abysner.domain.decompression.algorithm.Model
+import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.Snapshot
 import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
@@ -35,7 +35,7 @@ class Buhlmann(
     val environment: Environment,
     val gfLow: Double,
     val gfHigh: Double,
-) : Model {
+) : DecompressionModel {
 
     /**
      * Keeps track of the lowest ceiling in bars encountered during the dive so far, based on gfLow.

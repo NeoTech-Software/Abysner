@@ -546,7 +546,7 @@ A big misconception about free open-source software, is that it is supposed to b
 But this is not the intention of free open-source software. Abysner is free in the sense that you
 are allowed to distribute it freely, and do with it whatever you want as long as you don't break the
 AGPLv3 license terms and conditions. The channels I personally use to distribute official builds may
-require a small free (not gratis). The lather has mainly to do with the fees that Apple is asking me
+require a small fee (not gratis). The latter has mainly to do with the fees that Apple is asking me
 to pay on a yearly basis, and to cover some of the costs associated with running an open-source
 project, such as a domain name, development tools, hardware to test on etc. However should you feel
 like this payment is too much, then you are free to build the software yourself or get a pre-built
