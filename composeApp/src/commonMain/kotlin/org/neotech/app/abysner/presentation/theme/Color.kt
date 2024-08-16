@@ -85,3 +85,11 @@ val surfaceContainerLowDark = Color(0xFF171C1F)
 val surfaceContainerDark = Color(0xFF1B2023)
 val surfaceContainerHighDark = Color(0xFF252B2D)
 val surfaceContainerHighestDark = Color(0xFF303638)
+
+// Custom (non material) dark colors
+val warningLight: Color = Color(0xFFCCBC33)
+val warningDark: Color = Color(0xFFFDFFAB)
+
+// Custom (non material) light colors
+val onWarningLight: Color = Color(0xFFFFFFFF)
+val onWarningDark: Color = Color(0xFF690005)

@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
@@ -54,6 +53,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -289,7 +289,7 @@ private fun ColumnScope.DecoPlanTable(
                     previousGas = currentGas,
                     runtime = diveSegment.end
                 )
-                currentGas = diveSegment.gas
+                currentGas = diveSegment.cylinder.gas
             }
         }
     }
@@ -346,14 +346,14 @@ private fun RowScope.DecoPlanRow(
         modifier = Modifier.weight(0.2f),
         text = "+${diveSegment.duration}",
     )
-    val gasIcon: Painter = if (previousGas != null && previousGas != diveSegment.gas) {
+    val gasIcon: Painter = if (previousGas != null && previousGas != diveSegment.cylinder.gas) {
         painterResource(resource = Res.drawable.ic_outline_change_circle_24)
     } else {
         ColorPainter(Color.Transparent)
     }
     TextWithStartIcon(
         modifier = Modifier.weight(0.2f),
-        text = diveSegment.gas.toString(),
+        text = diveSegment.cylinder.gas.toString(),
         icon = gasIcon
     )
 }
@@ -367,9 +367,9 @@ fun DecoPlanCardComponentPreview() {
             configuration = Configuration()
         }.getDecoPlan(
             plan = listOf(
-                DiveProfileSection(16, 45, Gas.Air),
+                DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
             ),
-            decoGases = listOf(Gas.Oxygen50),
+            decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Oxygen50)),
         )
 
         DecoPlanCardComponent(

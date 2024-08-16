@@ -34,7 +34,7 @@ class OxygenToxicityCalculator {
     fun calculateCns(segments: List<DiveSegment>, environment: Environment): Double {
         var cns = 0.0
         segments.forEach {
-            cns += calculateCns(it.gas.oxygenFraction, it.startDepth, it.endDepth, environment, it.duration)
+            cns += calculateCns(it.cylinder.gas.oxygenFraction, it.startDepth, it.endDepth, environment, it.duration)
         }
         return cns
     }
@@ -69,7 +69,7 @@ class OxygenToxicityCalculator {
         // seems to be more important (or even necessary).
         var otu = 0.0
         segments.forEach {
-            val o2 = it.gas.oxygenFraction
+            val o2 = it.cylinder.gas.oxygenFraction
             otu += this.calculateOtu(it.duration, o2, it.startDepth, it.endDepth, environment)
         }
         return otu

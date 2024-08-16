@@ -12,9 +12,9 @@
 
 package org.neotech.app.abysner.domain.decompression
 
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.findBestDecoGas
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.SnapshotScope
@@ -47,7 +47,7 @@ class DecompressionPlanner(
 
     var runtime = 0
         private set
-    private val decoGasses = mutableListOf<Gas>()
+    private val decoGasses = mutableListOf<Cylinder>()
     private val segments = mutableListOf<DiveSegment>()
     private val alternativeAccents: MutableMap<Int, List<DiveSegment>> = mutableMapOf()
 
@@ -61,22 +61,24 @@ class DecompressionPlanner(
      */
     fun getAlternativeAccents(): Map<Int, List<DiveSegment>> = alternativeAccents
 
-    fun getDecoGasses(): List<Gas> = decoGasses.toList()
+    fun getDecoGasses(): List<Cylinder> = decoGasses.toList()
 
-    fun setDecoGasses(gasses: List<Gas>) {
+    fun setDecoGasses(gasses: List<Cylinder>) {
         this.decoGasses.clear()
         this.decoGasses.addAll(gasses)
     }
 
-    fun addDecoGas(gas: Gas) {
-        this.decoGasses.add(gas)
+    fun addCylinder(cylinder: Cylinder) {
+        this.decoGasses.add(cylinder)
     }
 
-    fun addFlat(depth: Double, gas: Gas, timeInMinutes: Int, isDecompression: Boolean) {
+    fun addFlat(depth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
         return addDepthChangePerMinute(depth, depth, gas, timeInMinutes, isDecompression)
     }
 
-    fun addDepthChangePerMinute(startDepth: Double, endDepth: Double, gas: Gas, timeInMinutes: Int, isDecompression: Boolean) {
+    fun addDepthChangePerMinute(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
+        println("from $startDepth, to $endDepth")
+
         if(calculateTissueChangesPerMinute && !isCalculatingTts) {
             val diff = startDepth - endDepth
             repeat(timeInMinutes) {
@@ -89,9 +91,9 @@ class DecompressionPlanner(
         }
     }
 
-    private fun addDepthChange(startDepth: Double, endDepth: Double, gas: Gas, timeInMinutes: Int, isDecompression: Boolean) {
+    private fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
 
-        model.addDepthChange(startDepth, endDepth, gas, timeInMinutes)
+        model.addDepthChange(startDepth, endDepth, gas.gas, timeInMinutes)
 
         val ceiling = model.getCeiling()
 
@@ -102,7 +104,7 @@ class DecompressionPlanner(
                 duration = timeInMinutes,
                 startDepth = startDepth,
                 endDepth = endDepth,
-                gas = gas,
+                cylinder = gas,
                 isDecompression = isDecompression,
                 gfCeilingAtEnd = ceiling,
                 ttsAfter = -1
@@ -139,7 +141,7 @@ class DecompressionPlanner(
      * Move diver from [fromDepth] to the next ceiling depth [toDepth]. During which a gas change
      * may occur as the diver reaches depths at which a different gas may be better to breath.
      */
-    private fun addDecoDepthChange(fromDepth: Double, toDepth: Double, maxppO2: Double, maxEND: Double, fromGas: Gas, ascentRateInMetersPerMinute: Double): Gas {
+    private fun addDecoDepthChange(fromDepth: Double, toDepth: Double, maxppO2: Double, maxEND: Double, fromGas: Cylinder, ascentRateInMetersPerMinute: Double): Cylinder {
         var gas = fromGas
         var currentDepth = fromDepth
 
@@ -161,7 +163,7 @@ class DecompressionPlanner(
             // We do this by descending with increments of 1 meter and checking if there is a better
             // gas available at each depth.
             var nextDepth = currentDepth - 1
-            var nextDecoGas: Gas?
+            var nextDecoGas: Cylinder?
             while(nextDepth >= targetDepth) {
                 nextDecoGas = decoGasses.findBestDecoGas(nextDepth, environment, maxppO2, maxEND)
                 // TODO don't hardcode 3 here, instead use the configuration!
@@ -205,7 +207,7 @@ class DecompressionPlanner(
     fun calculateDecompression(
         toDepth: Int,
     ): List<DiveSegment> {
-        var gas: Gas
+        var gas: Cylinder
         val fromDepth: Double
         if (this.segments.size == 0) {
             // TODO
@@ -215,14 +217,13 @@ class DecompressionPlanner(
             throw IllegalStateException("Unable to decompress, current depth is 0, have any dive stages been registered?")
         } else {
             fromDepth = this.segments[this.segments.size-1].endDepth
-            gas = this.segments[this.segments.size-1].gas
+            gas = this.segments[this.segments.size-1].cylinder
         }
         val segmentSizeStart = this.segments.size
 
         if(toDepth > fromDepth) {
             throw IllegalArgumentException("Cannot calculate decompression as the target depth ($toDepth meter) is deeper then the current depth ($fromDepth meter). Add an descending depth change first!")
         }
-
 
         // Get the current ceiling:
         var ceiling = findFirstDecoCeiling(fromDepth, decoStepSize, lastDecoStopDepth, maxPpO2, maxEquivalentNarcoticDepth, gas, ascentRate)
@@ -236,6 +237,7 @@ class DecompressionPlanner(
         } else {
             gas = decoGasses.findBestDecoGas(fromDepth, environment, maxPpO2, maxEquivalentNarcoticDepth) ?: gas
             // Move the diver to the first ceiling (this may already be the surface)
+
             gas = addDecoDepthChange(
                 fromDepth,
                 max(ceiling.toDouble(), toDepth.toDouble()),
@@ -255,7 +257,7 @@ class DecompressionPlanner(
 
             // Check the new ceiling
             ceiling = max(
-                this.getDecoCeiling(ceiling.toDouble(), decoStepSize, lastDecoStopDepth),
+                this.getDecoCeiling(decoStepSize, lastDecoStopDepth),
                 toDepth
             )
 
@@ -294,7 +296,7 @@ class DecompressionPlanner(
                     // for some additional conservatism, we only move the diver to toDepth if the nearest
                     // shallower deco ceiling is cleared as well.
                     ceiling = max(
-                        this.getDecoCeiling(currentDepth, decoStepSize, lastDecoStopDepth),
+                        this.getDecoCeiling(decoStepSize, lastDecoStopDepth),
                         toDepth
                     )
                     if(ceiling < nextDecoDepth && forceMinimalDecoStopTime) {
@@ -326,11 +328,11 @@ class DecompressionPlanner(
         lastDecoStopDepth: Int,
         maxPpO2: Double,
         maxEquivalentNarcoticDepth: Double,
-        gas: Gas,
+        gas: Cylinder,
         ascentRate: Double
     ): Int {
 
-        var ceiling: Int = getDecoCeiling(fromDepth, decoStepSize, lastDecoStopDepth)
+        var ceiling: Int = getDecoCeiling(decoStepSize, lastDecoStopDepth)
         var nextCeiling = ceiling
         do {
 
@@ -354,7 +356,6 @@ class DecompressionPlanner(
 
                 // Check new ceiling (could already be higher)
                 getDecoCeiling(
-                    fromDepth,
                     decoStepSize,
                     lastDecoStopDepth
                 )
@@ -364,7 +365,7 @@ class DecompressionPlanner(
         return nextCeiling
     }
 
-    private fun getDecoCeiling(currentDepth: Double, decoStepSize: Int, lastDecoStopDepth: Int): Int {
+    private fun getDecoCeiling(decoStepSize: Int, lastDecoStopDepth: Int): Int {
         var ceiling = round(model.getCeiling()).toInt()
         // Divers like to do deco stops in increments of 10 feet or 3 meters.
         // This finds the closest to the ceiling increment of 3 (lower or at the ceiling,

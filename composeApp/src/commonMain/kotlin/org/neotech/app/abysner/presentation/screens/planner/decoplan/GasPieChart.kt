@@ -37,6 +37,7 @@ import io.github.koalaplot.core.pie.DefaultSlice
 import io.github.koalaplot.core.pie.PieChart
 import io.github.koalaplot.core.style.KoalaPlotTheme
 import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
@@ -93,7 +94,7 @@ fun GasPieChart(
                 //   for some reason is can request a slice that is not in the values, and thus not
                 //   in the colors array. This only seems to be a problem on iOS.
                 if (it in gas.indices) {
-                    val name = gas[it].first.toString()
+                    val name = gas[it].first.gas.toString()
                     val liters = gas[it].second
                     Text(
                         style = MaterialTheme.typography.bodyMedium,
@@ -162,10 +163,10 @@ fun GasPieChart(
 @Composable
 fun GasPieChartPreview() = PreviewWrapper {
     val plan = listOf(
-        DiveProfileSection(25, 35, Gas.Air),
+        DiveProfileSection(25, 35, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
     )
 
-    val divePlan = DivePlanner().getDecoPlan(plan, listOf(Gas.Oxygen50))
+    val divePlan = DivePlanner().getDecoPlan(plan, listOf(Cylinder.aluminium80Cuft(Gas.Oxygen50)))
 
     val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 

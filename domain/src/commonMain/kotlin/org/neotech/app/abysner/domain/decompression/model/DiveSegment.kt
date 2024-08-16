@@ -1,6 +1,6 @@
 package org.neotech.app.abysner.domain.decompression.model
 
-import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.utilities.equalsDelta
 import kotlin.math.max
 
@@ -24,9 +24,9 @@ data class DiveSegment(
      */
     val endDepth: Double,
     /**
-     * Selected gas for this segment (usually travel or bottom gas)
+     * Selected cylinder & gas for this segment
      */
-    val gas: Gas,
+    val cylinder: Cylinder,
 
     val gfCeilingAtEnd: Double,
 
@@ -115,7 +115,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             currentSegment.type == DiveSegment.Type.FLAT &&
             nextSegment.type == DiveSegment.Type.FLAT &&
             currentSegment.endDepth == nextSegment.startDepth &&
-            currentSegment.gas == nextSegment.gas &&
+            currentSegment.cylinder == nextSegment.cylinder &&
             currentSegment.isDecompression == nextSegment.isDecompression
         ) {
             val combinedSegment = currentSegment.copy(
@@ -126,7 +126,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
         } else if (
             currentSegment.travelSpeed.equalsDelta(nextSegment.travelSpeed, maxTravelSpeedDelta) &&
             currentSegment.endDepth == nextSegment.startDepth &&
-            currentSegment.gas == nextSegment.gas
+            currentSegment.cylinder == nextSegment.cylinder
         ) {
             val combinedSegment = currentSegment.copy(
                 endDepth = nextSegment.endDepth,
@@ -145,7 +145,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
                 endDepth = nextSegment.endDepth,
                 startDepth = nextSegment.startDepth,
                 duration = currentSegment.duration + nextSegment.duration,
-                gas = nextSegment.gas,
+                cylinder = nextSegment.cylinder,
                 gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
                 isDecompression = true,
             )

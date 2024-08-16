@@ -22,27 +22,23 @@ class PressureTest {
     @Test
     fun testDepthInMetersToBars() {
         // 10 meters (pure water)
-        assertEquals(1.9939, depthInMetersToBars(10.0, Environment.Default), DOUBLE_PRECISION)
+        assertEquals(1.9939, depthInMetersToBars(10.0, Environment.Default), DOUBLE_TOLERANCE)
 
         // 24 meters (pure water)
-        assertEquals(3.3668, depthInMetersToBars(24.0, Environment.Default), DOUBLE_PRECISION)
+        assertEquals(3.3668, depthInMetersToBars(24.0, Environment.Default), DOUBLE_TOLERANCE)
     }
 
     @Test
     fun testAltitudeToPressure() {
         assertEquals(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL, altitudeToPressure(0.0), tenthAtDecimalPoint(4))
-        assertEquals(0.7099843196815809, altitudeToPressure(3000.0), DOUBLE_PRECISION)
+        assertEquals(0.7099843196815809, altitudeToPressure(3000.0), DOUBLE_TOLERANCE)
     }
 
     @Test
     fun testPressureToAltitude() {
-        assertEquals(
-            0.0,
-            pressureToAltitude(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL),
-            DOUBLE_PRECISION
-        )
-        assertEquals(3000.0, pressureToAltitude(0.7099843196815809), DOUBLE_PRECISION)
+        assertEquals(0.0, pressureToAltitude(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL), DOUBLE_TOLERANCE)
+        assertEquals(3000.0, pressureToAltitude(0.7099843196815809), DOUBLE_TOLERANCE)
     }
 }
 
-private val DOUBLE_PRECISION = tenthAtDecimalPoint(4)
+private val DOUBLE_TOLERANCE = tenthAtDecimalPoint(4)

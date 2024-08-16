@@ -435,18 +435,19 @@ fun GradientFactorPreferenceDialog(
     gfLow: Int,
     gfHigh: Int,
 ) {
-    val gfLowValue: MutableState<Int> = remember(gfLow) { mutableIntStateOf(gfLow) }
-    val gfHighValue: MutableState<Int> = remember(gfHigh) { mutableIntStateOf(gfHigh) }
+    val gfLowValue: MutableState<Int?> = remember(gfLow) { mutableStateOf(gfLow) }
+    val gfHighValue: MutableState<Int?> = remember(gfHigh) { mutableStateOf(gfHigh) }
 
-    val isValid = remember { mutableStateOf(false) }
+    val isGfLowValid = remember { mutableStateOf(false) }
+    val isGfHighValid = remember { mutableStateOf(false) }
 
     AlertDialogCustomContent(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
-                enabled = isValid.value,
+                enabled = isGfLowValid.value && isGfHighValid.value,
                 onClick = {
-                    onConfirmButtonClicked(gfLowValue.value, gfHighValue.value)
+                    onConfirmButtonClicked(gfLowValue.value!!, gfHighValue.value!!)
                 }) {
                 Text(text = confirmButtonText)
             }
@@ -463,8 +464,8 @@ fun GradientFactorPreferenceDialog(
                     modifier = Modifier.padding(start = 24.dp).weight(1f),
                     minValue = 10,
                     maxValue = 100,
-                    initialValue = gfLowValue.value,
-                    isValid = isValid,
+                    initialValue = gfLow,
+                    isValid = isGfLowValid,
                     visualTransformation = SuffixVisualTransformation(" low")
                 ) {
                     gfLowValue.value = it
@@ -473,8 +474,8 @@ fun GradientFactorPreferenceDialog(
                     modifier = Modifier.padding(end = 24.dp).weight(1f),
                     minValue = 10,
                     maxValue = 100,
-                    initialValue = gfHighValue.value,
-                    isValid = isValid,
+                    initialValue = gfHigh,
+                    isValid = isGfHighValid,
                     visualTransformation = SuffixVisualTransformation(" high")
                 ) {
                     gfHighValue.value = it

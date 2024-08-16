@@ -12,12 +12,13 @@
 
 package org.neotech.app.abysner.domain.gasplanning.model
 
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.utilities.merge
 
 data class GasPlan(
-    val base: Map<Gas, Double>,
-    val extraRequiredForWorstCaseOutOfAir: Map<Gas, Double>
+    val base: Map<Cylinder, Double>,
+    val extraRequiredForWorstCaseOutOfAir: Map<Cylinder, Double>
 ) {
 
     val sortedBase = base.toList().sortedByDescending { it.second }

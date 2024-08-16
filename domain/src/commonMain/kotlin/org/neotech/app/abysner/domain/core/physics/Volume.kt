@@ -10,21 +10,8 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.domain.diveplanning.model
+package org.neotech.app.abysner.domain.core.physics
 
-import org.neotech.app.abysner.domain.core.model.Cylinder
+inline fun Double.asCubicFeetToLiters(): Double = this * 28.3168466
 
-data class DiveProfileSection(
-    /**
-     * Duration is minutes.
-     */
-    val duration: Int,
-    /**
-     * Depth of this segment
-     */
-    val depth: Int,
-    /**
-     * Selected gas for this segment (usually travel or bottom gas)
-     */
-    val cylinder: Cylinder
-)
+inline fun Double.asLitersToCubicFeet(): Double = this / 28.3168466

@@ -16,6 +16,7 @@ import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
@@ -24,8 +25,7 @@ import kotlin.math.ceil
 data class DivePlan(
     val segments: List<DiveSegment>,
     val alternativeAccents: Map<Int, List<DiveSegment>>,
-    val decoGasses: List<Gas>,
-    val bottomGasses: List<Gas>,
+    val decoGasses: List<Cylinder>,
     val configuration: Configuration,
     val totalCns: Double,
     val totalOtu: Double,
@@ -52,10 +52,10 @@ data class DivePlan(
 
     val maximumGasDensities: List<GasAtDepth>
         get() = segmentsCollapsed
-            .groupBy { it.gas }
+            .groupBy { it.cylinder }
             .mapValues { it.value.maxOf { segment -> segment.maxDepth } }
             .map {
-                GasAtDepth(it.key, it.value, configuration.environment)
+                GasAtDepth(it.key.gas, it.value, configuration.environment)
             }
 
     data class GasAtDepth(
@@ -107,7 +107,7 @@ private fun List<DiveSegment>.asString(): String {
             DiveSegment.Type.ASCENT -> '▲'
         }
         val depth = formatter.format(0, it.endDepth).toInt()
-        builder.appendLine("${index.spaced(5)} $typeChar ${depth.spaced(6)} ${it.end.spaced(10)} ${it.duration.spaced(11)} ${it.gas}")
+        builder.appendLine("${index.spaced(5)} $typeChar ${depth.spaced(6)} ${it.end.spaced(10)} ${it.duration.spaced(11)} ${it.cylinder.gas}")
     }
     return builder.toString()
 }

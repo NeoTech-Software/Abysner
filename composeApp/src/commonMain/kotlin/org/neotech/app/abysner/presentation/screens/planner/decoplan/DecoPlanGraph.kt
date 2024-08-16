@@ -49,6 +49,7 @@ import io.github.koalaplot.core.xygraph.FloatLinearAxisModel
 import io.github.koalaplot.core.xygraph.XYGraph
 import io.github.koalaplot.core.xygraph.rememberAxisStyle
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
@@ -261,18 +262,20 @@ fun DecoPlanGraph(
 @Preview
 @Composable
 private fun DecoPlanGraphPreview() {
+
+    val cylinder = Cylinder.steel12Liter(Gas.Air)
+
     DecoPlanGraph(
         modifier = Modifier, divePlan = DivePlan(
             segments = listOf(
-                DiveSegment(0,5, 0.0, 25.0, Gas.Air, isDecompression = false, gfCeilingAtEnd = 0.0),
+                DiveSegment(0,5, 0.0, 25.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
 
-                DiveSegment(5,20, 25.0, 20.0, Gas.Air, isDecompression = false, gfCeilingAtEnd = 0.0),
-                DiveSegment(25,20, 25.0, 0.0, Gas.Air, isDecompression = false, gfCeilingAtEnd = 0.0),
+                DiveSegment(5,20, 25.0, 20.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
+                DiveSegment(25,20, 25.0, 0.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
 
                 ),
             alternativeAccents = emptyMap(),
             decoGasses = emptyList(),
-            bottomGasses = listOf(Gas.Air),
             configuration = Configuration(),
             totalCns = 0.0,
             totalOtu = 0.0

@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.domain.gasplanning
 
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -63,7 +64,7 @@ class GasPlanner {
 
     fun calculateGasPlan(divePlan: DivePlan): GasPlan {
         // Calculate base gas usage for a normal dive for one diver
-        val baseLine = divePlan.segmentsCollapsed.calculateGasRequirements(divePlan.configuration.sacRate, divePlan.configuration.environment)
+        val baseLine = divePlan.segmentsCollapsed.calculateGasRequirementsPerCylinder(divePlan.configuration.sacRate, divePlan.configuration.environment)
 
         val worstCaseGasLossScenarios = findPotentialWorstCaseTtsPoints(divePlan)
 
@@ -73,27 +74,26 @@ class GasPlanner {
 
             // For each TTS calculated the dive plan should have a accent schedule, retrieve it and use it to calculate gas usage.
             val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
-            ascent?.calculateGasRequirements(
+            ascent?.calculateGasRequirementsPerCylinder(
                 divePlan.configuration.sacRateOutOfAir,
                 divePlan.configuration.environment
             ) ?: error("DivePlan does not have alternative accent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
         }
 
-        val maxPerGas = mutableMapOf<Gas, Double>()
+        val extraRequiredForWorstCaseOutOfAir = mutableMapOf<Cylinder, Double>()
         outOfAirScenarios.forEach { scenario ->
-            scenario.mergeInto(maxPerGas, ::max)
+            scenario.mergeInto(extraRequiredForWorstCaseOutOfAir, ::max)
         }
-        return GasPlan(baseLine, maxPerGas)
+        return GasPlan(baseLine, extraRequiredForWorstCaseOutOfAir)
     }
 
-
-    private fun List<DiveSegment>.calculateGasRequirements(sac: Double, environment: Environment): Map<Gas, Double> {
-        val requiredLitersByGas = mutableMapOf<Gas, Double>()
+    private fun List<DiveSegment>.calculateGasRequirementsPerCylinder(sac: Double, environment: Environment): Map<Cylinder, Double> {
+        val requiredLitersByGas = mutableMapOf<Cylinder, Double>()
         forEach {
             val pressure = depthInMetersToBars(it.averageDepth, environment)
             val sacAtDepth = sac * pressure
             val liters = it.duration * sacAtDepth
-            requiredLitersByGas.updateOrInsert(it.gas, liters) { currentValue, newValue ->
+            requiredLitersByGas.updateOrInsert(it.cylinder, liters) { currentValue, newValue ->
                 currentValue + newValue
             }
         }

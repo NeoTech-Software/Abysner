@@ -27,48 +27,64 @@ import kotlin.math.round
 @Composable
 fun GasPropertiesComponent(
     modifier: Modifier,
-    gas: Gas,
+    gas: Gas?,
     maxPPO2: Double,
     maxDensity: Double,
     environment: Environment,
+    showTopRow: Boolean = true,
 ) {
-    val oxygenPercentage = round(gas.oxygenFraction * 100).toInt()
-    val heliumPercentage = round(gas.heliumFraction * 100).toInt()
-    val nitrogenPercentage = 100 - oxygenPercentage - heliumPercentage
+
+    val mix: String
+    val nitrogenPercentage: String
+    if(gas != null) {
+        val oxygenPercentageInt = round(gas.oxygenFraction * 100).toInt()
+        val heliumPercentageInt = round(gas.heliumFraction * 100).toInt()
+        mix = "$oxygenPercentageInt/$heliumPercentageInt"
+        nitrogenPercentage = "${100 - oxygenPercentageInt - heliumPercentageInt}%"
+    } else {
+        mix = EMPTY_PLACEHOLDER
+        nitrogenPercentage = EMPTY_PLACEHOLDER
+    }
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            GasDisplay(
-                modifier = Modifier.weight(0.6f),
-                size = BigNumberSize.LARGE,
-                oxygenPercentage = oxygenPercentage,
-                heliumPercentage = heliumPercentage
-            )
-            val name = gas.diveIndustryName()
-            BigNumberDisplay(
-                modifier = Modifier.weight(0.4f),
-                size = BigNumberSize.SMALL,
-                value = name,
-                label = "Type"
-            )
+        if(showTopRow) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BigNumberDisplay(
+                    modifier = Modifier.weight(0.6f),
+                    size = BigNumberSize.LARGE,
+                    value = mix,
+                    label = "Mix (O2/He)"
+                )
+
+                val name = gas?.diveIndustryName() ?: EMPTY_PLACEHOLDER
+                BigNumberDisplay(
+                    modifier = Modifier.weight(0.4f),
+                    size = BigNumberSize.SMALL,
+                    value = name,
+                    label = "Type"
+                )
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 
-            val mod = gas.oxygenMod(maxPPO2, environment)
+            val mod = gas?.let {
+                "${round(it.oxygenMod(maxPPO2, environment)).toInt()}m"
+            } ?: EMPTY_PLACEHOLDER
+
             FlipCardComponent(
                 modifier = Modifier.weight(0.3f),
                 front = {
                     BigNumberDisplay(
                         modifier = it,
                         size = BigNumberSize.SMALL,
-                        value = "${round(mod).toInt()}m",
+                        value = mod,
                         label = "Oxygen MOD"
                     )
                 },
@@ -82,7 +98,9 @@ fun GasPropertiesComponent(
                 }
             )
 
-            val densityMod = gas.densityMod(maxAllowedDensity = maxDensity, environment = environment)
+            val densityMod = gas?.let {
+                "${round(it.densityMod(maxAllowedDensity = maxDensity, environment = environment)).toInt()}m"
+            } ?: EMPTY_PLACEHOLDER
 
             FlipCardComponent(
                 modifier = Modifier.weight(0.3f),
@@ -90,7 +108,7 @@ fun GasPropertiesComponent(
                     BigNumberDisplay(
                         modifier = it,
                         size = BigNumberSize.SMALL,
-                        value = "${round(densityMod).toInt()}m",
+                        value = densityMod,
                         label = "Density MOD"
                     )
                 },
@@ -110,7 +128,7 @@ fun GasPropertiesComponent(
                     BigNumberDisplay(
                         modifier = it,
                         size = BigNumberSize.SMALL,
-                        value = "$nitrogenPercentage%",
+                        value = nitrogenPercentage,
                         label = "Nitrogen"
                     )
                 },
@@ -126,3 +144,5 @@ fun GasPropertiesComponent(
         }
     }
 }
+
+private const val EMPTY_PLACEHOLDER = "…"

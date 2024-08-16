@@ -16,8 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -25,21 +24,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun CheckableListItemComponent(
-    isChecked: Boolean = true,
+    modifier: Modifier = Modifier,
+    checked: Boolean = true,
+    enabled: Boolean = true,
     onCheckedChanged: (isChecked: Boolean) -> Unit = {},
     content: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        modifier = Modifier.padding(start = 16.dp),
+        modifier = modifier.padding(start = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-            Checkbox(checked = isChecked, onCheckedChange = onCheckedChanged)
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+            Checkbox(
+                checked = checked,
+                enabled = enabled,
+                onCheckedChange = onCheckedChanged
+            )
         }
         content()
     }

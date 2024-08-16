@@ -15,3 +15,11 @@ package org.neotech.app.abysner.domain.utilities
 expect object DecimalFormat {
     fun format(fractionDigits: Int, number: Number): String
 }
+
+expect class DecimalFormatter(format: String) {
+    fun format(number: Number): String
+    fun setFractionDigits(digits: Int)
+    fun decimalSeparator(): Char
+}
+
+expect fun generateUUID(): String

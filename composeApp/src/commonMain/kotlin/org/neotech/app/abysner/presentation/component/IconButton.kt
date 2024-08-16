@@ -46,6 +46,7 @@ fun IconAndTextButtonPreview() {
 fun IconAndTextButton(
     modifier: Modifier = Modifier,
     imageVector: ImageVector,
+    enabled: Boolean = true,
     text: String,
     outlined: Boolean = false,
     onClick: () -> Unit,
@@ -63,6 +64,7 @@ fun IconAndTextButton(
     if(!outlined) {
         Button(
             modifier = modifier,
+            enabled = enabled,
             onClick = onClick,
             contentPadding = PaddingValues(start = 16.dp, end = 24.dp, top = 8.dp, bottom = 8.dp)
         ) {
@@ -71,6 +73,7 @@ fun IconAndTextButton(
     } else {
         OutlinedButton(
             modifier = modifier,
+            enabled = enabled,
             onClick = onClick,
             contentPadding = PaddingValues(start = 16.dp, end = 24.dp, top = 8.dp, bottom = 8.dp)
         ) {
