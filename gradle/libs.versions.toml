@@ -10,7 +10,7 @@ androidx-activityCompose = "1.9.1"
 ####### END:   Android target specific #######
 
 # Compose & Kotlin
-compose-plugin = "1.6.11"
+compose-plugin = "1.7.0-alpha02"
 kotlin = "2.0.0"
 # KSP version should follow Kotlin version
 ksp = "2.0.0-1.0.21"
