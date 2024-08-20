@@ -16,9 +16,11 @@ import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_outline_propane_tank_24
 import abysner.composeapp.generated.resources.ic_outline_timer_24
 import abysner.composeapp.generated.resources.ic_outline_vertical_align_bottom_24
+import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -32,9 +34,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
@@ -45,6 +48,7 @@ import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 fun PlanSelectionCardComponent(
     modifier: Modifier = Modifier,
     segments: List<DiveProfileSection>,
+    addAllowed: Boolean,
     onAddSegment: () -> Unit,
     onRemoveSegment: (index: Int, segment: DiveProfileSection) -> Unit,
     onEditSegment: (index: Int, segment: DiveProfileSection) -> Unit
@@ -70,25 +74,31 @@ fun PlanSelectionCardComponent(
                 )
             }
 
-            val planRunTime = segments.sumOf { it.duration }
-            val planMaxDepth = segments.maxOfOrNull { it.depth } ?: 0
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp).padding(top = 8.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+
+                val message = if(!addAllowed) {
+                   "You must add (and select) at least one cylinder before creating the dive profile."
+                } else if(segments.isEmpty()) {
+                   "Add at least one section to your dive profile to see your deco & gas plan."
+                } else {
+                    null
+                }
+
+                if(message != null) {
                     Text(
-                        text = "Planned runtime: $planRunTime min",
-                        style = MaterialTheme.typography.bodySmall
+                        modifier = Modifier.weight(1f).padding(end = 16.dp),
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic)
                     )
-                    Text(
-                        text = "Max depth: $planMaxDepth m",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                } else {
+                    Spacer(Modifier.weight(1f))
                 }
                 IconAndTextButton(
                     onClick = onAddSegment,
+                    enabled = addAllowed,
                     text = "Add",
                     imageVector = Icons.Outlined.Add,
                 )
@@ -100,7 +110,7 @@ fun PlanSelectionCardComponent(
 @Composable
 fun PlanListItemComponent(
     modifier: Modifier,
-    diveProfileSection: DiveProfileSection = DiveProfileSection(10, 15, Gas.Air),
+    diveProfileSection: DiveProfileSection = DiveProfileSection(10, 15, Cylinder(Gas.Air, 232, 12)),
     onDelete: (diveProfileSection: DiveProfileSection) -> Unit = {},
 ) {
     Row(
@@ -121,28 +131,31 @@ fun PlanListItemComponent(
             modifier = Modifier
                 .padding(start = 8.dp)
                 .weight(1f),
-            text = "${diveProfileSection.gas}",
+            text = "${diveProfileSection.cylinder.gas}",
             icon = painterResource(resource = Res.drawable.ic_outline_propane_tank_24)
         )
-        IconButton(onClick = {
-            onDelete(diveProfileSection)
-        }) {
+        IconButton(
+            onClick = { onDelete(diveProfileSection) }
+        ) {
             Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete gas")
         }
     }
 }
 
-//@Preview(widthDp = 500)
 @Preview
 @Composable
 fun PlanSelectionCardComponentPreview() {
     AbysnerTheme {
+
+        val cylinder = Cylinder.steel12Liter(Gas.Air)
+
         PlanSelectionCardComponent(
             segments = listOf(
-                DiveProfileSection(5, 20, Gas.Air),
-                DiveProfileSection(15, 15, Gas.Air),
-                DiveProfileSection(30, 10, Gas.Air)
+                DiveProfileSection(5, 20, cylinder),
+                DiveProfileSection(15, 15, cylinder),
+                DiveProfileSection(30, 10, cylinder)
             ),
+            addAllowed = true,
             onAddSegment = {},
             onRemoveSegment = { _, _ -> },
             onEditSegment = { _, _ -> }

@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.gasplan
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,17 +19,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
@@ -42,10 +41,13 @@ import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.higherThenDelta
+import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
+import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.textfield.ExpandableText
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.LoadingBoxWithBlur
 
+@OptIn(ExperimentalTextApi::class)
 @Composable
 fun GasPlanCardComponent(
     modifier: Modifier = Modifier,
@@ -107,8 +109,9 @@ fun GasPlanCardComponent(
 
 
                     Text(
-                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp).padding(horizontal = 16.dp),
-                        text = "Volumes",
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                            .padding(horizontal = 16.dp),
+                        text = "Cylinders",
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
 
@@ -116,25 +119,66 @@ fun GasPlanCardComponent(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         header = {
                             Text(
-                                modifier = Modifier.weight(0.3f),
+                                modifier = Modifier.weight(0.1f),
+                                text = "No.",
+                            )
+                            Text(
+                                modifier = Modifier.weight(0.2f),
                                 text = "Mix",
                             )
                             Text(
+                                modifier = Modifier.weight(0.2f),
+                                text = "Size (ℓ)",
+                            )
+                            Text(
                                 modifier = Modifier.weight(0.3f),
-                                text = "Total volume"
+                                text = "Usage (bar)"
                             )
                         }
                     ) {
 
-                        gasRequirements.total.forEach { (gas, volume) ->
+                        gasRequirements.total.forEachIndexed { index, (gas, volume) ->
                             row {
                                 Text(
-                                    modifier = Modifier.weight(0.3f),
-                                    text = gas.toString(),
+                                    modifier = Modifier.weight(0.1f),
+                                    text = (index + 1).toString(),
                                 )
                                 Text(
+                                    modifier = Modifier.weight(0.2f),
+                                    text = gas.gas.toString(),
+                                )
+                                val size = DecimalFormat.format(1, gas.waterVolume)
+                                Text(
+                                    modifier = Modifier.weight(0.2f),
+                                    text = size,
+                                )
+
+                                // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
+                                val endPressureBase =
+                                    gas.pressureAfter(volumeUsage = gasRequirements.sortedBase[index].second)
+                                val endPressure = gas.pressureAfter(volumeUsage = volume)
+
+                                val startPressure = DecimalFormat.format(0, gas.pressure)
+
+                                val alertSeverity: AlertSeverity
+                                val pressureText =
+                                    if (endPressureBase == null || endPressure == null) {
+                                        alertSeverity = AlertSeverity.ERROR
+                                        "$startPressure > empty"
+                                    } else {
+                                        alertSeverity = AlertSeverity.NONE
+                                        "$startPressure > ${
+                                            DecimalFormat.format(
+                                                0,
+                                                endPressureBase
+                                            )
+                                        } (${DecimalFormat.format(0, endPressure)})"
+                                    }
+
+                                TextAlert(
                                     modifier = Modifier.weight(0.3f),
-                                    text = "${DecimalFormat.format(0, volume)} liters"
+                                    alertSeverity = alertSeverity,
+                                    text = pressureText
                                 )
                             }
                         }
@@ -142,7 +186,8 @@ fun GasPlanCardComponent(
 
 
                     Text(
-                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp).padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                            .padding(horizontal = 16.dp),
                         text = "Limits",
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
@@ -152,15 +197,19 @@ fun GasPlanCardComponent(
                             .padding(bottom = 16.dp),
                         header = {
                             Text(
-                                modifier = Modifier.weight(0.3f),
-                                text = "Mix @ depth",
+                                modifier = Modifier.weight(0.2f),
+                                text = "Mix",
                             )
                             Text(
                                 modifier = Modifier.weight(0.3f),
-                                text = "Density (g/L)",
+                                text = "Depth (m)",
                             )
                             Text(
                                 modifier = Modifier.weight(0.3f),
+                                text = "Density (g/ℓ)",
+                            )
+                            Text(
+                                modifier = Modifier.weight(0.2f),
                                 text = "PPO2"
                             )
                         }
@@ -170,52 +219,49 @@ fun GasPlanCardComponent(
                         (divePlanSet.deeperAndLonger.maximumGasDensities + divePlanSet.base.maximumGasDensities)
                             .distinct().sortedBy { it.gas.oxygenFraction }.forEach {
 
-                            val backgroundColor = when {
-                                it.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.01) -> Color(
-                                    240,
-                                    50,
-                                    50
-                                )
+                                row {
+                                    Text(
+                                        modifier = Modifier.weight(0.2f),
+                                        text = it.gas.toString(),
+                                    )
 
-                                it.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.01) -> Color(240, 50, 50)
-                                it.density.higherThenDelta(
-                                    Gas.MAX_RECOMMENDED_GAS_DENSITY,
-                                    0.01
-                                ) -> Color(255, 150, 20)
+                                    Text(
+                                        modifier = Modifier.weight(0.3f),
+                                        text = "${it.depth.toInt()}m",
+                                    )
 
-                                else -> null
-                            }
+                                    val density = DecimalFormat.format(2, it.density)
 
-                            row(modifier = backgroundColor?.let { color -> Modifier.background(color) }
-                                ?: Modifier) {
+                                    val alertSeverityDensity =
+                                        if (it.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.01)) {
+                                            AlertSeverity.ERROR
+                                        } else if (it.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.01)) {
+                                            AlertSeverity.WARNING
+                                        } else {
+                                            AlertSeverity.NONE
+                                        }
 
-                                val foregroundColor = if (backgroundColor == null) {
-                                    LocalTextStyle.current.color
-                                } else {
-                                    MaterialTheme.colorScheme.onErrorContainer
+                                    TextAlert(
+                                        alertSeverity = alertSeverityDensity,
+                                        modifier = Modifier.weight(0.3f),
+                                        text = density,
+                                    )
+
+                                    val ppo2 = DecimalFormat.format(2, it.ppo2)
+                                    val alertSeverityPPO2 =
+                                        if (it.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.01)) {
+                                            AlertSeverity.ERROR
+                                        } else {
+                                            AlertSeverity.NONE
+                                        }
+
+                                    TextAlert(
+                                        alertSeverity = alertSeverityPPO2,
+                                        modifier = Modifier.weight(0.2f),
+                                        text = ppo2,
+                                    )
                                 }
-
-                                Text(
-                                    color = foregroundColor,
-                                    modifier = Modifier.weight(0.3f),
-                                    text = "${it.gas} at ${it.depth.toInt()}m",
-                                )
-
-                                val density = DecimalFormat.format(2, it.density)
-                                val ppo2 = DecimalFormat.format(2, it.ppo2)
-
-                                Text(
-                                    color = foregroundColor,
-                                    modifier = Modifier.weight(0.3f),
-                                    text = density,
-                                )
-                                Text(
-                                    color = foregroundColor,
-                                    modifier = Modifier.weight(0.3f),
-                                    text = ppo2,
-                                )
                             }
-                        }
                     }
                     ExpandableText(
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -237,10 +283,10 @@ private fun GasPlanCardComponentPreview() {
             configuration = Configuration()
         }.getDecoPlan(
             plan = listOf(
-                DiveProfileSection(16,  45, Gas.Air),
-                DiveProfileSection(16,  35, Gas(0.28, 0.0)),
+                DiveProfileSection(16, 45, Cylinder.steel12Liter(Gas.Air)),
+                DiveProfileSection(16, 35, Cylinder.steel12Liter(Gas(0.28, 0.0))),
             ),
-            decoGases = listOf(Gas.Oxygen50),
+            decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Oxygen50)),
         )
 
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)

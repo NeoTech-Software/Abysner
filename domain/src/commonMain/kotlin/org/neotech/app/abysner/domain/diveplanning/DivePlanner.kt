@@ -17,6 +17,7 @@ import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.gasplanning.OxygenToxicityCalculator
 import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import kotlin.math.abs
@@ -34,7 +35,7 @@ class DivePlanner {
 
     fun getDecoPlan(
         plan: List<DiveProfileSection>,
-        decoGases: List<Gas>,
+        decoGases: List<Cylinder>,
     ): DivePlan {
 
         if(plan.isEmpty()) {
@@ -42,7 +43,6 @@ class DivePlanner {
                 emptyList(),
                 emptyMap(),
                 decoGases,
-                emptyList(),
                 configuration,
                 0.0,
                 0.0
@@ -72,7 +72,7 @@ class DivePlanner {
         )
 
         decoGases.forEach {
-            decompressionPlanner.addDecoGas(it)
+            decompressionPlanner.addCylinder(it)
         }
 
         var currentDepth = 0.0
@@ -93,7 +93,7 @@ class DivePlanner {
 
                         // Only allow the listed bottom gas to get to this segment
                         // This is similar to what MultiDeco does
-                        decompressionPlanner.setDecoGasses(listOf(it.gas))
+                        decompressionPlanner.setDecoGasses(listOf(it.cylinder))
                         decompressionPlanner.calculateDecompression(toDepth = it.depth)
                         decompressionPlanner.setDecoGasses(gasses)
                     } else {
@@ -109,7 +109,7 @@ class DivePlanner {
                     } else if(timeLeftAtPlannedDepth > 0) {
                         decompressionPlanner.addFlat(
                             it.depth.toDouble(),
-                            it.gas,
+                            it.cylinder,
                             timeLeftAtPlannedDepth,
                             isDecompression = false,
                         )
@@ -131,7 +131,7 @@ class DivePlanner {
                     decompressionPlanner.addDepthChangePerMinute(
                         currentDepth,
                         it.depth.toDouble(),
-                        it.gas,
+                        it.cylinder,
                         timeToChange,
                         isDecompression = false,
                     )
@@ -142,7 +142,7 @@ class DivePlanner {
                     } else if(timeLeftAtPlannedDepth > 0) {
                         decompressionPlanner.addFlat(
                             it.depth.toDouble(),
-                            it.gas,
+                            it.cylinder,
                             timeLeftAtPlannedDepth,
                             isDecompression = false,
                         )
@@ -153,7 +153,7 @@ class DivePlanner {
             } else {
                 decompressionPlanner.addFlat(
                     it.depth.toDouble(),
-                    it.gas,
+                    it.cylinder,
                     it.duration,
                     isDecompression = false,
                 )
@@ -170,7 +170,6 @@ class DivePlanner {
             segments = segments,
             alternativeAccents = decompressionPlanner.getAlternativeAccents(),
             decoGasses = decoGases,
-            bottomGasses = plan.asSequence().map { it.gas }.distinct().toList(),
             configuration = configuration,
             totalCns = OxygenToxicityCalculator().calculateCns(segments, configuration.environment),
             totalOtu = OxygenToxicityCalculator().calculateOtu(segments, configuration.environment)

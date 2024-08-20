@@ -25,6 +25,9 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         }
     }
 
+    val oxygenPercentage: Int = round(oxygenFraction * 100.0).toInt()
+    val heliumPercentage: Int = round(heliumFraction * 100.0).toInt()
+
     /**
      * The N2 fraction of this gas, calculated by subtracting the helium and oxygen fractions from 1.0.
      */
@@ -156,14 +159,18 @@ private const val DENSITY_HE = 0.178
  *         null if no gasses match these criteria. If multiple gasses match the gas with the highest
  *         PPO2 is chosen (to have the maximum off gassing effect).
  */
-fun List<Gas>.findBestDecoGas(depth: Double, environment: Environment, maxPPO2: Double, maxEND: Double): Gas? {
-    var bestGas: Gas? = null
+fun List<Cylinder>.findBestDecoGas(depth: Double, environment: Environment, maxPPO2: Double, maxEND: Double): Cylinder? {
+    var bestGas: Cylinder? = null
     forEach { candidateGas ->
         // TODO be safe and use 'floor' instead of 'round'?
-        val mod = round(candidateGas.oxygenMod(maxPPO2, environment))
-        val end = round(candidateGas.endInMeters(depth, environment))
+        val mod = round(candidateGas.gas.oxygenMod(maxPPO2, environment))
+        val end = round(candidateGas.gas.endInMeters(depth, environment))
         if (depth <= mod && end <= maxEND) {
-            if (bestGas == null || bestGas!!.oxygenFraction < candidateGas.oxygenFraction) {
+            // Gas is usable (todo min-OD check?)
+            if (bestGas == null) {
+                bestGas = candidateGas
+            } else if(bestGas!!.gas.oxygenFraction < candidateGas.gas.oxygenFraction) {
+                // Prefer the higher oxygen percentage
                 bestGas = candidateGas
             }
         }

@@ -18,10 +18,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -39,13 +45,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.presentation.component.GasPickerComponent
+import org.neotech.app.abysner.domain.utilities.DecimalFormat
+import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
@@ -54,18 +69,18 @@ import org.neotech.app.abysner.presentation.component.modifier.invisible
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlanPickerBottomSheet(
     isAdd: Boolean = true,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    initialValue: DiveProfileSection,
+    initialValue: DiveProfileSection?,
     maxPPO2: Double,
     maxDensity: Double,
     environment: Environment,
-    onAddDiveSegment: (gas: DiveProfileSection) -> Unit = {},
+    cylinders: List<Cylinder>,
+    onAddOrUpdateDiveSegment: (gas: DiveProfileSection) -> Unit = {},
     onDismissRequest: () -> Unit = {},
 ) {
 
@@ -88,17 +103,20 @@ fun PlanPickerBottomSheet(
             ) {
                 Text(
                     modifier = Modifier
-                        .padding(bottom = 16.dp)
                         .fillMaxWidth(),
                     style = MaterialTheme.typography.headlineSmall,
                     text = "Dive segment"
                 )
 
+                var cylinder: Cylinder? by remember {
+                    mutableStateOf(initialValue?.cylinder ?: cylinders.firstOrNull())
+                }
+
                 var depth by remember {
-                    mutableIntStateOf(initialValue.depth)
+                    mutableIntStateOf(initialValue?.depth ?: 10)
                 }
                 var time by remember {
-                    mutableIntStateOf(initialValue.duration)
+                    mutableIntStateOf(initialValue?.duration ?: 15)
                 }
 
                 val errorMessageDepth = remember {
@@ -111,7 +129,59 @@ fun PlanPickerBottomSheet(
                 val isDepthValid = remember { mutableStateOf(true) }
                 val isTimeValid = remember { mutableStateOf(true) }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+
+                GasPropertiesComponent(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    gas = cylinder?.gas,
+                    maxDensity = maxDensity,
+                    maxPPO2 = maxPPO2,
+                    environment = environment,
+                    showTopRow = false,
+                )
+
+                val suffixGas = if(cylinder != null) {
+                    val liters = DecimalFormat.format(1, cylinder!!.waterVolume)
+                    val pressure = DecimalFormat.format(0, cylinder!!.pressure)
+                    " (${liters}l @ ${pressure}bar)"
+                } else {
+                    ""
+                }
+
+                val bigBodyStyle = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 24.sp
+                )
+
+                fun Cylinder.buildGasText() = buildAnnotatedString {
+                    withStyle(bigBodyStyle.toSpanStyle()) {
+                        append(gas.toString())
+                    }
+                    val liters = DecimalFormat.format(1, cylinder!!.waterVolume)
+                    val pressure = DecimalFormat.format(0, cylinder!!.pressure)
+                    append(" (${liters}l @ ${pressure}bar)")
+                }
+
+                DropDown(
+                    modifier = Modifier.fillMaxWidth(),
+                    label = "Cylinder",
+                    selectedValue = cylinder,
+                    items = cylinders,
+                    selectedText = {
+                        it?.buildGasText() ?: AnnotatedString("")
+                    },
+                    dropdownRow = { index, gas ->
+                        Text(
+                            style = MaterialTheme.typography.bodyLarge,
+                            text = gas.buildGasText()
+                        )
+                    },
+                    onSelectionChanged = { index, gas ->
+                        cylinder = gas
+                    }
+                )
+
+                Row(
+                    modifier = Modifier.padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     OutlinedNumberInputField(
                         modifier = Modifier.weight(1f)
                             .recordLayoutCoordinates("depth", textFieldPositions),
@@ -119,11 +189,13 @@ fun PlanPickerBottomSheet(
                         minValue = 1,
                         maxValue = 150,
                         visualTransformation = SuffixVisualTransformation(" m"),
-                        initialValue = depth,
+                        initialValue = initialValue?.depth,
                         errorMessage = errorMessageDepth,
                         isValid = isDepthValid,
                         onNumberChanged = {
-                            depth = it
+                            if(it != null) {
+                                depth = it
+                            }
                         },
                         supportingText = null,
                     )
@@ -134,32 +206,28 @@ fun PlanPickerBottomSheet(
                         minValue = 1,
                         maxValue = 999,
                         visualTransformation = SuffixVisualTransformation(" min"),
-                        initialValue = time,
+                        initialValue = initialValue?.duration,
                         errorMessage = errorMessageTime,
                         isValid = isTimeValid,
                         onNumberChanged = {
-                            time = it
+                            if(it != null) {
+                                time = it
+                            }
                         },
                         supportingText = null,
                     )
                 }
 
-                var oxygenPercentage: Int by remember {
-                    mutableIntStateOf((initialValue.gas.oxygenFraction * 100).roundToInt())
-                }
-
-                var heliumPercentage: Int by remember {
-                    mutableIntStateOf((initialValue.gas.heliumFraction * 100).roundToInt())
-                }
-
-                val gas = Gas(oxygenPercentage / 100.0, heliumPercentage / 100.0)
+                val gas = cylinder?.gas
 
                 var anyErrorMessage = errorMessageDepth.value ?: errorMessageTime.value
 
-                if(anyErrorMessage == null && depth > gas.oxygenModRounded(maxPPO2, environment)) {
-                    anyErrorMessage = "Warning: Depth exceeds oxygen MOD!"
-                } else if(anyErrorMessage == null && depth > gas.densityModRounded(environment = environment)) {
-                    anyErrorMessage = "Warning: Depth exceeds density MOD!"
+                if(gas != null) {
+                    if (anyErrorMessage == null && depth > gas.oxygenModRounded(maxPPO2, environment)) {
+                        anyErrorMessage = "Warning: Depth exceeds oxygen MOD!"
+                    } else if (anyErrorMessage == null && depth > gas.densityModRounded(environment = environment)) {
+                        anyErrorMessage = "Warning: Depth exceeds density MOD!"
+                    }
                 }
 
                 Text(
@@ -171,23 +239,6 @@ fun PlanPickerBottomSheet(
                     maxLines = 1,
                     text = anyErrorMessage ?: "Dummy to avoid jumping",
                     color = MaterialTheme.colorScheme.error
-                )
-
-                GasPropertiesComponent(
-                    modifier = Modifier.padding(vertical = 16.dp),
-                    gas = gas,
-                    maxDensity = maxDensity,
-                    maxPPO2 = maxPPO2,
-                    environment = environment,
-                )
-
-                GasPickerComponent(
-                    initialHeliumPercentage = heliumPercentage,
-                    initialOxygenPercentage = oxygenPercentage,
-                    onGasChanged = { oxygen, helium ->
-                        oxygenPercentage = oxygen
-                        heliumPercentage = helium
-                    }
                 )
 
                 Row {
@@ -204,19 +255,16 @@ fun PlanPickerBottomSheet(
                         Text("Cancel")
                     }
                     Button(
-                        enabled = isTimeValid.value && isDepthValid.value,
+                        enabled = isTimeValid.value && isDepthValid.value && cylinder != null,
                         modifier = Modifier
                             .weight(0.5f)
                             .padding(top = 16.dp),
                         onClick = {
-                            onAddDiveSegment(
+                            onAddOrUpdateDiveSegment(
                                 DiveProfileSection(
                                     duration = time,
                                     depth = depth,
-                                    gas = Gas(
-                                        oxygenFraction = oxygenPercentage / 100.0,
-                                        heliumFraction = heliumPercentage / 100.0
-                                    )
+                                    cylinder = cylinder!!
                                 )
                             )
                             scope.launch {
@@ -224,7 +272,7 @@ fun PlanPickerBottomSheet(
                                 onDismissRequest()
                             }
                         }) {
-                        Text(if(isAdd) { "Add" } else { "Save"})
+                        Text(if(isAdd) { "Add" } else { "Update" })
                     }
                 }
             }
@@ -245,6 +293,11 @@ private fun PlanPickerBottomSheetPreview() {
         maxDensity = Gas.MAX_GAS_DENSITY,
         maxPPO2 = 1.4,
         environment = Environment.Default,
-        initialValue = DiveProfileSection(10, 15, Gas.Air)
+        initialValue = DiveProfileSection(10, 15, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
+        cylinders = listOf(
+            Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0),
+            Cylinder(gas = Gas.Oxygen50, pressure = 207.0, waterVolume = Cylinder.AL80_WATER_VOLUME),
+            Cylinder(gas =Gas.Oxygen80, pressure = 207.0, waterVolume = Cylinder.AL63_WATER_VOLUME)
+        )
     )
 }

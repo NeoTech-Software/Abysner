@@ -34,14 +34,16 @@ fun TextWithStartIcon(
     textStyle: TextStyle = LocalTextStyle.current,
 ) {
     Row(modifier = modifier) {
-        Icon(
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .size(16.dp),
-            painter = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary
-        )
+        if(text.isNotEmpty()) {
+            Icon(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .size(16.dp),
+                painter = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary
+            )
+        }
         Text(
             style = textStyle,
             text = text,

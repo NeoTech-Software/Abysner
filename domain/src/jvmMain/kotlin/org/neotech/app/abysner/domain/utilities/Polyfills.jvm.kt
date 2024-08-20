@@ -12,6 +12,9 @@
 
 package org.neotech.app.abysner.domain.utilities
 
+import java.text.DecimalFormat
+import java.util.UUID
+
 actual object DecimalFormat {
     actual fun format(fractionDigits: Int, number: Number): String {
         val df = java.text.DecimalFormat()
@@ -21,4 +24,22 @@ actual object DecimalFormat {
         df.isDecimalSeparatorAlwaysShown = false
         return df.format(number)
     }
+}
+
+actual class DecimalFormatter actual constructor(format: String) {
+
+    private val decimalFormat = DecimalFormat(format)
+
+    actual fun setFractionDigits(digits: Int) {
+        decimalFormat.minimumFractionDigits = digits
+        decimalFormat.maximumFractionDigits = digits
+    }
+
+    actual fun format(number: Number): String = decimalFormat.format(number)
+
+    actual fun decimalSeparator(): Char = decimalFormat.decimalFormatSymbols.decimalSeparator
+}
+
+actual fun generateUUID(): String {
+    return UUID.randomUUID().toString()
 }

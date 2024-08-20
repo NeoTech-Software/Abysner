@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.domain.gasplanning
 
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
@@ -25,6 +26,10 @@ class GasPlannerTest {
 
     @Test
     fun testFindPotentialWorstCaseTtsPoints() {
+
+        val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
+
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             sacRate = 15.0,
@@ -43,12 +48,12 @@ class GasPlannerTest {
         )
         val divePlan = divePlanner.getDecoPlan(
             plan = listOf(
-                DiveProfileSection(10, 50, Gas.Trimix2135),
-                DiveProfileSection(1, 50, Gas.Trimix2135),
-                DiveProfileSection(10, 20, Gas.Trimix2135),
-                DiveProfileSection(30, 20, Gas.Trimix2135)
+                DiveProfileSection(10, 50, bottomGas),
+                DiveProfileSection(1, 50, bottomGas),
+                DiveProfileSection(10, 20, bottomGas),
+                DiveProfileSection(30, 20, bottomGas)
             ),
-            decoGases = listOf(Gas.Oxygen50)
+            decoGases = listOf(decoGas)
         )
 
         // at T=10 and D=50.0: TTS=11

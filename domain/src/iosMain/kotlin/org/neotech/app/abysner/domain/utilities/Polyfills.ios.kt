@@ -12,8 +12,12 @@
 
 package org.neotech.app.abysner.domain.utilities
 
+import platform.Foundation.NSCoder
 import platform.Foundation.NSNumber
 import platform.Foundation.NSNumberFormatter
+import platform.Foundation.NSUUID
+import platform.darwin.NSInteger
+import platform.darwin.NSUInteger
 
 actual object DecimalFormat {
     actual fun format(fractionDigits: Int, number: Number): String {
@@ -24,4 +28,26 @@ actual object DecimalFormat {
         formatter.usesGroupingSeparator = false
         return formatter.stringFromNumber(number as NSNumber)!!
     }
+}
+
+actual class DecimalFormatter actual constructor(format: String) {
+
+    private val decimalFormat = NSNumberFormatter().apply {
+        positiveFormat = format
+        negativeFormat = format
+    }
+
+    actual fun setFractionDigits(digits: Int) {
+        decimalFormat.minimumFractionDigits = digits.toULong()
+        decimalFormat.maximumFractionDigits = digits.toULong()
+    }
+
+    actual fun format(number: Number): String = decimalFormat.stringFromNumber(number as NSNumber)!!
+
+    actual fun decimalSeparator(): Char = decimalFormat.decimalSeparator.first()
+}
+
+
+actual fun generateUUID(): String {
+    return NSUUID().UUIDString()
 }

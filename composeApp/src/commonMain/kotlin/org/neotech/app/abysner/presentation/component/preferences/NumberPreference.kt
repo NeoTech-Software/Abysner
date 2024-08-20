@@ -156,11 +156,14 @@ fun NumberPreferenceDialog(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 minValue = minValue,
                 maxValue = maxValue,
-                initialValue = numberValue.value,
+                initialValue = initialValue,
                 isValid = isValid,
                 visualTransformation = visualTransformation
             ) {
-                numberValue.value = it
+                // Empty is not valid, thus don't accept it to start with.
+                if(it != null) {
+                    numberValue.value = it
+                }
             }
         }
 

@@ -15,6 +15,7 @@ package org.neotech.app.abysner.domain.diveplanning
 
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Configuration.Algorithm
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
@@ -27,7 +28,7 @@ class DivePlannerTest {
 
     @Test
     fun referencePlan1() {
-        val bottomGas = Gas.Air
+        val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,
@@ -57,8 +58,8 @@ class DivePlannerTest {
 
     @Test
     fun referencePlan2() {
-        val bottomGas = Gas.Air
-        val decoGas = Gas.Oxygen50
+        val bottomGas = Cylinder.steel12Liter(Gas.Air)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,
@@ -96,8 +97,8 @@ class DivePlannerTest {
 
     @Test
     fun referencePlan3() {
-        val bottomGas = Gas.Trimix2135
-        val decoGas = Gas.Oxygen50
+        val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,
@@ -133,8 +134,8 @@ class DivePlannerTest {
 
     @Test
     fun referencePlan4() {
-        val bottomGas = Gas.Trimix1845
-        val decoGas = Gas.Oxygen50
+        val bottomGas = Cylinder.steel12Liter(Gas.Trimix1845)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,
@@ -179,7 +180,7 @@ class DivePlannerTest {
 
     @Test
     fun referencePlan5() {
-        val bottomGas = Gas(0.21, 0.20)
+        val bottomGas = Cylinder.steel12Liter(Gas(0.21, 0.20))
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,
@@ -224,12 +225,12 @@ class DivePlannerTest {
     }
 }
 
-fun List<DiveSegment>.assertSegment(index: Int, type: DiveSegment.Type, isDecompression: Boolean, startDepth: Double, endDepth: Double, duration: Int, gas: Gas) {
+fun List<DiveSegment>.assertSegment(index: Int, type: DiveSegment.Type, isDecompression: Boolean, startDepth: Double, endDepth: Double, duration: Int, gas: Cylinder) {
     val actual = this[index]
     assertEquals(type, actual.type)
     assertEquals(isDecompression, actual.isDecompression)
     assertEquals(startDepth, actual.startDepth)
     assertEquals(endDepth, actual.endDepth)
     assertEquals(duration, actual.duration)
-    assertEquals(gas, actual.gas)
+    assertEquals(gas, actual.cylinder)
 }

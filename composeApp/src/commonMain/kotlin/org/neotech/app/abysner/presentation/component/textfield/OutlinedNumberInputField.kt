@@ -12,14 +12,14 @@
 
 package org.neotech.app.abysner.presentation.component.textfield
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -29,20 +29,96 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.neotech.app.abysner.presentation.component.modifier.ifTrue
 import org.neotech.app.abysner.presentation.component.modifier.invisible
+import org.neotech.app.abysner.presentation.component.textfield.behavior.DecimalInputBehavior
+import org.neotech.app.abysner.presentation.component.textfield.behavior.NumberInputBehavior
+import kotlin.math.min
+import kotlin.math.round
+
+
+@Composable
+fun OutlinedDecimalInputField(
+    modifier: Modifier = Modifier,
+    initialValue: Double?,
+    label: String? = null,
+    fractionDigits: Int = 2,
+    minValue: Double = Double.MIN_VALUE,
+    maxValue: Double = Double.MAX_VALUE,
+    isValid: MutableState<Boolean> = remember { mutableStateOf(false) },
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    errorMessage: MutableState<String?> = remember { mutableStateOf(null) },
+    supportingText: (@Composable (message: String?) -> Unit)? = {
+        Text(
+            modifier = Modifier.ifTrue(errorMessage.value == null) {
+                invisible()
+            },
+            text = errorMessage.value ?: "Dummy to avoid jumping",
+            color = MaterialTheme.colorScheme.error
+        )
+    },
+    onNumberChanged: (Double?) -> Unit,
+) {
+
+    val behavior = remember {
+        DecimalInputBehavior(fractionDigits = fractionDigits, visualTransformation = visualTransformation)
+    }
+
+    fun updateErrorMessage(number: Double?) {
+        errorMessage.value = if(number == null) {
+            isValid.value = false
+            "${label ?: "Value"} must be between ${behavior.toString(behavior.fromDecimal(minValue))} and ${behavior.toString(behavior.fromDecimal(maxValue))}."
+        } else if(number > maxValue) {
+            isValid.value = false
+            "${label ?: "Value"} must not be higher then ${behavior.toString(behavior.fromDecimal(maxValue))}."
+        } else if(number < minValue) {
+            isValid.value = false
+            "${label ?: "Value"} must not be lower then ${behavior.toString(behavior.fromDecimal(minValue))}."
+        } else {
+            isValid.value = true
+            null
+        }
+    }
+
+    val numberValue: MutableState<Long?> = remember(initialValue) {
+        updateErrorMessage(initialValue)
+        mutableStateOf(behavior.fromDecimal(initialValue))
+    }
+
+    OutlinedGenericInputField(
+        modifier = modifier,
+        behavior = behavior,
+        initialValue = numberValue.value,
+        supportingText = { supportingText?.invoke(errorMessage.value) },
+        label = label,
+        isError = errorMessage.value != null,
+        colors = OutlinedTextFieldDefaults.colors().copy(errorTextColor = Color.Red),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            textAlign = TextAlign.Center,
+            fontSize = 24.sp
+        ),
+        errorMessage = errorMessage.value,
+        onNumberChanged = {
+
+            val decimalNumber = behavior.toDecimal(it)
+            updateErrorMessage(decimalNumber)
+            onNumberChanged(decimalNumber)
+            numberValue.value = it
+        }
+    )
+}
 
 @Composable
 fun OutlinedNumberInputField(
     modifier: Modifier = Modifier,
-    initialValue: Int,
+    initialValue: Int?,
     label: String? = null,
     minValue: Int = Int.MIN_VALUE,
     maxValue: Int = Int.MAX_VALUE,
@@ -58,20 +134,85 @@ fun OutlinedNumberInputField(
             color = MaterialTheme.colorScheme.error
         )
     },
-    onNumberChanged: (Int) -> Unit,
+    onNumberChanged: (Int?) -> Unit,
 ) {
 
-    val numberValue: MutableState<String> =
-        remember(initialValue) { mutableStateOf(initialValue.toString()) }
+    val behavior = remember {
+        NumberInputBehavior(visualTransformation = visualTransformation)
+    }
 
+    fun updateErrorMessage(number: Int?) {
+        errorMessage.value = if(number == null) {
+            isValid.value = false
+            "${label ?: "Value"} must be between $minValue and $maxValue."
+        } else if(number > maxValue) {
+            isValid.value = false
+            "${label ?: "Value"} must not be higher then $maxValue."
+        } else if(number < minValue) {
+            isValid.value = false
+            "${label ?: "Value"} must not be lower then $minValue."
+        } else {
+            isValid.value = true
+            null
+        }
+    }
+
+    val numberValue: MutableState<Int?> = remember(initialValue) {
+        updateErrorMessage(initialValue)
+        mutableStateOf(initialValue)
+    }
+
+    OutlinedGenericInputField(
+        modifier = modifier,
+        behavior = behavior,
+        initialValue = numberValue.value?.toLong(),
+        supportingText = { supportingText?.invoke(errorMessage.value) },
+        label = label,
+        isError = errorMessage.value != null,
+        colors = OutlinedTextFieldDefaults.colors().copy(errorTextColor = Color.Red),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            textAlign = TextAlign.Center,
+            fontSize = 24.sp
+        ),
+        errorMessage = errorMessage.value,
+        onNumberChanged = {
+            val number = it?.toInt()
+            updateErrorMessage(number)
+            onNumberChanged(number)
+            numberValue.value = number
+        }
+    )
+}
+
+
+@Composable
+fun <T>  OutlinedGenericInputField(
+    modifier: Modifier = Modifier,
+    initialValue: T,
+    behavior: GenericTextFieldBehavior<T>,
+    label: String? = null,
+    isError: Boolean = false,
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors().copy(errorTextColor = Color.Red),
+    textStyle: TextStyle = LocalTextStyle.current,
+    errorMessage: String?,
+    supportingText: (@Composable (message: String?) -> Unit)? = {
+        Text(
+            modifier = Modifier.ifTrue(errorMessage == null) {
+                invisible()
+            },
+            text = errorMessage ?: "Dummy to avoid jumping",
+            color = MaterialTheme.colorScheme.error
+        )
+    },
+    onNumberChanged: (T) -> Unit,
+) {
     val focusManager = LocalFocusManager.current
 
     OutlinedTextField(
         modifier = modifier,
         singleLine = true,
         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done, keyboardType = KeyboardType.Number),
-        supportingText = { supportingText?.invoke(errorMessage.value) },
+        supportingText = { supportingText?.invoke(errorMessage) },
         label = {
             if(label != null) {
                 Text(
@@ -83,58 +224,15 @@ fun OutlinedNumberInputField(
                 )
             }
         },
-        isError = errorMessage.value != null,
-        colors = OutlinedTextFieldDefaults.colors().copy(errorTextColor = Color.Red),
-        textStyle = MaterialTheme.typography.bodyLarge.copy(
-            textAlign = TextAlign.Center,
-            fontSize = 24.sp
-        ),
-        visualTransformation = visualTransformation,
-        value = numberValue.value,
-        onValueChange = { rawValue ->
-
-            // Filter out all non 0-9 characters and only allow minus at first character
-            val filtered = rawValue.trim().filterIndexed { index, c ->
-                c in '0'..'9' || (c == '-' && index == 0 && minValue < 0)
-            }.take(10)
-
-            // Remove leading zeroes (if-any), this is done after initial character filtering
-            // so we can correctly check if a zero is the last character or not.
-            var anyNumberBeforeZero = false
-            val zeroPadRemoved = filtered.filterIndexed { index, c ->
-                when (c) {
-                    '0' -> {
-                        // Keep zero only if:
-                        // - It is the last zero (and only zero)
-                        // - There was at least a non-zero number in front of it.
-                        index == filtered.length-1  || anyNumberBeforeZero
-                    }
-                    '-' -> true// Keep minus
-                    else -> {
-                        // Keep all other digits and mark that we have seen at least another digit.
-                        anyNumberBeforeZero = true
-                        true
-                    }
-                }
-            }
-
-            val number = zeroPadRemoved.toIntOrNull()
-            errorMessage.value = if(number == null) {
-                isValid.value = false
-                "${label ?: "Value"} must be between $minValue and $maxValue."
-            } else if(number > maxValue) {
-                isValid.value = false
-                "${label ?: "Value"} must not be higher then $maxValue."
-            } else if(number < minValue) {
-                isValid.value = false
-                "${label ?: "Value"} must not be lower then $minValue."
-            } else {
-                isValid.value = true
-                onNumberChanged(number)
-                null
-            }
-
-            numberValue.value = zeroPadRemoved
+        isError = isError,
+        colors = colors,
+        textStyle = textStyle,
+        value = behavior.toString(initialValue),
+        keyboardOptions = behavior.getKeyboardOptions(),
+        visualTransformation = behavior.getVisualTransformation(),
+        onValueChange = {
+            val number = behavior.fromString(initialValue, it)
+            onNumberChanged(number)
         }
     )
 }

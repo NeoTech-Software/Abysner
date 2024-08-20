@@ -42,6 +42,11 @@ fun pascalToBar(pascals: Double): Double = pascals / 100000.0
  */
 fun barToPascal(bars: Double): Double = bars * 100000.0
 
+fun Double.asPsiToBar(): Double = this / 14.503774
+
+fun Double.asBarToPsi(): Double = this * 14.503774
+
+
 /**
  * Converts depth in meters given a certain density (salinity) and atmospheric pressure to pressure
  * in bars including atmospheric pressure.

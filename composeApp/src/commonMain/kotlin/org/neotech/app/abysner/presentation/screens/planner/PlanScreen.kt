@@ -55,15 +55,15 @@ import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
-import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.Destinations
+import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanCardComponent
-import org.neotech.app.abysner.presentation.screens.planner.gas.DecoGasSelectionCardComponent
-import org.neotech.app.abysner.presentation.screens.planner.gas.GasPickerBottomSheet
+import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderPickerBottomSheet
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.plan.PlanPickerBottomSheet
 import org.neotech.app.abysner.presentation.screens.planner.plan.PlanSelectionCardComponent
@@ -89,14 +89,13 @@ fun PlannerScreen(
 
     AbysnerTheme {
 
-        val gasSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        var showGasBottomSheet by remember { mutableStateOf(false) }
+        val cylinderPickerBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var showCylinderPickerBottomSheet by remember { mutableStateOf(false) }
+        var cylinderBeingEdited: Cylinder? by remember { mutableStateOf(null) }
 
-        val planSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        var planSegmentBeingEdited: Int? by remember {
-            mutableStateOf(null)
-        }
-        var planGasBottomSheet by remember { mutableStateOf(false) }
+        val segmentPickerBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var segmentBeingEdited: Int? by remember { mutableStateOf(null) }
+        var showSegmentPickerBottomSheet by remember { mutableStateOf(false) }
 
         val configuration by planningRepository.configuration.collectAsState()
         val settings by settingsRepository.settings.collectAsState()
@@ -167,32 +166,40 @@ fun PlannerScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
 
+                CylinderSelectionCardComponent(
+                    gases = viewState.availableGas,
+                    onAddCylinder = {
+                        showCylinderPickerBottomSheet = true
+                    },
+                    onRemoveCylinder = { gas ->
+                        viewModel.removeCylinder(gas)
+                    },
+                    onCylinderChecked = { gas, isChecked ->
+                        viewModel.toggleCylinder(gas, isChecked)
+                        // TODO check if toggle is possible
+                    },
+                    onEditCylinder = { gas ->
+                        cylinderBeingEdited = gas
+                        showCylinderPickerBottomSheet = true
+                    }
+                )
+
                 PlanSelectionCardComponent(
                     segments = viewState.segments,
+                    addAllowed = viewState.availableGas.any { it.isChecked },
                     onAddSegment = {
-                        planSegmentBeingEdited = null
-                        planGasBottomSheet = true
+                        segmentBeingEdited = null
+                        showSegmentPickerBottomSheet = true
                     },
                     onRemoveSegment = { index, _ ->
                         viewModel.removeSegment(index)
                     },
                     onEditSegment = { index, _ ->
-                        planSegmentBeingEdited = index
-                        planGasBottomSheet = true
+                        segmentBeingEdited = index
+                        showSegmentPickerBottomSheet = true
                     },
                 )
-                DecoGasSelectionCardComponent(
-                    gases = viewState.decoGases,
-                    onAddGas = {
-                        showGasBottomSheet = true
-                    },
-                    onRemoveGas = { _, gas ->
-                        viewModel.removeDecoGas(gas)
-                    },
-                    onGasChecked = { index, gas, isChecked ->
-                        viewModel.toggleDecoGas(gas, isChecked)
-                    }
-                )
+
                 DecoPlanCardComponent(
                     divePlanSet = viewState.divePlanSet.getOrNull(),
                     settings = settings,
@@ -207,40 +214,48 @@ fun PlannerScreen(
             }
         }
 
-        if (showGasBottomSheet) {
-            GasPickerBottomSheet(
-                sheetState = gasSheetState,
+        if (showCylinderPickerBottomSheet) {
+            CylinderPickerBottomSheet(
+                sheetState = cylinderPickerBottomSheetState,
+                isAdd = cylinderBeingEdited == null,
+                initialValue = cylinderBeingEdited,
                 environment = configuration.environment,
                 maxPPO2 = configuration.maxPPO2Deco,
-                onAddGas = {
-                    viewModel.addDecoGas(it)
+                onAddOrUpdateCylinder = {
+                    if(cylinderBeingEdited != null) {
+                        viewModel.updateCylinder(it)
+                    } else {
+                        viewModel.addCylinder(it)
+                    }
                 }
             ) {
-                showGasBottomSheet = false
+                showCylinderPickerBottomSheet = false
+                cylinderBeingEdited = null
             }
         }
 
-        if (planGasBottomSheet) {
+        if (showSegmentPickerBottomSheet) {
 
-            val initial = planSegmentBeingEdited?.let { viewState.segments[it] }
+            val initial = segmentBeingEdited?.let { viewState.segments[it] }
 
             PlanPickerBottomSheet(
-                sheetState = planSheetState,
+                sheetState = segmentPickerBottomSheetState,
                 isAdd = initial == null,
-                initialValue = initial ?: DiveProfileSection(10, 15, Gas.Air),
+                initialValue = initial,
                 maxPPO2 = configuration.maxPPO2,
                 maxDensity = Gas.MAX_GAS_DENSITY,
                 environment = configuration.environment,
-                onAddDiveSegment = {
-                    if(planSegmentBeingEdited != null) {
-                        viewModel.updateSegment(planSegmentBeingEdited!!, it)
+                cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder },
+                onAddOrUpdateDiveSegment = {
+                    if(segmentBeingEdited != null) {
+                        viewModel.updateSegment(segmentBeingEdited!!, it)
                     } else {
                         viewModel.addSegment(it)
                     }
-                    planSegmentBeingEdited = null
                 }
             ) {
-                planGasBottomSheet = false
+                showSegmentPickerBottomSheet = false
+                segmentBeingEdited = null
             }
         }
     }
@@ -255,6 +270,7 @@ private fun PlannerScreenPreview() {
 
         override fun updateConfiguration(updateBlock: (Configuration) -> Configuration) = Unit
     }
+
     val settingsRepository = object : SettingsRepository {
         override val settings = MutableStateFlow(SettingsModel())
 

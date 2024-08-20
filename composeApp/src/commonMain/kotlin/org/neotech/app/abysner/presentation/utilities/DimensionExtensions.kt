@@ -10,21 +10,11 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.domain.diveplanning.model
+package org.neotech.app.abysner.presentation.utilities
 
-import org.neotech.app.abysner.domain.core.model.Cylinder
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 
-data class DiveProfileSection(
-    /**
-     * Duration is minutes.
-     */
-    val duration: Int,
-    /**
-     * Depth of this segment
-     */
-    val depth: Int,
-    /**
-     * Selected gas for this segment (usually travel or bottom gas)
-     */
-    val cylinder: Cylinder
-)
+@Composable
+fun Dp.toPx() = with(LocalDensity.current) { toPx() }
