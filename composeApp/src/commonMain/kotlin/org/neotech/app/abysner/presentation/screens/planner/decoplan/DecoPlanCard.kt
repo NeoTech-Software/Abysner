@@ -65,6 +65,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
+import org.neotech.app.abysner.domain.utilities.DecimalFormatter
 import org.neotech.app.abysner.presentation.component.SingleChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
@@ -148,81 +149,21 @@ fun DecoPlanCardComponent(
                         divePlan = planToShow
                     )
 
-                    DecoPlanTable(divePlan = planToShow, settings = settings)
+                    DecoPlanTable(
+                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                        divePlan = planToShow,
+                        settings = settings
+                    )
 
                     Row(
                         verticalAlignment = Alignment.Bottom
                     ) {
-                        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
 
-                            Text(
-                                text = buildAnnotatedString {
-                                    appendBold("Average depth: ")
-                                    append(
-                                        "${
-                                            DecimalFormat.format(
-                                                2,
-                                                planToShow.averageDepth
-                                            )
-                                        } meters"
-                                    )
-                                },
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = buildAnnotatedString {
-                                    appendBold("Total deco time: ")
-                                    append("${planToShow.totalDeco} minutes")
-                                },
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            if(planToShow.firstDeco != -1) {
-                                Text(
-                                    text = buildAnnotatedString {
-                                        appendBold("First deco after: ")
-                                        append("${planToShow.firstDeco} minutes")
-                                    },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            Text(
-                                text = buildAnnotatedString {
-                                    appendBold("Deepest ceiling: ")
-                                    append(
-                                        "${
-                                            DecimalFormat.format(
-                                                2,
-                                                planToShow.deepestCeiling
-                                            )
-                                        } meter"
-                                    )
-                                },
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            if(planToShow.maxTimeToSurface != null) {
-                                Text(
-                                    text = buildAnnotatedString {
-                                        appendBold("Max TTS: ")
-                                        append("${planToShow.maxTimeToSurface!!.ttsAfter} @ ${planToShow.maxTimeToSurface!!.end} minutes")
-                                    },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            Text(
-                                text = buildAnnotatedString {
-                                    appendBold("CNS: ")
-                                    append("${DecimalFormat.format(0, ceil(planToShow.totalCns))}%")
-                                },
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = buildAnnotatedString {
-                                    appendBold("OTU: ")
-                                    append(DecimalFormat.format(0, ceil(planToShow.totalOtu)))
-                                },
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
+                        DecoPlanExtraInfo(
+                            modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
+                            divePlan = planToShow
+                        )
+
                         var showConfigurationInfo by remember { mutableStateOf(false) }
 
                         IconButton(
@@ -247,12 +188,83 @@ fun DecoPlanCardComponent(
     }
 }
 
+
 @Composable
-private fun ColumnScope.DecoPlanTable(
+fun DecoPlanExtraInfo(
+    modifier: Modifier = Modifier,
+    divePlan: DivePlan
+) {
+    Column(modifier = modifier) {
+
+        Text(
+            text = buildAnnotatedString {
+                appendBold("Average depth: ")
+                append(
+                    "${DecimalFormat.format(2, divePlan.averageDepth)} meters"
+                )
+            },
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = buildAnnotatedString {
+                appendBold("Total deco time: ")
+                append("${divePlan.totalDeco} minutes")
+            },
+            style = MaterialTheme.typography.bodySmall
+        )
+        if(divePlan.firstDeco != -1) {
+            Text(
+                text = buildAnnotatedString {
+                    appendBold("First deco after: ")
+                    append("${divePlan.firstDeco} minutes")
+                },
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Text(
+            text = buildAnnotatedString {
+                appendBold("Deepest ceiling: ")
+                append(
+                    "${DecimalFormat.format(2, divePlan.deepestCeiling)} meter"
+                )
+            },
+            style = MaterialTheme.typography.bodySmall
+        )
+        if(divePlan.maxTimeToSurface != null) {
+            Text(
+                text = buildAnnotatedString {
+                    appendBold("Max TTS: ")
+                    append("${divePlan.maxTimeToSurface!!.ttsAfter} @ ${divePlan.maxTimeToSurface!!.end} minutes")
+                },
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Text(
+            text = buildAnnotatedString {
+                appendBold("CNS: ")
+                append("${DecimalFormat.format(0, ceil(divePlan.totalCns))}%")
+            },
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = buildAnnotatedString {
+                appendBold("OTU: ")
+                append(DecimalFormat.format(0, ceil(divePlan.totalOtu)))
+            },
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+}
+
+
+
+@Composable
+fun DecoPlanTable(
+    modifier: Modifier = Modifier,
     divePlan: DivePlan,
     settings: SettingsModel,
 ) {
-    Table(modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+    Table(modifier = modifier,
         header = {
             TextWithStartIcon(
                 modifier = Modifier.weight(0.2f),

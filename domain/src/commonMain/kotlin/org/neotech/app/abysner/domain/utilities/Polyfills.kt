@@ -12,6 +12,9 @@
 
 package org.neotech.app.abysner.domain.utilities
 
+
+fun Number.format(fractionDigits: Int) = DecimalFormat.format(fractionDigits, this)
+
 expect object DecimalFormat {
     fun format(fractionDigits: Int, number: Number): String
 }

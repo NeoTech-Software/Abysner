@@ -102,7 +102,7 @@ internal val DarkColorScheme = darkColorScheme(
 fun AbysnerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = getColorScheme(dynamicColor, darkTheme)
@@ -143,3 +143,13 @@ expect fun getColorScheme(dynamicColor: Boolean, isDarkMode: Boolean): ColorSche
 
 @Composable
 expect fun applyPlatformSpecificThemeConfiguration(colorScheme: ColorScheme, isDarkMode: Boolean)
+
+enum class Platform(
+    val humanReadable: String
+) {
+    ANDROID("Android"),
+    DESKTOP("Desktop"),
+    IOS("iOS");
+}
+
+expect fun platform(): Platform

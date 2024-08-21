@@ -23,3 +23,5 @@ actual fun getColorScheme(dynamicColor: Boolean, isDarkMode: Boolean): ColorSche
 
 @Composable
 actual fun applyPlatformSpecificThemeConfiguration(colorScheme: ColorScheme, isDarkMode: Boolean) = Unit
+
+actual fun platform(): Platform = Platform.IOS

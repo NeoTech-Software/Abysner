@@ -31,6 +31,7 @@ import org.neotech.app.abysner.presentation.utilities.DestinationDefinition
 import org.neotech.app.abysner.presentation.utilities.NavHost
 import org.neotech.app.abysner.presentation.utilities.composable
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.BitmapRenderRoot
 
 enum class Destinations(override val destinationName: String) : DestinationDefinition {
     PLANNER("planner"),
@@ -66,7 +67,8 @@ fun MainNavController(
     }
 
     val navController = rememberNavController()
-    AbysnerTheme {
+
+    BitmapRenderRoot {
 
         NavHost(navController = navController, startDestination = startDestination) {
             composable(
