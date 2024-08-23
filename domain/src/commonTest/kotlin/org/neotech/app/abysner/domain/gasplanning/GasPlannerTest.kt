@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 class GasPlannerTest {
 
     @Test
-    fun testFindPotentialWorstCaseTtsPoints() {
+    fun testFindPotentialWorstCaseTtsPointsScenario1() {
 
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
@@ -53,7 +53,7 @@ class GasPlannerTest {
                 DiveProfileSection(10, 20, bottomGas),
                 DiveProfileSection(30, 20, bottomGas)
             ),
-            decoGases = listOf(decoGas)
+            decoGases = listOf(bottomGas, decoGas)
         )
 
         // at T=10 and D=50.0: TTS=11
@@ -70,5 +70,45 @@ class GasPlannerTest {
         assertEquals(2, ttsWorstCaseScenarios.size)
         assertTrue { ttsWorstCaseScenarios.any { it.end == 11 && it.endDepth == 50.0 && it.ttsAfter == 12 } }
         assertTrue { ttsWorstCaseScenarios.any { it.end == 51 && it.endDepth == 20.0 && it.ttsAfter == 14 } }
+    }
+
+    @Test
+    fun testFindPotentialWorstCaseTtsPointsScenario2() {
+
+        val bottomGas = Cylinder.steel12Liter(Gas.Air)
+
+        val divePlanner = DivePlanner()
+        divePlanner.configuration = Configuration(
+            sacRate = 15.0,
+            maxPPO2 = 1.4,
+            maxPPO2Deco = 1.6,
+            maxEND = 30.0,
+            maxAscentRate = 5.0,
+            maxDescentRate = 5.0,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+            forceMinimalDecoStopTime = true,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            salinity = Salinity.WATER_FRESH,
+            algorithm = Configuration.Algorithm.BUHLMANN_ZH16C
+        )
+        val divePlan = divePlanner.getDecoPlan(
+            plan = listOf(
+                DiveProfileSection(15, 10, bottomGas),
+                DiveProfileSection(15, 15, bottomGas),
+                // +3 + 3 (contingency plan)
+                DiveProfileSection(18, 23, bottomGas),
+            ),
+            decoGases = listOf(bottomGas)
+        )
+
+        // at T=15 and D=10.0: TTS=2
+        // at T=30 and D=15.0: TTS=3
+        // at T=48 and D=23.0: TTS=7
+
+        val ttsWorstCaseScenarios = GasPlanner().findPotentialWorstCaseTtsPoints(divePlan)
+        assertEquals(1, ttsWorstCaseScenarios.size)
+        assertTrue { ttsWorstCaseScenarios.any { it.end == 48 && it.endDepth == 23.0 && it.ttsAfter == 15 } }
     }
 }
