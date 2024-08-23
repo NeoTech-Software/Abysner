@@ -14,6 +14,8 @@ package org.neotech.app.abysner.domain.core.model
 
 import org.neotech.app.abysner.domain.core.physics.altitudeToPressure
 import org.neotech.app.abysner.domain.persistence.EnumPreference
+import kotlin.math.floor
+import kotlin.math.max
 
 /**
  * TODO: Eventually this needs to be part of a single planned dive, so we can plan multiple dives allowing multiple configurations.
@@ -53,5 +55,21 @@ data class Configuration(
         BUHLMANN_ZH16A("ZHL-16A-GF") {
             override val preferenceValue: String = "BUHLMANN-ZHL-16A-GF"
         },
+    }
+
+    /**
+     * Calculate travel time, negative distance is descending, positive is ascending.
+     */
+    fun travelTime(distance: Double): Int {
+        val rate = if(distance > 0) {
+            maxAscentRate
+        } else {
+            -maxDescentRate
+        }
+        return if(distance == 0.0) {
+            0
+        } else {
+            max(floor(distance / rate).toInt(), 1)
+        }
     }
 }

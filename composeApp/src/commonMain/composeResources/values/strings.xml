@@ -1,0 +1,26 @@
+<!--
+  ~ Abysner - Dive planner
+  ~ Copyright (C) 2024 Neotech
+  ~
+  ~ Abysner is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License version 3,
+  ~ as published by the Free Software Foundation.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program. If not, see https://www.gnu.org/licenses/.
+  -->
+
+<resources>
+    <plurals name="unit_meter">
+        <item quantity="one">%1$d meter</item>
+        <item quantity="other">%1$d meters</item>
+    </plurals>
+
+    <plurals name="unit_minute">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+
+    <string name="segment_picker_travel_time_hint">%1$s will be spend to travel to %2$s, leaving %3$s of bottom time.</string>
+
+</resources>
