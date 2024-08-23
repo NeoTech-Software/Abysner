@@ -137,7 +137,7 @@ fun GasPieChart(
                     1 -> "Lost gas extra*"
                     else -> error("Unknown legend index")
                 }
-                Text(text = label, style = MaterialTheme.typography.bodySmall)
+                Text(text = label, style = MaterialTheme.typography.bodyMedium)
             },
             symbol = {
 

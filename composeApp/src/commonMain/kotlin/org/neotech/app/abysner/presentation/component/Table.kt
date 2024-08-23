@@ -90,7 +90,7 @@ interface TableScope {
 @Composable
 private fun TableHeader(
     modifier: Modifier = Modifier,
-    textStyle: TextStyle = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer),
+    textStyle: TextStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer),
     content: @Composable RowScope.() -> Unit
 ) {
     Row(

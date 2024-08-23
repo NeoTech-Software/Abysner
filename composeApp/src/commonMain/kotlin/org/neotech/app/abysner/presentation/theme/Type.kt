@@ -19,11 +19,12 @@ import abysner.composeapp.generated.resources.Montserrat_Medium
 import abysner.composeapp.generated.resources.Montserrat_MediumItalic
 import abysner.composeapp.generated.resources.Montserrat_Regular
 import abysner.composeapp.generated.resources.Res
-import abysner.composeapp.generated.resources.SourceSans3_Bold
-import abysner.composeapp.generated.resources.SourceSans3_Italic
-import abysner.composeapp.generated.resources.SourceSans3_Medium
-import abysner.composeapp.generated.resources.SourceSans3_MediumItalic
-import abysner.composeapp.generated.resources.SourceSans3_Regular
+import abysner.composeapp.generated.resources.Roboto_Bold
+import abysner.composeapp.generated.resources.Roboto_BoldItalic
+import abysner.composeapp.generated.resources.Roboto_Italic
+import abysner.composeapp.generated.resources.Roboto_Medium
+import abysner.composeapp.generated.resources.Roboto_MediumItalic
+import abysner.composeapp.generated.resources.Roboto_Regular
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -45,13 +46,13 @@ private fun fontFamilyMontserrat() = FontFamily(
 )
 
 @Composable
-private fun fontFamilySourceSans() = FontFamily(
-    Font(Res.font.SourceSans3_Regular, weight = FontWeight.Normal, style = FontStyle.Normal),
-    Font(Res.font.SourceSans3_Italic, weight = FontWeight.Normal, style = FontStyle.Italic),
-    Font(Res.font.SourceSans3_Medium, weight = FontWeight.Medium, style = FontStyle.Normal),
-    Font(Res.font.SourceSans3_MediumItalic, weight = FontWeight.Medium, style = FontStyle.Italic),
-    Font(Res.font.SourceSans3_Bold, weight = FontWeight.Bold, style = FontStyle.Normal),
-    Font(Res.font.SourceSans3_Italic, weight = FontWeight.Bold, style = FontStyle.Italic)
+private fun fontFamilyRoboto() = FontFamily(
+    Font(Res.font.Roboto_Regular, weight = FontWeight.Normal, style = FontStyle.Normal),
+    Font(Res.font.Roboto_Italic, weight = FontWeight.Normal, style = FontStyle.Italic),
+    Font(Res.font.Roboto_Medium, weight = FontWeight.Medium, style = FontStyle.Normal),
+    Font(Res.font.Roboto_MediumItalic, weight = FontWeight.Medium, style = FontStyle.Italic),
+    Font(Res.font.Roboto_Bold, weight = FontWeight.Bold, style = FontStyle.Normal),
+    Font(Res.font.Roboto_BoldItalic, weight = FontWeight.Bold, style = FontStyle.Italic)
 )
 
 private val baseline = Typography()
@@ -61,7 +62,7 @@ private val baseline = Typography()
 fun getTypography(): Typography {
 
     val montserrat = fontFamilyMontserrat()
-    val sourceSans = fontFamilySourceSans()
+    val roboto = fontFamilyRoboto()
 
     return Typography(
         titleLarge = baseline.titleLarge.copy(fontFamily = montserrat, fontWeight = FontWeight.Medium),
@@ -76,9 +77,14 @@ fun getTypography(): Typography {
         displayMedium = baseline.displayMedium.copy(fontFamily = montserrat, fontWeight = FontWeight.Medium),
         displaySmall = baseline.displaySmall.copy(fontFamily = montserrat, fontWeight = FontWeight.Medium),
 
-        labelLarge = baseline.labelLarge.copy(fontFamily = sourceSans),
-        labelMedium = baseline.labelMedium.copy(fontFamily = sourceSans),
-        labelSmall = baseline.labelSmall.copy(fontFamily = sourceSans)
+        labelLarge = baseline.labelLarge.copy(fontFamily = roboto, fontWeight = FontWeight.Medium),
+        labelMedium = baseline.labelMedium.copy(fontFamily = roboto, fontWeight = FontWeight.Medium),
+        labelSmall = baseline.labelSmall.copy(fontFamily = roboto, fontWeight = FontWeight.Medium),
+
+        bodyLarge = baseline.bodyLarge.copy(fontFamily = roboto, fontWeight = FontWeight.Normal),
+        bodyMedium = baseline.bodyMedium.copy(fontFamily = roboto, fontWeight = FontWeight.Normal),
+        // Roboto with default font size of 12.sp is just a bit too small
+        bodySmall = baseline.bodySmall.copy(fontFamily = roboto, fontWeight = FontWeight.Normal, fontSize = 13.sp),
     )
 }
 

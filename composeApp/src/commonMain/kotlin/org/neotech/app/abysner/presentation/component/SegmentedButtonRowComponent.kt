@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.presentation.component
 
+import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -36,7 +37,6 @@ fun rememberSingleChoiceSegmentedButtonRowState(initialSelectedIndex: Int): Sing
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> SingleChoiceSegmentedButtonRow(
     modifier: Modifier = Modifier,
@@ -63,6 +63,7 @@ fun <T> SingleChoiceSegmentedButtonRow(
     }
 }
 
+@Preview
 @Composable
 fun SingleChoiceSegmentedButtonRowPreview() {
     SingleChoiceSegmentedButtonRow(
