@@ -40,10 +40,11 @@ class GasPlanner {
         while (segmentIndex < ttsValues.size) {
             val segment = ttsValues[segmentIndex++]
             var isCandidate = true
-            val iterator = ttsValues.iterator()
+
+            val iterator = ttsValues.listIterator()
             while (iterator.hasNext()) {
                 val other = iterator.next()
-                if (other != segment) {
+                if (other !== segment) {
                     if (other.endDepth >= segment.endDepth && other.ttsAfter >= segment.ttsAfter) {
                         // Found segment at same or deeper depth with an equal or longer TTS, thus this segment cannot be the worst case gas scenario.
                         isCandidate = false
@@ -51,6 +52,10 @@ class GasPlanner {
                     } else if (other.ttsAfter < segment.ttsAfter && other.endDepth < segment.endDepth) {
                         // Found segment that is also not a worst case scenario, since it is shallower and has a shorter TTS.
                         // We can already remove this segment, as an optimization (no need to check this segment again).
+                        // Correct main loop index if the removal happens before the current segment
+                        if(iterator.previousIndex() < segmentIndex) {
+                            segmentIndex--
+                        }
                         iterator.remove()
                     }
                 }
@@ -84,6 +89,7 @@ class GasPlanner {
         outOfAirScenarios.forEach { scenario ->
             scenario.mergeInto(extraRequiredForWorstCaseOutOfAir, ::max)
         }
+
         return GasPlan(baseLine, extraRequiredForWorstCaseOutOfAir)
     }
 
