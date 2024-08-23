@@ -44,7 +44,7 @@ fun <T> DropDown(
     label: String? = null,
     selectedValue: T? = null,
     items: List<T>,
-    selectedText: (value: T?) -> AnnotatedString,
+    selectedText: @Composable (value: T?) -> AnnotatedString,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     dropdownRow: @Composable (index: Int, value: T) -> Unit,
     onSelectionChanged: (index: Int, value: T) -> Unit,

@@ -12,6 +12,9 @@
 
 package org.neotech.app.abysner.presentation.theme
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 val primaryLight = Color(0xFF0D6680)
@@ -93,3 +96,18 @@ val warningDark: Color = Color(0xFFFDFFAB)
 // Custom (non material) light colors
 val onWarningLight: Color = Color(0xFFFFFFFF)
 val onWarningDark: Color = Color(0xFF690005)
+
+internal val LocalCustomColors = staticCompositionLocalOf { CustomColors() }
+
+data class CustomColors(
+    val warning: Color = warningLight,
+    val onWarning: Color = onWarningLight,
+)
+
+val ColorScheme.warning: Color
+    @Composable
+    get() = LocalCustomColors.current.warning
+
+val ColorScheme.onWarning: Color
+    @Composable
+    get() = LocalCustomColors.current.onWarning

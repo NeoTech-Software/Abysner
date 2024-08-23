@@ -16,7 +16,6 @@ import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_outline_settings_24
 import abysner.composeapp.generated.resources.ic_outline_tune_24
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -48,9 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -71,8 +68,8 @@ import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderPi
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanCardComponent
-import org.neotech.app.abysner.presentation.screens.planner.plan.PlanPickerBottomSheet
-import org.neotech.app.abysner.presentation.screens.planner.plan.PlanSelectionCardComponent
+import org.neotech.app.abysner.presentation.screens.planner.segments.PlanPickerBottomSheet
+import org.neotech.app.abysner.presentation.screens.planner.segments.PlanSelectionCardComponent
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconSet
 import org.neotech.app.abysner.presentation.utilities.LocalBitmapRenderController

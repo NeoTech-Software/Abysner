@@ -10,7 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.presentation.screens.planner.plan
+package org.neotech.app.abysner.presentation.screens.planner.segments
 
 import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_outline_propane_tank_24
