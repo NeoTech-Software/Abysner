@@ -203,14 +203,14 @@ fun DecoPlanExtraInfo(
                     "${DecimalFormat.format(2, divePlan.averageDepth)} meters"
                 )
             },
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodyMedium
         )
         Text(
             text = buildAnnotatedString {
                 appendBold("Total deco time: ")
                 append("${divePlan.totalDeco} minutes")
             },
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodyMedium
         )
         if(divePlan.firstDeco != -1) {
             Text(
@@ -218,7 +218,7 @@ fun DecoPlanExtraInfo(
                     appendBold("First deco after: ")
                     append("${divePlan.firstDeco} minutes")
                 },
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodyMedium
             )
         }
         Text(
@@ -228,7 +228,7 @@ fun DecoPlanExtraInfo(
                     "${DecimalFormat.format(2, divePlan.deepestCeiling)} meter"
                 )
             },
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodyMedium
         )
         if(divePlan.maxTimeToSurface != null) {
             Text(
@@ -236,7 +236,7 @@ fun DecoPlanExtraInfo(
                     appendBold("Max TTS: ")
                     append("${divePlan.maxTimeToSurface!!.ttsAfter} @ ${divePlan.maxTimeToSurface!!.end} minutes")
                 },
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodyMedium
             )
         }
         Text(
@@ -244,14 +244,14 @@ fun DecoPlanExtraInfo(
                 appendBold("CNS: ")
                 append("${DecimalFormat.format(0, ceil(divePlan.totalCns))}%")
             },
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodyMedium
         )
         Text(
             text = buildAnnotatedString {
                 appendBold("OTU: ")
                 append(DecimalFormat.format(0, ceil(divePlan.totalOtu)))
             },
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }

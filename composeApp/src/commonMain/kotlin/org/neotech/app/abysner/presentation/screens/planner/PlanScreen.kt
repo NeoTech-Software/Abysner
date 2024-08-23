@@ -68,8 +68,8 @@ import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderPi
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanCardComponent
-import org.neotech.app.abysner.presentation.screens.planner.segments.PlanPickerBottomSheet
-import org.neotech.app.abysner.presentation.screens.planner.segments.PlanSelectionCardComponent
+import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentPickerBottomSheet
+import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentsCardComponent
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconSet
 import org.neotech.app.abysner.presentation.utilities.LocalBitmapRenderController
@@ -218,7 +218,7 @@ fun PlannerScreen(
                     }
                 )
 
-                PlanSelectionCardComponent(
+                SegmentsCardComponent(
                     segments = viewState.segments,
                     addAllowed = viewState.availableGas.any { it.isChecked },
                     onAddSegment = {
@@ -272,7 +272,7 @@ fun PlannerScreen(
 
             val initial = segmentBeingEdited?.let { viewState.segments[it] }
 
-            PlanPickerBottomSheet(
+            SegmentPickerBottomSheet(
                 sheetState = segmentPickerBottomSheetState,
                 isAdd = initial == null,
                 initialValue = initial,

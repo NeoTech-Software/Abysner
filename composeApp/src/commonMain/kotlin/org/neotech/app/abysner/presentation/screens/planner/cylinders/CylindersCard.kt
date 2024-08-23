@@ -155,7 +155,6 @@ fun CylinderListItemComponent(
         val cylinderSuffix = " - ${DecimalFormat.format(0, cylinder.pressure)} bar (${DecimalFormat.format(1, cylinder.waterVolume)} l)"
 
         TextWithStartIcon(
-            textStyle = MaterialTheme.typography.bodyMedium,
             text = "${cylinder.gas}$cylinderSuffix",
             modifier = Modifier
                 .weight(1f)

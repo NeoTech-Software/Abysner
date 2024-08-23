@@ -45,7 +45,7 @@ import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
-fun PlanSelectionCardComponent(
+fun SegmentsCardComponent(
     modifier: Modifier = Modifier,
     segments: List<DiveProfileSection>,
     addAllowed: Boolean,
@@ -63,7 +63,7 @@ fun PlanSelectionCardComponent(
                 text = "Dive profile"
             )
             segments.forEachIndexed { index, diveSegment ->
-                PlanListItemComponent(
+                SegmentListItemComponent(
                     modifier = Modifier.clickable {
                         onEditSegment(index, diveSegment)
                     },
@@ -108,7 +108,7 @@ fun PlanSelectionCardComponent(
 }
 
 @Composable
-fun PlanListItemComponent(
+private fun SegmentListItemComponent(
     modifier: Modifier,
     diveProfileSection: DiveProfileSection = DiveProfileSection(10, 15, Cylinder(Gas.Air, 232, 12)),
     onDelete: (diveProfileSection: DiveProfileSection) -> Unit = {},
@@ -144,12 +144,12 @@ fun PlanListItemComponent(
 
 @Preview
 @Composable
-fun PlanSelectionCardComponentPreview() {
+private fun SegmentsCardComponentPreview() {
     AbysnerTheme {
 
         val cylinder = Cylinder.steel12Liter(Gas.Air)
 
-        PlanSelectionCardComponent(
+        SegmentsCardComponent(
             segments = listOf(
                 DiveProfileSection(5, 20, cylinder),
                 DiveProfileSection(15, 15, cylinder),
