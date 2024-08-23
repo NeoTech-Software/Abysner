@@ -115,75 +115,10 @@ fun GasPlanCardComponent(
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
 
-                    Table(
+                    CylindersTable(
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        header = {
-                            Text(
-                                modifier = Modifier.weight(0.1f),
-                                text = "No.",
-                            )
-                            Text(
-                                modifier = Modifier.weight(0.2f),
-                                text = "Mix",
-                            )
-                            Text(
-                                modifier = Modifier.weight(0.2f),
-                                text = "Size (ℓ)",
-                            )
-                            Text(
-                                modifier = Modifier.weight(0.3f),
-                                text = "Usage (bar)"
-                            )
-                        }
-                    ) {
-
-                        gasRequirements.total.forEachIndexed { index, (gas, volume) ->
-                            row {
-                                Text(
-                                    modifier = Modifier.weight(0.1f),
-                                    text = (index + 1).toString(),
-                                )
-                                Text(
-                                    modifier = Modifier.weight(0.2f),
-                                    text = gas.gas.toString(),
-                                )
-                                val size = DecimalFormat.format(1, gas.waterVolume)
-                                Text(
-                                    modifier = Modifier.weight(0.2f),
-                                    text = size,
-                                )
-
-                                // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
-                                val endPressureBase =
-                                    gas.pressureAfter(volumeUsage = gasRequirements.sortedBase[index].second)
-                                val endPressure = gas.pressureAfter(volumeUsage = volume)
-
-                                val startPressure = DecimalFormat.format(0, gas.pressure)
-
-                                val alertSeverity: AlertSeverity
-                                val pressureText =
-                                    if (endPressureBase == null || endPressure == null) {
-                                        alertSeverity = AlertSeverity.ERROR
-                                        "$startPressure > empty"
-                                    } else {
-                                        alertSeverity = AlertSeverity.NONE
-                                        "$startPressure > ${
-                                            DecimalFormat.format(
-                                                0,
-                                                endPressureBase
-                                            )
-                                        } (${DecimalFormat.format(0, endPressure)})"
-                                    }
-
-                                TextAlert(
-                                    modifier = Modifier.weight(0.3f),
-                                    alertSeverity = alertSeverity,
-                                    text = pressureText
-                                )
-                            }
-                        }
-                    }
-
+                        divePlanSet = divePlanSet,
+                    )
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
@@ -192,77 +127,12 @@ fun GasPlanCardComponent(
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
 
-                    Table(
+                    GasLimitsTable(
                         modifier = Modifier.padding(horizontal = 16.dp)
                             .padding(bottom = 16.dp),
-                        header = {
-                            Text(
-                                modifier = Modifier.weight(0.2f),
-                                text = "Mix",
-                            )
-                            Text(
-                                modifier = Modifier.weight(0.3f),
-                                text = "Depth (m)",
-                            )
-                            Text(
-                                modifier = Modifier.weight(0.3f),
-                                text = "Density (g/ℓ)",
-                            )
-                            Text(
-                                modifier = Modifier.weight(0.2f),
-                                text = "PPO2"
-                            )
-                        }
-                    ) {
+                        divePlanSet
+                    )
 
-
-                        (divePlanSet.deeperAndLonger.maximumGasDensities + divePlanSet.base.maximumGasDensities)
-                            .distinct().sortedBy { it.gas.oxygenFraction }.forEach {
-
-                                row {
-                                    Text(
-                                        modifier = Modifier.weight(0.2f),
-                                        text = it.gas.toString(),
-                                    )
-
-                                    Text(
-                                        modifier = Modifier.weight(0.3f),
-                                        text = "${it.depth.toInt()}m",
-                                    )
-
-                                    val density = DecimalFormat.format(2, it.density)
-
-                                    val alertSeverityDensity =
-                                        if (it.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.01)) {
-                                            AlertSeverity.ERROR
-                                        } else if (it.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.01)) {
-                                            AlertSeverity.WARNING
-                                        } else {
-                                            AlertSeverity.NONE
-                                        }
-
-                                    TextAlert(
-                                        alertSeverity = alertSeverityDensity,
-                                        modifier = Modifier.weight(0.3f),
-                                        text = density,
-                                    )
-
-                                    val ppo2 = DecimalFormat.format(2, it.ppo2)
-                                    val alertSeverityPPO2 =
-                                        if (it.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.01)) {
-                                            AlertSeverity.ERROR
-                                        } else {
-                                            AlertSeverity.NONE
-                                        }
-
-                                    TextAlert(
-                                        alertSeverity = alertSeverityPPO2,
-                                        modifier = Modifier.weight(0.2f),
-                                        text = ppo2,
-                                    )
-                                }
-                            }
-                    }
                     ExpandableText(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         text = "Note: All gas information is calculated based on the contingency (deeper & longer) plan. 'Baseline' represents the gas requirement for a single diver to normally complete the contingency plan. 'Lost gas extra' represents the extra gas that is needed for a safe ascent (including potential deco) should a team buddy lose one or more gas mixes at the worst-possible time during the dive (calculated using the out-of-air SAC rate). This lost-gas calculation assumes buddy breathing is possible, however with deco gasses this may not always be the case and you may have to take turns using the deco gas. No extra (bottom) gas is accounted for those situations! Also keep in mind that you need to plan your tanks carefully taking into account 'minimum functional pressure' of your regulators.",
@@ -271,6 +141,158 @@ fun GasPlanCardComponent(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CylindersTable(
+    modifier: Modifier = Modifier,
+    divePlanSet: DivePlanSet,
+) {
+    Table(
+        modifier = modifier,
+        header = {
+            Text(
+                modifier = Modifier.weight(0.1f),
+                text = "No.",
+            )
+            Text(
+                modifier = Modifier.weight(0.2f),
+                text = "Mix",
+            )
+            Text(
+                modifier = Modifier.weight(0.2f),
+                text = "Size (ℓ)",
+            )
+            Text(
+                modifier = Modifier.weight(0.3f),
+                text = "Usage (bar)"
+            )
+        }
+    ) {
+
+        val gasRequirements = divePlanSet.gasPlan
+        gasRequirements.total.forEachIndexed { index, (gas, volume) ->
+            row {
+                Text(
+                    modifier = Modifier.weight(0.1f),
+                    text = (index + 1).toString(),
+                )
+                Text(
+                    modifier = Modifier.weight(0.2f),
+                    text = gas.gas.toString(),
+                )
+                val size = DecimalFormat.format(1, gas.waterVolume)
+                Text(
+                    modifier = Modifier.weight(0.2f),
+                    text = size,
+                )
+
+                // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
+                val endPressureBase =
+                    gas.pressureAfter(volumeUsage = gasRequirements.sortedBase[index].second)
+                val endPressure = gas.pressureAfter(volumeUsage = volume)
+
+                val startPressure = DecimalFormat.format(0, gas.pressure)
+
+                val alertSeverity: AlertSeverity
+                val pressureText =
+                    if (endPressureBase == null || endPressure == null) {
+                        alertSeverity = AlertSeverity.ERROR
+                        "$startPressure > empty"
+                    } else {
+                        alertSeverity = AlertSeverity.NONE
+                        "$startPressure > ${
+                            DecimalFormat.format(
+                                0,
+                                endPressureBase
+                            )
+                        } (${DecimalFormat.format(0, endPressure)})"
+                    }
+
+                TextAlert(
+                    modifier = Modifier.weight(0.3f),
+                    alertSeverity = alertSeverity,
+                    text = pressureText
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GasLimitsTable(
+    modifier: Modifier = Modifier,
+    divePlanSet: DivePlanSet,
+) {
+    Table(
+        modifier = modifier,
+        header = {
+            Text(
+                modifier = Modifier.weight(0.2f),
+                text = "Mix",
+            )
+            Text(
+                modifier = Modifier.weight(0.3f),
+                text = "Depth (m)",
+            )
+            Text(
+                modifier = Modifier.weight(0.3f),
+                text = "Density (g/ℓ)",
+            )
+            Text(
+                modifier = Modifier.weight(0.2f),
+                text = "PPO2"
+            )
+        }
+    ) {
+
+        (divePlanSet.deeperAndLonger.maximumGasDensities + divePlanSet.base.maximumGasDensities)
+            .distinct().sortedBy { it.gas.oxygenFraction }.forEach {
+
+                row {
+                    Text(
+                        modifier = Modifier.weight(0.2f),
+                        text = it.gas.toString(),
+                    )
+
+                    Text(
+                        modifier = Modifier.weight(0.3f),
+                        text = "${it.depth.toInt()}m",
+                    )
+
+                    val density = DecimalFormat.format(2, it.density)
+
+                    val alertSeverityDensity =
+                        if (it.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.01)) {
+                            AlertSeverity.ERROR
+                        } else if (it.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.01)) {
+                            AlertSeverity.WARNING
+                        } else {
+                            AlertSeverity.NONE
+                        }
+
+                    TextAlert(
+                        alertSeverity = alertSeverityDensity,
+                        modifier = Modifier.weight(0.3f),
+                        text = density,
+                    )
+
+                    val ppo2 = DecimalFormat.format(2, it.ppo2)
+                    val alertSeverityPPO2 =
+                        if (it.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.01)) {
+                            AlertSeverity.ERROR
+                        } else {
+                            AlertSeverity.NONE
+                        }
+
+                    TextAlert(
+                        alertSeverity = alertSeverityPPO2,
+                        modifier = Modifier.weight(0.2f),
+                        text = ppo2,
+                    )
+                }
+            }
     }
 }
 

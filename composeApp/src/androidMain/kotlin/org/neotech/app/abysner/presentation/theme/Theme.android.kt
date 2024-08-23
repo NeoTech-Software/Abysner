@@ -47,3 +47,5 @@ actual fun applyPlatformSpecificThemeConfiguration(colorScheme: ColorScheme, isD
     //     }
     // }
 }
+
+actual fun platform(): Platform = Platform.ANDROID

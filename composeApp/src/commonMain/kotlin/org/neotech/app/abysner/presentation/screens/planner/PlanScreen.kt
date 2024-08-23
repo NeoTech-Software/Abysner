@@ -16,6 +16,7 @@ import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_outline_settings_24
 import abysner.composeapp.generated.resources.ic_outline_tune_24
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -44,13 +45,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.painterResource
@@ -61,13 +66,17 @@ import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.Destinations
+import org.neotech.app.abysner.presentation.screens.ShareImage
+import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderPickerBottomSheet
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanCardComponent
-import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderPickerBottomSheet
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.plan.PlanPickerBottomSheet
 import org.neotech.app.abysner.presentation.screens.planner.plan.PlanSelectionCardComponent
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.theme.IconSet
+import org.neotech.app.abysner.presentation.utilities.LocalBitmapRenderController
+import org.neotech.app.abysner.presentation.utilities.shareImageBitmap
 
 typealias PlannerScreen = @Composable (navController: NavHostController) -> Unit
 
@@ -86,6 +95,7 @@ fun PlannerScreen(
     }
 
     val viewState: PlanScreenViewModel.ViewState by viewModel.uiState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
     AbysnerTheme {
 
@@ -114,6 +124,34 @@ fun PlannerScreen(
                             }
                         },
                         actions = {
+
+                            val bitmapRenderController = LocalBitmapRenderController.current
+
+                            val plan = viewState.divePlanSet.getOrNull()
+                            if(plan != null && plan.isEmpty.not()) {
+                                IconButton(onClick = {
+                                    coroutineScope.launch {
+                                        bitmapRenderController.renderBitmap(
+                                            width = 1080,
+                                            height = null,
+                                            onRendered = {
+                                                shareImageBitmap(it)
+                                            }
+                                        ) {
+                                            ShareImage(
+                                                divePlan = plan,
+                                                settingsModel = settings,
+                                            )
+                                        }
+                                    }
+                                }) {
+                                    Icon(
+                                        imageVector = IconSet.share,
+                                        contentDescription = "Share"
+                                    )
+                                }
+                            }
+
                             var showMenu by remember { mutableStateOf(false) }
 
                             DropdownMenu(
@@ -176,7 +214,6 @@ fun PlannerScreen(
                     },
                     onCylinderChecked = { gas, isChecked ->
                         viewModel.toggleCylinder(gas, isChecked)
-                        // TODO check if toggle is possible
                     },
                     onEditCylinder = { gas ->
                         cylinderBeingEdited = gas

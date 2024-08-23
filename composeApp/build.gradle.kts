@@ -100,6 +100,8 @@ kotlin {
             implementation(libs.kotlinInject.runtimeKmp)
             implementation(libs.navigation.compose)
             implementation(libs.jetbrains.lifecycle.viewmodel)
+            implementation(libs.jetbrains.lifecycle.runtime)
+            implementation(libs.jetbrains.kotlinx.datetime)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

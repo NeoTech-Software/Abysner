@@ -77,8 +77,6 @@ class DecompressionPlanner(
     }
 
     fun addDepthChangePerMinute(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
-        println("from $startDepth, to $endDepth")
-
         if(calculateTissueChangesPerMinute && !isCalculatingTts) {
             val diff = startDepth - endDepth
             repeat(timeInMinutes) {

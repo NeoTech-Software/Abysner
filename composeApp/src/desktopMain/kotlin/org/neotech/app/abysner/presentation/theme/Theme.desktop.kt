@@ -14,8 +14,6 @@ package org.neotech.app.abysner.presentation.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
-import org.neotech.app.abysner.presentation.theme.DarkColorScheme
-import org.neotech.app.abysner.presentation.theme.LightColorScheme
 
 @Composable
 actual fun getColorScheme(dynamicColor: Boolean, isDarkMode: Boolean): ColorScheme = when(isDarkMode) {
@@ -25,3 +23,5 @@ actual fun getColorScheme(dynamicColor: Boolean, isDarkMode: Boolean): ColorSche
 
 @Composable
 actual fun applyPlatformSpecificThemeConfiguration(colorScheme: ColorScheme, isDarkMode: Boolean) = Unit
+
+actual fun platform(): Platform = Platform.DESKTOP

@@ -139,14 +139,6 @@ fun PlanPickerBottomSheet(
                     showTopRow = false,
                 )
 
-                val suffixGas = if(cylinder != null) {
-                    val liters = DecimalFormat.format(1, cylinder!!.waterVolume)
-                    val pressure = DecimalFormat.format(0, cylinder!!.pressure)
-                    " (${liters}l @ ${pressure}bar)"
-                } else {
-                    ""
-                }
-
                 val bigBodyStyle = MaterialTheme.typography.bodyLarge.copy(
                     fontSize = 24.sp
                 )
@@ -189,7 +181,7 @@ fun PlanPickerBottomSheet(
                         minValue = 1,
                         maxValue = 150,
                         visualTransformation = SuffixVisualTransformation(" m"),
-                        initialValue = initialValue?.depth,
+                        initialValue = initialValue?.depth ?: 10,
                         errorMessage = errorMessageDepth,
                         isValid = isDepthValid,
                         onNumberChanged = {
@@ -206,7 +198,7 @@ fun PlanPickerBottomSheet(
                         minValue = 1,
                         maxValue = 999,
                         visualTransformation = SuffixVisualTransformation(" min"),
-                        initialValue = initialValue?.duration,
+                        initialValue = initialValue?.duration ?: 15,
                         errorMessage = errorMessageTime,
                         isValid = isTimeValid,
                         onNumberChanged = {

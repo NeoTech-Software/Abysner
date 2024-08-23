@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.presentation.screens.planner
 
+import androidx.compose.material3.Text
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -24,14 +25,14 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import me.tatarka.inject.annotations.Inject
-import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.core.model.Configuration
-import org.neotech.app.abysner.domain.diveplanning.DivePlanner
-import org.neotech.app.abysner.domain.gasplanning.GasPlanner
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.diveplanning.DivePlanner
+import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
+import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 import kotlin.time.measureTimedValue
 
 @Inject
