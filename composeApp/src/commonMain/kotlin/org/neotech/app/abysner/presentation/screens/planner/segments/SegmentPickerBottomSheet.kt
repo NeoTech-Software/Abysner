@@ -10,7 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.presentation.screens.planner.plan
+package org.neotech.app.abysner.presentation.screens.planner.segments
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
@@ -53,7 +53,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
@@ -69,6 +68,7 @@ import org.neotech.app.abysner.presentation.component.modifier.invisible
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
+import org.neotech.app.abysner.presentation.theme.bodyExtraLarge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,19 +139,6 @@ fun PlanPickerBottomSheet(
                     showTopRow = false,
                 )
 
-                val bigBodyStyle = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 24.sp
-                )
-
-                fun Cylinder.buildGasText() = buildAnnotatedString {
-                    withStyle(bigBodyStyle.toSpanStyle()) {
-                        append(gas.toString())
-                    }
-                    val liters = DecimalFormat.format(1, cylinder!!.waterVolume)
-                    val pressure = DecimalFormat.format(0, cylinder!!.pressure)
-                    append(" (${liters}l @ ${pressure}bar)")
-                }
-
                 DropDown(
                     modifier = Modifier.fillMaxWidth(),
                     label = "Cylinder",
@@ -160,13 +147,13 @@ fun PlanPickerBottomSheet(
                     selectedText = {
                         it?.buildGasText() ?: AnnotatedString("")
                     },
-                    dropdownRow = { index, gas ->
+                    dropdownRow = { _, gas ->
                         Text(
                             style = MaterialTheme.typography.bodyLarge,
                             text = gas.buildGasText()
                         )
                     },
-                    onSelectionChanged = { index, gas ->
+                    onSelectionChanged = { _, gas ->
                         cylinder = gas
                     }
                 )
@@ -270,6 +257,16 @@ fun PlanPickerBottomSheet(
             }
         }
     }
+}
+
+@Composable
+private fun Cylinder.buildGasText() = buildAnnotatedString {
+    withStyle(MaterialTheme.typography.bodyExtraLarge.toSpanStyle()) {
+        append(gas.toString())
+    }
+    val liters = DecimalFormat.format(1, waterVolume)
+    val pressure = DecimalFormat.format(0, pressure)
+    append(" (${liters}l @ ${pressure}bar)")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

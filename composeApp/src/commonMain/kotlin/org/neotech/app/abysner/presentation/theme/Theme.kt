@@ -19,8 +19,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 internal val LightColorScheme = lightColorScheme(
     primary = primaryLight,
@@ -109,34 +108,29 @@ fun AbysnerTheme(
 
     applyPlatformSpecificThemeConfiguration(colorScheme, darkTheme)
 
-    val colors = if (darkTheme) {
+    val customColors = if (darkTheme) {
         CustomColors(warning = warningDark, onWarning = onWarningDark)
     } else {
         CustomColors(warning = warningLight, onWarning = onWarningLight)
     }
-    CompositionLocalProvider(LocalColors provides colors) {
+
+    val typography = getTypography()
+
+    val customTypography = CustomTypography(
+        bodyExtraLarge = typography.bodyLarge.copy(fontSize = 24.sp)
+    )
+
+    CompositionLocalProvider(
+        LocalCustomColors provides customColors,
+        LocalCustomTypography provides customTypography
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = getTypography(),
+            typography = typography,
             content = content
         )
     }
 }
-
-private val LocalColors = staticCompositionLocalOf { CustomColors() }
-
-data class CustomColors(
-    val warning: Color = warningLight,
-    val onWarning: Color = onWarningLight,
-)
-
-val ColorScheme.warning: Color
-    @Composable
-    get() = LocalColors.current.warning
-
-val ColorScheme.onWarning: Color
-    @Composable
-    get() = LocalColors.current.onWarning
 
 @Composable
 expect fun getColorScheme(dynamicColor: Boolean, isDarkMode: Boolean): ColorScheme

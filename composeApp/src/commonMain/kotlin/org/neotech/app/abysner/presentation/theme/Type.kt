@@ -26,9 +26,12 @@ import abysner.composeapp.generated.resources.SourceSans3_MediumItalic
 import abysner.composeapp.generated.resources.SourceSans3_Regular
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 
 @Composable
@@ -78,3 +81,13 @@ fun getTypography(): Typography {
         labelSmall = baseline.labelSmall.copy(fontFamily = sourceSans)
     )
 }
+
+internal val LocalCustomTypography = staticCompositionLocalOf { CustomTypography() }
+
+data class CustomTypography(
+    val bodyExtraLarge: TextStyle = baseline.bodyLarge.copy(fontSize = 24.sp),
+)
+
+val Typography.bodyExtraLarge: TextStyle
+    @Composable
+    get() = LocalCustomTypography.current.bodyExtraLarge
