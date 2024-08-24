@@ -79,9 +79,9 @@ class DivePlanner {
         plan.forEach {
             if (it.depth.toDouble() != currentDepth) {
 
-                val difference = it.depth - currentDepth
+                val difference = currentDepth - it.depth
 
-                if(difference < 0) {
+                if(difference > 0) {
                     // Ascending
 
                     val runtime = decompressionPlanner.runtime
@@ -118,13 +118,7 @@ class DivePlanner {
 
                 } else {
                     // Descending
-
-                    val timeToChange = if(difference >= 0) {
-                        max(floor(abs(difference) / configuration.maxDescentRate).toInt(), 1)
-                    } else {
-                        // TODO ceil seems more logical here, why do most planners use floor instead?
-                        floor(abs(difference) / configuration.maxAscentRate).toInt()
-                    }
+                    val timeToChange = configuration.travelTime(difference)
 
                     val timeLeftAtPlannedDepth = it.duration - timeToChange
 

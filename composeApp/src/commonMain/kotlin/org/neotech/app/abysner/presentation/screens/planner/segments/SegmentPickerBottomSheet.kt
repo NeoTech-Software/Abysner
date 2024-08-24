@@ -12,6 +12,10 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.segments
 
+import abysner.composeapp.generated.resources.Res
+import abysner.composeapp.generated.resources.segment_picker_travel_time_hint
+import abysner.composeapp.generated.resources.unit_meter
+import abysner.composeapp.generated.resources.unit_minute
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -45,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -54,11 +60,10 @@ import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
-import org.neotech.app.abysner.presentation.component.modifier.ifTrue
-import org.neotech.app.abysner.presentation.component.modifier.invisible
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
+import org.neotech.app.abysner.presentation.utilities.pluralsStringBuilder
 import org.neotech.app.abysner.presentation.theme.bodyExtraLarge
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,9 +76,14 @@ fun SegmentPickerBottomSheet(
     maxDensity: Double,
     environment: Environment,
     cylinders: List<Cylinder>,
+    previousDepth: Double,
+    configuration: Configuration,
     onAddOrUpdateDiveSegment: (gas: DiveProfileSection) -> Unit = {},
     onDismissRequest: () -> Unit = {},
 ) {
+    require(cylinders.isNotEmpty()) {
+        "SegmentPickerBottomSheet was shown with an empty list of cylinders, this is not supported."
+    }
 
     val scope = rememberCoroutineScope()
 
@@ -99,8 +109,8 @@ fun SegmentPickerBottomSheet(
                     text = "Dive segment"
                 )
 
-                var cylinder: Cylinder? by remember {
-                    mutableStateOf(initialValue?.cylinder ?: cylinders.firstOrNull())
+                var cylinder: Cylinder by remember {
+                    mutableStateOf(initialValue?.cylinder ?: cylinders.first())
                 }
 
                 var depth by remember {
@@ -119,7 +129,6 @@ fun SegmentPickerBottomSheet(
 
                 val isDepthValid = remember { mutableStateOf(true) }
                 val isTimeValid = remember { mutableStateOf(true) }
-
 
                 GasPropertiesComponent(
                     modifier = Modifier.padding(vertical = 16.dp),
@@ -171,8 +180,8 @@ fun SegmentPickerBottomSheet(
                     )
                     OutlinedNumberInputField(
                         modifier = Modifier.weight(1f)
-                            .recordLayoutCoordinates("time", textFieldPositions),
-                        label = "Time",
+                            .recordLayoutCoordinates("duration", textFieldPositions),
+                        label = "Duration",
                         minValue = 1,
                         maxValue = 999,
                         visualTransformation = SuffixVisualTransformation(" min"),
@@ -188,27 +197,35 @@ fun SegmentPickerBottomSheet(
                     )
                 }
 
-                val gas = cylinder?.gas
+                val gas = cylinder.gas
 
                 var anyErrorMessage = errorMessageDepth.value ?: errorMessageTime.value
 
-                if(gas != null) {
-                    if (anyErrorMessage == null && depth > gas.oxygenModRounded(maxPPO2, environment)) {
-                        anyErrorMessage = "Warning: Depth exceeds oxygen MOD!"
-                    } else if (anyErrorMessage == null && depth > gas.densityModRounded(environment = environment)) {
-                        anyErrorMessage = "Warning: Depth exceeds density MOD!"
-                    }
+                if (anyErrorMessage == null && depth > gas.oxygenModRounded(maxPPO2, environment)) {
+                    anyErrorMessage = "Warning: Depth exceeds oxygen MOD!"
+                } else if (anyErrorMessage == null && depth > gas.densityModRounded(environment = environment)) {
+                    anyErrorMessage = "Warning: Depth exceeds density MOD!"
+                }
+
+                val distance = (previousDepth - depth)
+                val travelTime = configuration.travelTime(distance)
+                val bottomTime = time - travelTime
+
+                val travelTimeHint = pluralsStringBuilder(Res.string.segment_picker_travel_time_hint) {
+                    pluralInt(Res.plurals.unit_minute, travelTime)
+                    pluralInt(Res.plurals.unit_meter, depth)
+                    pluralInt(Res.plurals.unit_minute, bottomTime)
                 }
 
                 Text(
-                    modifier = Modifier.ifTrue(anyErrorMessage == null) {
-                        invisible()
-                    },
                     textAlign = TextAlign.Center,
                     minLines = 1,
-                    maxLines = 1,
-                    text = anyErrorMessage ?: "Dummy to avoid jumping",
-                    color = MaterialTheme.colorScheme.error
+                    text = anyErrorMessage ?: travelTimeHint,
+                    color = if(anyErrorMessage != null) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        Color.Unspecified
+                    }
                 )
 
                 Row {
@@ -272,6 +289,8 @@ private fun SegmentPickerBottomSheetPreview() {
         ),
         maxDensity = Gas.MAX_GAS_DENSITY,
         maxPPO2 = 1.4,
+        previousDepth = 0.0,
+        configuration = Configuration(),
         environment = Environment.Default,
         initialValue = DiveProfileSection(10, 15, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
         cylinders = listOf(

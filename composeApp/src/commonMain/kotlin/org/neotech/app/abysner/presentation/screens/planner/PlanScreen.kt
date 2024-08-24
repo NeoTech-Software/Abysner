@@ -272,6 +272,8 @@ fun PlannerScreen(
 
             val initial = segmentBeingEdited?.let { viewState.segments[it] }
 
+            val previousIndex = (segmentBeingEdited ?: (viewState.segments.size)) - 1
+
             SegmentPickerBottomSheet(
                 sheetState = segmentPickerBottomSheetState,
                 isAdd = initial == null,
@@ -280,6 +282,8 @@ fun PlannerScreen(
                 maxDensity = Gas.MAX_GAS_DENSITY,
                 environment = configuration.environment,
                 cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder },
+                previousDepth = viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
+                configuration = configuration,
                 onAddOrUpdateDiveSegment = {
                     if(segmentBeingEdited != null) {
                         viewModel.updateSegment(segmentBeingEdited!!, it)
