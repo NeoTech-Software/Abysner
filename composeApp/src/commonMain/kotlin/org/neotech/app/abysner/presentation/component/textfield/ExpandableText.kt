@@ -60,8 +60,15 @@ fun ExpandableText(
             onClick = { expanded = !expanded }
         )
     ) {
+
+        val textCollapsed = remember(text) {
+            // Replace all double whitespace with a single space
+            // Replace all new lines
+            text.replace(Regex("\\s*(?:\\n|\\s{2})\\s*"), " ")
+        }
+
         Text(
-            text = text,
+            text = if(expanded) { text } else { textCollapsed },
             maxLines = if (expanded) { Int.MAX_VALUE } else { minimizedMaxLines },
             onTextLayout = { hasVisualOverflow = it.hasVisualOverflow },
             style = style
