@@ -50,7 +50,6 @@ import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.textfield.ExpandableText
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.LoadingBoxWithBlur
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 fun GasPlanCardComponent(
     modifier: Modifier = Modifier,
@@ -109,7 +108,6 @@ fun GasPlanCardComponent(
                             gasRequirement = gasRequirements
                         )
                     }
-
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
