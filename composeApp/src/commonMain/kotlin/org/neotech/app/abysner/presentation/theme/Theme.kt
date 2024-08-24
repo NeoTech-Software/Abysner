@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.presentation.theme
 
+import LocalIconFont
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +21,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.sp
+import fontFamilyIconFont
 
 internal val LightColorScheme = lightColorScheme(
     primary = primaryLight,
@@ -120,7 +122,10 @@ fun AbysnerTheme(
         bodyExtraLarge = typography.bodyLarge.copy(fontSize = 24.sp)
     )
 
+    val iconFont = fontFamilyIconFont()
+
     CompositionLocalProvider(
+        LocalIconFont provides iconFont,
         LocalCustomColors provides customColors,
         LocalCustomTypography provides customTypography
     ) {
