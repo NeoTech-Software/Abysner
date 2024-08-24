@@ -52,6 +52,7 @@ import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.preview.PreviewData
+import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanOxygenToxicityDisplay
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanTable
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.CylindersTable
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasLimitsTable
@@ -100,26 +101,11 @@ fun ShareImage(
                         settings = settingsModel
                     )
 
-                    Row(
+                    DecoPlanOxygenToxicityDisplay(
                         modifier = Modifier.padding(top = 16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(
-                            16.dp,
-                            Alignment.CenterHorizontally
-                        ),
-                    ) {
-                        BigNumberDisplay(
-                            modifier = Modifier.width(96.dp),
-                            size = BigNumberSize.SMALL,
-                            value = "${divePlan.base.totalCns.format(0)}%",
-                            label = "CNS"
-                        )
-                        BigNumberDisplay(
-                            modifier = Modifier.width(96.dp),
-                            size = BigNumberSize.SMALL,
-                            value = divePlan.base.totalOtu.format(0),
-                            label = "OTU"
-                        )
-                    }
+                        cns = divePlan.base.totalCns,
+                        otu = divePlan.base.totalOtu
+                    )
 
                     // DecoPlanExtraInfo(
                     //     modifier = Modifier.padding(horizontal = 16.dp).padding(top = 16.dp),

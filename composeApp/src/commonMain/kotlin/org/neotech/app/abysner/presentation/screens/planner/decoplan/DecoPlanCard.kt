@@ -19,6 +19,7 @@ import abysner.composeapp.generated.resources.ic_outline_trending_down_24
 import abysner.composeapp.generated.resources.ic_outline_trending_flat_24
 import abysner.composeapp.generated.resources.ic_outline_trending_up_24
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
@@ -66,6 +68,9 @@ import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.DecimalFormatter
+import org.neotech.app.abysner.domain.utilities.format
+import org.neotech.app.abysner.presentation.component.BigNumberDisplay
+import org.neotech.app.abysner.presentation.component.BigNumberSize
 import org.neotech.app.abysner.presentation.component.SingleChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
@@ -155,6 +160,12 @@ fun DecoPlanCardComponent(
                         settings = settings
                     )
 
+                    DecoPlanOxygenToxicityDisplay(
+                        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp).fillMaxWidth(),
+                        cns = planToShow.totalCns,
+                        otu = planToShow.totalOtu
+                    )
+
                     Row(
                         verticalAlignment = Alignment.Bottom
                     ) {
@@ -185,6 +196,31 @@ fun DecoPlanCardComponent(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun DecoPlanOxygenToxicityDisplay(
+    cns: Double,
+    otu: Double,
+    modifier: Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        BigNumberDisplay(
+            modifier = Modifier.width(96.dp),
+            size = BigNumberSize.EXTRA_SMALL,
+            value = "${ceil(cns).format(0)}%",
+            label = "CNS"
+        )
+        BigNumberDisplay(
+            modifier = Modifier.width(96.dp),
+            size = BigNumberSize.EXTRA_SMALL,
+            value = ceil(otu).format(0),
+            label = "OTU"
+        )
     }
 }
 
@@ -239,20 +275,6 @@ fun DecoPlanExtraInfo(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-        Text(
-            text = buildAnnotatedString {
-                appendBold("CNS: ")
-                append("${DecimalFormat.format(0, ceil(divePlan.totalCns))}%")
-            },
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Text(
-            text = buildAnnotatedString {
-                appendBold("OTU: ")
-                append(DecimalFormat.format(0, ceil(divePlan.totalOtu)))
-            },
-            style = MaterialTheme.typography.bodyMedium
-        )
     }
 }
 

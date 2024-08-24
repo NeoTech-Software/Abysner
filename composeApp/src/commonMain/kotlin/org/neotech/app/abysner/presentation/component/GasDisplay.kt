@@ -42,18 +42,21 @@ fun BigNumberDisplay(
 ) {
 
     val style = when (size) {
+        BigNumberSize.EXTRA_SMALL -> MaterialTheme.typography.headlineSmall
         BigNumberSize.SMALL -> MaterialTheme.typography.headlineMedium
         BigNumberSize.MEDIUM -> MaterialTheme.typography.displayMedium
         BigNumberSize.LARGE -> MaterialTheme.typography.displayLarge
     }
 
     val paddingHorizontal = when (size) {
+        BigNumberSize.EXTRA_SMALL -> 16.dp
         BigNumberSize.SMALL -> 16.dp
         BigNumberSize.MEDIUM -> 16.dp
         BigNumberSize.LARGE -> 16.dp
     }
 
     val paddingVertical = when (size) {
+        BigNumberSize.EXTRA_SMALL -> 8.dp
         BigNumberSize.SMALL -> 8.dp
         BigNumberSize.MEDIUM -> 16.dp
         BigNumberSize.LARGE -> 16.dp
@@ -118,6 +121,7 @@ fun BigNumberDisplay(
 }
 
 enum class BigNumberSize {
+    EXTRA_SMALL,
     SMALL,
     MEDIUM,
     LARGE
