@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.presentation.component
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +28,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.isUnspecified
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.unit.dp
@@ -43,6 +46,20 @@ enum class AlertSeverity {
     ERROR
 }
 
+@OptIn(ExperimentalTextApi::class)
+@Composable
+fun TextAlert(
+    modifier: Modifier = Modifier,
+    text: String,
+    alertSeverity: AlertSeverity = AlertSeverity.NONE,
+) {
+    TextAlert(
+        modifier = modifier,
+        text = AnnotatedString(text),
+        alertSeverity = alertSeverity
+    )
+}
+
 /**
  * Text composable that has the ability to draw a rounded corner background behind the text in
  * case a [AlertSeverity] is given that is anything other then [AlertSeverity.NONE].
@@ -55,7 +72,8 @@ enum class AlertSeverity {
 @Composable
 fun TextAlert(
     modifier: Modifier = Modifier,
-    text: String,
+    text: AnnotatedString,
+    textStyle: TextStyle = LocalTextStyle.current,
     alertSeverity: AlertSeverity = AlertSeverity.NONE,
 ) {
     val annotatedString = buildAnnotatedString {
@@ -77,6 +95,7 @@ fun TextAlert(
     Text(
         color = textColor,
         maxLines = 1,
+        style = textStyle,
         modifier = modifier.drawBehind { onDraw() },
         text = annotatedString,
         onTextLayout = { layoutResult ->

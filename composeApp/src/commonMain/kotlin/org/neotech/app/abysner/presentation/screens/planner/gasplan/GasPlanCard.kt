@@ -24,10 +24,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import appendIcon
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
@@ -40,6 +42,7 @@ import org.neotech.app.abysner.presentation.screens.planner.decoplan.GasPieChart
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
+import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.domain.utilities.higherThenDelta
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
@@ -189,26 +192,27 @@ fun CylindersTable(
                 )
 
                 // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
-                val endPressureBase =
-                    gas.pressureAfter(volumeUsage = gasRequirements.sortedBase[index].second)
+                val endPressureBase = gas.pressureAfter(volumeUsage = gasRequirements.sortedBase[index].second)
                 val endPressure = gas.pressureAfter(volumeUsage = volume)
 
                 val startPressure = DecimalFormat.format(0, gas.pressure)
 
-                val alertSeverity: AlertSeverity
-                val pressureText =
-                    if (endPressureBase == null || endPressure == null) {
+                var alertSeverity: AlertSeverity = AlertSeverity.NONE
+                val pressureText = buildAnnotatedString {
+                    if (endPressureBase == null && endPressure == null) {
                         alertSeverity = AlertSeverity.ERROR
-                        "$startPressure > empty"
+                        append("$startPressure > empty")
+                        appendIcon(IconFont.WARNING)
+                    } else if(endPressure == null && endPressureBase != null) {
+                        alertSeverity = AlertSeverity.ERROR
+                        append("$startPressure > ${endPressureBase.format(0)} (")
+                        appendIcon(IconFont.WARNING)
+                        append("0)")
                     } else {
                         alertSeverity = AlertSeverity.NONE
-                        "$startPressure > ${
-                            DecimalFormat.format(
-                                0,
-                                endPressureBase
-                            )
-                        } (${DecimalFormat.format(0, endPressure)})"
+                        append("$startPressure > ${endPressureBase!!.format(0)} (${endPressure!!.format(0)})")
                     }
+                }
 
                 TextAlert(
                     modifier = Modifier.weight(0.3f),
