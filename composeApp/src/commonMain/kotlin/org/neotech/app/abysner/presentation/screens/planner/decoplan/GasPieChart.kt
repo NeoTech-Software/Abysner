@@ -56,8 +56,6 @@ fun GasPieChart(
     val emergencyExtra = gasRequirement.extraRequiredForWorstCaseOutOfAirSorted
     val base = gasRequirement.sortedBase
 
-    val baselineSlicesCount = base.size
-
     val gas = base + emergencyExtra
 
     val baseColor = MaterialTheme.colorScheme.primary
@@ -129,8 +127,7 @@ fun GasPieChart(
 
         FlowLegend(
             modifier = Modifier.padding(all = 16.dp).align(Alignment.CenterHorizontally),
-            // TODO check item count against actual slices
-            itemCount = 2,
+            itemCount = arrayOf(emergencyExtra.isNotEmpty(), base.isNotEmpty()).count { it },
             label = {
                 val label = when(it) {
                     0 -> "Baseline*"
@@ -145,15 +142,16 @@ fun GasPieChart(
                     0 -> Symbol(
                         shape = CircleShape,
                         size = 20.dp,
-                        fillBrush = Brush.horizontalGradient(listOf(colors.first(), colors[baselineSlicesCount-1])),
+                        // Gradient from first primary color that is used, until the last blue color.
+                        fillBrush = Brush.horizontalGradient(listOf(colors.first(), colors[base.size-1])),
                     )
                     1 -> Symbol(
                         shape = CircleShape,
                         size = 20.dp,
-                        fillBrush = Brush.horizontalGradient(listOf(colorsRed[baselineSlicesCount], colorsRed.last())),
+                        // Gradient from first red color that is actually used until the last red color
+                        fillBrush = Brush.horizontalGradient(listOf(colorsRed[base.size], colorsRed.last())),
                     )
                 }
-
             }
         )
     }
