@@ -254,7 +254,8 @@ fun PlannerScreen(
                 isAdd = cylinderBeingEdited == null,
                 initialValue = cylinderBeingEdited,
                 environment = configuration.environment,
-                maxPPO2 = configuration.maxPPO2Deco,
+                maxPPO2 = configuration.maxPPO2,
+                maxPPO2Secondary = configuration.maxPPO2Deco,
                 onAddOrUpdateCylinder = {
                     if(cylinderBeingEdited != null) {
                         viewModel.updateCylinder(it)

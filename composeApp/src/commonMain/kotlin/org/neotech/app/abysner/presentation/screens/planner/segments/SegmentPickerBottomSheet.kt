@@ -132,9 +132,10 @@ fun SegmentPickerBottomSheet(
 
                 GasPropertiesComponent(
                     modifier = Modifier.padding(vertical = 16.dp),
-                    gas = cylinder?.gas,
+                    gas = cylinder.gas,
                     maxDensity = maxDensity,
                     maxPPO2 = maxPPO2,
+                    maxPPO2Secondary = null,
                     environment = environment,
                     showTopRow = false,
                 )

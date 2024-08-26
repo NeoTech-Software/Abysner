@@ -13,8 +13,22 @@
 package org.neotech.app.abysner.presentation.screens.planner.cylinders
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,8 +37,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.neotech.app.abysner.domain.core.model.Cylinder
@@ -32,16 +50,12 @@ import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
+import org.neotech.app.abysner.presentation.component.SingleChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedGenericInputField
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
-import org.neotech.app.abysner.presentation.component.textfield.behavior.DecimalInputBehavior
-import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import kotlin.math.round
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +64,7 @@ fun CylinderPickerBottomSheet(
     initialValue: Cylinder?,
     environment: Environment,
     maxPPO2: Double,
+    maxPPO2Secondary: Double,
     sheetState: SheetState = rememberStandardBottomSheetState(),
     onAddOrUpdateCylinder: (cylinder: Cylinder) -> Unit = {},
     onDismissRequest: () -> Unit = {},
@@ -63,6 +78,7 @@ fun CylinderPickerBottomSheet(
             initialValue = initialValue ?: Cylinder(Gas.Air, 232.0, 10.0),
             environment = environment,
             maxPPO2 = maxPPO2,
+            maxPPO2Secondary = maxPPO2Secondary,
             sheetState = sheetState,
             onAddOrUpdateCylinder = onAddOrUpdateCylinder,
             onDismissRequest = onDismissRequest
@@ -77,6 +93,7 @@ private fun CylinderPickerBottomSheetContent(
     initialValue: Cylinder = Cylinder(Gas.Air, 232.0, 10.0),
     environment: Environment,
     maxPPO2: Double,
+    maxPPO2Secondary: Double?,
     sheetState: SheetState = rememberStandardBottomSheetState(),
     onAddOrUpdateCylinder: (cylinder: Cylinder) -> Unit = {},
     onDismissRequest: () -> Unit = {},
@@ -108,7 +125,10 @@ private fun CylinderPickerBottomSheetContent(
         modifier = Modifier
             .clearFocusOutside(textFieldPositions)
     ) {
-        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+        ) {
+
             Text(
                 modifier = Modifier
                     .padding(bottom = 16.dp)
@@ -116,6 +136,9 @@ private fun CylinderPickerBottomSheetContent(
                 style = MaterialTheme.typography.headlineSmall,
                 text = "Gas & cylinder"
             )
+
+            val errorMessageVolume = remember { mutableStateOf<String?>(null) }
+            val errorMessagePressure = remember { mutableStateOf<String?>(null) }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -131,9 +154,11 @@ private fun CylinderPickerBottomSheetContent(
                     label = "Volume",
                     minValue = 0.1,
                     maxValue = 50.0,
+                    errorMessage = errorMessageVolume,
                     onNumberChanged = {
                         volume = it
-                    }
+                    },
+                    supportingText = null
                 )
 
                 OutlinedDecimalInputField(
@@ -146,9 +171,22 @@ private fun CylinderPickerBottomSheetContent(
                     fractionDigits = 0,
                     isValid = isStartPressureValid,
                     visualTransformation = SuffixVisualTransformation(" bar"),
+                    errorMessage = errorMessagePressure,
                     onNumberChanged = {
                         startPressure = it
-                    }
+                    },
+                    supportingText = null
+                )
+            }
+
+            val anyErrorMessage = errorMessageVolume.value ?: errorMessagePressure.value
+            if(anyErrorMessage != null) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    minLines = 1,
+                    text = anyErrorMessage,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
 
@@ -161,6 +199,7 @@ private fun CylinderPickerBottomSheetContent(
                 modifier = Modifier.padding(vertical = 16.dp),
                 gas = gas,
                 maxPPO2 = maxPPO2,
+                maxPPO2Secondary = maxPPO2Secondary,
                 maxDensity = Gas.MAX_GAS_DENSITY,
                 environment = environment
             )
@@ -221,14 +260,16 @@ private fun CylinderPickerBottomSheetContent(
 @Composable
 @Preview
 private fun GasPickerBottomSheetPreview() {
-    AbysnerTheme {
-        CylinderPickerBottomSheetContent(
-            environment = Environment.Default,
-            maxPPO2 = 1.4,
-            isAdd = true,
-            sheetState = rememberStandardBottomSheetState(
-                SheetValue.Expanded
-            )
-        )
-    }
+    CylinderPickerBottomSheet(
+        sheetState = SheetState(
+            skipPartiallyExpanded = true,
+            density = LocalDensity.current,
+            initialValue = SheetValue.Expanded
+        ),
+        environment = Environment.Default,
+        maxPPO2 = 1.4,
+        maxPPO2Secondary = 1.6,
+        isAdd = true,
+        initialValue = Cylinder.steel10Liter(Gas.Air)
+    )
 }
