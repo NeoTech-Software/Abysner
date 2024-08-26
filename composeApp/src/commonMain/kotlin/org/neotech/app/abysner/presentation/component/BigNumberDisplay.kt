@@ -13,9 +13,11 @@
 package org.neotech.app.abysner.presentation.component
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,11 +29,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.neotech.app.abysner.domain.core.model.Gas
+import kotlin.math.min
 
 @Composable
 fun BigNumberDisplay(
@@ -49,10 +60,10 @@ fun BigNumberDisplay(
     }
 
     val paddingHorizontal = when (size) {
-        BigNumberSize.EXTRA_SMALL -> 16.dp
-        BigNumberSize.SMALL -> 16.dp
-        BigNumberSize.MEDIUM -> 16.dp
-        BigNumberSize.LARGE -> 16.dp
+        BigNumberSize.EXTRA_SMALL -> 12.dp
+        BigNumberSize.SMALL -> 12.dp
+        BigNumberSize.MEDIUM -> 12.dp
+        BigNumberSize.LARGE -> 12.dp
     }
 
     val paddingVertical = when (size) {
@@ -68,57 +79,84 @@ fun BigNumberDisplay(
         shape = MaterialTheme.shapes.large
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(
-                start = paddingHorizontal,
-                end = paddingHorizontal,
-                top = paddingVertical,
-                bottom = paddingVertical
-            ),
+            modifier = Modifier
+                .wrapContentWidth()
+                .padding(horizontal = paddingHorizontal, vertical = paddingVertical),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
+            TextSingleLineAutoSize(
                 style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                text = label
+                text = label,
             )
 
-            // TODO generalize the below auto-sizing code potentially extracting it?
-            var textStyle by remember { mutableStateOf(style) }
-            var isTextMeasured by remember { mutableStateOf(false) }
-            val minSize = 6.sp
-
-            Text(
-                modifier = Modifier.drawWithContent {
-                    if (isTextMeasured) {
-                        drawContent()
-                    }
-                },
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Visible,
+            TextSingleLineAutoSize(
                 color = MaterialTheme.colorScheme.primary,
-                style = textStyle,
+                style = style,
                 text = value,
-                onTextLayout = {
-                    fun constrain() {
-                        val reducedSize = textStyle.fontSize * 0.9f
-                        if (minSize != TextUnit.Unspecified && reducedSize <= minSize) {
-                            textStyle = textStyle.copy(fontSize = minSize)
-                            isTextMeasured = true
-                        } else {
-                            textStyle = textStyle.copy(fontSize = reducedSize)
-                        }
-                    }
-                    if (it.didOverflowWidth) {
-                        constrain()
-                    } else {
-                        isTextMeasured = true
-                    }
-                }
             )
         }
     }
 }
+
+@Composable
+private fun TextSingleLineAutoSize(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    fontStyle: FontStyle? = null,
+    fontWeight: FontWeight? = null,
+    fontFamily: FontFamily? = null,
+    letterSpacing: TextUnit = TextUnit.Unspecified,
+    textDecoration: TextDecoration? = null,
+    textAlign: TextAlign? = null,
+    lineHeight: TextUnit = TextUnit.Unspecified,
+    style: TextStyle = LocalTextStyle.current
+) {
+    require(style.fontSize != TextUnit.Unspecified)
+
+    var fontSizeAdjusted by remember { mutableStateOf(style.fontSize) }
+    var isTextMeasured by remember { mutableStateOf(false) }
+    val minSize = 6.sp
+
+    Text(
+        modifier = modifier.drawWithContent {
+            if (isTextMeasured) {
+                drawContent()
+            }
+        },
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Visible,
+        color = color,
+        style = style,
+        lineHeight = lineHeight,
+        textAlign = textAlign,
+        textDecoration = textDecoration,
+        letterSpacing = letterSpacing,
+        fontFamily = fontFamily,
+        fontWeight = fontWeight,
+        fontStyle = fontStyle,
+        fontSize = fontSizeAdjusted,
+        text = text,
+        onTextLayout = {
+            fun constrain() {
+                val reducedSize = fontSizeAdjusted * 0.9f
+                if (minSize != TextUnit.Unspecified && reducedSize <= minSize) {
+                    fontSizeAdjusted = minSize
+                    isTextMeasured = true
+                } else {
+                    fontSizeAdjusted = reducedSize
+                }
+            }
+            if (it.didOverflowWidth) {
+                constrain()
+            } else {
+                isTextMeasured = true
+            }
+        }
+    )
+}
+
 
 enum class BigNumberSize {
     EXTRA_SMALL,
@@ -159,5 +197,11 @@ fun GasDisplay(
 @Preview
 @Composable
 private fun GasDisplayPreview() {
-    GasDisplay()
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        GasDisplay()
+        BigNumberDisplay(
+            value = "45m",
+            label = "Oxygen MOD",
+        )
+    }
 }
