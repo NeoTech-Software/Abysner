@@ -13,50 +13,51 @@
 package org.neotech.app.abysner.presentation.component
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 
 @Stable
-class SingleChoiceSegmentedButtonRowState(initialSelectedIndex: Int) {
-    var selectedIndex: Int by mutableIntStateOf(initialSelectedIndex)
+class MultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes: Array<Int>) {
+    var checkedItemIndexes: SnapshotStateList<Int> = mutableStateListOf(*initialCheckedItemIndexes)
 }
 
 @Composable
-fun rememberSingleChoiceSegmentedButtonRowState(initialSelectedIndex: Int): SingleChoiceSegmentedButtonRowState {
+fun rememberMultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes: Array<Int> = emptyArray()): MultiChoiceSegmentedButtonRowState {
     return remember {
-        SingleChoiceSegmentedButtonRowState(initialSelectedIndex)
+        MultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes)
     }
 }
 
 @Composable
-fun <T> SingleChoiceSegmentedButtonRow(
+fun <T> MultiChoiceSegmentedButtonRow(
     modifier: Modifier = Modifier,
     items: List<T>,
-    singleChoiceSegmentedButtonRowState: SingleChoiceSegmentedButtonRowState = rememberSingleChoiceSegmentedButtonRowState(0),
-    onClick: (item: T, index: Int) -> Unit =  { _, _ -> },
+    multiChoiceSegmentedButtonRowState: MultiChoiceSegmentedButtonRowState = rememberMultiChoiceSegmentedButtonRowState(emptyArray()),
+    onChecked: (item: T, index: Int, checked: Boolean) -> Unit =  { _, _, _ -> },
     label: @Composable (item: T, index: Int) -> Unit = { item, _ ->
         Text(text = item.toString(), maxLines = 1)
     }
 ) {
-    androidx.compose.material3.SingleChoiceSegmentedButtonRow(
+    androidx.compose.material3.MultiChoiceSegmentedButtonRow(
         modifier = modifier
     ) {
         items.forEachIndexed { index, item ->
             SegmentedButton(
-                selected = index == singleChoiceSegmentedButtonRowState.selectedIndex,
-                onClick = {
-                    singleChoiceSegmentedButtonRowState.selectedIndex = index
-                    onClick(item, index)
+                checked = index in multiChoiceSegmentedButtonRowState.checkedItemIndexes,
+                onCheckedChange = {
+                    if (it) {
+                        multiChoiceSegmentedButtonRowState.checkedItemIndexes.add(index)
+                    } else {
+                        multiChoiceSegmentedButtonRowState.checkedItemIndexes.remove(index)
+                    }
+                    onChecked(item, index, it)
                 },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = items.size)
             ) {
@@ -68,10 +69,10 @@ fun <T> SingleChoiceSegmentedButtonRow(
 
 @Preview
 @Composable
-fun SingleChoiceSegmentedButtonRowPreview() {
-    SingleChoiceSegmentedButtonRow(
-        items = listOf("All", "Basics"),
-        onClick = { _, _ ->
+private fun MultiChoiceSegmentedButtonRowPreview() {
+    MultiChoiceSegmentedButtonRow(
+        items = listOf("+3min", "+3m"),
+        onChecked = { _, _, _ ->
 
         }
     ) { item, _ ->

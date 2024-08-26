@@ -12,6 +12,8 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.gasplan
 
+import IconFont
+import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,24 +25,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import appendIcon
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.core.model.Configuration
-import org.neotech.app.abysner.domain.diveplanning.DivePlanner
-import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
-import org.neotech.app.abysner.presentation.screens.planner.decoplan.GasPieChart
-import org.neotech.app.abysner.presentation.getUserReadableMessage
-import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.domain.utilities.higherThenDelta
@@ -48,7 +41,11 @@ import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.textfield.ExpandableText
+import org.neotech.app.abysner.presentation.getUserReadableMessage
+import org.neotech.app.abysner.presentation.preview.PreviewData
+import org.neotech.app.abysner.presentation.screens.planner.decoplan.GasPieChart
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.LoadingBoxWithBlur
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
 fun GasPlanCardComponent(
@@ -72,7 +69,17 @@ fun GasPlanCardComponent(
                 Text(
                     modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                     style = MaterialTheme.typography.titleLarge,
-                    text = "Gas plan"
+                    text = buildAnnotatedString {
+                        append("Gas plan")
+                        withStyle(MaterialTheme.typography.titleSmall.toSpanStyle()) {
+                            if(divePlanSet?.isDeeper == true) {
+                                append(" +${divePlanSet.deeper}m")
+                            }
+                            if(divePlanSet?.isLonger == true) {
+                                append(" +${divePlanSet.longer}min")
+                            }
+                        }
+                    }
                 )
 
                 if (divePlanSet == null || divePlanSet.isEmpty) {
@@ -136,9 +143,10 @@ fun GasPlanCardComponent(
 
                     ExpandableText(
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        text = "Note: All gas information is calculated based on the contingency (deeper & longer) plan:\n\n - 'Baseline' represents the gas requirement for a single diver to normally complete the contingency plan.\n\n - 'Lost gas extra' represents the extra gas that is needed for a safe ascent (including deco) should a buddy lose one or more gas mixes at the worst possible time during the dive (calculated using the out-of-air SAC rate). This lost-gas calculation assumes buddy breathing is possible, however with deco gasses this may not always be the case and you may have to take turns using the deco gas. No extra (bottom) gas is accounted for those situations! Also keep in mind that you need to plan your tanks carefully taking into account 'minimum functional pressure' of your regulators.",
+                        text = "Note: 'Base' represents the gas requirement for a single diver to normally complete the plan. 'Out-of-air' represents the extra gas that is needed for a safe ascent (including deco) should a buddy lose one or more gas mixes at the worst possible time during the dive (calculated using the out-of-air SAC rate). This out-of-air calculation assumes buddy breathing is possible, however with deco gasses this may not always be the case and you may have to take turns using the deco gas. No extra (bottom) gas is accounted for those situations! Also keep in mind that you need to plan your tanks carefully taking into account 'minimum functional pressure' of your regulators.",
                         style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic)
                     )
+
                 }
             }
         }
@@ -249,7 +257,7 @@ fun GasLimitsTable(
         }
     ) {
 
-        (divePlanSet.deeperAndLonger.maximumGasDensities + divePlanSet.base.maximumGasDensities)
+        (divePlanSet.base.maximumGasDensities)
             .distinct().sortedBy { it.gas.oxygenFraction }.forEach {
 
                 row {
@@ -302,21 +310,8 @@ fun GasLimitsTable(
 @Composable
 private fun GasPlanCardComponentPreview() {
     AbysnerTheme {
-
-        val divePlan = DivePlanner().apply {
-            configuration = Configuration()
-        }.getDecoPlan(
-            plan = listOf(
-                DiveProfileSection(16, 45, Cylinder.steel12Liter(Gas.Air)),
-                DiveProfileSection(16, 35, Cylinder.steel12Liter(Gas(0.28, 0.0))),
-            ),
-            decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Oxygen50)),
-        )
-
-        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
-
         GasPlanCardComponent(
-            divePlanSet = DivePlanSet(divePlan, divePlan, gasPlan),
+            divePlanSet = PreviewData.divePlan,
             planningException = null,
             isLoading = false
         )

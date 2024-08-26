@@ -117,7 +117,7 @@ fun DecoPlanGraph(
                 val label = when(it) {
                     0 -> "Depth"
                     1 -> "GF ceiling"
-                    2 -> "Avg. depth (running)"
+                    2 -> "Avg. depth"
                     else -> error("Unknown legend index")
                 }
                 Text(text = label, style = MaterialTheme.typography.bodySmall)

@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.screens.planner
 
-import androidx.compose.material3.Text
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -203,36 +202,34 @@ class PlanScreenViewModel(
                 val planner = DivePlanner()
                 planner.configuration = configuration
 
-                val segmentsDeeperAndLonger = inputState.segments.toMutableList()
-                val index =
-                    segmentsDeeperAndLonger.indices.maxByOrNull { segmentsDeeperAndLonger[it].depth }
+                val segmentsAdjusted = inputState.segments.toMutableList()
+                val index = segmentsAdjusted.indices.maxByOrNull { segmentsAdjusted[it].depth }
                 val deepestSegment = index?.let { inputState.segments[it] }
 
+                val deeper = configuration.contingencyDeeper.takeIf { inputState.deeper }
+                val longer = configuration.contingencyLonger.takeIf { inputState.longer }
+
                 if (deepestSegment != null) {
-                    segmentsDeeperAndLonger[index] = deepestSegment.copy(
-                        depth = deepestSegment.depth + configuration.contingencyDeeper,
-                        duration = deepestSegment.duration + configuration.contingencyLonger
+                    segmentsAdjusted[index] = deepestSegment.copy(
+                        depth = deepestSegment.depth + (deeper ?: 0),
+                        duration = deepestSegment.duration + (longer ?: 0)
                     )
                 }
 
                 val decoGasses = inputState.availableCylinders.filter { it.isChecked }.map { it.cylinder }
 
-                val basePlan = planner.getDecoPlan(
-                    plan = inputState.segments,
+                val adjustedPlan = planner.getDecoPlan(
+                    plan = segmentsAdjusted,
                     decoGases = decoGasses,
                 )
 
-                val deeperAndLongerPlan = planner.getDecoPlan(
-                    plan = segmentsDeeperAndLonger,
-                    decoGases = decoGasses,
-                )
-
-                val gasPlan = GasPlanner().calculateGasPlan(deeperAndLongerPlan)
+                val gasPlan = GasPlanner().calculateGasPlan(adjustedPlan)
 
                 Result.success(
                     DivePlanSet(
-                        base = basePlan,
-                        deeperAndLonger = deeperAndLongerPlan,
+                        base = adjustedPlan,
+                        deeper = deeper,
+                        longer = longer,
                         gasPlan = gasPlan,
                     )
                 )
@@ -245,7 +242,18 @@ class PlanScreenViewModel(
         }
     }
 
+    fun setContingency(deeper: Boolean, longer: Boolean) {
+        inputState.update { inputState ->
+            inputState.copy(
+                deeper = deeper,
+                longer = longer,
+            )
+        }
+    }
+
     data class InputState(
+        val deeper: Boolean = false,
+        val longer: Boolean = false,
         val segments: List<DiveProfileSection> = defaultProfile,
         val availableCylinders: List<CylinderStatusUiModel> = defaultCylinders,
     )

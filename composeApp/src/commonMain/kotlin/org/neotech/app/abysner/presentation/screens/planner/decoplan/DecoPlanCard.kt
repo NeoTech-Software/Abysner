@@ -71,10 +71,12 @@ import org.neotech.app.abysner.domain.utilities.DecimalFormatter
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
+import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.SingleChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.appendBold
+import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
 import org.neotech.app.abysner.presentation.component.rememberSingleChoiceSegmentedButtonRowState
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.screens.planner.ConfigurationSummeryDialog
@@ -88,6 +90,7 @@ fun DecoPlanCardComponent(
     settings: SettingsModel,
     planningException: Throwable?,
     isLoading: Boolean,
+    onContingencyInputChanged: (deeper: Boolean, longer: Boolean) -> Unit
 ) {
     val errorMessage: String? = planningException?.getUserReadableMessage()
 
@@ -127,24 +130,36 @@ fun DecoPlanCardComponent(
                     }
                 } else {
 
-                    val singleChoiceRowState = rememberSingleChoiceSegmentedButtonRowState(0)
+                    val items = listOf("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper}", "Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
 
-                    SingleChoiceSegmentedButtonRow(
+                    val preSelected = when {
+                        divePlanSet.isDeeper && divePlanSet.isLonger -> arrayOf(0, 1)
+                        divePlanSet.isDeeper -> arrayOf(0)
+                        divePlanSet.isLonger -> arrayOf(1)
+                        else -> emptyArray()
+                    }
+
+                    val multiChoiceRowState = rememberMultiChoiceSegmentedButtonRowState(preSelected)
+
+                    MultiChoiceSegmentedButtonRow(
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .wrapContentWidth()
                             .padding(horizontal = 16.dp)
                             .padding(bottom = 16.dp),
-                        items = listOf("Normal", "Contingency"),
-                        singleChoiceSegmentedButtonRowState = singleChoiceRowState,
+                        items = items,
+                        multiChoiceSegmentedButtonRowState = multiChoiceRowState,
+                        onChecked = { _, _, _ ->
+                            onContingencyInputChanged(
+                                multiChoiceRowState.checkedItemIndexes.contains(0),
+                                multiChoiceRowState.checkedItemIndexes.contains(1)
+                            )
+                        }
                     ) { item, _ ->
                         Text(text = item, maxLines = 1)
                     }
 
-                    val planToShow = when (singleChoiceRowState.selectedIndex) {
-                        1 -> divePlanSet.deeperAndLonger
-                        else -> divePlanSet.base
-                    }
+                    val planToShow = divePlanSet.base
 
                     DecoPlanGraph(
                         modifier = Modifier
@@ -407,10 +422,11 @@ fun DecoPlanCardComponentPreview() {
         )
 
         DecoPlanCardComponent(
-            divePlanSet = DivePlanSet(divePlan, divePlan, GasPlan(emptyMap(), emptyMap())),
+            divePlanSet = DivePlanSet(base = divePlan, deeper = null, longer = null, gasPlan = GasPlan(emptyMap(), emptyMap())),
             settings = SettingsModel(),
             planningException = null,
-            isLoading = false
+            isLoading = false,
+            onContingencyInputChanged = { _, _ -> }
         )
     }
 }
