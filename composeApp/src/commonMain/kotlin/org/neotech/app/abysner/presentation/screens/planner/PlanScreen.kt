@@ -15,9 +15,13 @@ package org.neotech.app.abysner.presentation.screens.planner
 import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_outline_settings_24
 import abysner.composeapp.generated.resources.ic_outline_tune_24
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -40,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +65,7 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
+import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.Destinations
@@ -92,18 +98,16 @@ fun PlannerScreen(
     }
 
     val viewState: PlanScreenViewModel.ViewState by viewModel.uiState.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
 
     AbysnerTheme {
 
-        val cylinderPickerBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        var showCylinderPickerBottomSheet by remember { mutableStateOf(false) }
-        var cylinderBeingEdited: Cylinder? by remember { mutableStateOf(null) }
+        val showCylinderPickerBottomSheet = remember { mutableStateOf(false) }
+        val cylinderBeingEdited: MutableState<Cylinder?> = remember { mutableStateOf(null) }
 
-        val segmentPickerBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        var segmentBeingEdited: Int? by remember { mutableStateOf(null) }
-        var showSegmentPickerBottomSheet by remember { mutableStateOf(false) }
+        val segmentBeingEdited: MutableState<Int?> = remember { mutableStateOf(null) }
+        val showSegmentPickerBottomSheet = remember { mutableStateOf(false) }
 
+        // TODO move these into the ViewState and the collection to the ViewModel
         val configuration by planningRepository.configuration.collectAsState()
         val settings by settingsRepository.settings.collectAsState()
 
@@ -121,185 +125,253 @@ fun PlannerScreen(
                             }
                         },
                         actions = {
-
-                            val bitmapRenderController = LocalBitmapRenderController.current
-
-                            val plan = viewState.divePlanSet.getOrNull()
-                            if(plan != null && plan.isEmpty.not()) {
-                                IconButton(onClick = {
-                                    coroutineScope.launch {
-                                        bitmapRenderController.renderBitmap(
-                                            width = 1080,
-                                            height = null,
-                                            onRendered = {
-                                                shareImageBitmap(it)
-                                            }
-                                        ) {
-                                            ShareImage(
-                                                divePlan = plan,
-                                                settingsModel = settings,
-                                            )
-                                        }
-                                    }
-                                }) {
-                                    Icon(
-                                        imageVector = IconSet.share,
-                                        contentDescription = "Share"
-                                    )
-                                }
-                            }
-
-                            var showMenu by remember { mutableStateOf(false) }
-
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Dive configuration")},
-                                    onClick = {
-                                        showMenu = false
-                                        navController.navigate(Destinations.DIVE_CONFIGURATION.destinationName) },
-                                    leadingIcon = { Icon(painter = painterResource(resource = Res.drawable.ic_outline_tune_24), contentDescription = "Dive configuration") }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Settings")},
-                                    onClick = {
-                                        showMenu = false
-                                        navController.navigate(Destinations.APP_CONFIGURATION.destinationName)
-                                              },
-                                    leadingIcon = { Icon(painter = painterResource(resource = Res.drawable.ic_outline_settings_24), contentDescription = "Settings") }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("About")},
-                                    onClick = {
-                                        showMenu = false
-                                        navController.navigate(Destinations.ABOUT.destinationName) },
-                                    leadingIcon = { Icon(imageVector = Icons.Outlined.Info, contentDescription = "About") }
-                                )
-                            }
-                            IconButton(onClick = { showMenu = true }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.MoreVert,
-                                    contentDescription = "More"
-                                )
-                            }
+                            AppBarActions(viewState, navController, settings)
                         })
                 }
             }
         ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .windowInsetsPadding(
-                        androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(
-                            WindowInsetsSides.Horizontal
+            AnimatedVisibility(!viewState.isLoading, enter = fadeIn(), exit = fadeOut()) {
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .windowInsetsPadding(
+                            androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(
+                                WindowInsetsSides.Horizontal
+                            )
                         )
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+
+                    CylinderSelectionCardComponent(
+                        gases = viewState.availableGas,
+                        onAddCylinder = {
+                            showCylinderPickerBottomSheet.value = true
+                        },
+                        onRemoveCylinder = { gas ->
+                            viewModel.removeCylinder(gas)
+                        },
+                        onCylinderChecked = { gas, isChecked ->
+                            viewModel.toggleCylinder(gas, isChecked)
+                        },
+                        onEditCylinder = { gas ->
+                            cylinderBeingEdited.value = gas
+                            showCylinderPickerBottomSheet.value = true
+                        }
                     )
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
 
-                CylinderSelectionCardComponent(
-                    gases = viewState.availableGas,
-                    onAddCylinder = {
-                        showCylinderPickerBottomSheet = true
-                    },
-                    onRemoveCylinder = { gas ->
-                        viewModel.removeCylinder(gas)
-                    },
-                    onCylinderChecked = { gas, isChecked ->
-                        viewModel.toggleCylinder(gas, isChecked)
-                    },
-                    onEditCylinder = { gas ->
-                        cylinderBeingEdited = gas
-                        showCylinderPickerBottomSheet = true
-                    }
-                )
+                    SegmentsCardComponent(
+                        segments = viewState.segments,
+                        addAllowed = viewState.availableGas.any { it.isChecked },
+                        onAddSegment = {
+                            segmentBeingEdited.value = null
+                            showSegmentPickerBottomSheet.value = true
+                        },
+                        onRemoveSegment = { index, _ ->
+                            viewModel.removeSegment(index)
+                        },
+                        onEditSegment = { index, _ ->
+                            segmentBeingEdited.value = index
+                            showSegmentPickerBottomSheet.value = true
+                        },
+                    )
 
-                SegmentsCardComponent(
-                    segments = viewState.segments,
-                    addAllowed = viewState.availableGas.any { it.isChecked },
-                    onAddSegment = {
-                        segmentBeingEdited = null
-                        showSegmentPickerBottomSheet = true
-                    },
-                    onRemoveSegment = { index, _ ->
-                        viewModel.removeSegment(index)
-                    },
-                    onEditSegment = { index, _ ->
-                        segmentBeingEdited = index
-                        showSegmentPickerBottomSheet = true
-                    },
-                )
-
-                DecoPlanCardComponent(
-                    divePlanSet = viewState.divePlanSet.getOrNull(),
-                    settings = settings,
-                    planningException = viewState.divePlanSet.exceptionOrNull(),
-                    isLoading = viewState.isLoading,
-                    onContingencyInputChanged = { deeper, longer ->
-                        viewModel.setContingency(deeper, longer)
-                    }
-                )
-                GasPlanCardComponent(
-                    isLoading = viewState.isLoading,
-                    divePlanSet = viewState.divePlanSet.getOrNull(),
-                    planningException = viewState.divePlanSet.exceptionOrNull(),
-                )
-            }
-        }
-
-        if (showCylinderPickerBottomSheet) {
-            CylinderPickerBottomSheet(
-                sheetState = cylinderPickerBottomSheetState,
-                isAdd = cylinderBeingEdited == null,
-                initialValue = cylinderBeingEdited,
-                environment = configuration.environment,
-                maxPPO2 = configuration.maxPPO2,
-                maxPPO2Secondary = configuration.maxPPO2Deco,
-                onAddOrUpdateCylinder = {
-                    if(cylinderBeingEdited != null) {
-                        viewModel.updateCylinder(it)
-                    } else {
-                        viewModel.addCylinder(it)
-                    }
+                    DecoPlanCardComponent(
+                        divePlanSet = viewState.divePlanSet.getOrNull(),
+                        settings = settings,
+                        planningException = viewState.divePlanSet.exceptionOrNull(),
+                        isLoading = viewState.isCalculatingDivePlan,
+                        onContingencyInputChanged = { deeper, longer ->
+                            viewModel.setContingency(deeper, longer)
+                        }
+                    )
+                    GasPlanCardComponent(
+                        isLoading = viewState.isCalculatingDivePlan,
+                        divePlanSet = viewState.divePlanSet.getOrNull(),
+                        planningException = viewState.divePlanSet.exceptionOrNull(),
+                    )
                 }
-            ) {
-                showCylinderPickerBottomSheet = false
-                cylinderBeingEdited = null
             }
-        }
 
-        if (showSegmentPickerBottomSheet) {
-
-            val initial = segmentBeingEdited?.let { viewState.segments[it] }
-
-            val previousIndex = (segmentBeingEdited ?: (viewState.segments.size)) - 1
-
-            SegmentPickerBottomSheet(
-                sheetState = segmentPickerBottomSheetState,
-                isAdd = initial == null,
-                initialValue = initial,
-                maxPPO2 = configuration.maxPPO2,
-                maxDensity = Gas.MAX_GAS_DENSITY,
-                environment = configuration.environment,
-                cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder },
-                previousDepth = viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
+            ShowCylinderPickerBottomSheet(
+                show = showCylinderPickerBottomSheet,
                 configuration = configuration,
-                onAddOrUpdateDiveSegment = {
-                    if(segmentBeingEdited != null) {
-                        viewModel.updateSegment(segmentBeingEdited!!, it)
-                    } else {
-                        viewModel.addSegment(it)
-                    }
-                }
-            ) {
-                showSegmentPickerBottomSheet = false
-                segmentBeingEdited = null
-            }
+                cylinderBeingEdited = cylinderBeingEdited,
+                viewModel = viewModel,
+            )
+
+            ShowSegmentPickerBottomSheet(
+                show = showSegmentPickerBottomSheet,
+                configuration = configuration,
+                segmentBeingEdited = segmentBeingEdited,
+                viewModel = viewModel,
+                viewState = viewState
+            )
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShowSegmentPickerBottomSheet(
+    show: MutableState<Boolean>,
+    viewState: PlanScreenViewModel.ViewState,
+    segmentBeingEdited: MutableState<Int?>,
+    configuration: Configuration,
+    viewModel: PlanScreenViewModel,
+) {
+    if (show.value) {
+
+        val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+        val initial = segmentBeingEdited.value?.let {  viewState.segments[it] }
+        val previousIndex = (segmentBeingEdited.value ?: ( viewState.segments.size)) - 1
+
+
+        SegmentPickerBottomSheet(
+            sheetState = bottomSheetState,
+            isAdd = initial == null,
+            initialValue = initial,
+            maxPPO2 = configuration.maxPPO2,
+            maxDensity = Gas.MAX_GAS_DENSITY,
+            environment = configuration.environment,
+            cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder },
+            previousDepth =  viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
+            configuration = configuration,
+            onAddOrUpdateDiveSegment = {
+                if (segmentBeingEdited.value != null) {
+                    viewModel.updateSegment(segmentBeingEdited.value!!, it)
+                } else {
+                    viewModel.addSegment(it)
+                }
+            }
+        ) {
+            show.value = false
+            segmentBeingEdited.value = null
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShowCylinderPickerBottomSheet(
+    show: MutableState<Boolean>,
+    configuration: Configuration,
+    cylinderBeingEdited: MutableState<Cylinder?>,
+    viewModel: PlanScreenViewModel,
+) {
+    if (show.value) {
+
+        val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+        CylinderPickerBottomSheet(
+            sheetState = bottomSheetState,
+            isAdd = cylinderBeingEdited.value == null,
+            initialValue = cylinderBeingEdited.value,
+            environment = configuration.environment,
+            maxPPO2 = configuration.maxPPO2,
+            maxPPO2Secondary = configuration.maxPPO2Deco,
+            onAddOrUpdateCylinder = {
+                if (cylinderBeingEdited.value != null) {
+                    viewModel.updateCylinder(it)
+                } else {
+                    viewModel.addCylinder(it)
+                }
+            }
+        ) {
+            show.value = false
+            cylinderBeingEdited.value = null
+        }
+    }
+}
+
+@Composable
+private fun RowScope.AppBarActions(
+    viewState: PlanScreenViewModel.ViewState,
+    navController: NavHostController,
+    settings: SettingsModel,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val bitmapRenderController = LocalBitmapRenderController.current
+
+    val plan = viewState.divePlanSet.getOrNull()
+    if (plan != null && plan.isEmpty.not()) {
+        IconButton(onClick = {
+            coroutineScope.launch {
+                bitmapRenderController.renderBitmap(
+                    width = 1024,
+                    height = null,
+                    onRendered = {
+                        shareImageBitmap(it)
+                    }
+                ) {
+                    ShareImage(
+                        divePlan = plan,
+                        settingsModel = settings,
+                    )
+                }
+            }
+        }) {
+            Icon(
+                imageVector = IconSet.share,
+                contentDescription = "Share"
+            )
+        }
+    }
+
+    var showMenu by remember { mutableStateOf(false) }
+
+    DropdownMenu(
+        expanded = showMenu,
+        onDismissRequest = { showMenu = false }
+    ) {
+        DropdownMenuItem(
+            text = { Text("Dive configuration") },
+            onClick = {
+                showMenu = false
+                navController.navigate(Destinations.DIVE_CONFIGURATION.destinationName)
+            },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(resource = Res.drawable.ic_outline_tune_24),
+                    contentDescription = "Dive configuration"
+                )
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("Settings") },
+            onClick = {
+                showMenu = false
+                navController.navigate(Destinations.APP_CONFIGURATION.destinationName)
+            },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(resource = Res.drawable.ic_outline_settings_24),
+                    contentDescription = "Settings"
+                )
+            }
+        )
+        DropdownMenuItem(
+            text = { Text("About") },
+            onClick = {
+                showMenu = false
+                navController.navigate(Destinations.ABOUT.destinationName)
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = "About"
+                )
+            }
+        )
+    }
+    IconButton(onClick = { showMenu = true }) {
+        Icon(
+            imageVector = Icons.Outlined.MoreVert,
+            contentDescription = "More"
+        )
     }
 }
 
@@ -311,6 +383,10 @@ private fun PlannerScreenPreview() {
         override val configuration = MutableStateFlow(Configuration())
 
         override fun updateConfiguration(updateBlock: (Configuration) -> Configuration) = Unit
+
+        override suspend fun getDivePlanInput(): DivePlanInputModel? = null
+
+        override fun setDivePlanInput(divePlanInputModel: DivePlanInputModel) = Unit
     }
 
     val settingsRepository = object : SettingsRepository {

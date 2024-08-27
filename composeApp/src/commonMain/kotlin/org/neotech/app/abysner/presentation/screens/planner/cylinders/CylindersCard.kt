@@ -36,19 +36,19 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.CheckableListItemComponent
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.modifier.ifTrue
 import org.neotech.app.abysner.presentation.component.modifier.invisible
-import org.neotech.app.abysner.presentation.screens.planner.CylinderStatusUiModel
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
 fun CylinderSelectionCardComponent(
     modifier: Modifier = Modifier,
-    gases: List<CylinderStatusUiModel>,
+    gases: List<PlannedCylinderModel>,
     onAddCylinder: () -> Unit,
     onRemoveCylinder: (cylinder: Cylinder) -> Unit,
     onCylinderChecked: (cylinder: Cylinder, checked: Boolean) -> Unit,
@@ -194,17 +194,17 @@ fun CylinderSelectionCardComponentPreview() {
     AbysnerTheme {
         CylinderSelectionCardComponent(
             gases = listOf(
-                CylinderStatusUiModel(
+                PlannedCylinderModel(
                     isChecked = true,
                     isInUse = true,
                     cylinder = Cylinder(gas = Gas.Air, 232.0, 12.0)
                 ),
-                CylinderStatusUiModel(
+                PlannedCylinderModel(
                     isChecked = true,
                     isInUse = false,
                     cylinder = Cylinder(gas = Gas.Oxygen50, 207.0, 11.1)
                 ),
-                CylinderStatusUiModel(
+                PlannedCylinderModel(
                     isChecked = false,
                     isInUse = false,
                     cylinder = Cylinder(gas = Gas.Oxygen80, 207.0, 9.0)

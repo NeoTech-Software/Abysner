@@ -15,32 +15,40 @@ package org.neotech.app.abysner.presentation.screens.planner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
+import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 import kotlin.time.measureTimedValue
 
+@OptIn(FlowPreview::class)
 @Inject
 class PlanScreenViewModel(
     planningRepository: PlanningRepository,
 ) : ViewModel() {
 
-    private val inputState = MutableStateFlow(InputState())
-    private val isLoading = MutableStateFlow(false)
+    private val inputState = MutableStateFlow(defaultDivePlanInputModel)
+    private val isCalculatingDivePlan = MutableStateFlow(false)
+    private val isLoading = MutableStateFlow(true)
 
     /**
      * The downside of using combine on a StateFlow is that it returns a cold flow, meaning that
@@ -55,11 +63,11 @@ class PlanScreenViewModel(
         // For now it seems the recalculation is so fast, that showing a loading state is kinda pointless.
         // Maybe instead of a full loading status, a small indicator somewhere can show whether or
         // not recalculation is happening?
-        isLoading.value = true
+        isCalculatingDivePlan.value = true
         val result = measureTimedValue {
             calculateDivePlan(inputState, configuration)
         }.also {
-            isLoading.value = false
+            isCalculatingDivePlan.value = false
         }
         println("Duration: Calculating dive plan took ${result.duration}")
         result.value
@@ -75,12 +83,13 @@ class PlanScreenViewModel(
         )
 
     val uiState: StateFlow<ViewState> =
-        combine(inputState, divePlanSet, isLoading) { input, divePlan, isLoading ->
+        combine(inputState, divePlanSet, isCalculatingDivePlan, isLoading) { input, divePlan, isCalculatingDivePlan, isLoading ->
             ViewState(
-                segments = input.segments,
-                availableGas = input.availableCylinders,
+                segments = input.plannedProfile,
+                availableGas = input.cylinders,
+                isCalculatingDivePlan = isCalculatingDivePlan,
+                divePlanSet = divePlan,
                 isLoading = isLoading,
-                divePlanSet = divePlan
             )
         }.stateIn(
             scope = viewModelScope,
@@ -88,7 +97,23 @@ class PlanScreenViewModel(
             initialValue = ViewState()
         )
 
-    private fun updateCylinderUsage(segments: List<DiveProfileSection>, cylinders: List<CylinderStatusUiModel>): List<CylinderStatusUiModel> {
+    init {
+        viewModelScope.launch(context = Dispatchers.IO) {
+
+            inputState.value = planningRepository.getDivePlanInput() ?: defaultDivePlanInputModel
+            //delay(1000)
+            isLoading.value = false
+            inputState.debounce(1000).collectLatest {
+                try {
+                    planningRepository.setDivePlanInput(it)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    private fun updateCylinderUsage(segments: List<DiveProfileSection>, cylinders: List<PlannedCylinderModel>): List<PlannedCylinderModel> {
         val inUse = segments.map { it.cylinder }
         return cylinders.map {
             it.copy(isInUse = inUse.contains(it.cylinder))
@@ -97,34 +122,34 @@ class PlanScreenViewModel(
 
     fun updateSegment(index: Int, diveProfileSection: DiveProfileSection) {
         inputState.update {
-            val newSegments = it.segments.toMutableList().apply {
+            val newSegments = it.plannedProfile.toMutableList().apply {
                 set(index, diveProfileSection)
             }
             it.copy(
-                segments = newSegments,
-                availableCylinders = updateCylinderUsage(newSegments, it.availableCylinders)
+                plannedProfile = newSegments,
+                cylinders = updateCylinderUsage(newSegments, it.cylinders)
             )
         }
     }
 
     fun addSegment(diveProfileSection: DiveProfileSection) {
         inputState.update {
-            val newSegments = it.segments.plus(diveProfileSection)
+            val newSegments = it.plannedProfile.plus(diveProfileSection)
             it.copy(
-                segments = newSegments,
-                availableCylinders = updateCylinderUsage(newSegments, it.availableCylinders)
+                plannedProfile = newSegments,
+                cylinders = updateCylinderUsage(newSegments, it.cylinders)
             )
         }
     }
 
     fun removeSegment(index: Int) {
         inputState.update {
-            val newSegments = it.segments.toMutableList().apply {
+            val newSegments = it.plannedProfile.toMutableList().apply {
                 removeAt(index)
             }
             it.copy(
-                segments = newSegments,
-                availableCylinders = updateCylinderUsage(newSegments, it.availableCylinders)
+                plannedProfile = newSegments,
+                cylinders = updateCylinderUsage(newSegments, it.cylinders)
             )
         }
     }
@@ -132,8 +157,8 @@ class PlanScreenViewModel(
     fun addCylinder(cylinder: Cylinder) {
         inputState.update {
             it.copy(
-                availableCylinders = it.availableCylinders.plus(
-                    CylinderStatusUiModel(
+                cylinders = it.cylinders.plus(
+                    PlannedCylinderModel(
                         cylinder = cylinder,
                         isChecked = false,
                         isInUse = false
@@ -145,13 +170,13 @@ class PlanScreenViewModel(
 
     fun updateCylinder(cylinder: Cylinder) {
         inputState.update { inputState ->
-            val index = inputState.availableCylinders.indexOfFirst { it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier }
-            val item = inputState.availableCylinders[index]
+            val index = inputState.cylinders.indexOfFirst { it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier }
+            val item = inputState.cylinders[index]
             inputState.copy(
-                availableCylinders = inputState.availableCylinders.toMutableList().apply {
+                cylinders = inputState.cylinders.toMutableList().apply {
                     set(index, item.copy(cylinder = cylinder))
                 },
-                segments = inputState.segments.map {
+                plannedProfile = inputState.plannedProfile.map {
                     if (it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier) {
                         it.copy(cylinder = cylinder)
                     } else {
@@ -164,12 +189,12 @@ class PlanScreenViewModel(
 
     fun toggleCylinder(cylinder: Cylinder, enabled: Boolean) {
         inputState.update { inputState ->
-            if (inputState.segments.any { it.cylinder == cylinder }) {
+            if (inputState.plannedProfile.any { it.cylinder == cylinder }) {
                 // Cylinder is in used, do not allow toggle.
                 inputState
             } else {
                 inputState.copy(
-                    availableCylinders = inputState.availableCylinders.map { pair ->
+                    cylinders = inputState.cylinders.map { pair ->
                         if (pair.cylinder == cylinder) {
                             pair.copy(isChecked = enabled)
                         } else {
@@ -183,12 +208,12 @@ class PlanScreenViewModel(
 
     fun removeCylinder(gas: Cylinder) {
         inputState.update { inputState ->
-            if (inputState.segments.any { it.cylinder == gas }) {
+            if (inputState.plannedProfile.any { it.cylinder == gas }) {
                 // Cylinder is in used, do not allow removal.
                 inputState
             } else {
                 inputState.copy(
-                    availableCylinders = inputState.availableCylinders.toMutableList().apply {
+                    cylinders = inputState.cylinders.toMutableList().apply {
                         removeAll { pair -> pair.cylinder == gas }
                     }
                 )
@@ -196,15 +221,15 @@ class PlanScreenViewModel(
         }
     }
 
-    private suspend fun calculateDivePlan(inputState: InputState, configuration: Configuration, ): Result<DivePlanSet> {
+    private suspend fun calculateDivePlan(inputState: DivePlanInputModel, configuration: Configuration, ): Result<DivePlanSet> {
         return try {
             val timedResult = measureTimedValue {
                 val planner = DivePlanner()
                 planner.configuration = configuration
 
-                val segmentsAdjusted = inputState.segments.toMutableList()
+                val segmentsAdjusted = inputState.plannedProfile.toMutableList()
                 val index = segmentsAdjusted.indices.maxByOrNull { segmentsAdjusted[it].depth }
-                val deepestSegment = index?.let { inputState.segments[it] }
+                val deepestSegment = index?.let { inputState.plannedProfile[it] }
 
                 val deeper = configuration.contingencyDeeper.takeIf { inputState.deeper }
                 val longer = configuration.contingencyLonger.takeIf { inputState.longer }
@@ -216,7 +241,7 @@ class PlanScreenViewModel(
                     )
                 }
 
-                val decoGasses = inputState.availableCylinders.filter { it.isChecked }.map { it.cylinder }
+                val decoGasses = inputState.cylinders.filter { it.isChecked }.map { it.cylinder }
 
                 val adjustedPlan = planner.getDecoPlan(
                     plan = segmentsAdjusted,
@@ -251,43 +276,31 @@ class PlanScreenViewModel(
         }
     }
 
-    data class InputState(
-        val deeper: Boolean = false,
-        val longer: Boolean = false,
-        val segments: List<DiveProfileSection> = defaultProfile,
-        val availableCylinders: List<CylinderStatusUiModel> = defaultCylinders,
-    )
-
     data class ViewState(
         val segments: List<DiveProfileSection> = defaultProfile,
-        val availableGas: List<CylinderStatusUiModel> = defaultCylinders,
+        val availableGas: List<PlannedCylinderModel> = defaultCylinders,
         val divePlanSet: Result<DivePlanSet?> = Result.success(null),
-        val isLoading: Boolean = false
+        val isCalculatingDivePlan: Boolean = false,
+        val isLoading: Boolean = true,
     )
 }
-
-data class CylinderStatusUiModel(
-    val cylinder: Cylinder,
-    val isInUse: Boolean,
-    val isChecked: Boolean,
-)
 
 // TODO consider removing defaults from the production version of the app.
 private val defaultCylinderAir = Cylinder.steel12Liter(gas = Gas.Air, pressure = 232.0)
 
 // TODO consider removing defaults from the production version of the app.
-private val defaultCylinders: List<CylinderStatusUiModel> = listOf(
-    CylinderStatusUiModel(
+private val defaultCylinders: List<PlannedCylinderModel> = listOf(
+    PlannedCylinderModel(
         cylinder = defaultCylinderAir,
         isInUse = true,
         isChecked = true
     ),
-    CylinderStatusUiModel(
+    PlannedCylinderModel(
         cylinder = Cylinder.aluminium80Cuft(gas = Gas.Oxygen50, pressure = 207.0),
         isInUse = false,
         isChecked = true
     ),
-    CylinderStatusUiModel(
+    PlannedCylinderModel(
         cylinder = Cylinder.aluminium63Cuft(gas = Gas.Oxygen80, pressure = 207.0),
         isInUse = false,
         isChecked = false
@@ -302,5 +315,13 @@ private val defaultProfile = listOf(
         defaultCylinderAir
     )
 )
+
+private val defaultDivePlanInputModel = DivePlanInputModel(
+    deeper = false,
+    longer = false,
+    plannedProfile = defaultProfile,
+    cylinders = defaultCylinders,
+)
+
 
 private const val SUBSCRIPTION_TIME_OUT: Long = 5 * 60 * 1000

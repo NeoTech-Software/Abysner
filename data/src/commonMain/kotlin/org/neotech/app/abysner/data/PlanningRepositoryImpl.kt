@@ -21,12 +21,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import me.tatarka.inject.annotations.Inject
+import org.neotech.app.abysner.data.plan.resources.DivePlanInputResourceV1
+import org.neotech.app.abysner.data.plan.toModel
+import org.neotech.app.abysner.data.plan.toResource
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Salinity
+import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.persistence.PersistenceRepository
 import org.neotech.app.abysner.domain.persistence.get
 import org.neotech.app.abysner.domain.persistence.set
@@ -105,7 +112,22 @@ class PlanningRepositoryImpl(
             }
         }
     }
+
+    override fun setDivePlanInput(divePlanInputModel: DivePlanInputModel) {
+        scope.launch {
+            persistenceRepository.updatePreferences {
+                it[PREFERENCE_KEY_INPUT_DIVE_PLAN] = Json.encodeToString(divePlanInputModel.toResource())
+            }
+        }
+    }
+
+    override suspend fun getDivePlanInput(): DivePlanInputModel? {
+        val json = persistenceRepository.getPreferences().first()[PREFERENCE_KEY_INPUT_DIVE_PLAN] ?: return null
+        return Json.decodeFromString<DivePlanInputResourceV1>(json).toModel()
+    }
 }
+
+private val PREFERENCE_KEY_INPUT_DIVE_PLAN = stringPreferencesKey("input.diveplan")
 
 private val PREFERENCE_KEY_ALGORITHM_TYPE = stringPreferencesKey("algorithm.type")
 private val PREFERENCE_KEY_ALGORITHM_GF_LOW = doublePreferencesKey("algorithm.buhlmann.gradientFactor.low")
