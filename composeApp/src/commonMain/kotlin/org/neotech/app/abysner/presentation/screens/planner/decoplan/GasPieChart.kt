@@ -130,8 +130,8 @@ fun GasPieChart(
             itemCount = arrayOf(emergencyExtra.isNotEmpty(), base.isNotEmpty()).count { it },
             label = {
                 val label = when(it) {
-                    0 -> "Baseline*"
-                    1 -> "Lost gas extra*"
+                    0 -> "Base*"
+                    1 -> "(Out-of-air)*"
                     else -> error("Unknown legend index")
                 }
                 Text(text = label, style = MaterialTheme.typography.bodyMedium)

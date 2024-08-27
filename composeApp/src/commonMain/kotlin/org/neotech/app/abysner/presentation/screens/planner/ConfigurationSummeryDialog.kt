@@ -37,7 +37,7 @@ fun ConfigurationSummeryDialog(
         text = {
             Column {
                 Text(
-                    text = "Algorithm: ${configuration.algorithm.name}",
+                    text = "Algorithm: ${configuration.algorithm.shortName}",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(

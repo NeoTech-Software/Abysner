@@ -37,7 +37,8 @@ object PreviewData {
             )
             return DivePlanSet(
                 base = divePlan,
-                deeperAndLonger = divePlan,
+                deeper = null,
+                longer = null,
                 gasPlan = gasPlan
             )
         }

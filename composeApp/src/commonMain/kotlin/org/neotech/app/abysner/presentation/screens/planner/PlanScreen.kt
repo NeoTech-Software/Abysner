@@ -238,7 +238,10 @@ fun PlannerScreen(
                     divePlanSet = viewState.divePlanSet.getOrNull(),
                     settings = settings,
                     planningException = viewState.divePlanSet.exceptionOrNull(),
-                    isLoading = viewState.isLoading
+                    isLoading = viewState.isLoading,
+                    onContingencyInputChanged = { deeper, longer ->
+                        viewModel.setContingency(deeper, longer)
+                    }
                 )
                 GasPlanCardComponent(
                     isLoading = viewState.isLoading,

@@ -17,9 +17,14 @@ import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 
 data class DivePlanSet(
     val base: DivePlan,
-    val deeperAndLonger: DivePlan,
+    val deeper: Int?,
+    val longer: Int?,
     val gasPlan: GasPlan,
 ) {
+
+    val isDeeper = deeper != null
+    val isLonger = longer != null
+
     val configuration: Configuration = base.configuration
     val isEmpty: Boolean = base.isEmpty
 }
