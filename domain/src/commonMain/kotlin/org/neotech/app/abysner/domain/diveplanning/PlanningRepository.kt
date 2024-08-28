@@ -14,10 +14,15 @@ package org.neotech.app.abysner.domain.diveplanning
 
 import kotlinx.coroutines.flow.StateFlow
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 
 interface PlanningRepository {
 
     val configuration: StateFlow<Configuration>
 
     fun updateConfiguration(updateBlock: (Configuration) -> Configuration)
+
+    fun setDivePlanInput(divePlanInputModel: DivePlanInputModel)
+
+    suspend fun getDivePlanInput(): DivePlanInputModel?
 }

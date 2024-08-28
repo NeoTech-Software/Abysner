@@ -18,6 +18,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinx.serialization)
     id("abysner.jacoco-conventions")
 }
 
@@ -66,6 +67,7 @@ kotlin {
             implementation(libs.kotlinInject.runtimeKmp)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.kotlinx.serialization)
         }
     }
 }
