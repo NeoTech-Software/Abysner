@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -32,15 +33,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal data class RenderTask(
     val composable: @Composable () -> Unit,
     val width: Int?,
     val height: Int?,
-    val onComplete: (ImageBitmap) -> Unit
+    val onComplete: suspend (ImageBitmap) -> Unit
 )
 
 class BitmapRenderController {
@@ -51,7 +54,7 @@ class BitmapRenderController {
     suspend fun renderBitmap(
         width: Int?,
         height: Int?,
-        onRendered: (ImageBitmap) -> Unit,
+        onRendered: suspend (ImageBitmap) -> Unit,
         composable: @Composable () -> Unit,
     ) {
         _channel.send(
@@ -74,6 +77,8 @@ fun BitmapRenderRoot(content: @Composable () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val render = remember { BitmapRenderController() }
 
+    val coroutineScope = rememberCoroutineScope()
+
     val actionState: MutableState<RenderTask?> = remember { mutableStateOf(null) }
 
     LaunchedEffect(lifecycleOwner) {
@@ -93,7 +98,9 @@ fun BitmapRenderRoot(content: @Composable () -> Unit) {
             height = action.height,
             onRendered = {
                 actionState.value = null
-                action.onComplete(it)
+                coroutineScope.launch {
+                    action.onComplete(it)
+                }
             }
         ) {
             action.composable.invoke()
@@ -163,7 +170,10 @@ private fun RenderBitmap(
     }
 
     LaunchedEffect(true) {
-        val bitmap = graphicsLayer.toImageBitmap()
+        // Not sure if this is entirely save to do, but it seems to work regardless.
+        val bitmap = withContext(Dispatchers.IO) {
+            graphicsLayer.toImageBitmap()
+        }
         onRendered(bitmap)
     }
 }
