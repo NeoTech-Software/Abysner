@@ -14,4 +14,4 @@ package org.neotech.app.abysner.presentation.utilities
 
 import androidx.compose.ui.graphics.ImageBitmap
 
-expect fun shareImageBitmap(image: ImageBitmap)
+expect suspend fun shareImageBitmap(image: ImageBitmap)

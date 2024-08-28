@@ -18,25 +18,31 @@ import android.net.Uri
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.neotech.app.abysner.applicationContext
 import org.neotech.app.abysner.currentActivity
 import java.io.File
 import java.io.FileOutputStream
 
-actual fun shareImageBitmap(image: ImageBitmap) {
-    val bitmap = image.asAndroidBitmap()
+actual suspend fun shareImageBitmap(image: ImageBitmap) {
 
-    val file = File(applicationContext.cacheDir, "share/shared-image.png")
-    file.parentFile?.mkdirs()
-    FileOutputStream(file).use { out ->
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+    // Offload the file & bitmap handling a the IO dispatcher
+    val uri: Uri = withContext(Dispatchers.IO) {
+        val bitmap = image.asAndroidBitmap()
+
+        val file = File(applicationContext.cacheDir, "share/shared-image.png")
+        file.parentFile?.mkdirs()
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+
+       FileProvider.getUriForFile(
+            applicationContext,
+            "${applicationContext.packageName}.provider",
+            file
+        )
     }
-
-    val uri: Uri = FileProvider.getUriForFile(
-        applicationContext,
-        "${applicationContext.packageName}.provider",
-        file
-    )
 
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "image/png"

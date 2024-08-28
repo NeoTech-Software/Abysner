@@ -18,6 +18,9 @@ import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.refTo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.ColorType
@@ -122,27 +125,40 @@ private fun createWithCGImage(buffer: CValuesRef<ByteVar>, width: ULong, height:
     return image
 }
 
-actual fun shareImageBitmap(image: ImageBitmap) {
-    val uiImage: UIImage = image.toUiImage()
+actual suspend fun shareImageBitmap(image: ImageBitmap) {
 
-    val pngData: NSData? = UIImagePNGRepresentation(uiImage)
+    // Offload the file & bitmap handling a the IO dispatcher, including the creation of the
+    // UIActivityViewController, as that seems to take a long time to complete (more then a second
+    // sometimes).
+    val shareViewController: UIActivityViewController? = withContext(Dispatchers.IO) {
+        val uiImage: UIImage = image.toUiImage()
 
-    val cachesDirectory = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true).first() as String
-    val filePath = "$cachesDirectory/temp.png"
+        val pngData: NSData? = UIImagePNGRepresentation(uiImage)
 
-    if(pngData?.writeToFile(filePath, true) == true) {
+        val cachesDirectory = NSSearchPathForDirectoriesInDomains(
+            NSCachesDirectory,
+            NSUserDomainMask,
+            true
+        ).first() as String
 
-        val fileURL = NSURL.fileURLWithPath(filePath)
+        val filePath = "$cachesDirectory/temp.png"
 
-        val activityViewController = UIActivityViewController(listOf(fileURL), null)
-
-        val application = UIApplication.sharedApplication
-        application.keyWindow?.rootViewController?.presentViewController(
-            activityViewController,
-            true,
+        if (pngData?.writeToFile(filePath, true) == true) {
+            UIActivityViewController(listOf(NSURL.fileURLWithPath(filePath)), null)
+        } else {
+            println("Error: Could not share image file because file could not be written or conversion to PNG failed.")
             null
-        )
-    } else {
-        println("Error: Could not share image file because file could not be written.")
+        }
     }
+
+    if (shareViewController == null) {
+        return
+    }
+
+    val application = UIApplication.sharedApplication
+    application.keyWindow?.rootViewController?.presentViewController(
+        shareViewController,
+        true,
+        null
+    )
 }

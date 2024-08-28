@@ -14,6 +14,6 @@ package org.neotech.app.abysner.presentation.utilities
 
 import androidx.compose.ui.graphics.ImageBitmap
 
-actual fun shareImageBitmap(image: ImageBitmap) {
+actual suspend fun shareImageBitmap(image: ImageBitmap) {
     TODO("Not yet implemented")
 }
