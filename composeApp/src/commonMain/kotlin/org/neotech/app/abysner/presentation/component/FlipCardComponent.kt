@@ -29,15 +29,14 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 
+
 @Composable
 fun FlipCardComponent(
     showBack: MutableState<Boolean> = remember { mutableStateOf(false) },
-    onClick: () -> Unit = { showBack.value = !showBack.value },
     modifier: Modifier = Modifier,
     animateBackAutomatically: Boolean = true,
-    shape: Shape = MaterialTheme.shapes.large,
-    front: @Composable (modifier: Modifier) -> Unit = {},
-    back: @Composable (modifier: Modifier) -> Unit = {},
+    front: @Composable (modifier: Modifier, onClick: () -> Unit) -> Unit = { _, _, ->},
+    back: @Composable (modifier: Modifier, onClick: () -> Unit) -> Unit = {_, _, -> },
 ) {
 
     LaunchedEffect(showBack.value) {
@@ -56,20 +55,21 @@ fun FlipCardComponent(
         animationSpec = tween(delayMillis = 0)
     )
 
+
+    val onClick = remember { { showBack.value = !showBack.value} }
+
     Box(
         modifier = modifier
-            .clip(shape)
-            .clickable(onClick = onClick)
             .graphicsLayer {
                 rotationY = rotation.value
             },
     ) {
         if (rotation.value <= 90f) {
-            front(Modifier.fillMaxSize())
+            front(Modifier.fillMaxSize(), onClick)
         } else {
             back(Modifier.fillMaxSize().graphicsLayer {
                 rotationY = 180f
-            })
+            }, onClick)
         }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -92,7 +93,8 @@ fun AlertDialogCustomContent(
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
+        // Limit height to maximum that is equal to the maximum dialog width (internal: AlertDialog.DialogMaxWidth = 560)
+        modifier = Modifier.heightIn(max = (560 * 1.25).dp),
         properties = properties
     ) {
         AlertDialogContentCopy(

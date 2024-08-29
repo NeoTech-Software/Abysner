@@ -296,12 +296,12 @@ private val defaultCylinders: List<PlannedCylinderModel> = listOf(
         isChecked = true
     ),
     PlannedCylinderModel(
-        cylinder = Cylinder.aluminium80Cuft(gas = Gas.Oxygen50, pressure = 207.0),
+        cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50, pressure = 207.0),
         isInUse = false,
         isChecked = true
     ),
     PlannedCylinderModel(
-        cylinder = Cylinder.aluminium63Cuft(gas = Gas.Oxygen80, pressure = 207.0),
+        cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80, pressure = 207.0),
         isInUse = false,
         isChecked = false
     )

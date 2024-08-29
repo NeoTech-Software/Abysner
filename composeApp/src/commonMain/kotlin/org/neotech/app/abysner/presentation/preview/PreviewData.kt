@@ -29,7 +29,7 @@ object PreviewData {
                 plan = listOf(
                     DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
                 ),
-                decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Oxygen50)),
+                decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
             )
 
             val gasPlan = GasPlanner().calculateGasPlan(

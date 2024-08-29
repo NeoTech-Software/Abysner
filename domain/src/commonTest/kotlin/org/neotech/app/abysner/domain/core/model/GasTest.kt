@@ -22,7 +22,7 @@ class GasTest {
     fun test() {
         assertEquals(
             5.98,
-            Gas.Oxygen100.oxygenMod(1.6, Environment.Default),
+            Gas.Oxygen.oxygenMod(1.6, Environment.Default),
             DOUBLE_PRECISION_DELTA
         )
 

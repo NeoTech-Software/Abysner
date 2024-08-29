@@ -18,18 +18,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -37,9 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
@@ -50,7 +47,6 @@ import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
-import org.neotech.app.abysner.presentation.component.SingleChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
@@ -120,6 +116,8 @@ private fun CylinderPickerBottomSheetContent(
     val isStartPressureValid = remember { mutableStateOf(false) }
 
     val textFieldPositions = mutableStateMapOf<String, LayoutCoordinates>()
+
+    val showStandardGasPickerDialog = remember { mutableStateOf(false) }
 
     ModalBottomSheetScaffold(
         modifier = Modifier
@@ -201,12 +199,15 @@ private fun CylinderPickerBottomSheetContent(
                 maxPPO2 = maxPPO2,
                 maxPPO2Secondary = maxPPO2Secondary,
                 maxDensity = Gas.MAX_GAS_DENSITY,
-                environment = environment
+                environment = environment,
+                onClickMix = {
+                    showStandardGasPickerDialog.value = true
+                }
             )
 
             GasPickerComponent(
-                initialOxygenPercentage = initialValue.gas.oxygenPercentage,
-                initialHeliumPercentage = initialValue.gas.heliumPercentage,
+                initialOxygenPercentage = oxygenPercentage,
+                initialHeliumPercentage = heliumPercentage,
                 onGasChanged = { oxygenFraction, heliumFraction ->
                     oxygenPercentage = oxygenFraction
                     heliumPercentage = heliumFraction
@@ -253,6 +254,32 @@ private fun CylinderPickerBottomSheetContent(
                 }
             }
         }
+    }
+
+    ShowStandardGasPickerDialog(
+        show = showStandardGasPickerDialog,
+        onGasSelected = {
+            oxygenPercentage = it.oxygenPercentage
+            heliumPercentage = it.heliumPercentage
+        }
+    )
+}
+
+@Composable
+private fun ShowStandardGasPickerDialog(
+    show: MutableState<Boolean>,
+    onGasSelected: (gas: Gas) -> Unit
+) {
+
+    if(show.value) {
+        StandardGasPickerDialog(
+            onGasSelected = {
+                onGasSelected(it)
+            },
+            onDismissRequest = {
+                show.value = false
+            }
+        )
     }
 }
 

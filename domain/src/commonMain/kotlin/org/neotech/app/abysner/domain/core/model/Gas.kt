@@ -127,13 +127,28 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
 
         val Air = Gas(oxygenFraction = 0.21, heliumFraction = 0.0)
         val Nitrox32 = Gas(oxygenFraction = 0.32, heliumFraction = 0.0)
-        val Oxygen50 = Gas(oxygenFraction = 0.5, heliumFraction = 0.0)
-        val Oxygen80= Gas(oxygenFraction = 0.8, heliumFraction = 0.0)
-        val Oxygen100 = Gas(oxygenFraction = 1.0, heliumFraction = 0.0)
+        val Nitrox36 = Gas(oxygenFraction = 0.36, heliumFraction = 0.0)
+        val Nitrox40 = Gas(oxygenFraction = 0.40, heliumFraction = 0.0)
+        val Nitrox50 = Gas(oxygenFraction = 0.5, heliumFraction = 0.0)
+        val Nitrox80= Gas(oxygenFraction = 0.8, heliumFraction = 0.0)
+        val Oxygen = Gas(oxygenFraction = 1.0, heliumFraction = 0.0)
+
+        // "Recreational Trimix"
+        val Trimix3030 = Gas(oxygenFraction = 0.30, heliumFraction = 0.30)
+        // Technical Trimix
         val Trimix2135 = Gas(oxygenFraction = 0.21, heliumFraction = 0.35)
         val Trimix1845 = Gas(oxygenFraction = 0.18, heliumFraction = 0.45)
         val Trimix1555 = Gas(oxygenFraction = 0.15, heliumFraction = 0.55)
-        val Trimix1060 = Gas(oxygenFraction = 0.10, heliumFraction = 0.60)
+        val Trimix1070 = Gas(oxygenFraction = 0.10, heliumFraction = 0.70)
+
+        val StandardGasses = listOf(
+            Air,
+            Nitrox32, Nitrox36, Nitrox40,
+            Nitrox50, Nitrox80,
+            Oxygen,
+            Trimix3030,
+            Trimix2135, Trimix1845, Trimix1555, Trimix1070
+        )
     }
 }
 

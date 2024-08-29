@@ -36,34 +36,28 @@ fun GasPickerComponent(
     onGasChanged: (oxygenPercentage: Int, heliumPercentage: Int) -> Unit = { _, _ -> }
 ) {
     Column(modifier = modifier) {
-
-        var oxygenPercentage: Int by remember {
-            mutableIntStateOf(initialOxygenPercentage)
-        }
-
-        var heliumPercentage: Int by remember {
-            mutableIntStateOf(initialHeliumPercentage)
-        }
-
         Text(
             text = "Oxygen",
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
         )
         SliderWithButtons(
-            value = oxygenPercentage.toFloat(),
+            value = initialOxygenPercentage.toFloat(),
             onValueChange = {
 
-                val newNitrogenPercentage = (100 - (round(it).toInt() + heliumPercentage))
+                val newNitrogenPercentage = (100 - (round(it).toInt() + initialHeliumPercentage))
 
+                val newHeliumPercentage: Int
                 if (newNitrogenPercentage < 0) {
-                    heliumPercentage += newNitrogenPercentage
+                    newHeliumPercentage = initialHeliumPercentage + newNitrogenPercentage
                 } else if(newNitrogenPercentage > 79) {
                     // Don't allow a nitrogen percentage above 79% (that would not be a normal diving gas)
                     // Instead increase helium percentage
-                    heliumPercentage += (newNitrogenPercentage - 79)
+                    newHeliumPercentage = initialHeliumPercentage + (newNitrogenPercentage - 79)
+                } else {
+                    newHeliumPercentage = initialHeliumPercentage
                 }
-                oxygenPercentage = round(it).toInt()
-                onGasChanged(oxygenPercentage, heliumPercentage)
+                val oxygenPercentage = round(it).toInt()
+                onGasChanged(oxygenPercentage, newHeliumPercentage)
             },
             valueRange = 4f..100f
         )
@@ -73,23 +67,25 @@ fun GasPickerComponent(
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
         )
         SliderWithButtons(
-            value = heliumPercentage.toFloat(),
+            value = initialHeliumPercentage.toFloat(),
             onValueChange = {
-                val newNitrogenPercentage = (100 - (oxygenPercentage + round(it).toInt()))
+                val newNitrogenPercentage = (100 - (initialOxygenPercentage + round(it).toInt()))
+
+                var newOxygenPercentage: Int = initialOxygenPercentage
                 if (newNitrogenPercentage < 0) {
-                    oxygenPercentage += newNitrogenPercentage
+                    newOxygenPercentage = initialOxygenPercentage + newNitrogenPercentage
                     // Don't allow oxygen percentage lower then 4%
-                    if (oxygenPercentage < 4) {
-                        oxygenPercentage = 4
+                    if (newOxygenPercentage < 4) {
+                        newOxygenPercentage = 4
                         return@SliderWithButtons
                     }
                 } else if(newNitrogenPercentage > 79) {
                     // Don't allow a nitrogen percentage above 79% (that would not be a normal diving gas)
                     // Instead increase oxygen percentage
-                    oxygenPercentage += (newNitrogenPercentage - 79)
+                    newOxygenPercentage = initialOxygenPercentage + (newNitrogenPercentage - 79)
                 }
-                heliumPercentage = round(it).toInt()
-                onGasChanged(oxygenPercentage, heliumPercentage)
+                val heliumPercentage = round(it).toInt()
+                onGasChanged(newOxygenPercentage, heliumPercentage)
             },
             valueRange = 0f..99f,
         )

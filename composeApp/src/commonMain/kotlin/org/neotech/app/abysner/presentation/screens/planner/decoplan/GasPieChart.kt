@@ -164,7 +164,7 @@ fun GasPieChartPreview() = PreviewWrapper {
         DiveProfileSection(25, 35, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
     )
 
-    val divePlan = DivePlanner().getDecoPlan(plan, listOf(Cylinder.aluminium80Cuft(Gas.Oxygen50)))
+    val divePlan = DivePlanner().getDecoPlan(plan, listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)))
 
     val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
