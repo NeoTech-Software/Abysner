@@ -21,9 +21,9 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.neotech.app.abysner.domain.settings.SettingsRepository
-import org.neotech.app.abysner.utilities.StateEvent
-import org.neotech.app.abysner.utilities.consumed
-import org.neotech.app.abysner.utilities.event
+import org.neotech.app.abysner.presentation.utilities.StateEvent
+import org.neotech.app.abysner.presentation.utilities.consumed
+import org.neotech.app.abysner.presentation.utilities.event
 
 @Inject
 class TermsAndConditionsViewModel(

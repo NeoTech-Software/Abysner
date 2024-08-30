@@ -25,10 +25,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -78,9 +76,9 @@ import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import org.neotech.app.abysner.presentation.utilities.onlyBottom
-import org.neotech.app.abysner.presentation.utilities.preMixedWith
-import org.neotech.app.abysner.presentation.utilities.withoutBottom
+import org.neotech.app.abysner.presentation.component.core.onlyBottom
+import org.neotech.app.abysner.presentation.component.core.preMixedWith
+import org.neotech.app.abysner.presentation.component.core.withoutBottom
 import org.neotech.app.abysner.version.VersionInfo
 import kotlin.math.ceil
 import kotlin.math.max

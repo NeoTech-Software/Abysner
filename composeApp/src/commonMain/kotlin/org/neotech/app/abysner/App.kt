@@ -1,4 +1,4 @@
-/*
+package org.neotech.app.abysner/*
  * Abysner - Dive planner
  * Copyright (C) 2024 Neotech
  *
@@ -10,11 +10,12 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.presentation.utilities
-
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.neotech.app.abysner.di.AppComponent
 
 @Composable
-fun Dp.toPx() = with(LocalDensity.current) { toPx() }
+@Preview
+fun App(appComponent: AppComponent) {
+    appComponent.mainNavController()
+}

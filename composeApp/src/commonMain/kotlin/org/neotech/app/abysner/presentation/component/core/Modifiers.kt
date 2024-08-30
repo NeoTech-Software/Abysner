@@ -10,16 +10,19 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.utilities
-/*
-actual object DecimalFormat {
-    actual fun format(fractionDigits: Int, number: Number): String {
-        val df = java.text.DecimalFormat()
-        df.isGroupingUsed = false
-        df.maximumFractionDigits = 2
-        df.isDecimalSeparatorAlwaysShown = false
-        return df.format(number)
+package org.neotech.app.abysner.presentation.component.core
+
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+
+fun Modifier.ifTrue(value: Boolean, block: Modifier.() -> Modifier): Modifier {
+    return if(value) {
+        block()
+    } else {
+        this
     }
 }
 
- */
+fun Modifier.invisible(): Modifier {
+    return drawWithContent {  }
+}

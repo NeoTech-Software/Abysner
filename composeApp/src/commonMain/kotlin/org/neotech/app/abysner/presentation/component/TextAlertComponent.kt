@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
-import org.neotech.app.abysner.presentation.utilities.toPx
+import org.neotech.app.abysner.presentation.component.core.toPx
 
 
 enum class AlertSeverity {

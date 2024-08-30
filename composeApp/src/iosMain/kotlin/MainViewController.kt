@@ -12,6 +12,7 @@
 
 import androidx.compose.ui.uikit.OnFocusBehavior
 import androidx.compose.ui.window.ComposeUIViewController
+import org.neotech.app.abysner.App
 import org.neotech.app.abysner.di.AppComponent
 
 // Unfortunately it seems non-trivial (impossible) to use KSP on the iosMain sourceSet, since

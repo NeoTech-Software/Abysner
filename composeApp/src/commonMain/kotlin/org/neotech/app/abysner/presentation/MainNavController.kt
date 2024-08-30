@@ -30,8 +30,7 @@ import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAn
 import org.neotech.app.abysner.presentation.utilities.DestinationDefinition
 import org.neotech.app.abysner.presentation.utilities.NavHost
 import org.neotech.app.abysner.presentation.utilities.composable
-import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import org.neotech.app.abysner.presentation.utilities.BitmapRenderRoot
+import org.neotech.app.abysner.presentation.component.BitmapRenderRoot
 
 enum class Destinations(override val destinationName: String) : DestinationDefinition {
     PLANNER("planner"),

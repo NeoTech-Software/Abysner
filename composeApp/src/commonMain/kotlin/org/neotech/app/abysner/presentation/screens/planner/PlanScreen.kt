@@ -78,7 +78,7 @@ import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentPick
 import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentsCardComponent
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconSet
-import org.neotech.app.abysner.presentation.utilities.LocalBitmapRenderController
+import org.neotech.app.abysner.presentation.component.LocalBitmapRenderController
 import org.neotech.app.abysner.presentation.utilities.shareImageBitmap
 
 typealias PlannerScreen = @Composable (navController: NavHostController) -> Unit

@@ -63,7 +63,7 @@ import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
-import org.neotech.app.abysner.presentation.utilities.pluralsStringBuilder
+import org.neotech.app.abysner.presentation.component.core.pluralsStringBuilder
 import org.neotech.app.abysner.presentation.theme.bodyExtraLarge
 
 @OptIn(ExperimentalMaterial3Api::class)

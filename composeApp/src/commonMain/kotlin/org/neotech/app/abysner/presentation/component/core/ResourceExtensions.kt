@@ -10,7 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.presentation.utilities
+package org.neotech.app.abysner.presentation.component.core
 
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.PluralStringResource

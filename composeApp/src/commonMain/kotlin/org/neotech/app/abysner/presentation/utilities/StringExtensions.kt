@@ -10,7 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.utilities
+package org.neotech.app.abysner.presentation.utilities
 
 import androidx.compose.ui.text.AnnotatedString
 
