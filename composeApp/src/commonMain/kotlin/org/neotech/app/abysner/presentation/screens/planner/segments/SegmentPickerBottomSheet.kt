@@ -296,8 +296,8 @@ private fun SegmentPickerBottomSheetPreview() {
         initialValue = DiveProfileSection(10, 15, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
         cylinders = listOf(
             Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0),
-            Cylinder(gas = Gas.Oxygen50, pressure = 207.0, waterVolume = Cylinder.AL80_WATER_VOLUME),
-            Cylinder(gas =Gas.Oxygen80, pressure = 207.0, waterVolume = Cylinder.AL63_WATER_VOLUME)
+            Cylinder(gas = Gas.Nitrox50, pressure = 207.0, waterVolume = Cylinder.AL80_WATER_VOLUME),
+            Cylinder(gas =Gas.Nitrox80, pressure = 207.0, waterVolume = Cylinder.AL63_WATER_VOLUME)
         )
     )
 }

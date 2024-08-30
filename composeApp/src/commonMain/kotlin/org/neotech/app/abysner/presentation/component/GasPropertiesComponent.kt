@@ -13,12 +13,17 @@
 package org.neotech.app.abysner.presentation.component
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.ripple
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,6 +44,7 @@ fun GasPropertiesComponent(
     maxDensity: Double,
     environment: Environment,
     showTopRow: Boolean = true,
+    onClickMix: (() -> Unit)? = null
 ) {
 
     val mix: String
@@ -68,8 +74,12 @@ fun GasPropertiesComponent(
                 BigNumberDisplay(
                     modifier = Modifier.weight(0.6f),
                     size = BigNumberSize.LARGE,
+                    // 4 is widest number found in this character set
+                    widestEstimatedValue = "44/44",
                     value = mix,
-                    label = "Mix (O2/He)"
+                    label = "Mix (O2/He)",
+                    onClick = onClickMix,
+                    showDropDown = onClickMix != null
                 )
 
                 val name = gas?.diveIndustryName() ?: EMPTY_PLACEHOLDER
@@ -90,17 +100,19 @@ fun GasPropertiesComponent(
 
             FlipCardComponent(
                 modifier = Modifier.weight(0.3f),
-                front = {
+                front = { modifier, onClick ->
                     BigNumberDisplay(
-                        modifier = it,
+                        modifier = modifier,
+                        onClick = onClick,
                         size = BigNumberSize.SMALL,
                         value = mod,
                         label = "O2 MOD (${maxPPO2.format(1)})",
                     )
                 },
-                back = {
+                back = { modifier, onClick ->
                     BigNumberDisplay(
-                        modifier = it,
+                        modifier = modifier,
+                        onClick = onClick,
                         size = BigNumberSize.SMALL,
                         value = maxPPO2.toString(),
                         label = "at PPO2"
@@ -116,17 +128,19 @@ fun GasPropertiesComponent(
 
                 FlipCardComponent(
                     modifier = Modifier.weight(0.3f),
-                    front = {
+                    front = { modifier, onClick ->
                         BigNumberDisplay(
-                            modifier = it,
+                            modifier = modifier,
+                            onClick = onClick,
                             size = BigNumberSize.SMALL,
                             value = modSecondary,
                             label = "O2 MOD (${maxPPO2Secondary!!.format(1)})",
                         )
                     },
-                    back = {
+                    back = { modifier, onClick ->
                         BigNumberDisplay(
-                            modifier = it,
+                            modifier = modifier,
+                            onClick = onClick,
                             size = BigNumberSize.SMALL,
                             value = maxPPO2Secondary.toString(),
                             label = "at PPO2",
@@ -141,17 +155,19 @@ fun GasPropertiesComponent(
 
             FlipCardComponent(
                 modifier = Modifier.weight(0.3f),
-                front = {
+                front = { modifier, onClick ->
                     BigNumberDisplay(
-                        modifier = it,
+                        modifier = modifier,
+                        onClick = onClick,
                         size = BigNumberSize.SMALL,
                         value = densityMod,
                         label = "Density MOD"
                     )
                 },
-                back = {
+                back = { modifier, onClick ->
                     BigNumberDisplay(
-                        modifier = it,
+                        modifier = modifier,
+                        onClick = onClick,
                         size = BigNumberSize.SMALL,
                         value = maxDensity.toString(),
                         label = "at g/L"
@@ -162,17 +178,19 @@ fun GasPropertiesComponent(
             if(!showSecondaryPPO2) {
                 FlipCardComponent(
                     modifier = Modifier.weight(0.3f),
-                    front = {
+                    front = { modifier, onClick ->
                         BigNumberDisplay(
-                            modifier = it,
+                            modifier = modifier,
+                            onClick = onClick,
                             size = BigNumberSize.SMALL,
                             value = nitrogenPercentage,
                             label = "Nitrogen"
                         )
                     },
-                    back = {
+                    back = { modifier, onClick ->
                         BigNumberDisplay(
-                            modifier = it,
+                            modifier = modifier,
+                            onClick = onClick,
                             size = BigNumberSize.SMALL,
                             value = "\uD83E\uDD24",
                             label = "Nitrogen"

@@ -202,12 +202,12 @@ fun CylinderSelectionCardComponentPreview() {
                 PlannedCylinderModel(
                     isChecked = true,
                     isInUse = false,
-                    cylinder = Cylinder(gas = Gas.Oxygen50, 207.0, 11.1)
+                    cylinder = Cylinder(gas = Gas.Nitrox50, 207.0, 11.1)
                 ),
                 PlannedCylinderModel(
                     isChecked = false,
                     isInUse = false,
-                    cylinder = Cylinder(gas = Gas.Oxygen80, 207.0, 9.0)
+                    cylinder = Cylinder(gas = Gas.Nitrox80, 207.0, 9.0)
                 )
             ),
             onAddCylinder = {},

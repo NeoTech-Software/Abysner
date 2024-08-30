@@ -15,6 +15,7 @@ package org.neotech.app.abysner.presentation.component.list
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -39,21 +40,22 @@ fun LazyColumnWithScrollIndicators(
     userScrollEnabled: Boolean = true,
     content: LazyListScope.() -> Unit
 ) {
-    if (state.canScrollBackward) {
-        HorizontalDivider()
-    }
-    LazyColumn(
-        modifier = modifier,
-        state = state,
-        contentPadding = contentPadding,
-        reverseLayout = reverseLayout,
-        verticalArrangement = verticalArrangement,
-        horizontalAlignment = horizontalAlignment,
-        flingBehavior = flingBehavior,
-        userScrollEnabled = userScrollEnabled,
-        content = content
-    )
-    if (state.canScrollForward) {
-        HorizontalDivider()
+    Column(modifier = modifier) {
+        if (state.canScrollBackward) {
+            HorizontalDivider()
+        }
+        LazyColumn(
+            state = state,
+            contentPadding = contentPadding,
+            reverseLayout = reverseLayout,
+            verticalArrangement = verticalArrangement,
+            horizontalAlignment = horizontalAlignment,
+            flingBehavior = flingBehavior,
+            userScrollEnabled = userScrollEnabled,
+            content = content
+        )
+        if (state.canScrollForward) {
+            HorizontalDivider()
+        }
     }
 }

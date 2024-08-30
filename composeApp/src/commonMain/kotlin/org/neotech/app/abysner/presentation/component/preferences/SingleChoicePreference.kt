@@ -15,6 +15,8 @@ package org.neotech.app.abysner.presentation.component.preferences
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialogCustomContent
@@ -79,7 +81,7 @@ fun <T> SingleChoicePreference(
             title = label,
             items = items,
             initialSelectedItemIndex = selectedItemIndex,
-            onConfirmButtonClicked = { item, index ->
+            onItemSelected = { item, index ->
                 if (item != null) {
                     onItemPicked(item)
                 }
@@ -120,9 +122,9 @@ fun <T> SingleChoicePreference(
 @Composable
 fun <T> SingleChoicePreferenceDialog(
     title: String,
-    confirmButtonText: String = "OK",
+    confirmButtonText: String? = "OK",
     cancelButtonText: String = "Cancel",
-    onConfirmButtonClicked: (T?, Int) -> Unit = { _, _ -> },
+    onItemSelected: (T?, Int) -> Unit = { _, _ -> },
     onCancelButtonClicked: () -> Unit = {},
     onDismissRequest: () -> Unit = {},
     initialSelectedItemIndex: Int = 0,
@@ -135,14 +137,19 @@ fun <T> SingleChoicePreferenceDialog(
     AlertDialogCustomContent(
         onDismissRequest = onDismissRequest,
         confirmButton = {
-            TextButton(onClick = {
-                if (selectedItemIndex.value != -1) {
-                    onConfirmButtonClicked(items[selectedItemIndex.value], selectedItemIndex.value)
-                } else {
-                    onConfirmButtonClicked(null, selectedItemIndex.value)
+            if(confirmButtonText != null) {
+                TextButton(onClick = {
+                    if (selectedItemIndex.value != -1) {
+                        onItemSelected(
+                            items[selectedItemIndex.value],
+                            selectedItemIndex.value
+                        )
+                    } else {
+                        onItemSelected(null, selectedItemIndex.value)
+                    }
+                }) {
+                    Text(text = confirmButtonText)
                 }
-            }) {
-                Text(text = confirmButtonText)
             }
         },
         dismissButton = {
@@ -159,18 +166,24 @@ fun <T> SingleChoicePreferenceDialog(
                             .fillParentMaxWidth()
                             .defaultMinSize(minHeight = 56.dp)
                             .clickable {
-                                selectedItemIndex.value = index
+                                if(confirmButtonText == null) {
+                                    onItemSelected(items[index], index)
+                                } else {
+                                    selectedItemIndex.value = index
+                                }
                             }
-                            .padding(start = 8.dp, end = 24.dp),
+                            .padding(start = if(confirmButtonText == null) { 24.dp } else { 8.dp }, end = 24.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        RadioButton(
-                            selected = selectedItemIndex.value == index,
-                            onClick = {
-                                selectedItemIndex.value = index
-                            }
-                        )
-                        Text(text = itemToStringMapper(item).toAnnotatedString())
+                        if(confirmButtonText != null) {
+                            RadioButton(
+                                selected = selectedItemIndex.value == index,
+                                onClick = {
+                                    selectedItemIndex.value = index
+                                }
+                            )
+                        }
+                        Text(text = itemToStringMapper(item).toAnnotatedString(), style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

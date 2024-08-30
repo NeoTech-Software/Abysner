@@ -59,7 +59,7 @@ class DivePlannerTest {
     @Test
     fun referencePlan2() {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
-        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,
@@ -98,7 +98,7 @@ class DivePlannerTest {
     @Test
     fun referencePlan3() {
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
-        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,
@@ -135,7 +135,7 @@ class DivePlannerTest {
     @Test
     fun referencePlan4() {
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix1845)
-        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
             maxAscentRate = 5.0,

@@ -28,7 +28,7 @@ class GasPlannerTest {
     fun testFindPotentialWorstCaseTtsPointsScenario1() {
 
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
-        val decoGas = Cylinder.aluminium80Cuft(Gas.Oxygen50)
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
 
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(

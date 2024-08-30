@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // Code below for easier debugging of the splash screen
+        // The uncommented code below is for easier debugging (checking how it looks) of the splash screen
         /*
         var showSplashScreen = true
         val content: View = findViewById(android.R.id.content)

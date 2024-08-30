@@ -22,7 +22,6 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
@@ -67,17 +66,14 @@ import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
-import org.neotech.app.abysner.domain.utilities.DecimalFormatter
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
 import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButtonRow
-import org.neotech.app.abysner.presentation.component.SingleChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
-import org.neotech.app.abysner.presentation.component.rememberSingleChoiceSegmentedButtonRowState
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.screens.planner.ConfigurationSummeryDialog
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
@@ -418,7 +414,7 @@ fun DecoPlanCardComponentPreview() {
             plan = listOf(
                 DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
             ),
-            decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Oxygen50)),
+            decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
         )
 
         DecoPlanCardComponent(
