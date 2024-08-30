@@ -10,7 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.utilities
+package org.neotech.app.abysner.presentation.utilities
 
 import androidx.compose.runtime.Composable
 
@@ -51,7 +51,8 @@ sealed class Event {
 
 fun event(onConsumed: () -> Unit): Event = Event.Unconsumed(onConsumed)
 
-fun <T> event(content: T, onConsumed: () -> Unit): StateEvent<T> = StateEvent.Unconsumed(content, onConsumed)
+fun <T> event(content: T, onConsumed: () -> Unit): StateEvent<T> =
+    StateEvent.Unconsumed(content, onConsumed)
 
 fun consumed(): Event = Event.Consumed
 

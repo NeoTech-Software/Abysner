@@ -41,8 +41,8 @@ import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.CheckableListItemComponent
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
-import org.neotech.app.abysner.presentation.component.modifier.ifTrue
-import org.neotech.app.abysner.presentation.component.modifier.invisible
+import org.neotech.app.abysner.presentation.component.core.ifTrue
+import org.neotech.app.abysner.presentation.component.core.invisible
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable

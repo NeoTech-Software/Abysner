@@ -154,65 +154,6 @@ fun BigNumberDisplay(
     }
 }
 
-@Suppress("UnusedReceiverParameter")
-fun Arrangement.spaceAround(itemIndex: Int): Arrangement.Horizontal = ArrangementSpaceAround(itemIndex)
-
-private class ArrangementSpaceAround(private val itemIndex: Int) : Arrangement.HorizontalOrVertical {
-
-    override val spacing = 0.dp
-
-    override fun Density.arrange(
-        totalSize: Int,
-        sizes: IntArray,
-        layoutDirection: LayoutDirection,
-        outPositions: IntArray,
-    ) = if (layoutDirection == LayoutDirection.Ltr) {
-        placeNthInCenter(totalSize, sizes, outPositions, reverseInput = false)
-    } else {
-        placeNthInCenter(totalSize, sizes, outPositions, reverseInput = true)
-    }
-
-    override fun Density.arrange(
-        totalSize: Int,
-        sizes: IntArray,
-        outPositions: IntArray,
-    ) = placeNthInCenter(totalSize, sizes, outPositions, reverseInput = false)
-
-    private fun placeNthInCenter(
-        totalSize: Int,
-        sizes: IntArray,
-        outPosition: IntArray,
-        reverseInput: Boolean,
-    ) {
-        val totalOccupiedSpace = sizes.sum()
-        val totalGapSize = if (totalSize == totalOccupiedSpace) {
-            // No space to give away to the first item
-            0
-        } else {
-            (totalSize - totalOccupiedSpace)
-        }
-
-        var current = 0f
-        val correctedForDirection = if(reverseInput) {
-            sizes.reversedArray()
-        } else {
-            sizes
-        }
-        correctedForDirection.forEachIndexed { index, item ->
-
-            if(index == itemIndex) {
-                val currentTemp = round(current + (totalGapSize / 2f))
-                outPosition[index] = currentTemp.toInt()
-                // Add the whole gap size as a whole number (to avoid rounding issues)
-                current += totalGapSize
-            } else {
-                outPosition[index] = current.toInt()
-            }
-            current += item
-        }
-    }
-}
-
 @Composable
 private fun TextSingleLineAutoSize(
     text: String,

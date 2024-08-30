@@ -37,16 +37,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
@@ -60,10 +57,10 @@ import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.ViewState
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.closeApp
-import org.neotech.app.abysner.presentation.utilities.onlyBottom
-import org.neotech.app.abysner.presentation.utilities.withoutBottom
-import org.neotech.app.abysner.utilities.EventEffect
-import org.neotech.app.abysner.utilities.consumed
+import org.neotech.app.abysner.presentation.component.core.onlyBottom
+import org.neotech.app.abysner.presentation.component.core.withoutBottom
+import org.neotech.app.abysner.presentation.utilities.EventEffect
+import org.neotech.app.abysner.presentation.utilities.consumed
 
 typealias TermsAndConditionsScreen = @Composable (navController: NavHostController) -> Unit
 

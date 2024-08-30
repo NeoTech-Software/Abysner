@@ -12,6 +12,7 @@
 
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import org.neotech.app.abysner.App
 import org.neotech.app.abysner.di.AppComponent
 import org.neotech.app.abysner.di.PlatformComponentImpl
 import org.neotech.app.abysner.di.create

@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
-import org.neotech.app.abysner.utilities.toAnnotatedString
+import org.neotech.app.abysner.presentation.utilities.toAnnotatedString
 
 @Preview
 @Composable

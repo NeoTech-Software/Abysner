@@ -44,7 +44,7 @@ import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.presentation.component.none
-import org.neotech.app.abysner.presentation.utilities.getShades
+import org.neotech.app.abysner.presentation.component.core.getShades
 
 @OptIn(ExperimentalKoalaPlotApi::class)
 @Composable

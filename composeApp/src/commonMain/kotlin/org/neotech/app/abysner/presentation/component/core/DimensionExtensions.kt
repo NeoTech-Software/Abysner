@@ -10,19 +10,11 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.presentation.component.modifier
+package org.neotech.app.abysner.presentation.component.core
 
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 
-fun Modifier.ifTrue(value: Boolean, block: Modifier.() -> Modifier): Modifier {
-    return if(value) {
-        block()
-    } else {
-        this
-    }
-}
-
-fun Modifier.invisible(): Modifier {
-    return drawWithContent {  }
-}
+@Composable
+fun Dp.toPx() = with(LocalDensity.current) { toPx() }
