@@ -21,7 +21,7 @@ import kotlin.math.max
  * TODO: Eventually this needs to be part of a single planned dive, so we can plan multiple dives allowing multiple configurations.
  */
 data class Configuration(
-    val sacRate: Double = 15.0,
+    val sacRate: Double = 20.0,
     val sacRateOutOfAir: Double = 40.0,
     val maxPPO2Deco: Double = 1.6,
     val maxPPO2: Double = 1.4,
