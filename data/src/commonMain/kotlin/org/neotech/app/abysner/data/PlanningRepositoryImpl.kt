@@ -64,7 +64,7 @@ class PlanningRepositoryImpl(
                         salinity = preferences.get(PREFERENCE_KEY_ENVIRONMENT_SALINITY, Salinity.WATER_FRESH),
                         maxAscentRate = preferences.get(PREFERENCE_KEY_DIVER_SPEED_ASCENT, 5.0),
                         maxDescentRate = preferences.get(PREFERENCE_KEY_DIVER_SPEED_DESCENT, 20.0),
-                        sacRate = preferences.get(PREFERENCE_KEY_DIVER_NORMAL_SAC, 15.0),
+                        sacRate = preferences.get(PREFERENCE_KEY_DIVER_NORMAL_SAC, 20.0),
                         sacRateOutOfAir = preferences.get(PREFERENCE_KEY_DIVER_OUT_OF_AIR_SAC, 40.0),
                         forceMinimalDecoStopTime = preferences.get(PREFERENCE_KEY_FORCE_MINIMAL_STOP_TIME, true),
                         decoStepSize = preferences.get(PREFERENCE_KEY_DECO_STEP_SIZE, 3),
