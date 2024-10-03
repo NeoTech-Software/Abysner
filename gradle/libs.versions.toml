@@ -1,19 +1,19 @@
 [versions]
 ####### START: Android target specific #######
-agp = "8.5.2"
+agp = "8.6.1"
 android-compileSdk = "34"
 android-minSdk = "26"
 android-targetSdk = "34"
-uiTooling = "1.6.8"
-startupRuntime = "1.1.1"
-androidx-activityCompose = "1.9.1"
+uiTooling = "1.7.2"
+startupRuntime = "1.2.0"
+androidx-activityCompose = "1.9.2"
 ####### END:   Android target specific #######
 
 # Compose & Kotlin
-compose-plugin = "1.7.0-alpha02"
-kotlin = "2.0.0"
+compose-plugin = "1.7.0-beta02"
+kotlin = "2.0.20"
 # KSP version should follow Kotlin version
-ksp = "2.0.0-1.0.21"
+ksp = "2.0.20-1.0.25"
 
 # Dependency Injection
 kotlinInject = "0.7.1"
@@ -47,14 +47,14 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startupRuntime" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 
-# This exists mainly to replace the default dependency added by Jetbrains compose 1.6.11 and replace it with a beta version to
+# This exists mainly to replace the default dependency added by Jetbrains compose 1.6.11 and replace it with a newer version to
 # fix: https://issuetracker.google.com/issues/274872542
-androidx-compose-material3 = { module = "androidx.compose.material3:material3", version = "1.3.0-rc01" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version = "1.3.0" }
 ####### END:   Android target specific #######
 
 # This is here to make sure the material version on Android and other platforms is equal, and to fix an iOS bug:
 # Fix: https://github.com/JetBrains/compose-multiplatform-core/commit/d9c3ce5f2900c1ad27f72b5089082790aa8d9fa4
-jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version = "1.7.0-alpha03" }
+jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version = "1.7.0-beta02" }
 
 # Graphs & Plots
 koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.6.0" }
