@@ -78,7 +78,6 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.startup.runtime)
             implementation(libs.androidx.ui.tooling)
-            implementation(libs.androidx.compose.material3)
         }
 
         val desktopMain by getting
@@ -109,10 +108,8 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            
-            // See: https://github.com/JetBrains/compose-multiplatform-core/commit/d9c3ce5f2900c1ad27f72b5089082790aa8d9fa4
-            // implementation(compose.material3)
-            implementation(libs.jetbrains.compose.material3)
+
+            implementation(compose.material3)
             implementation(libs.koalaplot.core)
 
             // Data storage
