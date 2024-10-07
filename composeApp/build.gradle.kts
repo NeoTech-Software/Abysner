@@ -20,11 +20,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.ByteArrayOutputStream
 import java.util.Properties
 
-// DMG distribution does not support "-alpha", MSI requires at least MAJOR.MINOR.BUILD
-val abysnerVersionBase = "1.0.3"
-val abysnerVersion = "$abysnerVersionBase-alpha"
+// DMG distribution does not support "-beta", MSI requires at least MAJOR.MINOR.BUILD
+val abysnerVersionBase = "1.0.4"
+val abysnerVersion = "$abysnerVersionBase-beta"
 // iOS supports a String here, but Android only an integer
-val abysnerBuildNumber = 5
+val abysnerBuildNumber = 6
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
