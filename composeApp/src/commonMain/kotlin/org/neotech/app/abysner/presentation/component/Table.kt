@@ -46,34 +46,28 @@ fun Table(modifier: Modifier = Modifier,
         }
 
         TableScopeInstance().apply {
-            content()
-            rows.forEachIndexed { index, row ->
-                val color = if (index % 2 == 1) {
-                    MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp)
-                } else {
-                    Color.Transparent
-                }
-                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
-                    row(color)
-                }
+            CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
+                content()
             }
         }
     }
 }
 
-typealias TableRow = (@Composable ColumnScope.(color: Color) -> Unit)
-
 internal class TableScopeInstance : TableScope {
 
-    internal var rows = mutableStateListOf<TableRow>()
+    internal var index = 0
 
     @Composable
     override fun row(modifier: Modifier, content: @Composable RowScope.() -> Unit) {
-        rows.add {
-            Row(Modifier.background(it).then(modifier).padding(horizontal = 4.dp, vertical = 2.dp)) {
-                content()
-            }
+        val color = if (index % 2 == 1) {
+            MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp)
+        } else {
+            Color.Transparent
         }
+        Row(Modifier.background(color).then(modifier).padding(horizontal = 4.dp, vertical = 2.dp)) {
+            content()
+        }
+        index++
     }
 }
 
