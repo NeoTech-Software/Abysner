@@ -18,9 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -120,7 +122,7 @@ private fun RenderBitmap(
     composable: @Composable () -> Unit,
 ) {
     val graphicsLayer = rememberGraphicsLayer()
-
+    var graphicsLayerDrawn by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .layout { measurable, constraints ->
@@ -164,16 +166,19 @@ private fun RenderBitmap(
                 graphicsLayer.record {
                     this@drawWithContent.drawContent()
                 }
+                graphicsLayerDrawn = true
             }
     ) {
         composable()
     }
 
-    LaunchedEffect(true) {
-        // Not sure if this is entirely save to do, but it seems to work regardless.
-        val bitmap = withContext(Dispatchers.IO) {
-            graphicsLayer.toImageBitmap()
+    if(graphicsLayerDrawn) {
+        LaunchedEffect(true) {
+            // Not sure if this is entirely save to do, but it seems to work regardless.
+            val bitmap = withContext(Dispatchers.IO) {
+                graphicsLayer.toImageBitmap()
+            }
+            onRendered(bitmap)
         }
-        onRendered(bitmap)
     }
 }
