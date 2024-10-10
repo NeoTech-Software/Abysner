@@ -141,7 +141,7 @@ actual suspend fun shareImageBitmap(image: ImageBitmap) {
             true
         ).first() as String
 
-        val filePath = "$cachesDirectory/temp.png"
+        val filePath = "$cachesDirectory/diveplan.png"
 
         if (pngData?.writeToFile(filePath, true) == true) {
             UIActivityViewController(listOf(NSURL.fileURLWithPath(filePath)), null)
