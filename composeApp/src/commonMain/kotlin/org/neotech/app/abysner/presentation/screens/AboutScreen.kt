@@ -274,7 +274,7 @@ fun AboutScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(top = 32.dp),
                             style = MaterialTheme.typography.bodySmall.copy(color = grayTextColor),
-                            text = "All time spend on this was not\nspend diving! Can you even imagine! \uD83D\uDE31"
+                            text = "All time spent on this was not\nspent diving! Can you even imagine! \uD83D\uDE31"
                         )
                     }
                 }
