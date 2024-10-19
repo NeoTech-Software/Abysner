@@ -38,6 +38,8 @@ import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
 import org.neotech.app.abysner.presentation.component.core.toPx
+import kotlin.math.max
+import kotlin.math.min
 
 
 enum class AlertSeverity {
@@ -109,8 +111,14 @@ fun TextAlert(
             if (annotation == null) {
                 onDraw = {}
             } else {
-                val startLineNum = layoutResult.getLineForOffset(annotation.start)
-                val endLineNum = layoutResult.getLineForOffset(annotation.end)
+                // Clamp to lineCount - 1 (since offset is 0 based) this avoids
+                // java.lang.IllegalArgumentException: lineIndex(1) is out of bounds [0, 1)
+                //     at androidx.compose.ui.text.MultiParagraph.requireLineIndexInRange(MultiParagraph.kt:919)
+                //     at androidx.compose.ui.text.MultiParagraph.getLineBottom(MultiParagraph.kt:828)
+                //     at androidx.compose.ui.text.TextLayoutResult.getLineBottom(TextLayoutResult.kt:437)
+                //
+                val startLineNum = min(layoutResult.getLineForOffset(annotation.start), layoutResult.lineCount - 1)
+                val endLineNum = min(layoutResult.getLineForOffset(annotation.end), layoutResult.lineCount - 1)
                 val textBounds = Rect(
                     top = layoutResult.getLineTop(startLineNum),
                     bottom = layoutResult.getLineBottom(endLineNum),
