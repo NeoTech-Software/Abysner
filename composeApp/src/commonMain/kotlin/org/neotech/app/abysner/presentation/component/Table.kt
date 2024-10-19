@@ -14,10 +14,8 @@ package org.neotech.app.abysner.presentation.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Divider
@@ -28,6 +26,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -35,42 +34,54 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Table(modifier: Modifier = Modifier,
-          header: (@Composable RowScope.() -> Unit)?,
-          content: @Composable TableScope.() -> Unit
+fun Table(
+    modifier: Modifier = Modifier,
+    header: (@Composable RowScope.() -> Unit)?,
+    content: @Composable TableScope.() -> Unit
 ) {
     Column(modifier) {
-        if(header != null) {
+        if (header != null) {
             TableHeader { header() }
-            Divider (color = MaterialTheme.colorScheme.outline, modifier = Modifier.height(1.dp))
+            Divider(color = MaterialTheme.colorScheme.outline, modifier = Modifier.height(1.dp))
         }
 
-        TableScopeInstance().apply {
+        val items = mutableStateListOf<RowComposable>()
+
+        TableScopeInstance(items).apply {
             CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
+                items.clear()
                 content()
+                items.forEach {
+                    it()
+                }
             }
         }
     }
 }
 
-internal class TableScopeInstance : TableScope {
+typealias RowComposable = @Composable () -> Unit
 
-    internal var index = 0
+internal class TableScopeInstance(private val items: SnapshotStateList<RowComposable>) :
+    TableScope {
 
     @Composable
     override fun row(modifier: Modifier, content: @Composable RowScope.() -> Unit) {
-        val color = if (index % 2 == 1) {
+        val color = if (items.size % 2 == 1) {
             MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp)
         } else {
             Color.Transparent
         }
-        Row(Modifier.background(color).then(modifier).padding(horizontal = 4.dp, vertical = 2.dp)) {
-            content()
+        val row: RowComposable = {
+            Row(
+                Modifier.background(color).then(modifier)
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            ) {
+                content()
+            }
         }
-        index++
+        items.add(row)
     }
 }
-
 
 interface TableScope {
 
@@ -84,7 +95,10 @@ interface TableScope {
 @Composable
 private fun TableHeader(
     modifier: Modifier = Modifier,
-    textStyle: TextStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer),
+    textStyle: TextStyle = MaterialTheme.typography.bodyMedium.copy(
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSecondaryContainer
+    ),
     content: @Composable RowScope.() -> Unit
 ) {
     Row(
