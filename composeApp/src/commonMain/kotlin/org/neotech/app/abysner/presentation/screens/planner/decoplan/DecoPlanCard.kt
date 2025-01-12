@@ -418,7 +418,7 @@ fun DecoPlanCardComponentPreview() {
         )
 
         DecoPlanCardComponent(
-            divePlanSet = DivePlanSet(base = divePlan, deeper = null, longer = null, gasPlan = GasPlan(emptyMap(), emptyMap())),
+            divePlanSet = DivePlanSet(base = divePlan, deeper = null, longer = null, gasPlan = emptyList()),
             settings = SettingsModel(),
             planningException = null,
             isLoading = false,

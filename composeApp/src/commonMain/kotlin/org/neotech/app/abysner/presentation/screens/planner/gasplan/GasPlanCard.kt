@@ -181,7 +181,7 @@ fun CylindersTable(
     ) {
 
         val gasRequirements = divePlanSet.gasPlan
-        gasRequirements.total.forEachIndexed { index, (gas, volume) ->
+        gasRequirements.forEachIndexed { index, usage ->
             row {
                 Text(
                     modifier = Modifier.weight(0.1f),
@@ -189,19 +189,19 @@ fun CylindersTable(
                 )
                 Text(
                     modifier = Modifier.weight(0.2f),
-                    text = gas.gas.toString(),
+                    text = usage.gas.gas.toString(),
                 )
-                val size = DecimalFormat.format(1, gas.waterVolume)
+                val size = DecimalFormat.format(1, usage.gas.waterVolume)
                 Text(
                     modifier = Modifier.weight(0.2f),
                     text = size,
                 )
 
                 // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
-                val endPressureBase = gas.pressureAfter(volumeUsage = gasRequirements.sortedBase[index].second)
-                val endPressure = gas.pressureAfter(volumeUsage = volume)
+                val endPressureBase = usage.gas.pressureAfter(volumeUsage = usage.amount)
+                val endPressure = usage.gas.pressureAfter(volumeUsage = usage.amountTotal)
 
-                val startPressure = DecimalFormat.format(0, gas.pressure)
+                val startPressure = DecimalFormat.format(0, usage.gas.pressure)
 
                 var alertSeverity: AlertSeverity = AlertSeverity.NONE
                 val pressureText = buildAnnotatedString {

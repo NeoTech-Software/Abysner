@@ -19,6 +19,7 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
+import org.neotech.app.abysner.domain.gasplanning.model.GasUsage
 import org.neotech.app.abysner.domain.utilities.mergeInto
 import org.neotech.app.abysner.domain.utilities.updateOrInsert
 import kotlin.math.max
@@ -90,7 +91,11 @@ class GasPlanner {
             scenario.mergeInto(extraRequiredForWorstCaseOutOfAir, ::max)
         }
 
-        return GasPlan(baseLine, extraRequiredForWorstCaseOutOfAir)
+        return baseLine.map {
+            // It may happen that for a specific gas no extra is required, hence the default to 0.0
+            // liters if that gas is not found.
+            GasUsage(it.key, it.value, extraRequiredForWorstCaseOutOfAir[it.key] ?: 0.0)
+        }
     }
 
     private fun List<DiveSegment>.calculateGasRequirementsPerCylinder(sac: Double, environment: Environment): Map<Cylinder, Double> {
