@@ -367,7 +367,7 @@ private fun createWavePath(
 
                 else -> {
                     val controlY = if (point % 2 == 0) { -amplitude } else { amplitude }
-                    quadraticBezierTo(
+                    quadraticTo(
                         x1 = pointX - (distanceBetweenPoints / 2f),
                         y1 = offsetY + controlY,
                         x2 = pointX,

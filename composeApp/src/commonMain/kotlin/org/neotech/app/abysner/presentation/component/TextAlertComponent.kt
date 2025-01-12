@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -40,9 +40,9 @@ import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
 import kotlin.math.min
 
-
 enum class AlertSeverity {
     NONE,
+    POSITIVE,
     WARNING,
     ERROR
 }
@@ -85,6 +85,7 @@ fun TextAlert(
 
     val (textColor, backgroundColor) = when(alertSeverity) {
         AlertSeverity.NONE -> Color.Unspecified to Color.Unspecified
+        AlertSeverity.POSITIVE -> MaterialTheme.colorScheme.onPrimary to MaterialTheme.colorScheme.primary
         AlertSeverity.WARNING -> MaterialTheme.colorScheme.onWarning to MaterialTheme.colorScheme.warning
         AlertSeverity.ERROR -> MaterialTheme.colorScheme.onError to MaterialTheme.colorScheme.error
     }

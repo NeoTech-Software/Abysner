@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -11,8 +11,6 @@
  */
 
 package org.neotech.app.abysner.presentation.utilities
-
-import androidx.compose.ui.text.AnnotatedString
 
 fun String.removeNonAsciiDigits(): String {
     return filter { it in '0'..'9' }
@@ -32,12 +30,4 @@ inline fun CharSequence.trimStart(startIndex: Int, predicate: (Char) -> Boolean)
             return "${subSequence(0, startIndex)}${subSequence(index, length)}"
 
     return ""
-}
-
-fun CharSequence.toAnnotatedString(): AnnotatedString {
-    return if(this is AnnotatedString) {
-        return this
-    } else {
-        AnnotatedString(this.toString())
-    }
 }

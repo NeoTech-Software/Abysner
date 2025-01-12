@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -90,12 +90,12 @@ val surfaceContainerHighDark = Color(0xFF252B2D)
 val surfaceContainerHighestDark = Color(0xFF303638)
 
 // Custom (non material) dark colors
-val warningLight: Color = Color(0xFFBA6A1A)
-val warningDark: Color = Color(0xFFFFDEAB)
+val warningLight: Color = Color(0xFFFFCA33)
+val warningDark: Color = Color(0xFFFFC95C)
 
 // Custom (non material) light colors
-val onWarningLight: Color = Color(0xFFFFFFFF)
-val onWarningDark: Color = Color(0xFF690005)
+val onWarningLight: Color = Color(0xFF413730)
+val onWarningDark: Color = Color(0xFF2F2323)
 
 internal val LocalCustomColors = staticCompositionLocalOf { CustomColors() }
 

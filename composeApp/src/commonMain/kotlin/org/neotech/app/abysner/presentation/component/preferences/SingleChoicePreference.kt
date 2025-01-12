@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
-import org.neotech.app.abysner.presentation.utilities.toAnnotatedString
+import org.neotech.app.abysner.presentation.component.toAnnotatedString
 
 @Preview
 @Composable

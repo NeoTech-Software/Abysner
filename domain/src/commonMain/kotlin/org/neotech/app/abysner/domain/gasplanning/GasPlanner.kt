@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -18,7 +18,7 @@ import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
-import org.neotech.app.abysner.domain.gasplanning.model.GasUsage
+import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.mergeInto
 import org.neotech.app.abysner.domain.utilities.updateOrInsert
 import kotlin.math.max
@@ -79,6 +79,14 @@ class GasPlanner {
 
             // For each TTS calculated the dive plan should have a accent schedule, retrieve it and use it to calculate gas usage.
             val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
+
+            // This only calculates the gas usage for the emergency accent itself, for the diver
+            // that needs the gas (is out-of-air). It does not take into account that sometimes
+            // because of a emergency the dive could end sooner then expected, which also saves you
+            // some gas. However since usually the worst case scenario for a out-of-gas situation is
+            // at the end of the dive (deepest and longest point), this probably cancels out enough
+            // to be of no significance, and by not accounting for it we are on the safe side of
+            // things.
             ascent?.calculateGasRequirementsPerCylinder(
                 divePlan.configuration.sacRateOutOfAir,
                 divePlan.configuration.environment
@@ -93,7 +101,7 @@ class GasPlanner {
         return baseLine.map {
             // It may happen that for a specific gas no extra is required, hence the default to 0.0
             // liters if that gas is not found.
-            GasUsage(it.key, it.value, extraRequiredForWorstCaseOutOfAir[it.key] ?: 0.0)
+            CylinderGasRequirements(it.key, it.value, extraRequiredForWorstCaseOutOfAir[it.key] ?: 0.0)
         }
     }
 

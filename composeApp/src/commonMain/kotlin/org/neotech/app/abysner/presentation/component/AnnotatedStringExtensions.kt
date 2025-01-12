@@ -12,15 +12,43 @@
 
 package org.neotech.app.abysner.presentation.component
 
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Builder
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.sp
 
 internal fun Builder.appendBold(
     text: String,
 ) {
     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
         append(text)
+    }
+}
+
+internal fun Builder.appendBoldLine(
+    text: String,
+) {
+    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+        appendLine(text)
+    }
+}
+
+
+internal inline fun <R: Any> AnnotatedString.Builder.appendBulletPoint(crossinline block: AnnotatedString.Builder.() -> R) {
+    withStyle(style = ParagraphStyle(textIndent = TextIndent(firstLine = 4.sp, restLine = 10.sp))) {
+        append("\u2022 ")
+        block()
+    }
+}
+
+internal fun CharSequence.toAnnotatedString(): AnnotatedString {
+    return if(this is AnnotatedString) {
+        return this
+    } else {
+        AnnotatedString(this.toString())
     }
 }

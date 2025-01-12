@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -13,16 +13,17 @@
 package org.neotech.app.abysner.presentation.screens.planner.gasplan
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -32,16 +33,19 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
+import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.domain.utilities.higherThenDelta
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextAlert
+import org.neotech.app.abysner.presentation.component.appendBold
+import org.neotech.app.abysner.presentation.component.appendBoldLine
+import org.neotech.app.abysner.presentation.component.appendBulletPoint
 import org.neotech.app.abysner.presentation.component.textfield.ExpandableText
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.preview.PreviewData
-import org.neotech.app.abysner.presentation.screens.planner.decoplan.GasPieChart
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.LoadingBoxWithBlur
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconFont
@@ -106,6 +110,23 @@ fun GasPlanCardComponent(
                 } else {
                     val gasRequirements = divePlanSet.gasPlan
 
+
+                    var showCylinderDetails: CylinderGasRequirements? by remember { mutableStateOf(null) }
+
+                    if (showCylinderDetails != null) {
+                        GasUsageDetailsDialog(showCylinderDetails!!) {
+                            showCylinderDetails = null
+                        }
+                    }
+
+                    GasPlanBarChart(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        gasPlan = gasRequirements,
+                    ) {
+                        showCylinderDetails = it
+                    }
+
+                    /*
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -115,6 +136,8 @@ fun GasPlanCardComponent(
                             gasRequirement = gasRequirements
                         )
                     }
+
+                     */
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
@@ -141,9 +164,28 @@ fun GasPlanCardComponent(
                         divePlanSet
                     )
 
+                    val explanationText = buildAnnotatedString {
+                        appendBoldLine("Notes on the gas plan:")
+                        appendLine("The gas plan calculates cylinder pressures based on real-world gas behavior, rather than relying on simplified gas law assumptions. The bar chart divides gas usage into three key categories:")
+                        appendBulletPoint {
+                            appendBold("Normal: ")
+                            append("The pressure required (in bars) for a single diver to complete the planned dive under normal conditions.")
+                        }
+                        appendBulletPoint {
+                            appendBold("Emergency: ")
+                            append("This reserve pressure ensures a safe ascent if a buddy loses one or more gas mixes at the worst point in the dive. It assumes buddy breathing is possible for all cylinders, including during decompression stops.")
+                        }
+                        appendBulletPoint {
+                            appendBold("Unused: ")
+                            append("Any remaining pressure after accounting for both Normal and Emergency requirements.\n")
+                        }
+                        appendIcon(IconFont.WARNING)
+                        appendBold(" Always plan your cylinders carefully, considering the “minimum functional pressure” of your regulators.")
+                    }
+
                     ExpandableText(
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        text = "Note: 'Base' represents the gas requirement for a single diver to normally complete the plan. 'Out-of-air' represents the extra gas that is needed for a safe ascent (including deco) should a buddy lose one or more gas mixes at the worst possible time during the dive (calculated using the out-of-air SAC rate). This out-of-air calculation assumes buddy breathing is possible, however with deco gasses this may not always be the case and you may have to take turns using the deco gas. No extra (bottom) gas is accounted for those situations! Also keep in mind that you need to plan your tanks carefully taking into account 'minimum functional pressure' of your regulators.",
+                        annotatedText = explanationText,
                         style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic)
                     )
 
@@ -166,7 +208,7 @@ fun CylindersTable(
                 text = "No.",
             )
             Text(
-                modifier = Modifier.weight(0.2f),
+                modifier = Modifier.weight(0.15f),
                 text = "Mix",
             )
             Text(
@@ -174,7 +216,7 @@ fun CylindersTable(
                 text = "Size (ℓ)",
             )
             Text(
-                modifier = Modifier.weight(0.3f),
+                modifier = Modifier.weight(0.35f),
                 text = "Usage (bar)"
             )
         }
@@ -188,20 +230,20 @@ fun CylindersTable(
                     text = (index + 1).toString(),
                 )
                 Text(
-                    modifier = Modifier.weight(0.2f),
-                    text = usage.gas.gas.toString(),
+                    modifier = Modifier.weight(0.15f),
+                    text = usage.cylinder.gas.toString(),
                 )
-                val size = DecimalFormat.format(1, usage.gas.waterVolume)
+                val size = DecimalFormat.format(1, usage.cylinder.waterVolume)
                 Text(
                     modifier = Modifier.weight(0.2f),
                     text = size,
                 )
 
                 // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
-                val endPressureBase = usage.gas.pressureAfter(volumeUsage = usage.amount)
-                val endPressure = usage.gas.pressureAfter(volumeUsage = usage.amountTotal)
+                val endPressureBase = usage.cylinder.pressureAfter(volumeUsage = usage.normalRequirement)
+                val endPressure = usage.cylinder.pressureAfter(volumeUsage = usage.totalGasRequirement)
 
-                val startPressure = DecimalFormat.format(0, usage.gas.pressure)
+                val startPressure = DecimalFormat.format(0, usage.cylinder.pressure)
 
                 var alertSeverity: AlertSeverity = AlertSeverity.NONE
                 val pressureText = buildAnnotatedString {
@@ -210,7 +252,7 @@ fun CylindersTable(
                         append("$startPressure > empty")
                         appendIcon(IconFont.WARNING)
                     } else if(endPressure == null && endPressureBase != null) {
-                        alertSeverity = AlertSeverity.ERROR
+                        alertSeverity = AlertSeverity.WARNING
                         append("$startPressure > ${endPressureBase.format(0)} (")
                         appendIcon(IconFont.WARNING)
                         append("0)")
@@ -221,7 +263,7 @@ fun CylindersTable(
                 }
 
                 TextAlert(
-                    modifier = Modifier.weight(0.3f),
+                    modifier = Modifier.weight(0.35f),
                     alertSeverity = alertSeverity,
                     text = pressureText
                 )
@@ -239,7 +281,7 @@ fun GasLimitsTable(
         modifier = modifier,
         header = {
             Text(
-                modifier = Modifier.weight(0.2f),
+                modifier = Modifier.weight(0.15f),
                 text = "Mix",
             )
             Text(
@@ -247,7 +289,7 @@ fun GasLimitsTable(
                 text = "Depth (m)",
             )
             Text(
-                modifier = Modifier.weight(0.3f),
+                modifier = Modifier.weight(0.35f),
                 text = "Density (g/ℓ)",
             )
             Text(
@@ -262,7 +304,7 @@ fun GasLimitsTable(
 
                 row {
                     Text(
-                        modifier = Modifier.weight(0.2f),
+                        modifier = Modifier.weight(0.15f),
                         text = it.gas.toString(),
                     )
 
@@ -284,7 +326,7 @@ fun GasLimitsTable(
 
                     TextAlert(
                         alertSeverity = alertSeverityDensity,
-                        modifier = Modifier.weight(0.3f),
+                        modifier = Modifier.weight(0.35f),
                         text = density,
                     )
 

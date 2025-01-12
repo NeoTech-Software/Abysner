@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -36,14 +36,17 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun ExpandableText(
     modifier: Modifier = Modifier,
-    text: String,
+    annotatedText: AnnotatedString,
     showMoreText: String = "Show more",
     minimizedMaxLines: Int = 3,
     style: TextStyle = LocalTextStyle.current
@@ -61,14 +64,48 @@ fun ExpandableText(
         )
     ) {
 
-        val textCollapsed = remember(text) {
+        val textCollapsed = remember(annotatedText) {
             // Replace all double whitespace with a single space
             // Replace all new lines
-            text.replace(Regex("\\s*(?:\\n|\\s{2})\\s*"), " ")
+            // Keep existing spannable
+            buildAnnotatedString {
+                var lastWasWhitespace = false
+                val originalText = annotatedText.text
+                val spanStyles = annotatedText.spanStyles
+                val modifiedSpans = spanStyles.toMutableList()
+
+                originalText.forEachIndexed { i, char ->
+                    // If the character is a whitespace or newline, collapse multiple spaces/newlines into one
+                    if (char.isWhitespace() || char == '\n') {
+                        if (lastWasWhitespace) {
+                            // Already added a whitespace, skip this one (or line), and shift the spannable's accordingly.
+                            modifiedSpans.forEachIndexed { index, span ->
+                                if (span.start >= i) {
+                                    // If the span starts at this character index or after it, shift both start and end
+                                    modifiedSpans[index] = AnnotatedString.Range(span.item, span.start - 1, span.end - 1)
+                                } else if (span.start < i && span.end > i) {
+                                    // If the current index is within the span range, shift the end only
+                                    modifiedSpans[index] = AnnotatedString.Range(span.item, span.start, span.end - 1)
+                                }
+                            }
+                        } else {
+                            append(" ")
+                            lastWasWhitespace = true
+                        }
+                    } else {
+                        append(char)
+                        lastWasWhitespace = false
+                    }
+                }
+
+                modifiedSpans.forEach {
+                    addStyle(it.item, it.start, it.end)
+                }
+            }
         }
 
         Text(
-            text = if(expanded) { text } else { textCollapsed },
+            text = if(expanded) { annotatedText } else { textCollapsed },
             maxLines = if (expanded) { Int.MAX_VALUE } else { minimizedMaxLines },
             onTextLayout = { hasVisualOverflow = it.hasVisualOverflow },
             style = style
