@@ -52,9 +52,14 @@ fun GasPieChart(
     modifier: Modifier,
     gasRequirement: GasPlan
 ) {
-
-    val emergencyExtra = gasRequirement.extraRequiredForWorstCaseOutOfAirSorted
-    val base = gasRequirement.sortedBase
+    val emergencyExtra = gasRequirement.map {
+        it.gas to it.amountEmergencyExtra
+    }.sortedByDescending {
+        it.second
+    }
+    val base = gasRequirement.map {
+        it.gas to it.amount
+    }.sortedByDescending { it.second }
 
     val gas = base + emergencyExtra
 

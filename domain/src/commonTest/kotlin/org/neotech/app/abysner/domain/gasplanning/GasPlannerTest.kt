@@ -18,6 +18,7 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.tenthAtDecimalPoint
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -110,5 +111,44 @@ class GasPlannerTest {
         val ttsWorstCaseScenarios = GasPlanner().findPotentialWorstCaseTtsPoints(divePlan)
         assertEquals(1, ttsWorstCaseScenarios.size)
         assertTrue { ttsWorstCaseScenarios.any { it.end == 48 && it.endDepth == 23.0 && it.ttsAfter == 15 } }
+    }
+
+    /**
+     * Test for GitHub issue: https://github.com/NeoTech-Software/Abysner/issues/59
+     * Making sure the calculated volumes and pressures are as expected.
+     */
+    @Test
+    fun testBarUsage() {
+
+        val bottomGas = Cylinder(Gas.Air, 200, 22)
+        val decoGas = Cylinder(Gas.Nitrox50, 207, 7)
+
+        val divePlanner = DivePlanner()
+        divePlanner.configuration = Configuration(
+            sacRate = 14.0,
+            maxPPO2 = 1.4,
+            maxPPO2Deco = 1.6,
+            maxEND = 30.0,
+            maxAscentRate = 5.0,
+            maxDescentRate = 10.0,
+            gfLow = 0.4,
+            gfHigh = 0.8,
+            forceMinimalDecoStopTime = true,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            salinity = Salinity.WATER_FRESH,
+            algorithm = Configuration.Algorithm.BUHLMANN_ZH16C
+        )
+        val divePlan = divePlanner.getDecoPlan(
+            plan = listOf(
+                DiveProfileSection(30, 50, bottomGas),
+            ),
+            decoGases = listOf(bottomGas, decoGas)
+        )
+
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+
+        assertEquals(3769.0, gasPlan[0].amountTotal, tenthAtDecimalPoint(0))
+        assertEquals(4131.0, gasPlan[1].amountTotal, tenthAtDecimalPoint(0))
     }
 }

@@ -12,6 +12,21 @@
 
 package org.neotech.app.abysner.domain.gasplanning.model
 
-import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.Cylinder
 
-data class GasUsage(val gas: Gas, val amount: Double)
+data class GasUsage(
+    val gas: Cylinder,
+    /**
+     * Amount of gas used in liters at 1 ATA.
+     */
+    val amount: Double,
+    /**
+     * Amount of gas extra used in liters at 1 ATA.
+     */
+    val amountEmergencyExtra: Double
+) {
+    /**
+     * Amount of gas used in total (normal usage + emergency extra) in liters at 1 ATA.
+     */
+    val amountTotal = amount + amountEmergencyExtra
+}
