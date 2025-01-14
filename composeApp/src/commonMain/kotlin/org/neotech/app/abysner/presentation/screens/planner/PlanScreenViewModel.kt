@@ -221,7 +221,7 @@ class PlanScreenViewModel(
         }
     }
 
-    private suspend fun calculateDivePlan(inputState: DivePlanInputModel, configuration: Configuration, ): Result<DivePlanSet> {
+    private fun calculateDivePlan(inputState: DivePlanInputModel, configuration: Configuration): Result<DivePlanSet> {
         return try {
             val timedResult = measureTimedValue {
                 val planner = DivePlanner()

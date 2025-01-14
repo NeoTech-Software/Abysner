@@ -12,12 +12,9 @@
 
 package org.neotech.app.abysner.domain.utilities
 
-import platform.Foundation.NSCoder
 import platform.Foundation.NSNumber
 import platform.Foundation.NSNumberFormatter
 import platform.Foundation.NSUUID
-import platform.darwin.NSInteger
-import platform.darwin.NSUInteger
 
 actual object DecimalFormat {
     actual fun format(fractionDigits: Int, number: Number): String {

@@ -34,11 +34,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.unit.dp
+import org.neotech.app.abysner.presentation.component.core.toPx
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
-import org.neotech.app.abysner.presentation.component.core.toPx
-import kotlin.math.max
 import kotlin.math.min
 
 

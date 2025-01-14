@@ -54,13 +54,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
-import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
+import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection

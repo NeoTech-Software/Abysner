@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
-import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.waterVapourPressureInBars
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

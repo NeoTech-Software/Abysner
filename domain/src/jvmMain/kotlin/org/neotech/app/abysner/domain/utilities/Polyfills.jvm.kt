@@ -17,6 +17,7 @@ import java.util.UUID
 
 actual object DecimalFormat {
     actual fun format(fractionDigits: Int, number: Number): String {
+        @Suppress("RemoveRedundantQualifierName")
         val df = java.text.DecimalFormat()
         df.isGroupingUsed = false
         df.maximumFractionDigits = fractionDigits

@@ -207,7 +207,7 @@ class DecompressionPlanner(
     ): List<DiveSegment> {
         var gas: Cylinder
         val fromDepth: Double
-        if (this.segments.size == 0) {
+        if (this.segments.isEmpty()) {
             // TODO
             //   Instead of throwing an exception (if there are no segments) the current depth could
             //   be considered 0 meters, hence a simple return would be fine, as no decompression is

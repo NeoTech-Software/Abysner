@@ -65,6 +65,7 @@ val Lineshape: Shape = object : Shape {
             }
         )
 
+    @Suppress("SameReturnValue")
     override fun toString(): String = "LineShape"
 }
 

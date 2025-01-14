@@ -17,11 +17,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 
-fun appendBold(text: String) {
-
-}
-
-inline fun Builder.appendBold(
+internal fun Builder.appendBold(
     text: String,
 ) {
     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

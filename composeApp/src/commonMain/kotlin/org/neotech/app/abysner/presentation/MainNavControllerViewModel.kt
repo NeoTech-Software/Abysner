@@ -13,7 +13,6 @@
 package org.neotech.app.abysner.presentation
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.settings.SettingsRepository

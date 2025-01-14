@@ -1,16 +1,3 @@
-import abysner.composeapp.generated.resources.Res
-import abysner.composeapp.generated.resources.icon_font
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.withStyle
-import org.jetbrains.compose.resources.Font
-import org.neotech.app.abysner.presentation.theme.CustomColors
-
 /*
  * Abysner - Dive planner
  * Copyright (C) 2024 Neotech
@@ -22,6 +9,20 @@ import org.neotech.app.abysner.presentation.theme.CustomColors
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
+
+package org.neotech.app.abysner.presentation.theme
+
+import abysner.composeapp.generated.resources.Res
+import abysner.composeapp.generated.resources.icon_font
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.withStyle
+import org.jetbrains.compose.resources.Font
 
 @Composable
 fun fontFamilyIconFont() = FontFamily(Font(resource = Res.font.icon_font))

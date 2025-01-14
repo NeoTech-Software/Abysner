@@ -13,16 +13,11 @@
 package org.neotech.app.abysner.presentation.component
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,16 +40,14 @@ fun GasPickerComponent(
             onValueChange = {
 
                 val newNitrogenPercentage = (100 - (round(it).toInt() + initialHeliumPercentage))
-
-                val newHeliumPercentage: Int
-                if (newNitrogenPercentage < 0) {
-                    newHeliumPercentage = initialHeliumPercentage + newNitrogenPercentage
+                val newHeliumPercentage: Int = if (newNitrogenPercentage < 0) {
+                    initialHeliumPercentage + newNitrogenPercentage
                 } else if(newNitrogenPercentage > 79) {
                     // Don't allow a nitrogen percentage above 79% (that would not be a normal diving gas)
                     // Instead increase helium percentage
-                    newHeliumPercentage = initialHeliumPercentage + (newNitrogenPercentage - 79)
+                    initialHeliumPercentage + (newNitrogenPercentage - 79)
                 } else {
-                    newHeliumPercentage = initialHeliumPercentage
+                    initialHeliumPercentage
                 }
                 val oxygenPercentage = round(it).toInt()
                 onGasChanged(oxygenPercentage, newHeliumPercentage)

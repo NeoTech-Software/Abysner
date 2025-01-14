@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.gasplan
 
-import IconFont
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,7 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import appendIcon
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
@@ -46,6 +44,8 @@ import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.GasPieChart
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.LoadingBoxWithBlur
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.theme.IconFont
+import org.neotech.app.abysner.presentation.theme.appendIcon
 
 @Composable
 fun GasPlanCardComponent(

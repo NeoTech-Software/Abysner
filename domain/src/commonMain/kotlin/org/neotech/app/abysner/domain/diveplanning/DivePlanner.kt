@@ -12,17 +12,14 @@
 
 package org.neotech.app.abysner.domain.diveplanning
 
-import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
-import org.neotech.app.abysner.domain.gasplanning.OxygenToxicityCalculator
-import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
+import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
+import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.max
+import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.gasplanning.OxygenToxicityCalculator
 
 /**
  * Builds on top of the [DecompressionPlanner] and [DecompressionModel] and adds algorithms to
