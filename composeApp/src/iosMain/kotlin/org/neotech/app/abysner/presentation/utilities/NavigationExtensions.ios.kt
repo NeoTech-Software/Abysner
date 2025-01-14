@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.utilities
 
-import platform.posix.exit
 import kotlin.system.exitProcess
 
 actual fun closeApp() {

@@ -24,7 +24,7 @@ fun StandardGasPickerDialog(
     SingleChoicePreferenceDialog(
         title = "Standard gases",
         confirmButtonText = null,
-        onItemSelected = { item, _, ->
+        onItemSelected = { item, _ ->
             item?.let{
                 onGasSelected(it)
             }

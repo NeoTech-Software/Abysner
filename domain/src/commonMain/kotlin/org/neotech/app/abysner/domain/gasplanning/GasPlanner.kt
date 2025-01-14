@@ -13,12 +13,11 @@
 package org.neotech.app.abysner.domain.gasplanning
 
 import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
-import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
+import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasUsage
 import org.neotech.app.abysner.domain.utilities.mergeInto
 import org.neotech.app.abysner.domain.utilities.updateOrInsert

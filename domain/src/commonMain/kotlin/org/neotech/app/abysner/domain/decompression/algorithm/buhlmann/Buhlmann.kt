@@ -231,7 +231,7 @@ private data class TissueCompartment(
 
     /**
      * Returns this compartments ceiling in bars, with the given [gf] conservatism factor applied.
-     * A ceiling above the surface is clamped to [pressureAtSurface].
+     * A ceiling above the surface is clamped to [Environment.atmosphericPressure].
      */
     fun calculateCeiling(gf: Double): Double {
 

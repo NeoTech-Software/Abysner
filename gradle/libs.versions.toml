@@ -11,9 +11,9 @@ androidx-activityCompose = "1.9.3"
 
 # Compose & Kotlin
 compose-plugin = "1.7.3"
-kotlin = "2.0.20"
+kotlin = "2.1.0"
 # KSP version should follow Kotlin version
-ksp = "2.0.20-1.0.25"
+ksp = "2.1.0-1.0.28"
 
 # Dependency Injection
 kotlinInject = "0.7.1"

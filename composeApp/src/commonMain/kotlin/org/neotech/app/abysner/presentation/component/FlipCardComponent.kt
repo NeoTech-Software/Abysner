@@ -14,18 +14,14 @@ package org.neotech.app.abysner.presentation.component
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 
@@ -35,8 +31,8 @@ fun FlipCardComponent(
     showBack: MutableState<Boolean> = remember { mutableStateOf(false) },
     modifier: Modifier = Modifier,
     animateBackAutomatically: Boolean = true,
-    front: @Composable (modifier: Modifier, onClick: () -> Unit) -> Unit = { _, _, ->},
-    back: @Composable (modifier: Modifier, onClick: () -> Unit) -> Unit = {_, _, -> },
+    front: @Composable (modifier: Modifier, onClick: () -> Unit) -> Unit = { _, _ ->},
+    back: @Composable (modifier: Modifier, onClick: () -> Unit) -> Unit = {_, _ -> },
 ) {
 
     LaunchedEffect(showBack.value) {

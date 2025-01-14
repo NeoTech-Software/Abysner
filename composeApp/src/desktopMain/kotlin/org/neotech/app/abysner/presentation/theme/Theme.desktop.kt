@@ -21,7 +21,9 @@ actual fun getColorScheme(dynamicColor: Boolean, isDarkMode: Boolean): ColorSche
     false -> LightColorScheme
 }
 
+@Suppress("ComposableNaming")
 @Composable
 actual fun applyPlatformSpecificThemeConfiguration(colorScheme: ColorScheme, isDarkMode: Boolean) = Unit
 
+@Suppress("SameReturnValue")
 actual fun platform(): Platform = Platform.DESKTOP

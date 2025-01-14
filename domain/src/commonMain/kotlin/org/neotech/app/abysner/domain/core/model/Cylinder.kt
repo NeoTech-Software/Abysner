@@ -83,77 +83,77 @@ data class Cylinder(
         /**
          * Based on Luxfer LAL100
          */
-        val AL100_WATER_VOLUME = 13.2
+        const val AL100_WATER_VOLUME = 13.2
 
         /**
          * Based on Luxfer LAL80
          */
-        val AL80_WATER_VOLUME = 11.1
+        const val AL80_WATER_VOLUME = 11.1
 
         /**
          * Based on Luxfer LAL63
          */
-        val AL63_WATER_VOLUME = 9.0
+        const val AL63_WATER_VOLUME = 9.0
 
         /**
          * Based on Luxfer LAL50
          */
-        val AL50_WATER_VOLUME = 6.9
+        const val AL50_WATER_VOLUME = 6.9
 
         /**
          * Based on Luxfer LAL40
          */
-        val AL40_WATER_VOLUME = 5.7
+        const val AL40_WATER_VOLUME = 5.7
 
         /**
          * Based on Luxfer LAL30
          */
-        val AL30_WATER_VOLUME = 4.3
+        const val AL30_WATER_VOLUME = 4.3
 
         /**
          * Based on Luxfer LAL19
          */
-        val AL19_WATER_VOLUME = 2.9
+        const val AL19_WATER_VOLUME = 2.9
 
         /**
          * Based on Luxfer LAL13
          */
-        val AL13_WATER_VOLUME = 1.9
+        const val AL13_WATER_VOLUME = 1.9
 
         /**
          * Based on Luxfer LAL06
          */
-        val AL6_WATER_VOLUME = 0.9
+        const val AL6_WATER_VOLUME = 0.9
 
         /**
          * Based on Faber X8-133 HDG
          */
-        val HP133_WATER_VOLUME = 17.0
+        const val HP133_WATER_VOLUME = 17.0
 
         /**
          * Based on Faber X7-120 HDG
          */
-        val HP120_WATER_VOLUME = 15.3
+        const val HP120_WATER_VOLUME = 15.3
 
         /**
          * Based on Faber X8-117 HDG
          */
-        val HP117_WATER_VOLUME = 15.0
+        const val HP117_WATER_VOLUME = 15.0
 
         /**
          * Based on Faber X7-100 HDG
          */
-        val HP100_WATER_VOLUME = 12.9
+        const val HP100_WATER_VOLUME = 12.9
 
         /**
          * Based on Faber X7-80 HDG
          */
-        val HP80_WATER_VOLUME = 10.2
+        const val HP80_WATER_VOLUME = 10.2
 
-        inline fun steel10Liter(gas: Gas, pressure: Double = 232.0) = Cylinder(gas, pressure, 10.0)
-        inline fun steel12Liter(gas: Gas, pressure: Double = 232.0) = Cylinder(gas, pressure, 12.0)
-        inline fun aluminium80Cuft(gas: Gas, pressure: Double = 207.0) = Cylinder(gas, pressure, AL80_WATER_VOLUME)
-        inline fun aluminium63Cuft(gas: Gas, pressure: Double = 207.0) = Cylinder(gas, pressure, AL63_WATER_VOLUME)
+        fun steel10Liter(gas: Gas, pressure: Double = 232.0) = Cylinder(gas, pressure, 10.0)
+        fun steel12Liter(gas: Gas, pressure: Double = 232.0) = Cylinder(gas, pressure, 12.0)
+        fun aluminium80Cuft(gas: Gas, pressure: Double = 207.0) = Cylinder(gas, pressure, AL80_WATER_VOLUME)
+        fun aluminium63Cuft(gas: Gas, pressure: Double = 207.0) = Cylinder(gas, pressure, AL63_WATER_VOLUME)
 
 
     }
