@@ -20,10 +20,10 @@ import java.io.ByteArrayOutputStream
 import java.util.Properties
 
 // DMG distribution does not support "-beta", MSI requires at least MAJOR.MINOR.BUILD
-val abysnerVersionBase = "1.0.5"
+val abysnerVersionBase = "1.0.6"
 val abysnerVersion = "$abysnerVersionBase-beta"
 // iOS supports a String here, but Android only an integer
-val abysnerBuildNumber = 7
+val abysnerBuildNumber = 8
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
