@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -220,8 +220,8 @@ fun DiveConfigurationScreen(
                     }
 
                     NumberPreference(
-                        label = "Gas usage out-of-air",
-                        description = "The average amount of gas the diver is breathing per minute at 1 atmosphere during an out-of-air scenario. This is also known as the panic SAC or RMV rate.",
+                        label = "Gas usage emergency",
+                        description = "The average amount of gas a diver is breathing per minute at 1 atmosphere during an emergency scenario. This is also known as the panic SAC or RMV rate.",
                         initialValue = configuration.sacRateOutOfAir.toInt(),
                         minValue = 5,
                         maxValue = 99,

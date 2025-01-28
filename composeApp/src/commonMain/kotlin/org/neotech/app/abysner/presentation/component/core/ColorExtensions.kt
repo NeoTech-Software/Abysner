@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -13,8 +13,12 @@
 package org.neotech.app.abysner.presentation.component.core
 
 import androidx.annotation.Size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import org.neotech.app.abysner.presentation.theme.LocalIsDarkTheme
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -34,18 +38,72 @@ fun Color.preMixedWith(color: Color): Color {
 
 /**
  * Retains the hue and saturation of this color and modifies the lightness value to return
- * [count] shades of this color. The shades are equally divided along the full possible lightness
- * range, excluding the outer ends (full white and full black).
+ * [count] shades of this color. The shades are equally divided within the given range of min and
+ * max lightness, for example 0.15 (15%) to 0.85 (85%) would yield:
  *
- * So for 3 shades, the full range is divided by 3 + 1 (0.25)
- * Then the shades get these lightness values: 0.25 (x1), 0.50 (x2), 0.75 (x3)
+ * - For 2 shades: 15% and 85%.
+ * - For 4 shades: 15%, 38.33%, 61.67%, 85%.
  */
-fun Color.getShades(count: Int): List<Color> {
+fun Color.getShades(count: Int, minLightness: Float = 0.3f, maxLightness: Float = 0.7f): List<Color> {
     val hsl = toHsl()
-    return (1..count).map {
-        hsl[2] = ((1f / (count + 1).toFloat()) * it)
+    val step = (maxLightness - minLightness) / (count - 1)
+
+    return (0 until count).map {
+        hsl[2] = minLightness + (step * it)
         hsl.hslToColor()
     }
+}
+
+fun Color.getGradient(lightnessMiddle: Float? = null, difference: Float = 0.2f): List<Color> {
+    val hsl = toHsl()
+    val lightness = lightnessMiddle ?: hsl[2]
+
+    // Calculate the adjusted lightness values
+    val lowerLightness = lightness - (difference / 2)
+    val upperLightness = lightness + (difference / 2)
+
+    // Shift the range if it goes out of bounds
+    var shift = 0f
+    if (lowerLightness < 0f) {
+        shift = -lowerLightness
+    } else if (upperLightness > 1f) {
+        shift = 1f - upperLightness
+    }
+
+    // Create the gradient colors
+    hsl[2] = (lowerLightness + shift).coerceIn(0f, 1f)
+    val lowerColor = hsl.hslToColor()
+    hsl[2] = (upperLightness + shift).coerceIn(0f, 1f)
+    val upperColor = hsl.hslToColor()
+    hsl[2] = (lightness + shift).coerceIn(0f, 1f)
+    val middleColor = hsl.hslToColor()
+
+    return listOf(lowerColor, middleColor, upperColor)
+}
+
+@Composable
+fun Color.contrastingOnColor(): Color {
+    // Choose white for darker surfaces and black for lighter surfaces
+    val isDarkTheme = LocalIsDarkTheme.current
+    return if (this.luminance() > 0.73) {
+        if(isDarkTheme) {
+            MaterialTheme.colorScheme.inverseOnSurface
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+    } else {
+        if(isDarkTheme) {
+            MaterialTheme.colorScheme.onSurface
+        } else {
+            MaterialTheme.colorScheme.inverseOnSurface
+        }
+    }
+}
+
+fun Color.setSaturation(saturation: Float): Color {
+    val hsl = toHsl()
+    hsl[1] = saturation
+    return hsl.hslToColor()
 }
 
 /**

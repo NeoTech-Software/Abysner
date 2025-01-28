@@ -12,4 +12,4 @@
 
 package org.neotech.app.abysner.domain.gasplanning.model
 
-typealias GasPlan = List<GasUsage>
+typealias GasPlan = List<CylinderGasRequirements>

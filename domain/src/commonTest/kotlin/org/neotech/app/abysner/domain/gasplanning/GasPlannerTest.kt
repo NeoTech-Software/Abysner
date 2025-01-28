@@ -148,7 +148,7 @@ class GasPlannerTest {
 
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
-        assertEquals(3769.0, gasPlan[0].amountTotal, tenthAtDecimalPoint(0))
-        assertEquals(4131.0, gasPlan[1].amountTotal, tenthAtDecimalPoint(0))
+        assertEquals(3769.0, gasPlan[0].totalGasRequirement, tenthAtDecimalPoint(0))
+        assertEquals(4131.0, gasPlan[1].totalGasRequirement, tenthAtDecimalPoint(0))
     }
 }
