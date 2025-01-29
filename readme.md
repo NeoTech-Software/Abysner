@@ -1,9 +1,9 @@
-![Opensource mobile deco planner](resources/readme-header.png "Abysner")
+![Abysner - The open-source mobile dive planner](resources/readme-header.png)
+  
+[![Get it on Google Play](resources/store-badge-google.svg)](https://play.google.com/store/apps/details?id=nl.neotech.app.abysner)
+[![Download on the App Store](resources/store-badge-apple.svg)](https://apps.apple.com/nl/app/abysner/id6636477320)
 
-> **Note:** Abysner is currently not yet available on the App Store & Play Store, only as a private beta. Please be patient, coming soon!
-
-
-**The decompression models we use and trust today to plan our dives are the result of literally centuries worth of collective research by thousands of people. There is a lot of software available to the public to plan dives, built on top of this collective research. However on Android and iOS the options are pretty limited, either behind a paywall, closed-source or lack a good mobile friendly interface.**
+**The decompression models we use and trust today to plan our dives are the result of literally centuries worth of collective research by thousands of people. There is a lot of software available to the public to plan dives, built on top of this collective research. However on Android and iOS the options are pretty limited, either behind an expensive paywall, closed-source or lack a good mobile friendly interface.**
 
 Abysner was built with the goal of giving something back to the diving community. Abysner is open-source, free¹, and available on both Android and iOS. It was built using the best available cross-platform solution to date: Kotlin Multi-platform and Compose. The main goal of the app is not to be the most feature rich, instead it aims to be user friendly and simple.
 
@@ -16,18 +16,16 @@ _¹See: [FAQ No. 4](#faq)_
 
 # Features
 
-**Abysner is still in early stages of development, right now it supports the following features:**
+**Abysner is still in early stages of development, right now it supports the following features²:**
 
 - Buhlmann ZHL-16 A, B and C decompression models with gradient factors
-- Metric only*
-- Multi-gas ready (unlimited): 
+- Multi-gas ready: 
     - Air
     - Nitrox 
     - Oxygen
     - Trimix
     - Helitrox
     - Heliox
-- Open-circuit diving only*
 - Configurable:
     - SAC rates
     - Environment (salinity, altitude etc.)
@@ -44,13 +42,16 @@ _¹See: [FAQ No. 4](#faq)_
     - Runtime, depth, duration, gasses, gas (switches), ascends, descends are all shown
     - Time to deco (NDL limit)
 - Automatic contingency plan (longer & deeper)
-    - configurable extra time and depth
+    - Configurable extra time and depth
 - Gas plan:
-    - Chart showing how many gas is required per mix
+    - Automatic calculation of emergency reserves
+    - Chart with gas requirements per cylinder
+    - Warnings when gas supplies are not sufficient or limits are exceeded
     - Density and PPO2 information at maximum depth for each mix
 - Multi-level dive planning
 
-The development plan for this application is to first see how the reception will be, then stabilize the current basic feature set, before adding new features.
+> _²This app is currently under development and in a beta phase, CCR planning (constant PPO2) and
+imperial units are not available yet._
 
 # Dive planning
 Dives are planned based on bottom sections with automatically calculated ascents and descents.
@@ -85,21 +86,19 @@ _This list is by no means complete, prioritised or a commitment._
   - Isobaric counterdiffusion warnings
   - Overview of all dive warnings
 - **Localization:**
-  - Different languages
-  - Imperial (instead of only metric)
+  - Multi-language support
+  - Imperial units
 - **UX:**
   - Clickable graphs with more details
   - Option to choose theme (dark/light/auto)
 - **Planning:**
-  - Share created dive plans (by other means then screenshotting them)
   - Configurable SAC rate during deco
-  - Support for CCR and SCR (constant PPO2) diving
+  - Support for CCR (constant PPO2) diving
   - Multi-dive planning and surface intervals
   - VPM-B support
   - Auto-time mode (time is automatically calculated for a section based on ascent/descent speed)
 - **Gas planning:**
-   - Gas plans with tank selection
-   - Automatic gas selection for sections
+   - Automatic mix selection for planned sections
 - **Other:**
    - NDL tables
    - Gas blending calculator
@@ -545,12 +544,13 @@ that, so the answer is no.
 A big misconception about free open-source software, is that it is supposed to be without payment.
 But this is not the intention of free open-source software. Abysner is free in the sense that you
 are allowed to distribute it freely, and do with it whatever you want as long as you don't break the
-AGPLv3 license terms and conditions. The channels I personally use to distribute official builds may
-require a small fee (not gratis). The latter has mainly to do with the fees that Apple is asking me
-to pay on a yearly basis, and to cover some of the costs associated with running an open-source
-project, such as a domain name, development tools, hardware to test on etc. However should you feel
-like this payment is too much, then you are free to build the software yourself or get a pre-built
-package from somebody else (that's the free part).
+AGPLv3 license terms and conditions. The channels I personally use to distribute official builds
+(Play Store and App Store) require a tiny fee (not gratis). This has mainly to do with the fees
+that Apple is asking me  to pay on a yearly basis, and to cover some of the costs associated with
+running an open-source project or building an app in general, such as a domain name, development
+tools, hardware to test on etc. However should you feel like this payment is too much, then you are
+free to build the software yourself or get a pre-built package from somebody else (that's the free
+part).
 </details>
 
 
