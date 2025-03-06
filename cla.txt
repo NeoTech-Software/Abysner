@@ -1,0 +1,54 @@
+Contributor License Agreement (CLA)
+
+Thank you for your interest in contributing to the Abysner open-source software project.
+
+This Contributor License Agreement ("Agreement") sets forth the terms under which you
+("You" or "Contributor") contribute any work of authorship, including but not limited to source
+code, documentation, data, resources, or any other work protected by authorship ("Contributions")
+to Abysner ("Project"), owned by NeoTech (R.R. Smit), the Project Owner ("Owner").
+
+This Agreement ensures that:
+  - The Owner receives all rights necessary to use and distribute the Contributions under both
+    open-source and commercial licenses.
+  - The Contributor is protected from liabilities.
+  - The Owner is not obligated to use the Contributions.
+  - The Contributor has no obligation to provide maintenance, bug fixes, or support.
+
+By agreeing to this CLA, You accept the following terms for any Contributions You make to
+the Project:
+
+1. Grant of Rights
+You hereby grant the Owner a perpetual, worldwide, non-exclusive, royalty-free, and transferable
+license to:
+  - Use, reproduce, modify, prepare derivative works of, publicly display, publicly perform, and
+    distribute your Contributions, whether in original or modified form, in whole or in part.
+  - Sublicense, relicense, and transfer the foregoing rights to third parties, at the Owner’s
+    discretion.
+You also grant the Owner a patent license, allowing the Owner to make, use, sell, and distribute
+your Contributions, including the right to sublicense these patent rights to others.
+
+2. Contributor Representations
+By agreeing to this CLA, You represent and warrant the following:
+  - Your Contributions are your original work and have not been copied from any third party, unless
+    you have obtained the necessary rights to contribute such work.
+  - You have full legal authority to grant the rights described in this Agreement, including the
+    rights to the copyright and patent licenses.
+  - You have the right to submit your Contributions and that such Contributions do not infringe or
+    violate the intellectual property rights of others.
+  - If your Contributions were created as part of your employment, you represent that you have
+    obtained the necessary permission from your employer to contribute such work to this Project.
+    You further represent that you are not violating any obligations to your employer or any
+    intellectual property rights agreements in making these Contributions.
+
+3. No Contributor Obligations
+  - You are under no obligation to provide support, bug fixes, or ongoing maintenance for your
+    Contributions, whether in response to issues raised by the Owner or others.
+  - The Owner is under no obligation to use, incorporate, or distribute your Contributions, or to
+    incorporate them into any subsequent versions of the Project.
+
+4. Disclaimer
+  - Your Contributions are provided "as-is", without any warranties or representations of any kind,
+    either express or implied, including but not limited to the implied warranties of
+    merchantability, fitness for a particular purpose, or non-infringement.
+  - The Owner shall not be liable for any damages, claims, or losses arising from the use of the
+    Contributions, whether direct or indirect.
