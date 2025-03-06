@@ -126,6 +126,7 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         const val MAX_PPO2 = 1.6
 
         val Air = Gas(oxygenFraction = 0.21, heliumFraction = 0.0)
+        val Nitrox28 = Gas(oxygenFraction = 0.28, heliumFraction = 0.0)
         val Nitrox32 = Gas(oxygenFraction = 0.32, heliumFraction = 0.0)
         val Nitrox36 = Gas(oxygenFraction = 0.36, heliumFraction = 0.0)
         val Nitrox40 = Gas(oxygenFraction = 0.40, heliumFraction = 0.0)
@@ -143,7 +144,7 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
 
         val StandardGasses = listOf(
             Air,
-            Nitrox32, Nitrox36, Nitrox40,
+            Nitrox28, Nitrox32, Nitrox36, Nitrox40,
             Nitrox50, Nitrox80,
             Oxygen,
             Trimix3030,
