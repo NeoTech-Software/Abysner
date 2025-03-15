@@ -14,11 +14,10 @@ package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.Snapshot
-import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
 import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.physics.Pressure
 import kotlin.math.max
 
 /**
@@ -44,7 +43,7 @@ class Buhlmann(
 
     /**
      * The tissues of the diver, these will be loaded during the dive with inert gasses (see:
-     * [addFlat] and [addDepthChange]). Based on pressure levels in these tissues the ceiling will
+     * [addFlat] and [addPressureChange]). Based on pressure levels in these tissues the ceiling will
      * be calculated.
      */
     private val tissues = mutableListOf<TissueCompartment>().apply {
@@ -61,18 +60,18 @@ class Buhlmann(
     /**
      * Add a descending, ascending or flat section of the dive to tissues.
      *
-     * @param startDepth start depth in meters from the surface.
-     * @param endDepth end depth in meters from the surface.
+     * @param startPressure start depth in meters from the surface.
+     * @param endPressure end depth in meters from the surface.
      * @param gas the gas being breathe by the diver during this section.
      * @param timeInMinutes the timeInMinutes this section takes.
      */
-    override fun addDepthChange(startDepth: Double, endDepth: Double, gas: Gas, timeInMinutes: Int) {
+    override fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int) {
         val fO2 = gas.oxygenFraction
         val fHe = gas.heliumFraction
 
         var loadChange = 0.0
         tissues.forEach {
-            val tissueChange = it.addDepthChange(startDepth, endDepth, fO2, fHe, timeInMinutes)
+            val tissueChange = it.addPressureChange(startPressure.value, endPressure.value, fO2, fHe, timeInMinutes)
             loadChange += tissueChange
         }
     }
@@ -80,7 +79,7 @@ class Buhlmann(
     /**
      * Get the current ceiling based on maximum tissue tolerances in meters from the surface.
      */
-    override fun getCeiling(): Double {
+    override fun getCeiling(): Pressure {
         val ceiling = this.getMinimumToleratedAmbientPressure(environment.atmosphericPressure, gfLow, gfHigh)
 
         // Cap ceiling to surface, which is fine, because tissues will only be affected underwater.
@@ -88,9 +87,9 @@ class Buhlmann(
         // dive may still break the ceiling, but for the sake of this application we don't need
         // this information.
         return if (ceiling < environment.atmosphericPressure) {
-            barToDepthInMeters(environment.atmosphericPressure, environment)
+            Pressure(environment.atmosphericPressure)
         } else {
-            barToDepthInMeters(ceiling, environment)
+            Pressure(ceiling)
         }
     }
 
@@ -191,7 +190,7 @@ private data class TissueCompartment(
     private var pTotal: Double = pNitrogen + pHelium
 ) {
 
-    fun addDepthChange(startDepth: Double, endDepth: Double, fO2: Double, fHe: Double, timeInMinutes: Int): Double {
+    fun addPressureChange(startPressure: Double, endPressure: Double, fO2: Double, fHe: Double, timeInMinutes: Int): Double {
         if (timeInMinutes <= 0) {
             throw IllegalArgumentException("Invalid duration `$timeInMinutes` for on/off-gassing tissues. The minimum duration must be higher then 0.")
         }
@@ -209,16 +208,16 @@ private data class TissueCompartment(
         // TODO: Once CCR support is added consider making the time increments smaller (seconds)?
         // https://thetheoreticaldiver.org/wordpress/index.php/2017/11/30/ccr-schreiner-equation/
 
-        val depthChangeInBarsPerMinute = depthChangeInBarsPerMinute(startDepth, endDepth, timeInMinutes, environment)
+        val depthChangeInBarsPerMinute = pressureChangeInBarsPerMinute(startPressure, endPressure, timeInMinutes)
 
         // Calculate nitrogen loading
         var gasRate = partialPressure(depthChangeInBarsPerMinute, fN2)
-        var pGas = partialPressure(depthInMetersToBars(startDepth, environment), fN2) // initial ambient pressure
+        var pGas = partialPressure(startPressure, fN2)
         this.pNitrogen = schreinerEquation(pNitrogen, pGas, timeInMinutes, parameters.n2HalfTime, gasRate)
 
         // Calculate helium loading
         gasRate = partialPressure(depthChangeInBarsPerMinute, fHe)
-        pGas = partialPressure(depthInMetersToBars(startDepth, environment), fHe)
+        pGas = partialPressure(startPressure, fHe)
         this.pHelium = schreinerEquation(pHelium, pGas, timeInMinutes, parameters.heHalfTime, gasRate)
 
         val prevTotal = this.pTotal

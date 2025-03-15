@@ -13,8 +13,22 @@
 package org.neotech.app.abysner.domain.core.physics
 
 import org.neotech.app.abysner.domain.core.model.Environment
+import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
+import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
+import kotlin.jvm.JvmInline
 import kotlin.math.exp
 import kotlin.math.ln
+
+/**
+ * Represents pressure in metric bars, 1 bar is equal to 100.000 Pascal.
+ * The idea of using an inline value class for Pressure is not to use it
+ * everywhere, but instead to allow for compile-time checks (without run-time
+ * performance hits) when crossing abstraction boundaries, such as crossing
+ * between the [DecompressionPlanner] (works with meters currently) and
+ * [DecompressionModel] (works in pressure).
+ */
+@JvmInline
+value class Pressure(val value: Double)
 
 /**
  * Calculates the partial pressure of an individual gas component from the total pressure of the gas
@@ -54,13 +68,10 @@ fun Double.asBarToPsi(): Double = this * 14.503774
  * @param depth water depth in meters
  * @param environment the density (salinity) of the water and atmospheric pressure.
  * @return pressure at the given depth.
- *
- * TODO: Remove atmospheric pressure and make this a pure water column based pressure instead?
- *   this also allows for setting a custom atmospheric pressure?
  */
-fun depthInMetersToBars(depth: Double, environment: Environment): Double {
+fun depthInMetersToBar(depth: Double, environment: Environment): Pressure {
     val weightDensity = environment.salinity.density * GRAVITY_ON_EARTH
-    return pascalToBar(depth * weightDensity) + environment.atmosphericPressure
+    return Pressure(pascalToBar(depth * weightDensity) + environment.atmosphericPressure)
 }
 
 /**
@@ -75,6 +86,10 @@ fun barToDepthInMeters(pressure: Double, environment: Environment): Double {
     val waterPressure = pressure - environment.atmosphericPressure
     val weightDensity = environment.salinity.density * GRAVITY_ON_EARTH
     return barToPascal(waterPressure) / weightDensity
+}
+
+inline fun barToDepthInMeters(pressure: Pressure, environment: Environment): Double {
+    return barToDepthInMeters(pressure.value, environment)
 }
 
 /**

@@ -16,6 +16,8 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.findBestDecoGas
+import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
+import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.SnapshotScope
 import org.neotech.app.abysner.domain.decompression.algorithm.SnapshotScopeImpl
@@ -91,9 +93,12 @@ class DecompressionPlanner(
 
     private fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
 
-        model.addDepthChange(startDepth, endDepth, gas.gas, timeInMinutes)
+        val startPressure = depthInMetersToBar(startDepth, environment)
+        val endPressure = depthInMetersToBar(endDepth, environment)
 
-        val ceiling = model.getCeiling()
+        model.addPressureChange(startPressure, endPressure, gas.gas, timeInMinutes)
+
+        val ceiling = barToDepthInMeters(model.getCeiling(), environment)
 
         //store this as a stage
         this.segments.add(
@@ -364,7 +369,7 @@ class DecompressionPlanner(
     }
 
     private fun getDecoCeiling(decoStepSize: Int, lastDecoStopDepth: Int): Int {
-        var ceiling = round(model.getCeiling()).toInt()
+        var ceiling = round(barToDepthInMeters(model.getCeiling(), environment)).toInt()
         // Divers like to do deco stops in increments of 10 feet or 3 meters.
         // This finds the closest to the ceiling increment of 3 (lower or at the ceiling,
         // never higher).

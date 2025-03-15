@@ -14,9 +14,7 @@ package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
 import org.neotech.app.abysner.domain.core.physics.asDegreesCelsiusToDegreesKelvin
 import org.neotech.app.abysner.domain.core.physics.asDegreesKelvinToDegreesCelsius
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
 import org.neotech.app.abysner.domain.core.physics.pascalToBar
-import org.neotech.app.abysner.domain.core.model.Environment
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.pow
@@ -65,17 +63,13 @@ internal fun waterVapourPressureInBars(degreesCelsius: Double): Double {
 }
 
 /**
- * Calculates the change in depth in bars per minute.
+ * Calculates the change in pressure in bars per minute.
  *
- * TODO: May want the input to this method to be in bars as well? This avoids having to work with a
- *       salinity and atmospheric pressure value here.
- *
- * @return the depth changes in bars per minute, positive if descending, negative if ascending.
+ * @return the pressure changes in bars per minute, positive if descending, negative if ascending.
  */
-internal fun depthChangeInBarsPerMinute(beginDepth: Double, endDepth: Double, timeInMinutes: Int, environment: Environment): Double {
+internal fun pressureChangeInBarsPerMinute(beginPressure: Double, endPressure: Double, timeInMinutes: Int): Double {
     require(timeInMinutes > 0) { "timeInMinutes must be a positive integer, instead got: $timeInMinutes." }
-    val speed = (endDepth - beginDepth) / timeInMinutes
-    return depthInMetersToBars(speed, environment) - environment.atmosphericPressure
+    return (endPressure - beginPressure) / timeInMinutes
 }
 
 /**

@@ -22,10 +22,10 @@ class PressureTest {
     @Test
     fun testDepthInMetersToBars() {
         // 10 meters (pure water)
-        assertEquals(1.9939, depthInMetersToBars(10.0, Environment.Default), DOUBLE_TOLERANCE)
+        assertEquals(1.9939, depthInMetersToBar(10.0, Environment.Default).value, DOUBLE_TOLERANCE)
 
         // 24 meters (pure water)
-        assertEquals(3.3668, depthInMetersToBars(24.0, Environment.Default), DOUBLE_TOLERANCE)
+        assertEquals(3.3668, depthInMetersToBar(24.0, Environment.Default).value, DOUBLE_TOLERANCE)
     }
 
     @Test

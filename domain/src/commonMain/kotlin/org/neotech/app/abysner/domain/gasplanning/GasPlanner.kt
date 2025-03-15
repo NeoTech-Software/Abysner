@@ -14,7 +14,7 @@ package org.neotech.app.abysner.domain.gasplanning
 
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
+import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
@@ -108,8 +108,8 @@ class GasPlanner {
     private fun List<DiveSegment>.calculateGasRequirementsPerCylinder(sac: Double, environment: Environment): Map<Cylinder, Double> {
         val requiredLitersByGas = mutableMapOf<Cylinder, Double>()
         forEach {
-            val pressure = depthInMetersToBars(it.averageDepth, environment)
-            val sacAtDepth = sac * pressure
+            val pressure = depthInMetersToBar(it.averageDepth, environment)
+            val sacAtDepth = sac * pressure.value
             val liters = it.duration * sacAtDepth
             requiredLitersByGas.updateOrInsert(it.cylinder, liters) { currentValue, newValue ->
                 currentValue + newValue
