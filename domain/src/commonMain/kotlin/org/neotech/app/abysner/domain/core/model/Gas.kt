@@ -13,7 +13,7 @@
 package org.neotech.app.abysner.domain.core.model
 
 import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
+import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import kotlin.math.round
 
@@ -57,8 +57,8 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         // Helium has a narc factor of 0 while N2 and O2 have a narc factor of 1
         val narcIndex = (this.oxygenFraction) + (this.nitrogenFraction)
 
-        val bars = depthInMetersToBars(depth, environment)
-        val equivalentBars = bars * narcIndex
+        val bars = depthInMetersToBar(depth, environment)
+        val equivalentBars = bars.value * narcIndex
         return barToDepthInMeters(equivalentBars, environment)
     }
 
@@ -70,8 +70,8 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
     }
 
     fun densityAtDepth(depth: Double, environment: Environment): Double {
-        val bar = depthInMetersToBars(depth, environment)
-        return density * bar
+        val bar = depthInMetersToBar(depth, environment)
+        return density * bar.value
     }
 
     /**

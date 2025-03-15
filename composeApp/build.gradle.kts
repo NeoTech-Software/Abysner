@@ -16,6 +16,8 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.neotech.gradle.capitalizeFirstCharacter
 import java.io.ByteArrayOutputStream
 import java.util.Properties
 
@@ -35,13 +37,11 @@ plugins {
 
 kotlin {
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
@@ -49,7 +49,6 @@ kotlin {
 
     // Do not really support desktop, but this is required to get previews working.
     jvm("desktop") {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
             freeCompilerArgs.add("-Xexpect-actual-classes")
@@ -216,11 +215,12 @@ dependencies {
     // This is the same as repeating:
     //     add(target, libs.kotlinInject.compilerKsp)
     // where `target` is "kspDesktop", "kspAndroid", "kspIosX64" "kspIosArm64" or "kspIosSimulatorArm64"
-    kotlin.targets.asSequence().filter {
+    val kotlinTargets: Sequence<KotlinTarget> = kotlin.targets.asSequence()
+    kotlinTargets.filter {
         // Don't add KSP for common target, only final platforms
         it.platformType != KotlinPlatformType.common
     }.forEach {
-        add("ksp${it.targetName.capitalized()}", libs.kotlinInject.compilerKsp)
+        add("ksp${it.targetName.capitalizeFirstCharacter()}", libs.kotlinInject.compilerKsp)
     }
 }
 

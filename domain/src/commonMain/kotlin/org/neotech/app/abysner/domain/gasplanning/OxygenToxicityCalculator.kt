@@ -13,7 +13,7 @@
 package org.neotech.app.abysner.domain.gasplanning
 
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBars
+import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import kotlin.math.exp
 import kotlin.math.pow
@@ -40,8 +40,8 @@ class OxygenToxicityCalculator {
     }
 
     private fun calculateCns(fO2: Double, startDepth: Double, endDepth: Double, environment: Environment, duration: Int): Double {
-        val avgDepth = depthInMetersToBars((startDepth + endDepth) / 2.0, environment)
-        val ppO2 = fO2 * avgDepth
+        val avgPressure = depthInMetersToBar((startDepth + endDepth) / 2.0, environment).value
+        val ppO2 = fO2 * avgPressure
 
         if(ppO2 <= MINIMUM_CNS_PPO2) {
             return 0.0
@@ -77,8 +77,8 @@ class OxygenToxicityCalculator {
 
     private fun calculateOtu(duration: Int, pO2: Double, startDepth: Double, endDepth: Double, environment: Environment): Double {
         var durationInMinutes = duration.toDouble()
-        val startAAP = depthInMetersToBars(startDepth, environment)
-        val endAAP = depthInMetersToBars(endDepth, environment)
+        val startAAP = depthInMetersToBar(startDepth, environment).value
+        val endAAP = depthInMetersToBar(endDepth, environment).value
         var ppo2Start = startAAP * pO2
         var ppo2End = endAAP * pO2
 
