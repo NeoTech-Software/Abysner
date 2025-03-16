@@ -20,6 +20,8 @@ data class ConfigurationResourceV1(
     val lastDecoStopDepth: Int,
     val contingencyDeeper: Int,
     val contingencyLonger: Int,
+    // Default allows deserializing saves that predate this field.
+    val gasSwitchTime: Int = 1,
     val salinity: String,
     val altitude: Double,
     val algorithm: String,

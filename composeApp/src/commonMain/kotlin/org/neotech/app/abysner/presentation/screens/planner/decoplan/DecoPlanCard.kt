@@ -49,7 +49,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -321,21 +320,28 @@ fun DecoPlanTable(
         }
     ) {
 
-        var currentGas: Gas? = null
-
         val segments = divePlan.segmentsCollapsed
             .toMutableList()
             .compactSimilarSegments(compactAscentsBetweenDecoStops = settings.showBasicDecoTable)
 
-        segments.forEach { diveSegment ->
+        segments.forEachIndexed { index, diveSegment ->
 
+            // For gas switch segments, resolve the target gas the diver is switching to, so the
+            // table reads as an instruction ("switch to Nx50") rather than showing the old gas that
+            // is used for the tissue loading calculation.
+            val displayGas = if (diveSegment.isGasSwitch) {
+                // Theoretically speaking this should not occur, a gas switch is never the last
+                // segment in a dive
+                segments.getOrNull(index + 1)?.cylinder?.gas ?: diveSegment.cylinder.gas
+            } else {
+                diveSegment.cylinder.gas
+            }
             row {
                 DecoPlanRow(
                     diveSegment = diveSegment,
-                    previousGas = currentGas,
-                    runtime = diveSegment.end
+                    runtime = diveSegment.end,
+                    gas = displayGas,
                 )
-                currentGas = diveSegment.cylinder.gas
             }
         }
     }
@@ -363,18 +369,13 @@ fun LoadingBoxWithBlur(
 @Composable
 private fun RowScope.DecoPlanRow(
     diveSegment: DiveSegment,
-    previousGas: Gas?,
-    runtime: Int
+    runtime: Int,
+    gas: Gas,
 ) {
     val typeIcon = when (diveSegment.type) {
-        DiveSegment.Type.FLAT -> {
-            if (diveSegment.isDecompression) {
-                Res.drawable.ic_outline_stop_circle_24
-            } else {
-                Res.drawable.ic_outline_trending_flat_24
-            }
-        }
-
+        DiveSegment.Type.DECO_STOP -> Res.drawable.ic_outline_stop_circle_24
+        DiveSegment.Type.GAS_SWITCH -> Res.drawable.ic_outline_change_circle_24
+        DiveSegment.Type.FLAT -> Res.drawable.ic_outline_trending_flat_24
         DiveSegment.Type.DECENT -> Res.drawable.ic_outline_trending_down_24
         DiveSegment.Type.ASCENT -> Res.drawable.ic_outline_trending_up_24
     }
@@ -392,15 +393,10 @@ private fun RowScope.DecoPlanRow(
         modifier = Modifier.weight(0.2f),
         text = "+${diveSegment.duration}",
     )
-    val gasIcon: Painter = if (previousGas != null && previousGas != diveSegment.cylinder.gas) {
-        painterResource(resource = Res.drawable.ic_outline_change_circle_24)
-    } else {
-        ColorPainter(Color.Transparent)
-    }
-    TextWithStartIcon(
+
+    Text(
         modifier = Modifier.weight(0.2f),
-        text = diveSegment.cylinder.gas.toString(),
-        icon = gasIcon
+        text = gas.toString(),
     )
 }
 

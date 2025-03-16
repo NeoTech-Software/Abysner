@@ -42,7 +42,11 @@ data class DiveSegment(
 
     val gfCeilingAtEnd: Double,
 
-    val isDecompression: Boolean,
+    /**
+     * The type of this segment, which describes both the geometry (flat, ascending, descending)
+     * and the semantic purpose (deco stop, gas switch).
+     */
+    val type: Type,
 
     val travelSpeed: Double = (startDepth - endDepth) / duration.toDouble(),
 
@@ -55,7 +59,10 @@ data class DiveSegment(
     val end = start + duration
 
     val isDecompressionStop: Boolean
-        get() = type == Type.FLAT && isDecompression
+        get() = type == Type.DECO_STOP
+
+    val isGasSwitch: Boolean
+        get() = type == Type.GAS_SWITCH
 
     fun depthAt(duration: Int): Double {
         require(duration >= 0 && duration <= this.duration)
@@ -75,16 +82,20 @@ data class DiveSegment(
 
     val maxDepth = max(startDepth, endDepth)
 
-    val type = when {
-        startDepth == endDepth -> Type.FLAT
-        startDepth < endDepth -> Type.DECENT
-        else -> Type.ASCENT
-    }
-
     enum class Type {
+        /** Flat non-decompression segment (e.g., user-planned bottom time). */
         FLAT,
+        /** Descending segment. */
         DECENT,
-        ASCENT
+        /** Ascending segment. */
+        ASCENT,
+        /** Flat decompression stop. */
+        DECO_STOP,
+        /** Flat segment representing time spent switching to a different breathing gas. */
+        GAS_SWITCH;
+
+        /** Whether this type represents a flat (constant depth) segment. */
+        val isFlat: Boolean get() = this == FLAT || this == DECO_STOP || this == GAS_SWITCH
     }
 }
 
@@ -99,18 +110,15 @@ fun List<DiveSegment>.subList(fromTimeStamp: Int): List<DiveSegment> {
 }
 
 /**
- * Compacts adjacent segments together if they logically the same. Segments are only merged with
- * adjacent segments and the resulting segments may be merged again to other adjacent segments.
+ * Merges adjacent segments that are logically equivalent, reducing the list to a minimal set of
+ * dive instructions. Operates in place and returns the same list.
  *
- * Merging is done in 2 (or 3) situations
- * - If segments are flat, at the same depth, use the same gas and [DiveSegment.isDecompression] is the same.
- * - If segments are both either descending or ascending:
- *   - Start and end depth are matching
- *   - Use the same gas
- *   - Use the same ascent/descent speeds
+ * Note: some per-segment data becomes imprecise after merging. [DiveSegment.gfCeilingAtEnd] is
+ * taken from the last merged segment, so any deeper ceiling that occurred earlier within the
+ * merged span is lost.
  *
- *  If [compactAscentsBetweenDecoStops] is true, then if a single ascending segment exists between
- *  two deco stops, then this segment is merged with the shallowest deco stop.
+ * @param compactAscentsBetweenDecoStops If true, a single ascending segment between two deco stops
+ *                                       is folded into the shallower stop.
  */
 fun MutableList<DiveSegment>.compactSimilarSegments(
     compactAscentsBetweenDecoStops: Boolean = false
@@ -124,14 +132,14 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
         val currentSegment = this[i]
         val nextSegment = this[i + 1]
         if (
-            currentSegment.type == DiveSegment.Type.FLAT &&
-            nextSegment.type == DiveSegment.Type.FLAT &&
+            currentSegment.type.isFlat &&
+            currentSegment.type == nextSegment.type &&
             currentSegment.endDepth == nextSegment.startDepth &&
-            currentSegment.cylinder == nextSegment.cylinder &&
-            currentSegment.isDecompression == nextSegment.isDecompression
+            currentSegment.cylinder == nextSegment.cylinder
         ) {
             val combinedSegment = currentSegment.copy(
                 duration = currentSegment.duration + nextSegment.duration,
+                gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
             )
             this[i] = combinedSegment
             this.removeAt(i + 1)
@@ -143,6 +151,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             val combinedSegment = currentSegment.copy(
                 endDepth = nextSegment.endDepth,
                 duration = currentSegment.duration + nextSegment.duration,
+                gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
             )
             this[i] = combinedSegment
             this.removeAt(i + 1)
@@ -159,7 +168,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
                 duration = currentSegment.duration + nextSegment.duration,
                 cylinder = nextSegment.cylinder,
                 gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
-                isDecompression = true,
+                type = DiveSegment.Type.DECO_STOP,
             )
             this[i] = combinedSegment
             this.removeAt(i + 1)
