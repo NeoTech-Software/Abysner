@@ -94,19 +94,11 @@ class Buhlmann(
     }
 
     /**
-     * Returns the current lowest ceiling using the provided gradient factor [gf] in bars.
-     */
-    private fun getCeilingGf(gf: Double): Double {
-        require(gf in 0.0..1.0) { "Gradient factor should not be outside the 0.0-1.0 range, but is $gf!" }
-        return tissues.maxOf { it.calculateCeiling(gf) }
-    }
-
-    /**
      * Finds the lowest tolerated ambient pressure of all tissue compartments, taking into account
      * the given gradient factors, where gfLow applies to the lowest known ceiling.
      */
     private fun getMinimumToleratedAmbientPressure(surfacePressure: Double, gfLow: Double, gfHigh: Double): Double {
-        val currentLowestCeiling = getCeilingGf(gfLow)
+        val currentLowestCeiling = tissues.calculateCeiling(gfLow)
 
         if (currentLowestCeiling > this.lowestCeiling) {
             this.lowestCeiling = currentLowestCeiling
@@ -116,6 +108,19 @@ class Buhlmann(
             it.toleratedInertGasPressure(surfacePressure, lowestCeiling, gfHigh, gfLow)
         }
         return currentCeiling
+    }
+
+    override fun getNoDecompressionLimit(depth: Pressure, gas: Gas): Int {
+        // Take a snapshot of the tissues to restore at a later moment
+        val snapshot = snapshot()
+        var minutesAdded = 0
+        // Load tissues at given depth minutes by minute until the ceiling is below the surface.
+        while(getCeiling().value <= environment.atmosphericPressure) {
+            minutesAdded++
+            addFlat(depth, gas, 1)
+        }
+        reset(snapshot)
+        return minutesAdded
     }
 
     override fun snapshot(): Snapshot {
@@ -334,6 +339,16 @@ private data class TissueCompartment(
         //      exactly 37.0 degrees as the air from a OC system comes in cold?
         private val waterVapourPressure: Double = waterVapourPressureInBars(37.0)
     }
+}
+
+/**
+ * Returns the current lowest ceiling of the give compartments in bars, with the given [gf]
+ * conservatism factor applied. A ceiling above the surface is clamped to
+ * [Environment.atmosphericPressure].
+ */
+private fun List<TissueCompartment>.calculateCeiling(gf: Double): Double {
+    require(gf in 0.0..1.0) { "Gradient factor should not be outside the 0.0-1.0 range, but is $gf!" }
+    return this.maxOf { it.calculateCeiling(gf) }
 }
 
 // Note on the compartment values:
