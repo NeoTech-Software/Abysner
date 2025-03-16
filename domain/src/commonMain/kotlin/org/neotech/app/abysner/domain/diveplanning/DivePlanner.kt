@@ -20,6 +20,7 @@ import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.gasplanning.OxygenToxicityCalculator
+import kotlin.time.Duration
 
 /**
  * Builds on top of the [DecompressionPlanner] and [DecompressionModel] and adds algorithms to
@@ -30,7 +31,9 @@ class DivePlanner {
 
     var configuration = Configuration()
 
-    fun getDecoPlan(
+    private var decompressionModelSnapshot: DecompressionModel.Snapshot? = null
+
+    fun addDive(
         plan: List<DiveProfileSection>,
         decoGases: List<Cylinder>,
     ): DivePlan {
@@ -46,12 +49,6 @@ class DivePlanner {
             )
         }
 
-        val version = when(configuration.algorithm) {
-            Configuration.Algorithm.BUHLMANN_ZH16C -> Buhlmann.Version.ZH16C
-            Configuration.Algorithm.BUHLMANN_ZH16B -> Buhlmann.Version.ZH16B
-            Configuration.Algorithm.BUHLMANN_ZH16A -> Buhlmann.Version.ZH16A
-        }
-
         val decompressionPlanner = DecompressionPlanner(
             environment = configuration.environment,
             maxPpO2 = configuration.maxPPO2Deco,
@@ -60,13 +57,11 @@ class DivePlanner {
             decoStepSize = configuration.decoStepSize,
             lastDecoStopDepth = configuration.lastDecoStopDepth,
             forceMinimalDecoStopTime = configuration.forceMinimalDecoStopTime,
-            model = Buhlmann(
-                version = version,
-                environment = configuration.environment,
-                gfLow = configuration.gfLow,
-                gfHigh = configuration.gfHigh,
-            )
+            model = createDecompressionModel()
         )
+        decompressionModelSnapshot?.let {
+            decompressionPlanner.setDecompressionModelSnapshot(it)
+        }
 
         decoGases.forEach {
             decompressionPlanner.addCylinder(it)
@@ -157,6 +152,8 @@ class DivePlanner {
         decompressionPlanner.calculateDecompression(toDepth = 0)
 
         val segments = decompressionPlanner.getSegments()
+
+        decompressionModelSnapshot = decompressionPlanner.getDecompressionModelSnapshot()
         return DivePlan(
             segments = segments,
             alternativeAccents = decompressionPlanner.getAlternativeAccents(),
@@ -164,6 +161,31 @@ class DivePlanner {
             configuration = configuration,
             totalCns = OxygenToxicityCalculator().calculateCns(segments, configuration.environment),
             totalOtu = OxygenToxicityCalculator().calculateOtu(segments, configuration.environment)
+        )
+    }
+
+    fun addSurfaceInterval(duration: Duration) {
+        val model = createDecompressionModel()
+
+        model.reset(decompressionModelSnapshot ?: throw PlanningException("Unable to add surface interval, plan a dive first."))
+
+        model.addSurfaceInterval(duration.inWholeMinutes.toInt())
+
+        decompressionModelSnapshot = model.snapshot()
+    }
+
+    private fun createDecompressionModel(): DecompressionModel {
+        val version = when(configuration.algorithm) {
+            Configuration.Algorithm.BUHLMANN_ZH16C -> Buhlmann.Version.ZH16C
+            Configuration.Algorithm.BUHLMANN_ZH16B -> Buhlmann.Version.ZH16B
+            Configuration.Algorithm.BUHLMANN_ZH16A -> Buhlmann.Version.ZH16A
+        }
+
+        return Buhlmann(
+            version = version,
+            environment = configuration.environment,
+            gfLow = configuration.gfLow,
+            gfHigh = configuration.gfHigh,
         )
     }
 

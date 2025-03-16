@@ -32,10 +32,16 @@ class PolynomialRealGasModel(
     private val constantTimeCalculation: Boolean = false
 ): GasEquationOfStateModel {
 
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun virialO2(p: Double) = virial(p,-7.18092073703e-04, 2.81852572808e-06, -1.50290620492e-09)
+
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun virialHe(p: Double) = virial(p,4.87320026468e-04, -8.83632921053e-08, 5.33304543646e-11)
+
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun virialN2(p: Double) = virial(p, -2.19260353292e-04, 2.92844845532e-06, -2.07613482075e-09)
 
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun virial(p: Double, coefficientOne: Double, coefficientTwo: Double, coefficientThree: Double) =
         coefficientOne * p + coefficientTwo * p * p + coefficientThree * p * p * p
 

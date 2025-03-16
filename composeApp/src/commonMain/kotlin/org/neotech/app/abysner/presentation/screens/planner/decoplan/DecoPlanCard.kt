@@ -409,7 +409,7 @@ fun DecoPlanCardComponentPreview() {
 
         val divePlan = DivePlanner().apply {
             configuration = Configuration()
-        }.getDecoPlan(
+        }.addDive(
             plan = listOf(
                 DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
             ),

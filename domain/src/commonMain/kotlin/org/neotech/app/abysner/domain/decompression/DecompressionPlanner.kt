@@ -19,10 +19,9 @@ import org.neotech.app.abysner.domain.core.model.findBestDecoGas
 import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
-import org.neotech.app.abysner.domain.decompression.algorithm.SnapshotScope
-import org.neotech.app.abysner.domain.decompression.algorithm.SnapshotScopeImpl
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.decompression.model.subList
+import org.neotech.app.abysner.domain.diveplanning.DivePlanner.PlanningException
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
@@ -401,26 +400,38 @@ class DecompressionPlanner(
         }
     }
 
-    private fun <T> resetAfter(block: SnapshotScope.() -> T): T {
+    private fun <T> resetAfter(block: () -> T): T {
         val savedRuntime = runtime
         val savedSegments = segments.toList()
         val savedAlternativeAscents = alternativeAccents.toMap()
-        val scope = SnapshotScopeImpl()
         val result = model.resetAfter {
-            scope.block()
+            block()
         }
-        if(!scope.keepChanges) {
-            runtime = savedRuntime
-            segments.clear()
-            segments.addAll(savedSegments)
-            alternativeAccents.clear()
-            alternativeAccents.putAll(savedAlternativeAscents)
-        }
+        runtime = savedRuntime
+        segments.clear()
+        segments.addAll(savedSegments)
+        alternativeAccents.clear()
+        alternativeAccents.putAll(savedAlternativeAscents)
         return result
     }
 
     fun getSegments(): List<DiveSegment> {
         return segments.toList()
+    }
+
+    fun setDecompressionModelSnapshot(snapshot: DecompressionModel.Snapshot) {
+        // TODO it could be nicer if the snapshot can modify the model used, basically the
+        //   model is not a static variable for the DecompressionPlanner. There won't be any side
+        //   effects as far as I can see, as tissue are model specific and part of the model.
+        if(!snapshot.model.isInstance(model)) {
+            throw PlanningException("Unable to restore DecompressionModelSnapshot, decompression model (${snapshot.model}) does not equal the current decompression model (${model::class}).")
+        }
+
+        model.reset(snapshot)
+    }
+
+    fun getDecompressionModelSnapshot(): DecompressionModel.Snapshot {
+        return model.snapshot()
     }
 }
 

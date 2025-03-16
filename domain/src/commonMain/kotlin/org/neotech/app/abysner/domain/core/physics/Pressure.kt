@@ -88,6 +88,7 @@ fun barToDepthInMeters(pressure: Double, environment: Environment): Double {
     return barToPascal(waterPressure) / weightDensity
 }
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun barToDepthInMeters(pressure: Pressure, environment: Environment): Double {
     return barToDepthInMeters(pressure.value, environment)
 }

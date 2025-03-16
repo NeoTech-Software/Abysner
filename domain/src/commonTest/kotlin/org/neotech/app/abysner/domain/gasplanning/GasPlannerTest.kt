@@ -47,7 +47,7 @@ class GasPlannerTest {
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C
         )
-        val divePlan = divePlanner.getDecoPlan(
+        val divePlan = divePlanner.addDive(
             plan = listOf(
                 DiveProfileSection(10, 50, bottomGas),
                 DiveProfileSection(1, 50, bottomGas),
@@ -94,7 +94,7 @@ class GasPlannerTest {
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C
         )
-        val divePlan = divePlanner.getDecoPlan(
+        val divePlan = divePlanner.addDive(
             plan = listOf(
                 DiveProfileSection(15, 10, bottomGas),
                 DiveProfileSection(15, 15, bottomGas),
@@ -139,7 +139,7 @@ class GasPlannerTest {
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C
         )
-        val divePlan = divePlanner.getDecoPlan(
+        val divePlan = divePlanner.addDive(
             plan = listOf(
                 DiveProfileSection(30, 50, bottomGas),
             ),

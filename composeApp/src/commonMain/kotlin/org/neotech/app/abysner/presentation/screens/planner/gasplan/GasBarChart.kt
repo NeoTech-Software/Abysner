@@ -79,7 +79,7 @@ fun GasBarChartPreview() = PreviewWrapper {
         ),
     )
 
-    val divePlan = DivePlanner().getDecoPlan(
+    val divePlan = DivePlanner().addDive(
         plan,
         listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50), Cylinder.aluminium63Cuft(Gas.Nitrox80))
     )

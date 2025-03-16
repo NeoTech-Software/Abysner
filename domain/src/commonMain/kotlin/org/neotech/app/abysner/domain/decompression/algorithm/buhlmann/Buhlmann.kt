@@ -12,13 +12,14 @@
 
 package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
-import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
-import org.neotech.app.abysner.domain.decompression.algorithm.Snapshot
-import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.physics.Pressure
+import org.neotech.app.abysner.domain.core.physics.partialPressure
+import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
+import org.neotech.app.abysner.domain.diveplanning.DivePlanner.PlanningException
 import kotlin.math.max
+import kotlin.reflect.KClass
 
 /**
  * Pure Buhlmann model with gradient factors, without too much planning logic, just tissue loading.
@@ -76,6 +77,10 @@ class Buhlmann(
         }
     }
 
+    override fun addSurfaceInterval(timeInMinutes: Int) {
+        addFlat(Pressure(environment.atmosphericPressure), Gas.Air, timeInMinutes)
+    }
+
     /**
      * Get the current ceiling based on maximum tissue tolerances in meters from the surface.
      */
@@ -123,15 +128,20 @@ class Buhlmann(
         return minutesAdded
     }
 
-    override fun snapshot(): Snapshot {
+    override fun snapshot(): BuhlmannSnapshot {
         return BuhlmannSnapshot(
             lowestCeiling = lowestCeiling,
-            tissues = tissues.map { it.copy() }
+            tissues = tissues.map { it.copy() },
+            version = version
         )
     }
 
-    override fun reset(snapshot: Snapshot) {
-        snapshot as BuhlmannSnapshot
+    override fun reset(snapshot: DecompressionModel.Snapshot) {
+        if(snapshot !is BuhlmannSnapshot) {
+            throw PlanningException("Unable to restore snapshot, snapshot must be of type BuhlmannSnapshot!")
+        } else if (version != snapshot.version) {
+            throw PlanningException("Unable to restore BuhlmannSnapshot: snapshot Buhlmann version (${snapshot.version}) does not equal the current Buhlmann version ($version)!")
+        }
         this.lowestCeiling = snapshot.lowestCeiling
         this.tissues.clear()
         this.tissues.addAll(snapshot.tissues)
@@ -150,10 +160,14 @@ class Buhlmann(
         }
     }
 
-    private data class BuhlmannSnapshot(
+    data class BuhlmannSnapshot(
         val lowestCeiling: Double,
-        val tissues: List<TissueCompartment>
-    ) : Snapshot
+        val tissues: List<TissueCompartment>,
+        val version: Version
+    ) : DecompressionModel.Snapshot {
+
+        override val model: KClass<out DecompressionModel> = Buhlmann::class
+    }
 
     enum class Version {
         ZH16A,
@@ -162,7 +176,7 @@ class Buhlmann(
     }
 }
 
-private data class CompartmentParameters(
+data class CompartmentParameters(
     val n2HalfTime: Double,
     val n2ValueA: Double,
     val n2ValueB: Double,
@@ -176,7 +190,7 @@ private data class CompartmentParameters(
  * of tissue types differs between version of the Buhlmann algorithm. The compartment keeps track of
  * the gas loading in this tissue type.
  */
-private data class TissueCompartment(
+data class TissueCompartment(
     val parameters: CompartmentParameters,
     /**
      * The salinity (density) and atmospheric pressure of the dive.
