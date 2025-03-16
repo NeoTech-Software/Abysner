@@ -44,7 +44,14 @@ interface DecompressionModel: Snapshotable {
     fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int)
 
     /**
-     * Returns the current tissue ceiling in bars (including atmospheric pressure)
+     * Calculates and returns the current tissue ceiling in bars (including atmospheric pressure)
      */
     fun getCeiling(): Pressure
+
+    /**
+     * Calculates and returns the NDL (no decompression limit) time in minutes for a given depth and
+     * gas, with the current tissue loading as starting point. This method will not alter the
+     * current tissue loading, after returning tissues will be reset to their original state.
+     */
+    fun getNoDecompressionLimit(depth: Pressure, gas: Gas): Int
 }
