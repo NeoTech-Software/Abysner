@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -22,6 +22,8 @@ data class DivePlanInputResourceV1(
     val longer: Boolean,
     val cylinders: List<CheckableCylinderResource>,
     val profile: List<ProfileSegmentResource>,
+    // Version 1.0.8-beta did not have this field yet, for migration this field defaults to null
+    val surfaceIntervalBeforeMinutes: Int? = null,
 ): SerializableResource {
 
     @Serializable

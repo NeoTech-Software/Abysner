@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2025-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -28,12 +28,13 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.data.diveplanning.resources.ConfigurationResourceV1
 import org.neotech.app.abysner.data.diveplanning.resources.DivePlanInputResourceV1
+import org.neotech.app.abysner.data.diveplanning.resources.MultiDivePlanInputResourceV1
 import org.neotech.app.abysner.data.getJson
 import org.neotech.app.abysner.data.setJson
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
-import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
+import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.persistence.PersistenceRepository
 import org.neotech.app.abysner.domain.persistence.get
 
@@ -42,23 +43,29 @@ class PlanningRepositoryImpl(
     private val persistenceRepository: PersistenceRepository,
 ) : PlanningRepository {
 
-    override val configuration: MutableStateFlow<Configuration> =
-        MutableStateFlow(Configuration())
+    override val configuration: MutableStateFlow<Configuration> = MutableStateFlow(Configuration())
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     init {
         scope.launch {
             persistenceRepository.getPreferences().collect { preferences ->
-                if(preferences.contains(PREFERENCE_KEY_ALGORITHM_TYPE)) {
-                   preferences.migrateConfiguration()
+                @Suppress("DEPRECATION")
+                if (preferences.contains(PREFERENCE_KEY_ALGORITHM_TYPE)) {
+                    preferences.migrateConfigurationFromBuild9AndBefore()
+                }
+                @Suppress("DEPRECATION")
+                if (preferences.contains(PREFERENCE_KEY_INPUT_DIVE_PLAN)) {
+                    preferences.migrateConfigurationFromBuild10()
                 }
                 configuration.emit(preferences.getJson<ConfigurationResourceV1>(PREFERENCE_KEY_GLOBAL_CONFIGURATION)?.toModel() ?: Configuration())
             }
         }
     }
 
-    private suspend fun Preferences.migrateConfiguration() {
+    @Suppress("DEPRECATION")
+    private suspend fun Preferences.migrateConfigurationFromBuild9AndBefore() {
+        // Step 1: read old configuration
         val oldConfiguration = ConfigurationResourceV1(
             sacRate = get(PREFERENCE_KEY_DIVER_NORMAL_SAC, 20.0),
             sacRateOutOfAir = get(PREFERENCE_KEY_DIVER_OUT_OF_AIR_SAC, 40.0),
@@ -81,9 +88,11 @@ class PlanningRepositoryImpl(
         )
 
         persistenceRepository.updatePreferences {
+
+            // Step 2: update new configuration
             it.setJson(PREFERENCE_KEY_GLOBAL_CONFIGURATION, oldConfiguration)
 
-            // Remove old keys
+            // Step 3: remove old key configuration
             it.remove(PREFERENCE_KEY_ALGORITHM_TYPE)
             it.remove(PREFERENCE_KEY_ALGORITHM_GF_LOW)
             it.remove(PREFERENCE_KEY_ALGORITHM_GF_HIGH)
@@ -101,7 +110,22 @@ class PlanningRepositoryImpl(
             it.remove(PREFERENCE_KEY_CONTINGENCY_DEEPER)
             it.remove(PREFERENCE_KEY_CONTINGENCY_LONGER)
         }
+    }
 
+    @Suppress("DEPRECATION")
+    private suspend fun Preferences.migrateConfigurationFromBuild10() {
+        // Step 1: read old configuration
+        val singleDive = getJson<DivePlanInputResourceV1>(PREFERENCE_KEY_INPUT_DIVE_PLAN)
+        persistenceRepository.updatePreferences {
+
+            // Step 2: update new configuration
+            if (singleDive != null) {
+                it.setJson(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN, MultiDivePlanInputResourceV1(dives = listOf(singleDive)))
+            }
+
+            // Step 3: remove old key configuration
+            it.remove(PREFERENCE_KEY_INPUT_DIVE_PLAN)
+        }
     }
 
     override fun updateConfiguration(updateBlock: (Configuration) -> Configuration) {
@@ -116,20 +140,22 @@ class PlanningRepositoryImpl(
         }
     }
 
-    override fun setDivePlanInput(divePlanInputModel: DivePlanInputModel) {
+    override fun setMultiDivePlanInput(model: MultiDivePlanInputModel) {
         scope.launch {
             persistenceRepository.updatePreferences {
-                it.setJson(PREFERENCE_KEY_INPUT_DIVE_PLAN, divePlanInputModel.toResource())
+                it.setJson(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN, model.toResource())
             }
         }
     }
 
-    override suspend fun getDivePlanInput(): DivePlanInputModel? {
-        return persistenceRepository.getPreferences().first().getJson<DivePlanInputResourceV1>(PREFERENCE_KEY_INPUT_DIVE_PLAN)?.toModel()
-    }
+    override suspend fun getMultiDivePlanInput(): MultiDivePlanInputModel? =
+        persistenceRepository.getPreferences().first().getJson<MultiDivePlanInputResourceV1>(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN)?.toModel()
 }
 
 private val PREFERENCE_KEY_GLOBAL_CONFIGURATION = stringPreferencesKey("global.configuration")
+private val PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN = stringPreferencesKey("input.diveplan.multi.v1")
+
+@Deprecated("Will be removed in future version when most users have migrated to the multi-dive format.")
 private val PREFERENCE_KEY_INPUT_DIVE_PLAN = stringPreferencesKey("input.diveplan")
 
 @Deprecated(PREFERENCE_DEPRECATION_WARNING)

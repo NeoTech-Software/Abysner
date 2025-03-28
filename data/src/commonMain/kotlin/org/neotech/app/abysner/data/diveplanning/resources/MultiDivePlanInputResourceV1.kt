@@ -10,15 +10,14 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
-}
+package org.neotech.app.abysner.data.diveplanning.resources
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
-    }
-}
+import kotlinx.serialization.Serializable
+import org.neotech.app.abysner.data.SerializableResource
+
+@Serializable
+data class MultiDivePlanInputResourceV1(
+    val version: Int = 1,
+    val dives: List<DivePlanInputResourceV1>,
+) : SerializableResource
+

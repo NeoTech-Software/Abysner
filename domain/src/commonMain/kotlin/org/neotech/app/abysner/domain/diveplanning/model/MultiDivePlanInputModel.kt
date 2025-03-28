@@ -10,15 +10,15 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
-}
+package org.neotech.app.abysner.domain.diveplanning.model
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
+data class MultiDivePlanInputModel(
+    val dives: List<DivePlanInputModel>,
+) {
+    init {
+        require(dives.isNotEmpty()) { "At least one dive is required." }
     }
+
+    fun updateDive(index: Int, block: DivePlanInputModel.() -> DivePlanInputModel) =
+        copy(dives = dives.toMutableList().also { it[index] = it[index].block() })
 }

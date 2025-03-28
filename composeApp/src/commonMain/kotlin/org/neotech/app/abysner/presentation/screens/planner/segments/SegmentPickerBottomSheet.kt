@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -21,13 +21,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,6 +56,7 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
+import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
@@ -238,40 +237,31 @@ fun SegmentPickerBottomSheet(
                     }
                 )
 
-                Row {
-                    TextButton(
-                        modifier = Modifier
-                            .weight(0.5f)
-                            .padding(top = 16.dp),
-                        onClick = {
-                            scope.launch {
-                                sheetState.hide()
-                                onDismissRequest()
-                            }
-                        }) {
-                        Text("Cancel")
-                    }
-                    Button(
-                        enabled = isTimeValid.value && isDepthValid.value,
-                        modifier = Modifier
-                            .weight(0.5f)
-                            .padding(top = 16.dp),
-                        onClick = {
-                            onAddOrUpdateDiveSegment(
-                                DiveProfileSection(
-                                    duration = time,
-                                    depth = depth,
-                                    cylinder = selectedCylinder
-                                )
+                BottomSheetButtonRow(
+                    modifier = Modifier.padding(top = 16.dp),
+                    secondaryLabel = "Cancel",
+                    primaryLabel = if (isAdd) { "Add" } else { "Update" },
+                    primaryEnabled = isTimeValid.value && isDepthValid.value,
+                    onSecondary = {
+                        scope.launch {
+                            sheetState.hide()
+                            onDismissRequest()
+                        }
+                    },
+                    onPrimary = {
+                        onAddOrUpdateDiveSegment(
+                            DiveProfileSection(
+                                duration = time,
+                                depth = depth,
+                                cylinder = selectedCylinder
                             )
-                            scope.launch {
-                                sheetState.hide()
-                                onDismissRequest()
-                            }
-                        }) {
-                        Text(if(isAdd) { "Add" } else { "Update" })
-                    }
-                }
+                        )
+                        scope.launch {
+                            sheetState.hide()
+                            onDismissRequest()
+                        }
+                    },
+                )
             }
         }
     }

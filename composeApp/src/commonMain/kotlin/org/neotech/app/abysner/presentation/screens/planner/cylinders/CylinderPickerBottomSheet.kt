@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -18,14 +18,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
@@ -39,7 +36,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -48,6 +44,7 @@ import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
+import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
@@ -214,46 +211,35 @@ private fun CylinderPickerBottomSheetContent(
                     heliumPercentage = heliumFraction
                 }
             )
-            Row {
-                TextButton(
-
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .padding(top = 16.dp),
-                    onClick = {
-                        scope.launch {
-                            sheetState.hide()
-                            onDismissRequest()
-                        }
-                    }) {
-                    Text("Cancel")
-                }
-                Button(
-                    enabled = isVolumeValid.value,
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .padding(top = 16.dp),
-                    onClick = {
-                        onAddOrUpdateCylinder(
-                            // Copy since we want to maintain the uniqueIdentifier
-                            initialValue.copy(
-                                gas = Gas(
-                                    oxygenFraction = oxygenPercentage / 100.0,
-                                    heliumFraction = heliumPercentage / 100.0
-                                ),
-                                pressure = startPressure!!,
-                                waterVolume = volume!!,
-                            )
-
+            BottomSheetButtonRow(
+                modifier = Modifier.padding(top = 16.dp),
+                secondaryLabel = "Cancel",
+                primaryLabel = if (isAdd) { "Add" } else { "Update" },
+                primaryEnabled = isVolumeValid.value,
+                onSecondary = {
+                    scope.launch {
+                        sheetState.hide()
+                        onDismissRequest()
+                    }
+                },
+                onPrimary = {
+                    onAddOrUpdateCylinder(
+                        // Copy since we want to maintain the uniqueIdentifier
+                        initialValue.copy(
+                            gas = Gas(
+                                oxygenFraction = oxygenPercentage / 100.0,
+                                heliumFraction = heliumPercentage / 100.0
+                            ),
+                            pressure = startPressure!!,
+                            waterVolume = volume!!,
                         )
-                        scope.launch {
-                            sheetState.hide()
-                            onDismissRequest()
-                        }
-                    }) {
-                    Text(if(isAdd) { "Add" } else { "Update" })
-                }
-            }
+                    )
+                    scope.launch {
+                        sheetState.hide()
+                        onDismissRequest()
+                    }
+                },
+            )
         }
     }
 
