@@ -243,7 +243,7 @@ class PlanScreenViewModel(
 
                 val decoGasses = inputState.cylinders.filter { it.isChecked }.map { it.cylinder }
 
-                val adjustedPlan = planner.getDecoPlan(
+                val adjustedPlan = planner.addDive(
                     plan = segmentsAdjusted,
                     decoGases = decoGasses,
                 )

@@ -14,12 +14,19 @@ package org.neotech.app.abysner.domain.decompression.algorithm
 
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.physics.Pressure
+import kotlin.reflect.KClass
 
 /**
  * A decompression model is allows adding dive sections to load tissues, and a method that returns
  * the current ceiling.
  */
-interface DecompressionModel: Snapshotable {
+interface DecompressionModel {
+
+    /**
+     * Add a surface interval to the tissues, this is the same as calling [addFlat] with atmospheric
+     * pressure and air as gas.
+     */
+    fun addSurfaceInterval(timeInMinutes: Int)
 
     /**
      * Add a flat section of the dive to the tissues, this is the same as calling [addPressureChange]
@@ -54,4 +61,53 @@ interface DecompressionModel: Snapshotable {
      * current tissue loading, after returning tissues will be reset to their original state.
      */
     fun getNoDecompressionLimit(depth: Pressure, gas: Gas): Int
+
+    /**
+     * Reset the model (e.g. in case of Buhlmann this effectively resets all the tissue compartments).
+     */
+    fun reset()
+
+    /**
+     * Reset the model to a given snapshot
+     */
+    fun reset(snapshot: Snapshot)
+
+    /**
+     * Creates a new snapshot that contains the models state, can be used to restore a model to a
+     * certain state.
+     */
+    fun snapshot(): Snapshot
+
+    /**
+     * Execute the given block, on the current model state, then reset the state to the state before
+     * executing the block.
+     */
+    fun <T> resetAfter(block: SnapshotScope.() -> T): T {
+        val snapshot = snapshot()
+        val scope = SnapshotScopeImpl()
+        val result = scope.block()
+        if(!scope.keepChanges) {
+            reset(snapshot)
+        }
+        return result
+    }
+
+    interface Snapshot {
+        val model: KClass<out DecompressionModel>
+    }
+
+    interface SnapshotScope {
+        fun keepChanges()
+        fun rejectChanges()
+    }
+
+    data class SnapshotScopeImpl(var keepChanges: Boolean = false): SnapshotScope {
+        override fun keepChanges() {
+            keepChanges = true
+        }
+
+        override fun rejectChanges() {
+            keepChanges = false
+        }
+    }
 }

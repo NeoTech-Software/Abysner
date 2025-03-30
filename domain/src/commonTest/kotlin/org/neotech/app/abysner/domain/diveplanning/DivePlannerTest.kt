@@ -43,7 +43,7 @@ class DivePlannerTest {
 
         val plannedSections = listOf(DiveProfileSection(duration = 20, 20, bottomGas))
 
-        val divePlan = divePlanner.getDecoPlan(plannedSections, emptyList())
+        val divePlan = divePlanner.addDive(plannedSections, emptyList())
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
@@ -77,7 +77,7 @@ class DivePlannerTest {
             DiveProfileSection(duration = 30, 30, bottomGas)
         )
 
-        val divePlan = divePlanner.getDecoPlan(plannedSections, listOf(decoGas))
+        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas))
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
@@ -114,7 +114,7 @@ class DivePlannerTest {
 
         val plannedSections = listOf(DiveProfileSection(duration = 15, 45, bottomGas))
 
-        val divePlan = divePlanner.getDecoPlan(plannedSections, listOf(decoGas))
+        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas))
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
@@ -151,7 +151,7 @@ class DivePlannerTest {
 
         val plannedSections = listOf(DiveProfileSection(duration = 20, 60, bottomGas))
 
-        val divePlan = divePlanner.getDecoPlan(plannedSections, listOf(decoGas))
+        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas))
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
@@ -201,7 +201,7 @@ class DivePlannerTest {
             DiveProfileSection(duration = 4, 40, bottomGas)
         )
 
-        val divePlan = divePlanner.getDecoPlan(plannedSections, emptyList())
+        val divePlan = divePlanner.addDive(plannedSections, emptyList())
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
