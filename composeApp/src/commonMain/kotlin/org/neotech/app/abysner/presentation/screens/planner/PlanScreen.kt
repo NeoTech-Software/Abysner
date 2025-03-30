@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,6 +54,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -87,8 +91,6 @@ typealias PlannerScreen = @Composable (navController: NavHostController) -> Unit
 @Inject
 @Composable
 fun PlannerScreen(
-    planningRepository: PlanningRepository,
-    settingsRepository: SettingsRepository,
     viewModelCreator: () -> PlanScreenViewModel,
     @Assisted navController: NavHostController = rememberNavController()
 ) {
@@ -107,10 +109,6 @@ fun PlannerScreen(
         val segmentBeingEdited: MutableState<Int?> = remember { mutableStateOf(null) }
         val showSegmentPickerBottomSheet = remember { mutableStateOf(false) }
 
-        // TODO move these into the ViewState and the collection to the ViewModel
-        val configuration by planningRepository.configuration.collectAsState()
-        val settings by settingsRepository.settings.collectAsState()
-
         Scaffold(
             topBar = {
                 Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.background) {
@@ -125,7 +123,7 @@ fun PlannerScreen(
                             }
                         },
                         actions = {
-                            AppBarActions(viewState, navController, settings)
+                            AppBarActions(viewState, navController, viewState.settingsModel)
                         })
                 }
             }
@@ -179,7 +177,7 @@ fun PlannerScreen(
 
                     DecoPlanCardComponent(
                         divePlanSet = viewState.divePlanSet.getOrNull(),
-                        settings = settings,
+                        settings = viewState.settingsModel,
                         planningException = viewState.divePlanSet.exceptionOrNull(),
                         isLoading = viewState.isCalculatingDivePlan,
                         onContingencyInputChanged = { deeper, longer ->
@@ -196,14 +194,14 @@ fun PlannerScreen(
 
             ShowCylinderPickerBottomSheet(
                 show = showCylinderPickerBottomSheet,
-                configuration = configuration,
+                configuration = viewState.configuration,
                 cylinderBeingEdited = cylinderBeingEdited,
                 viewModel = viewModel,
             )
 
             ShowSegmentPickerBottomSheet(
                 show = showSegmentPickerBottomSheet,
-                configuration = configuration,
+                configuration = viewState.configuration,
                 segmentBeingEdited = segmentBeingEdited,
                 viewModel = viewModel,
                 viewState = viewState
@@ -226,8 +224,8 @@ private fun ShowSegmentPickerBottomSheet(
 
         val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-        val initial = segmentBeingEdited.value?.let {  viewState.segments[it] }
-        val previousIndex = (segmentBeingEdited.value ?: ( viewState.segments.size)) - 1
+        val initial = segmentBeingEdited.value?.let { viewState.segments[it] }
+        val previousIndex = (segmentBeingEdited.value ?: (viewState.segments.size)) - 1
 
 
         SegmentPickerBottomSheet(
@@ -238,7 +236,7 @@ private fun ShowSegmentPickerBottomSheet(
             maxDensity = Gas.MAX_GAS_DENSITY,
             environment = configuration.environment,
             cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder },
-            previousDepth =  viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
+            previousDepth = viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
             configuration = configuration,
             onAddOrUpdateDiveSegment = {
                 if (segmentBeingEdited.value != null) {
@@ -400,11 +398,19 @@ private fun PlannerScreenPreview() {
         override fun updateSettings(updateBlock: (SettingsModel) -> SettingsModel) = Unit
     }
 
-    PlannerScreen(
-        planningRepository = planningRepository,
-        settingsRepository = settingsRepository,
-        viewModelCreator = {
-            PlanScreenViewModel(planningRepository)
+    val fakeOwner = remember {
+        object : ViewModelStoreOwner {
+            override val viewModelStore: ViewModelStore = ViewModelStore()
         }
-    )
+    }
+
+    CompositionLocalProvider(
+        LocalViewModelStoreOwner provides fakeOwner
+    ) {
+        PlannerScreen(
+            viewModelCreator = {
+                PlanScreenViewModel(planningRepository, settingsRepository)
+            }
+        )
+    }
 }

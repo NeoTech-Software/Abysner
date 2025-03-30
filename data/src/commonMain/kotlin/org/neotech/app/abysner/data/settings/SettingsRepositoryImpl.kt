@@ -14,6 +14,7 @@ package org.neotech.app.abysner.data.settings
 
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -23,10 +24,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
+import org.neotech.app.abysner.data.PREFERENCE_DEPRECATION_WARNING
+import org.neotech.app.abysner.data.getJson
+import org.neotech.app.abysner.data.setJson
+import org.neotech.app.abysner.data.settings.resources.SettingsResourceV1
 import org.neotech.app.abysner.domain.persistence.PersistenceRepository
 import org.neotech.app.abysner.domain.persistence.get
-import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.settings.SettingsRepository
+import org.neotech.app.abysner.domain.settings.model.SettingsModel
 
 @Inject
 class SettingsRepositoryImpl(
@@ -39,18 +44,28 @@ class SettingsRepositoryImpl(
     init {
         scope.launch {
             persistenceRepository.getPreferences().collect { preferences ->
-                settings.update {
-                    it.updateWith(preferences)
+                if(preferences.contains(PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED)) {
+                    preferences.migrateSettings()
                 }
+
+                settings.emit(preferences.getJson<SettingsResourceV1>(PREFERENCE_KEY_GLOBAL_SETTINGS)?.toModel() ?: SettingsModel())
             }
         }
     }
 
-    private fun SettingsModel.updateWith(preferences: Preferences): SettingsModel {
-        return copy(
-            showBasicDecoTable = preferences.get(PREFERENCE_KEY_BASIC_DECO_TABLE, false),
-            termsAndConditionsAccepted = preferences.get(PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED, false)
+    private suspend fun Preferences.migrateSettings() {
+        val oldSettings = SettingsResourceV1(
+            showBasicDecoTable = get(PREFERENCE_KEY_BASIC_DECO_TABLE, false),
+            termsAndConditionsAccepted = get(PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED, false)
         )
+
+        persistenceRepository.updatePreferences {
+            it.setJson(PREFERENCE_KEY_GLOBAL_SETTINGS, oldSettings)
+
+            // Remove old keys
+            it.remove(PREFERENCE_KEY_BASIC_DECO_TABLE)
+            it.remove(PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED)
+        }
     }
 
     override fun updateSettings(updateBlock: (SettingsModel) -> SettingsModel) {
@@ -60,22 +75,26 @@ class SettingsRepositoryImpl(
         }
         scope.launch {
             persistenceRepository.updatePreferences {
-
-                it[PREFERENCE_KEY_BASIC_DECO_TABLE] = newSettings.showBasicDecoTable
+                it.setJson(PREFERENCE_KEY_GLOBAL_SETTINGS, newSettings.toResource())
             }
         }
     }
 
     override suspend fun setTermsAndConditionsAccepted(accepted: Boolean) {
-        persistenceRepository.updatePreferences {
-            it[PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED] = accepted
+        updateSettings {
+            it.copy(termsAndConditionsAccepted = accepted)
         }
     }
 
     override suspend fun getSettings(): SettingsModel {
-        return SettingsModel().updateWith(persistenceRepository.getPreferences().first())
+        return persistenceRepository.getPreferences().first().getJson<SettingsResourceV1>(PREFERENCE_KEY_GLOBAL_SETTINGS)?.toModel() ?: SettingsModel()
     }
 }
 
+private val PREFERENCE_KEY_GLOBAL_SETTINGS = stringPreferencesKey("global.settings")
+
+@Deprecated(PREFERENCE_DEPRECATION_WARNING)
 private val PREFERENCE_KEY_BASIC_DECO_TABLE = booleanPreferencesKey("settings.basicDecoTable")
+
+@Deprecated(PREFERENCE_DEPRECATION_WARNING)
 private val PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED = booleanPreferencesKey("settings.termsAndConditions.accepted")

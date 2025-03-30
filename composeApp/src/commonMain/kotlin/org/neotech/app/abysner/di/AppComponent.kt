@@ -16,7 +16,7 @@ import me.tatarka.inject.annotations.Component
 import me.tatarka.inject.annotations.Provides
 import me.tatarka.inject.annotations.Scope
 import org.neotech.app.abysner.data.PersistenceRepositoryImpl
-import org.neotech.app.abysner.data.PlanningRepositoryImpl
+import org.neotech.app.abysner.data.diveplanning.PlanningRepositoryImpl
 import org.neotech.app.abysner.data.PlatformFileDataSource
 import org.neotech.app.abysner.data.settings.SettingsRepositoryImpl
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
