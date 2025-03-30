@@ -25,6 +25,9 @@ data class Configuration(
     val sacRateOutOfAir: Double = 40.0,
     val maxPPO2Deco: Double = 1.6,
     val maxPPO2: Double = 1.4,
+    /**
+     * Currently not configurable via interface.
+     */
     val maxEND: Double = 30.0,
     val maxAscentRate: Double = 5.0,
     val maxDescentRate: Double = 20.0,

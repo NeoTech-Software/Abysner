@@ -18,6 +18,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import me.tatarka.inject.annotations.Inject
 import okio.Path
 import org.neotech.app.abysner.domain.persistence.PersistenceRepository
@@ -45,3 +47,18 @@ class PersistenceRepositoryImpl(
         }
     }
 }
+
+inline fun <reified T: SerializableResource> MutablePreferences.setJson(key: Preferences.Key<String>, value: T) {
+    set(key, Json.encodeToString(value))
+}
+
+inline fun <reified T: SerializableResource> Preferences.getJson(key: Preferences.Key<String>): T? {
+    val rawValue = get(key)
+    return if(rawValue != null) {
+        Json.decodeFromString<T>(rawValue)
+    } else {
+        null
+    }
+}
+
+internal const val PREFERENCE_DEPRECATION_WARNING = "Will be removed in future version when most users have migrated to the JSON format stored configuration."

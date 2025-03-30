@@ -10,14 +10,61 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.data.plan
+package org.neotech.app.abysner.data.diveplanning
 
-import org.neotech.app.abysner.data.plan.resources.DivePlanInputResourceV1
+import org.neotech.app.abysner.data.diveplanning.resources.ConfigurationResourceV1
+import org.neotech.app.abysner.data.diveplanning.resources.DivePlanInputResourceV1
+import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
+import org.neotech.app.abysner.domain.persistence.fromString
+
+fun Configuration.toResource() = ConfigurationResourceV1(
+    sacRate = sacRate,
+    sacRateOutOfAir = sacRateOutOfAir,
+    maxPPO2Deco = maxPPO2Deco,
+    maxPPO2 = maxPPO2,
+    maxEND = maxEND,
+    maxAscentRate = maxAscentRate,
+    maxDescentRate = maxDescentRate,
+    gfLow = gfLow,
+    gfHigh = gfHigh,
+    forceMinimalDecoStopTime = forceMinimalDecoStopTime,
+    useDecoGasBetweenSections = useDecoGasBetweenSections,
+    decoStepSize = decoStepSize,
+    lastDecoStopDepth = lastDecoStopDepth,
+    salinity = salinity.preferenceValue,
+    altitude = altitude,
+    algorithm = algorithm.preferenceValue,
+    contingencyDeeper = contingencyDeeper,
+    contingencyLonger = contingencyLonger
+)
+
+fun ConfigurationResourceV1.toModel() = Configuration(
+    sacRate = sacRate,
+    sacRateOutOfAir = sacRateOutOfAir,
+    maxPPO2Deco = maxPPO2Deco,
+    maxPPO2 = maxPPO2,
+    maxEND = maxEND,
+    maxAscentRate = maxAscentRate,
+    maxDescentRate = maxDescentRate,
+    gfLow = gfLow,
+    gfHigh = gfHigh,
+    forceMinimalDecoStopTime = forceMinimalDecoStopTime,
+    useDecoGasBetweenSections = useDecoGasBetweenSections,
+    decoStepSize = decoStepSize,
+    lastDecoStopDepth = lastDecoStopDepth,
+    salinity = fromString<Salinity>(salinity),
+    altitude = altitude,
+    algorithm = fromString<Configuration.Algorithm>(algorithm),
+    contingencyDeeper = contingencyDeeper,
+    contingencyLonger = contingencyLonger
+)
+
 
 fun DivePlanInputModel.toResource() = DivePlanInputResourceV1(
     deeper = deeper,

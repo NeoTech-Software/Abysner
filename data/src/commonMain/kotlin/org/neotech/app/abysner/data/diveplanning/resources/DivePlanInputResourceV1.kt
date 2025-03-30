@@ -10,9 +10,10 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.data.plan.resources
+package org.neotech.app.abysner.data.diveplanning.resources
 
 import kotlinx.serialization.Serializable
+import org.neotech.app.abysner.data.SerializableResource
 
 @Serializable
 data class DivePlanInputResourceV1(
@@ -21,7 +22,7 @@ data class DivePlanInputResourceV1(
     val longer: Boolean,
     val cylinders: List<CheckableCylinderResource>,
     val profile: List<ProfileSegmentResource>,
-) {
+): SerializableResource {
 
     @Serializable
     data class ProfileSegmentResource(

@@ -38,12 +38,15 @@ import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
+import org.neotech.app.abysner.domain.settings.SettingsRepository
+import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import kotlin.time.measureTimedValue
 
 @OptIn(FlowPreview::class)
 @Inject
 class PlanScreenViewModel(
     planningRepository: PlanningRepository,
+    settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val inputState = MutableStateFlow(defaultDivePlanInputModel)
@@ -58,8 +61,8 @@ class PlanScreenViewModel(
      */
     private val divePlanSet: StateFlow<Result<DivePlanSet?>> = combine(
         flow = inputState,
-        flow2 = planningRepository.configuration
-    ) { inputState, configuration ->
+        flow2 = planningRepository.configuration,
+    ) { inputState, configuration, ->
         // For now it seems the recalculation is so fast, that showing a loading state is kinda pointless.
         // Maybe instead of a full loading status, a small indicator somewhere can show whether or
         // not recalculation is happening?
@@ -83,13 +86,14 @@ class PlanScreenViewModel(
         )
 
     val uiState: StateFlow<ViewState> =
-        combine(inputState, divePlanSet, isCalculatingDivePlan, isLoading) { input, divePlan, isCalculatingDivePlan, isLoading ->
+        combine(inputState, divePlanSet, isCalculatingDivePlan, isLoading, settingsRepository.settings) { input, divePlan, isCalculatingDivePlan, isLoading, settings ->
             ViewState(
                 segments = input.plannedProfile,
                 availableGas = input.cylinders,
                 isCalculatingDivePlan = isCalculatingDivePlan,
                 divePlanSet = divePlan,
                 isLoading = isLoading,
+                settingsModel = settings
             )
         }.stateIn(
             scope = viewModelScope,
@@ -221,7 +225,10 @@ class PlanScreenViewModel(
         }
     }
 
-    private fun calculateDivePlan(inputState: DivePlanInputModel, configuration: Configuration): Result<DivePlanSet> {
+    private fun calculateDivePlan(
+        inputState: DivePlanInputModel,
+        configuration: Configuration,
+    ): Result<DivePlanSet> {
         return try {
             val timedResult = measureTimedValue {
                 val planner = DivePlanner()
@@ -282,6 +289,8 @@ class PlanScreenViewModel(
         val divePlanSet: Result<DivePlanSet?> = Result.success(null),
         val isCalculatingDivePlan: Boolean = false,
         val isLoading: Boolean = true,
+        val settingsModel: SettingsModel = SettingsModel(),
+        val configuration: Configuration = Configuration()
     )
 }
 

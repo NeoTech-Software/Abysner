@@ -80,3 +80,7 @@ inline fun <reified T> Preferences.get(
 interface EnumPreference {
     val preferenceValue: String
 }
+
+inline fun <reified T> fromString(value: String): T where T : Enum<T>, T : EnumPreference {
+    return enumValues<T>().find { it.preferenceValue == value } ?: throw IllegalArgumentException("Unable to find enum constant for value: $value")
+}
