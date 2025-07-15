@@ -14,7 +14,7 @@ package org.neotech.app.abysner.presentation.screens
 
 import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.abysner_logo
-import androidx.compose.desktop.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

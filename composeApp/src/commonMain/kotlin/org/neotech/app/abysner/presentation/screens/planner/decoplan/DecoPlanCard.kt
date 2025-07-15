@@ -18,7 +18,7 @@ import abysner.composeapp.generated.resources.ic_outline_stop_circle_24
 import abysner.composeapp.generated.resources.ic_outline_trending_down_24
 import abysner.composeapp.generated.resources.ic_outline_trending_flat_24
 import abysner.composeapp.generated.resources.ic_outline_trending_up_24
-import androidx.compose.desktop.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

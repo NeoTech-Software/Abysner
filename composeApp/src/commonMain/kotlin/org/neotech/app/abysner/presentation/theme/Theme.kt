@@ -12,7 +12,7 @@
 
 package org.neotech.app.abysner.presentation.theme
 
-import androidx.compose.desktop.ui.tooling.preview.PreviewWrapper
+import org.neotech.app.abysner.presentation.utilities.PreviewWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal val LightColorScheme = lightColorScheme(
     primary = primaryLight,
@@ -177,7 +178,7 @@ private data class ColorPairing(
     val foreground: Color? = null,
 )
 
-@androidx.compose.desktop.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ThemePreview() = PreviewWrapper {
     AbysnerTheme(darkTheme = true, dynamicColor = false) {

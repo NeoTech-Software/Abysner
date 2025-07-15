@@ -12,8 +12,8 @@
 
 package org.neotech.app.abysner.presentation.component.graphs
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.desktop.ui.tooling.preview.PreviewWrapper
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.neotech.app.abysner.presentation.utilities.PreviewWrapper
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
