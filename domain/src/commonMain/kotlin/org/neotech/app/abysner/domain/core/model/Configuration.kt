@@ -31,7 +31,7 @@ data class Configuration(
     val maxEND: Double = 30.0,
     val maxAscentRate: Double = 5.0,
     val maxDescentRate: Double = 20.0,
-    val gfLow: Double = 0.3,
+    val gfLow: Double = 0.6,
     val gfHigh: Double = 0.7,
     val forceMinimalDecoStopTime: Boolean = true,
     val useDecoGasBetweenSections: Boolean = false,
