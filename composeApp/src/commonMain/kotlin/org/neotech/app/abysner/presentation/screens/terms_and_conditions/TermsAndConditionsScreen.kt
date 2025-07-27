@@ -12,12 +12,10 @@
 
 package org.neotech.app.abysner.presentation.screens.terms_and_conditions
 
-import abysner.composeapp.generated.resources.Res
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -49,17 +47,18 @@ import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownPadding
-import kotlinx.coroutines.runBlocking
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.presentation.Destinations
-import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.ViewState
-import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import org.neotech.app.abysner.presentation.utilities.closeApp
+import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.onlyBottom
 import org.neotech.app.abysner.presentation.component.core.withoutBottom
+import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.ViewState
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.EventEffect
+import org.neotech.app.abysner.presentation.utilities.closeApp
 import org.neotech.app.abysner.presentation.utilities.consumed
 
 typealias TermsAndConditionsScreen = @Composable (navController: NavHostController) -> Unit
@@ -76,8 +75,8 @@ fun TermsAndConditionsScreen(
     TermsAndConditionsScreen(
         navController = navController,
         viewState = viewState,
-        onAcceptTermsAndConditions = {viewModel.acceptTermsAndConditions(true)},
-        onDeclineTermsAndConditions = {viewModel.acceptTermsAndConditions(false)},
+        onAcceptTermsAndConditions = { viewModel.acceptTermsAndConditions(true) },
+        onDeclineTermsAndConditions = { viewModel.acceptTermsAndConditions(false) },
     )
 }
 
@@ -115,9 +114,9 @@ fun TermsAndConditionsScreen(
             }
         ) { insets ->
 
-            if(viewState is ViewState.Content) {
+            if (viewState is ViewState.Content) {
                 EventEffect(viewState.acceptAndNavigate) { accepted ->
-                    if(accepted) {
+                    if (accepted) {
                         navController.navigate(Destinations.PLANNER.destinationName) {
                             popUpTo(Destinations.TERMS_AND_CONDITIONS.destinationName) {
                                 inclusive = true
@@ -129,62 +128,68 @@ fun TermsAndConditionsScreen(
                 }
             }
 
-            Column(modifier = Modifier.padding(insets.withoutBottom())) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f)
-                ) {
-                    if(viewState is ViewState.Content) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(insets.withoutBottom()),
+                verticalArrangement = Arrangement.Center
+            ) {
 
-                        Markdown(
-                            modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp),
-                            content = viewState.termsAndConditionsText,
-                            colors = markdownColor(),
-                            padding = markdownPadding(
-                                block = 8.dp
-                            ),
-                            typography = markdownTypography(
-                                h1 = MaterialTheme.typography.headlineSmall.copy(fontFamily = FontFamily.Monospace),
-                                h2 = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Monospace),
-                                h3 = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace),
-                                h4 = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
-                                h5 = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
-                                h6 = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
-                                text = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                                code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                                quote = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                                paragraph = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                                ordered = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                                bullet = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                                list = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                            )
+                if (viewState is ViewState.Content) {
+                    Markdown(
+                        modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(16.dp).ifTrue(viewState.accepted) {
+                            padding(insets.onlyBottom())
+                        },
+                        content = viewState.termsAndConditionsText,
+                        colors = markdownColor(),
+                        padding = markdownPadding(
+                            block = 8.dp
+                        ),
+                        typography = markdownTypography(
+                            h1 = MaterialTheme.typography.headlineSmall.copy(fontFamily = FontFamily.Monospace),
+                            h2 = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Monospace),
+                            h3 = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace),
+                            h4 = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
+                            h5 = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
+                            h6 = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
+                            text = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                            code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                            quote = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                            paragraph = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                            ordered = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                            bullet = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                            list = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
                         )
-                    } else {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    }
-                }
+                    )
 
-                Surface(
-                    shadowElevation = 8.dp
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(insets.onlyBottom()).padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        TextButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                onDeclineTermsAndConditions()
-                            }) {
-                            Text("Decline")
-                        }
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                onAcceptTermsAndConditions()
-                            }) {
-                            Text("Accept")
+                    if (!viewState.accepted) {
+
+                        Surface(
+                            shadowElevation = 8.dp
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(insets.onlyBottom())
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                TextButton(
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        onDeclineTermsAndConditions()
+                                    }) {
+                                    Text("Decline")
+                                }
+                                Button(
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        onAcceptTermsAndConditions()
+                                    }) {
+                                    Text("Accept")
+                                }
+                            }
                         }
                     }
+
+                } else {
+                    CircularProgressIndicator(modifier = Modifier.align(alignment = Alignment.CenterHorizontally))
                 }
             }
         }
@@ -196,13 +201,60 @@ fun TermsAndConditionsScreen(
 @Preview
 private fun TermsAndConditionsScreenPreview() {
 
-    val terms = runBlocking {
-        Res.readBytes("files/terms-and-conditions.md").decodeToString()
-    }
+    val terms = """
+        # Lorem Ipsum Dolor Sit Amet
+
+        **Lorem Ipsum:** Consectetur Adipiscing Elit
+
+        ## Lorem Ipsum
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
+
+        ## 1. Lorem Ipsum
+
+        - **Lorem:** Lorem ipsum dolor sit amet.
+        - **Ipsum:** Consectetur adipiscing elit.
+        - **Dolor:** Sed do eiusmod tempor.
+        - **Sit:** Incididunt ut labore et.
+        - **Amet:** Dolore magna aliqua.
+        - **Consectetur:** Ut enim ad minim veniam.
+
+        ## 2. Lorem Ipsum
+        Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+
+        ## 3. Lorem Ipsum
+
+        ### 3.1. Lorem Ipsum
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+        ### 3.2. Lorem Ipsum Dolor
+        Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+        ## 4. Lorem Ipsum
+
+        ### 4.1. Lorem Ipsum
+        Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+        ### 4.2. Lorem Ipsum Dolor
+        Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+        ## 5. Lorem Ipsum
+        Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse.
+
+        ## 6. Lorem Ipsum
+        Sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet.
+
+        ## 7. Lorem Ipsum
+        Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, [lorem@ipsum.dolor](mailto:lorem@ipsum.dolor).
+
+    """.trimIndent()
 
     TermsAndConditionsScreen(
         navController = rememberNavController(),
-        viewState = ViewState.Content(termsAndConditionsText = terms, consumed<Boolean>()),
+        viewState = ViewState.Content(
+            accepted = false,
+            termsAndConditionsText = terms,
+            consumed<Boolean>()
+        ),
         onAcceptTermsAndConditions = {},
         onDeclineTermsAndConditions = {},
     )

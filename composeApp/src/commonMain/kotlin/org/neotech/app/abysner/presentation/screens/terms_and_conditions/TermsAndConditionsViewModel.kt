@@ -44,6 +44,7 @@ class TermsAndConditionsViewModel(
         viewModelScope.launch {
             // This should not fail, yes it is IO, but the file should always be available, don't catch any error?
             viewState.value = ViewState.Content(
+                accepted = settingsRepository.getSettings().termsAndConditionsAccepted,
                 termsAndConditionsText = Res.readBytes("files/terms-and-conditions.md").decodeToString(),
                 acceptAndNavigate = consumed<Boolean>()
             )
@@ -79,6 +80,7 @@ class TermsAndConditionsViewModel(
         data object Loading: ViewState()
 
         data class Content(
+            val accepted: Boolean,
             val termsAndConditionsText: String,
             val acceptAndNavigate: StateEvent<Boolean>,
         ): ViewState()
