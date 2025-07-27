@@ -16,7 +16,7 @@ import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_baseline_check_circle_24
 import abysner.composeapp.generated.resources.ic_outline_dangerous_24
 import abysner.composeapp.generated.resources.ic_outline_warning_24
-import androidx.compose.desktop.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

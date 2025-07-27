@@ -13,7 +13,7 @@
 package org.neotech.app.abysner.presentation.screens.terms_and_conditions
 
 import abysner.composeapp.generated.resources.Res
-import androidx.compose.desktop.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
