@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +60,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -281,7 +281,7 @@ fun AboutScreen(
 
                 val annotatedString = buildAnnotatedString {
 
-                    pushStringAnnotation(tag = "url", annotation = "https://github.com/NeoTech-Software/Abysner")
+                    pushLink(LinkAnnotation.Url("https://github.com/NeoTech-Software/Abysner"))
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)) {
                         append("Open-source")
                     }
@@ -289,35 +289,30 @@ fun AboutScreen(
 
                     append(" & licensed under ")
 
-                    pushStringAnnotation(tag = "url", annotation = "https://www.gnu.org/licenses/agpl-3.0.txt")
+                    pushLink(LinkAnnotation.Url("https://www.gnu.org/licenses/agpl-3.0.txt"))
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)) {
                         append("GNU AGPLv3")
                     }
                     pop()
 
                     appendLine()
-                    pushStringAnnotation(tag = "terms", annotation = "https://google.com/terms")
+                    pushLink(LinkAnnotation.Clickable(tag = "terms_and_conditions") { link ->
+                        navController.navigate(Destinations.TERMS_AND_CONDITIONS_VIEW.destinationName)
+                    })
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)) {
                         append("Terms & Conditions")
                     }
                     pop()
                 }
 
-                ClickableText(
+                Text(
                     modifier = Modifier.padding(insets.onlyBottom()).padding(bottom = 16.dp).align(Alignment.BottomCenter),
                     style = MaterialTheme.typography.labelMedium.copy(
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onPrimary
                     ),
-                    text = annotatedString
-                ) { offset ->
-                    annotatedString.getStringAnnotations(tag = "url", start = offset, end = offset).firstOrNull()?.let {
-                        uriHandler.openUri(it.item)
-                    }
-                    annotatedString.getStringAnnotations(tag = "terms", start = offset, end = offset).firstOrNull()?.let {
-                        navController.navigate(Destinations.TERMS_AND_CONDITIONS_VIEW.destinationName)
-                    }
-                }
+                    text = annotatedString,
+                )
             }
         }
     }
