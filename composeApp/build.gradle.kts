@@ -10,6 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
+import com.google.devtools.ksp.gradle.KspAATask
 import com.google.devtools.ksp.gradle.KspTask
 import org.gradle.configurationcache.extensions.capitalized
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
@@ -224,41 +225,71 @@ dependencies {
     }
 }
 
+abstract class GenerateVersionInfoTask @Inject constructor(
+    private val execOperations: ExecOperations
+) : DefaultTask() {
 
-tasks.register("generateVersionInfo") {
-    doLast {
+    @get:OutputFile
+    abstract val outputFile: RegularFileProperty
 
-        val buffer = ByteArrayOutputStream()
-        exec {
+    @get:Input
+    abstract val buildNumber: Property<Int>
+
+    @get:Input
+    abstract val versionName: Property<String>
+
+    init {
+        // Set the default output file path
+        outputFile.convention(
+            project.layout.buildDirectory.file("generated/kotlin/version/VersionInfo.kt")
+        )
+    }
+
+    @TaskAction
+    fun generate() {
+        // Get commit hash
+        val commitBuffer = ByteArrayOutputStream()
+        execOperations.exec {
             executable = "git"
-            standardOutput = buffer
             args = listOf("rev-parse", "--short", "HEAD")
+            standardOutput = commitBuffer
         }
-        val commit = buffer.toString(Charsets.UTF_8).trim()
+        val commit = commitBuffer.toString(Charsets.UTF_8).trim()
 
-        val dirty = exec {
+        // Check dirty state
+        val dirty = execOperations.exec {
             isIgnoreExitValue = true
             executable = "git"
-            args = listOf("diff-index", "--quiet",  "HEAD", "--")
+            args = listOf("diff-index", "--quiet", "HEAD", "--")
         }.exitValue != 0
 
-        val file = project.layout.buildDirectory.file("generated/kotlin/version/VersionInfo.kt").get().asFile
+        // Write file
+        val file = outputFile.get().asFile
         file.parentFile.mkdirs()
         file.writeText(
             """
             package org.neotech.app.abysner.version
-            
+
             object VersionInfo {
                 const val DIRTY: Boolean = $dirty
                 const val COMMIT_HASH: String = "$commit"
-                const val BUILD: Int = $abysnerBuildNumber
-                const val VERSION_NAME: String = "$abysnerVersion"
+                const val BUILD: Int = ${buildNumber.get()}
+                const val VERSION_NAME: String = "${versionName.get()}"
             }
             """.trimIndent()
         )
     }
 }
 
+
+val versionInfoProvider = tasks.register<GenerateVersionInfoTask>("generateVersionInfo") {
+    buildNumber.set(abysnerBuildNumber)
+    versionName.set(abysnerVersion)
+}
+
 tasks.withType(KspTask::class.java).configureEach {
-    dependsOn("generateVersionInfo")
+    dependsOn(versionInfoProvider)
+}
+tasks.withType(KspAATask::class.java).configureEach {
+    dependsOn(versionInfoProvider)
 }

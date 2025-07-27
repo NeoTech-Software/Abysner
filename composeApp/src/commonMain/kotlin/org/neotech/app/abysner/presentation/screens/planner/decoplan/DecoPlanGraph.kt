@@ -155,7 +155,6 @@ fun DecoPlanGraph(
             xAxisStyle = xaxisStyle,
             yAxisStyle = yaxisStyle,
             modifier = modifier,
-            panZoomEnabled = false,
             horizontalMajorGridLineStyle = null,
             verticalMajorGridLineStyle = null,
             horizontalMinorGridLineStyle = null,
@@ -165,16 +164,12 @@ fun DecoPlanGraph(
                 minimumMajorTickIncrement = 1f,
                 minimumMajorTickSpacing = 48.dp,
                 range = 0f..divePlan.runtime.toFloat(),
-                allowPanning = false,
-                allowZooming = false,
             ),
             yAxisModel = FloatLinearAxisModel(
                 minorTickCount = 4,
                 range = -(divePlan.maximumDepth.toFloat() * 1.05f)..(divePlan.maximumDepth.toFloat() * 0.05f),
                 minimumMajorTickSpacing = 24.dp,
                 minimumMajorTickIncrement = 1f,
-                allowPanning = false,
-                allowZooming = false,
             ),
             xAxisLabels = {
                 Text(
@@ -192,7 +187,6 @@ fun DecoPlanGraph(
             },
             yAxisTitle = { },
         ) {
-
 
             AreaPlot(
                 data = //listOf(DefaultPoint(0f, 0f)) +

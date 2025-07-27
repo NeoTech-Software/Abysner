@@ -22,7 +22,11 @@ import org.neotech.app.abysner.di.AppScope
 @Inject
 class PlatformFileDataSourceImpl: PlatformFileDataSource {
 
-    private val appDirs = AppDirs("Abysner", "Neotech")
+    private val appDirs = AppDirs {
+        appName = "Abysner"
+        appAuthor = "Neotech"
+    }
+
     private val userData = appDirs.getUserDataDir()
 
     override fun getPrivateFileStoragePath(): Path {

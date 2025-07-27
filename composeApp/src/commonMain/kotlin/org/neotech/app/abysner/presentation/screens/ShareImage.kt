@@ -36,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -54,7 +53,10 @@ import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasLimitsTab
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.platform
 import org.neotech.app.abysner.version.VersionInfo
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun ShareImage(
     divePlan: DivePlanSet,
@@ -155,8 +157,7 @@ fun ShareImage(
                         style = MaterialTheme.typography.bodySmall
                     )
 
-                    val date =
-                        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+                    val date = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
                     Text(
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontStyle = FontStyle.Italic,
