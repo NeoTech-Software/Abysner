@@ -17,17 +17,16 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.neotech.gradle.capitalizeFirstCharacter
 import java.io.ByteArrayOutputStream
-import java.util.Properties
 
 // DMG distribution does not support "-beta", MSI requires at least MAJOR.MINOR.BUILD
-val abysnerVersionBase = "1.0.8"
-val abysnerVersion = "$abysnerVersionBase-beta"
+val abysnerVersionBase: String by project.properties
+val abysnerVersion: String by project.properties
 // iOS supports a String here, but Android only an integer
-val abysnerBuildNumber = 10
+val abysnerBuildNumber: String by project.properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidKmpLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
@@ -39,10 +38,11 @@ kotlin {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
+    android {
+        namespace = "nl.neotech.app.abysner.composeapp"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        androidResources.enable = true
     }
 
     // Do not really support desktop, but this is required to get previews working.
@@ -63,15 +63,14 @@ kotlin {
             isStatic = true
             binaryOption("bundleId", "nl.neotech.app.abysner")
             binaryOption("bundleShortVersionString", abysnerVersionBase)
-            binaryOption("bundleVersion", abysnerBuildNumber.toString())
+            binaryOption("bundleVersion", abysnerBuildNumber)
         }
     }
     
     sourceSets {
 
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
+            implementation(libs.jetbrains.compose.ui.tooling.preview)
             implementation(libs.androidx.startup.runtime)
             implementation(libs.androidx.ui.tooling)
         }
@@ -98,14 +97,14 @@ kotlin {
             implementation(libs.jetbrains.lifecycle.runtime)
             implementation(libs.jetbrains.kotlinx.datetime)
 
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+            implementation(libs.jetbrains.compose.runtime)
+            implementation(libs.jetbrains.compose.foundation)
+            implementation(libs.jetbrains.compose.material)
+            implementation(libs.jetbrains.compose.ui)
+            implementation(libs.jetbrains.compose.components.resources)
+            implementation(libs.jetbrains.compose.components.ui.tooling.preview)
 
-            implementation(compose.material3)
+            implementation(libs.jetbrains.compose.material3)
             implementation(libs.jetbrains.compose.material.icons)
             implementation(libs.koalaplot.core)
 
@@ -123,85 +122,6 @@ kotlin {
             implementation(libs.markdown.parser)
             implementation(libs.markdown.render)
         }
-    }
-}
-
-android {
-    namespace = "nl.neotech.app.abysner"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    // Line below seems not to be required and causes a duplicate root warning.
-    // sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
-    defaultConfig {
-        applicationId = "nl.neotech.app.abysner"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = abysnerBuildNumber
-        versionName = abysnerVersion
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    val keystorePropertiesFile = rootProject.file("keystore.properties")
-    val keystoreProperties = Properties()
-    try {
-        keystoreProperties.load(keystorePropertiesFile.inputStream())
-    } catch (_: Exception) {
-        logger.warn("w: Unable to load keystore.properties file!")
-    }
-
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            keystoreProperties.getProperty("storeFile")?.let {
-                storeFile = rootProject.file(it)
-            }
-            storePassword = keystoreProperties.getProperty("storePassword")
-            storeType = keystoreProperties.getProperty("storeType") ?: "JKS"
-        }
-    }
-
-    buildTypes {
-        getByName("debug") {
-            applicationIdSuffix = ".debug"
-        }
-        getByName("release") {
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.getByName("release")
-        }
-        create("development") {
-            applicationIdSuffix = ".development"
-            initWith(getByName("debug"))
-            matchingFallbacks += listOf("release")
-            isMinifyEnabled = true
-            isDebuggable = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        compose = true
-    }
-    dependencies {
-        debugImplementation(compose.uiTooling)
     }
 }
 
@@ -288,9 +208,17 @@ abstract class GenerateVersionInfoTask @Inject constructor(
 }
 
 val versionInfoProvider = tasks.register<GenerateVersionInfoTask>("generateVersionInfo") {
-    buildNumber.set(abysnerBuildNumber)
+    buildNumber.set(abysnerBuildNumber.toInt())
     versionName.set(abysnerVersion)
 }
+
+// Sync version info to iOS xcconfig at configuration time, so it's available before Xcode resolves build settings.
+rootProject.file("iosApp/Configuration/Version.xcconfig").writeText(
+    """
+    MARKETING_VERSION=$abysnerVersion
+    CURRENT_PROJECT_VERSION=$abysnerBuildNumber
+    """.trimIndent() + "\n"
+)
 
 tasks.withType(KspAATask::class.java).configureEach {
     dependsOn(versionInfoProvider)

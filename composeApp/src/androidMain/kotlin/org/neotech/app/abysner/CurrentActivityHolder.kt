@@ -10,12 +10,12 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-plugins {
-    // this is necessary to avoid the plugins to be loaded multiple times
-    // in each subproject's classloader
-    alias(libs.plugins.androidApplication) apply false
-    alias(libs.plugins.androidKmpLibrary) apply false
-    alias(libs.plugins.jetbrainsCompose) apply false
-    alias(libs.plugins.compose.compiler) apply false
-    alias(libs.plugins.kotlinMultiplatform) apply false
-}
+package org.neotech.app.abysner
+
+import android.app.Activity
+import java.lang.ref.WeakReference
+
+// This is required for closeApp and shareImage functionality.
+// Set by MainActivity in the androidApp module.
+var currentActivity: WeakReference<Activity> = WeakReference(null)
+

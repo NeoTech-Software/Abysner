@@ -12,12 +12,10 @@
 
 package org.neotech.app.abysner
 
-import android.app.Activity
 import android.app.Application
 import org.neotech.app.abysner.di.AppComponent
 import org.neotech.app.abysner.di.PlatformComponentImpl
 import org.neotech.app.abysner.di.create
-import java.lang.ref.WeakReference
 
 class AbysnerApplication: Application() {
 
@@ -32,6 +30,3 @@ class AbysnerApplication: Application() {
     fun appComponent(): AppComponent = appComponent
 }
 
-// This is required for closeApp, but maybe a interface/implementation navigation class would be better
-// where the current activity is just injected, and the implementation is platform specific?
-internal var currentActivity: WeakReference<Activity> = WeakReference(null)
