@@ -69,7 +69,7 @@ kotlin {
 }
 
 android {
-    namespace = "nl.neotech.app.abysner"
+    namespace = "nl.neotech.app.abysner.data"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")

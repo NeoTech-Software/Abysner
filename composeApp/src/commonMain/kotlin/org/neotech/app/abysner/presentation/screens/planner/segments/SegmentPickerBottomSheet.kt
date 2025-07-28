@@ -243,7 +243,7 @@ fun SegmentPickerBottomSheet(
                         Text("Cancel")
                     }
                     Button(
-                        enabled = isTimeValid.value && isDepthValid.value && cylinder != null,
+                        enabled = isTimeValid.value && isDepthValid.value,
                         modifier = Modifier
                             .weight(0.5f)
                             .padding(top = 16.dp),
@@ -252,7 +252,7 @@ fun SegmentPickerBottomSheet(
                                 DiveProfileSection(
                                     duration = time,
                                     depth = depth,
-                                    cylinder = cylinder!!
+                                    cylinder = cylinder
                                 )
                             )
                             scope.launch {
