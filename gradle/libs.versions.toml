@@ -1,25 +1,25 @@
 [versions]
 ####### START: Android target specific #######
-agp = "8.6.1"
-android-compileSdk = "34"
+agp = "8.11.1"
+android-compileSdk = "36"
 android-minSdk = "26"
-android-targetSdk = "34"
-uiTooling = "1.7.6"
+android-targetSdk = "35"
+uiTooling = "1.8.3"
 startupRuntime = "1.2.0"
-androidx-activityCompose = "1.9.3"
+androidx-activityCompose = "1.10.1"
 ####### END:   Android target specific #######
 
 # Compose & Kotlin
-compose-plugin = "1.7.3"
-kotlin = "2.1.0"
+compose-plugin = "1.8.2"
+kotlin = "2.2.0"
 # KSP version should follow Kotlin version
-ksp = "2.1.0-1.0.28"
+ksp = "2.2.0-2.0.2"
 
 # Dependency Injection
-kotlinInject = "0.7.1"
+kotlinInject = "0.8.0"
 
 # Local storage
-datastore = "1.1.1"
+datastore = "1.1.7"
 
 # Navigation
 navigationCompose = "2.7.0-alpha07"
@@ -29,18 +29,18 @@ navigationCompose = "2.7.0-alpha07"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 # Coroutines
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.1" }
-kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version = "1.10.1" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.2" }
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version = "1.10.2" }
 
 # Navigation
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 
 # ViewModel
-jetbrains-lifecycle-runtime = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version = "2.8.4" }
-jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.8.0" }
+jetbrains-lifecycle-runtime = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version = "2.9.1" }
+jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.9.1" }
 
 # Date & Time
-jetbrains-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.6.1"}
+jetbrains-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.7.1"}
 
 ####### START: Android target specific #######
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -49,7 +49,7 @@ androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", vers
 ####### END:   Android target specific #######
 
 # Graphs & Plots
-koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.6.0" }
+koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.9.0" }
 
 # Dependency Injection
 kotlinInject-compilerKsp = { module = "me.tatarka.inject:kotlin-inject-compiler-ksp", version.ref = "kotlinInject" }
@@ -58,17 +58,17 @@ kotlinInject-runtimeKmp = { module = "me.tatarka.inject:kotlin-inject-runtime-km
 # Local storage
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
-kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.7.1" }
+kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.9.0" }
 
 
 # File IO
-okio = { module = "com.squareup.okio:okio", version = "3.9.0" }
+okio = { module = "com.squareup.okio:okio", version = "3.15.0" }
 
 # User data folder access
-appdirs = { module = "ca.gosyer:kotlin-multiplatform-appdirs", version = "1.1.1" }
+appdirs = { module = "ca.gosyer:kotlin-multiplatform-appdirs", version = "2.0.0" }
 
 markdown-parser = { module = "org.jetbrains:markdown", version = "0.7.3" }
-markdown-render = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.25.0" }
+markdown-render = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.35.0" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
