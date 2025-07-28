@@ -66,7 +66,7 @@ class PlanningRepositoryImpl(
             maxPPO2 = get(PREFERENCE_KEY_MAX_PPO2, 1.4),
             maxAscentRate = get(PREFERENCE_KEY_DIVER_SPEED_ASCENT, 5.0),
             maxDescentRate = get(PREFERENCE_KEY_DIVER_SPEED_DESCENT, 20.0),
-            gfLow = get(PREFERENCE_KEY_ALGORITHM_GF_LOW, 0.3),
+            gfLow = get(PREFERENCE_KEY_ALGORITHM_GF_LOW, 0.6),
             gfHigh = get(PREFERENCE_KEY_ALGORITHM_GF_HIGH, 0.7),
             forceMinimalDecoStopTime = get(PREFERENCE_KEY_FORCE_MINIMAL_STOP_TIME, true),
             useDecoGasBetweenSections = get(PREFERENCE_KEY_USE_DECO_GAS_BETWEEN_SECTIONS, false),
