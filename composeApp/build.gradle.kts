@@ -23,10 +23,10 @@ import java.io.ByteArrayOutputStream
 import java.util.Properties
 
 // DMG distribution does not support "-beta", MSI requires at least MAJOR.MINOR.BUILD
-val abysnerVersionBase = "1.0.7"
+val abysnerVersionBase = "1.0.8"
 val abysnerVersion = "$abysnerVersionBase-beta"
 // iOS supports a String here, but Android only an integer
-val abysnerBuildNumber = 9
+val abysnerBuildNumber = 10
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -109,6 +109,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(compose.material3)
+            implementation(libs.jetbrains.compose.material.icons)
             implementation(libs.koalaplot.core)
 
             // Data storage
@@ -163,6 +164,7 @@ android {
                 storeFile = rootProject.file(it)
             }
             storePassword = keystoreProperties.getProperty("storePassword")
+            storeType = keystoreProperties.getProperty("storeType") ?: "JKS"
         }
     }
 

@@ -22,7 +22,7 @@ kotlinInject = "0.8.0"
 datastore = "1.1.7"
 
 # Navigation
-navigationCompose = "2.7.0-alpha07"
+navigationCompose = "2.8.0-alpha13"
 
 [libraries]
 # Testing
@@ -35,9 +35,13 @@ kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 # Navigation
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 
-# ViewModel
-jetbrains-lifecycle-runtime = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version = "2.9.1" }
-jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.9.1" }
+# ViewModel & Lifecycle
+# Note: 2.9.1 does not seem to be compatible with multiplatform 1.8.2, probably only compatible with 1.9.0 which is currently in beta)
+jetbrains-lifecycle-runtime = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version = "2.8.4" }
+jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version = "2.8.4" }
+
+# Material
+jetbrains-compose-material-icons = { module = "org.jetbrains.compose.material:material-icons-core", version = "1.7.3" }
 
 # Date & Time
 jetbrains-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version = "0.7.1"}
