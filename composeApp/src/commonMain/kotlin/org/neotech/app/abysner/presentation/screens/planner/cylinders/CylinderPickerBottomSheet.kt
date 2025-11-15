@@ -26,6 +26,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -288,10 +289,8 @@ private fun ShowStandardGasPickerDialog(
 @Preview
 private fun GasPickerBottomSheetPreview() {
     CylinderPickerBottomSheet(
-        sheetState = SheetState(
-            skipPartiallyExpanded = true,
-            density = LocalDensity.current,
-            initialValue = SheetValue.Expanded
+        sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
         ),
         environment = Environment.Default,
         maxPPO2 = 1.4,

@@ -30,6 +30,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -48,6 +49,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Configuration
@@ -75,7 +78,7 @@ fun SegmentPickerBottomSheet(
     maxPPO2: Double,
     maxDensity: Double,
     environment: Environment,
-    cylinders: List<Cylinder>,
+    cylinders: ImmutableList<Cylinder>,
     previousDepth: Double,
     configuration: Configuration,
     onAddOrUpdateDiveSegment: (gas: DiveProfileSection) -> Unit = {},
@@ -283,10 +286,8 @@ private fun Cylinder.buildGasText() = buildAnnotatedString {
 @Preview
 private fun SegmentPickerBottomSheetPreview() {
     SegmentPickerBottomSheet(
-        sheetState = SheetState(
-            skipPartiallyExpanded = true,
-            density = LocalDensity.current,
-            initialValue = SheetValue.Expanded
+        sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
         ),
         maxDensity = Gas.MAX_GAS_DENSITY,
         maxPPO2 = 1.4,
@@ -294,7 +295,7 @@ private fun SegmentPickerBottomSheetPreview() {
         configuration = Configuration(),
         environment = Environment.Default,
         initialValue = DiveProfileSection(10, 15, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
-        cylinders = listOf(
+        cylinders = persistentListOf(
             Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0),
             Cylinder(gas = Gas.Nitrox50, pressure = 207.0, waterVolume = Cylinder.AL80_WATER_VOLUME),
             Cylinder(gas =Gas.Nitrox80, pressure = 207.0, waterVolume = Cylinder.AL63_WATER_VOLUME)

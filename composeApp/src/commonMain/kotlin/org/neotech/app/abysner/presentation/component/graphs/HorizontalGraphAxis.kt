@@ -31,6 +31,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun HorizontalGraphAxis(
@@ -52,7 +55,7 @@ fun HorizontalGraphAxis(
 ) {
     val range = max - min
     val tickSpacing = range / (tickCount - 1)
-    val ticks = (0 until tickCount).map { index -> min + index * tickSpacing }
+    val ticks = (0 until tickCount).map { index -> min + index * tickSpacing }.toImmutableList()
     HorizontalGraphAxis(
         modifier = modifier,
         min = min,
@@ -75,7 +78,7 @@ fun HorizontalGraphAxis(
     modifier: Modifier = Modifier,
     min: Float,
     max: Float,
-    ticksAt: List<Float> = listOf(min, max),
+    ticksAt: ImmutableList<Float> = persistentListOf(min, max),
     axisLineColor: Color = Color.Black,
     tickMarkColor: Color = axisLineColor,
     tickMarkLength: Dp = 8.dp,
@@ -154,7 +157,7 @@ fun GraphAxisPreview() = PreviewWrapper {
         HorizontalGraphAxis(
             min = -100f,
             max = 200f,
-            ticksAt = listOf(-100f, 0f, 200f)
+            ticksAt = persistentListOf(-100f, 0f, 200f)
         )
     }
 }

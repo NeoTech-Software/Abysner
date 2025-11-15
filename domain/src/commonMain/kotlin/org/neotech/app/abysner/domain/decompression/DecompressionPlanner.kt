@@ -12,6 +12,10 @@
 
 package org.neotech.app.abysner.domain.decompression
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentMap
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.Environment
@@ -60,7 +64,7 @@ class DecompressionPlanner(
      * Note: These alternative accents are not calculated minute, but as an optimization
      * calculated per section.
      */
-    fun getAlternativeAccents(): Map<Int, List<DiveSegment>> = alternativeAccents
+    fun getAlternativeAccents(): ImmutableMap<Int, ImmutableList<DiveSegment>> = alternativeAccents.mapValues { it.value.toPersistentList() }.toPersistentMap()
 
     fun getDecoGasses(): List<Cylinder> = decoGasses.toList()
 
@@ -415,8 +419,8 @@ class DecompressionPlanner(
         return result
     }
 
-    fun getSegments(): List<DiveSegment> {
-        return segments.toList()
+    fun getSegments(): ImmutableList<DiveSegment> {
+        return segments.toPersistentList()
     }
 
     fun setDecompressionModelSnapshot(snapshot: DecompressionModel.Snapshot) {

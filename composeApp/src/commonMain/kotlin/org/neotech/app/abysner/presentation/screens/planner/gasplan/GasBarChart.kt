@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import io.github.koalaplot.core.Symbol
 import io.github.koalaplot.core.legend.FlowLegend
 import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
+import kotlinx.collections.immutable.persistentListOf
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
@@ -280,7 +281,7 @@ fun GasUsageBar(
     val redForeground = redShades[1].contrastingOnColor()
     val blueForeground = blueShades[1].contrastingOnColor()
 
-    val values = listOf<BarSection>(
+    val values = persistentListOf(
 
         // Gas left
         BarSection(

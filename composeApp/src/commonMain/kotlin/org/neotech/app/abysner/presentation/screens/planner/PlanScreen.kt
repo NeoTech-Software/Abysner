@@ -59,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
@@ -235,7 +236,7 @@ private fun ShowSegmentPickerBottomSheet(
             maxPPO2 = configuration.maxPPO2,
             maxDensity = Gas.MAX_GAS_DENSITY,
             environment = configuration.environment,
-            cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder },
+            cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder }.toImmutableList(),
             previousDepth = viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
             configuration = configuration,
             onAddOrUpdateDiveSegment = {

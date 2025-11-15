@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.domain.gasplanning
 
+import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
@@ -102,7 +103,7 @@ class GasPlanner {
             // It may happen that for a specific gas no extra is required, hence the default to 0.0
             // liters if that gas is not found.
             CylinderGasRequirements(it.key, it.value, extraRequiredForWorstCaseOutOfAir[it.key] ?: 0.0)
-        }
+        }.toImmutableList()
     }
 
     private fun List<DiveSegment>.calculateGasRequirementsPerCylinder(sac: Double, environment: Environment): Map<Cylinder, Double> {

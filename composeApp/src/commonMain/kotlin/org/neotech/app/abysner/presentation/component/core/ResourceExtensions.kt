@@ -18,26 +18,28 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
+private data class PluralData(val resource: PluralStringResource, val quantity: Int, val value: Any)
+
 interface PluralBuilder {
 
-    @Composable
     fun pluralArgument(resource: PluralStringResource, quantity: Int, value: Any)
 
-    @Composable
     fun pluralInt(resource: PluralStringResource, quantity: Int) =
         pluralArgument(resource, quantity, quantity)
 }
 
-
 @Composable
-fun pluralsStringBuilder(resource: StringResource, build: @Composable PluralBuilder.() -> Unit): String {
-    val arguments = mutableListOf<String>()
-    val builder = object: PluralBuilder {
-        @Composable
+fun pluralsStringBuilder(resource: StringResource, build: PluralBuilder.() -> Unit): String {
+    val pluralArgs = mutableListOf<PluralData>()
+    val builder = object : PluralBuilder {
         override fun pluralArgument(resource: PluralStringResource, quantity: Int, value: Any) {
-            arguments.add(pluralStringResource(resource, quantity, value))
+            pluralArgs.add(PluralData(resource, quantity, value))
         }
     }
     builder.build()
+
+    val arguments = pluralArgs.map { (resource, quantity, value) ->
+        pluralStringResource(resource, quantity, value)
+    }
     return stringResource(resource, *arguments.toTypedArray())
 }

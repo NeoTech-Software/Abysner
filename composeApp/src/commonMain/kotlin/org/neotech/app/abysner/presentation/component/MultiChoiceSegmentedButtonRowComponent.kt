@@ -21,16 +21,20 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @Stable
-class MultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes: Array<Int>) {
-    var checkedItemIndexes: SnapshotStateList<Int> = mutableStateListOf(*initialCheckedItemIndexes)
+class MultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes: ImmutableList<Int>) {
+    var checkedItemIndexes: SnapshotStateList<Int> = initialCheckedItemIndexes.toMutableStateList()
 }
 
 @Composable
-fun rememberMultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes: Array<Int> = emptyArray()): MultiChoiceSegmentedButtonRowState {
-    return remember {
+fun rememberMultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes: ImmutableList<Int> = persistentListOf()): MultiChoiceSegmentedButtonRowState {
+    return remember(initialCheckedItemIndexes) {
         MultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes)
     }
 }
@@ -38,8 +42,8 @@ fun rememberMultiChoiceSegmentedButtonRowState(initialCheckedItemIndexes: Array<
 @Composable
 fun <T> MultiChoiceSegmentedButtonRow(
     modifier: Modifier = Modifier,
-    items: List<T>,
-    multiChoiceSegmentedButtonRowState: MultiChoiceSegmentedButtonRowState = rememberMultiChoiceSegmentedButtonRowState(emptyArray()),
+    items: ImmutableList<T>,
+    multiChoiceSegmentedButtonRowState: MultiChoiceSegmentedButtonRowState = rememberMultiChoiceSegmentedButtonRowState(),
     onChecked: (item: T, index: Int, checked: Boolean) -> Unit =  { _, _, _ -> },
     label: @Composable (item: T, index: Int) -> Unit = { item, _ ->
         Text(text = item.toString(), maxLines = 1)
@@ -71,7 +75,7 @@ fun <T> MultiChoiceSegmentedButtonRow(
 @Composable
 private fun MultiChoiceSegmentedButtonRowPreview() {
     MultiChoiceSegmentedButtonRow(
-        items = listOf("+3min", "+3m"),
+        items = persistentListOf("+3min", "+3m"),
         onChecked = { _, _, _ ->
 
         }

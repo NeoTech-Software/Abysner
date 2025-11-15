@@ -34,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
@@ -49,7 +51,7 @@ private fun SingleChoicePreferencePreview() {
         SingleChoicePreference(
             label = "Salinity",
             description = "The type of water. Saltier water is heavier and increases pressure at depth.",
-            items = Salinity.entries,
+            items = Salinity.entries.toImmutableList(),
             selectedItemIndex = index,
             onItemPicked = {
                 index = Salinity.entries.indexOf(it)
@@ -64,7 +66,7 @@ fun <T> SingleChoicePreference(
     label: String,
     description: String,
     selectedItemIndex: Int = 0,
-    items: List<T>,
+    items: ImmutableList<T>,
     itemToStringMapper: (T) -> CharSequence = { it.toString() },
     selectedItemToStringMapper: (T) -> CharSequence = itemToStringMapper,
     onItemPicked: (T) -> Unit,
@@ -126,7 +128,7 @@ fun <T> SingleChoicePreferenceDialog(
     onCancelButtonClicked: () -> Unit = {},
     onDismissRequest: () -> Unit = {},
     initialSelectedItemIndex: Int = 0,
-    items: List<T>,
+    items: ImmutableList<T>,
     itemToStringMapper: (T) -> CharSequence = { it.toString() },
 ) {
     val selectedItemIndex: MutableState<Int> =
@@ -194,7 +196,7 @@ fun <T> SingleChoicePreferenceDialog(
 fun SingleChoicePreferenceDialogPreview() {
     SingleChoicePreferenceDialog(
         title = "Salinity",
-        items = Salinity.entries,
+        items = Salinity.entries.toImmutableList(),
         itemToStringMapper = {
             "${it.humanReadableName} (${it.density} kg/m3)"
         }

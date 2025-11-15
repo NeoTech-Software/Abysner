@@ -39,7 +39,9 @@ import io.github.koalaplot.core.Symbol
 import io.github.koalaplot.core.legend.FlowLegend
 import io.github.koalaplot.core.line.AreaBaseline
 import io.github.koalaplot.core.line.AreaPlot
+import io.github.koalaplot.core.line.AreaPlot2
 import io.github.koalaplot.core.line.LinePlot
+import io.github.koalaplot.core.line.LinePlot2
 import io.github.koalaplot.core.style.AreaStyle
 import io.github.koalaplot.core.style.KoalaPlotTheme
 import io.github.koalaplot.core.style.LineStyle
@@ -48,6 +50,8 @@ import io.github.koalaplot.core.xygraph.DefaultPoint
 import io.github.koalaplot.core.xygraph.FloatLinearAxisModel
 import io.github.koalaplot.core.xygraph.XYGraph
 import io.github.koalaplot.core.xygraph.rememberAxisStyle
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -70,7 +74,7 @@ val Lineshape: Shape = object : Shape {
 }
 
 @Composable
-fun StrokeDp(
+fun strokeDp(
     widthInDp: Dp = 0.dp,
     miter: Float = Stroke.DefaultMiter,
     cap: StrokeCap = Stroke.DefaultCap,
@@ -130,19 +134,19 @@ fun DecoPlanGraph(
                         shape = Lineshape,
                         size = 20.dp,
                         outlineBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        outlineStroke = StrokeDp(2.dp)
+                        outlineStroke = strokeDp(2.dp)
                     )
                     1 -> Symbol(
                         shape = Lineshape,
                         size = 20.dp,
                         outlineBrush = SolidColor(MaterialTheme.colorScheme.error),
-                        outlineStroke = StrokeDp(1.dp)
+                        outlineStroke = strokeDp(1.dp)
                     )
                     2 -> Symbol(
                         shape = Lineshape,
                         size = 20.dp,
                         outlineBrush = SolidColor(MaterialTheme.colorScheme.outline),
-                        outlineStroke = StrokeDp(widthInDp = 1.dp, pathEffect =  PathEffect.dashPathEffect(intervals = floatArrayOf(15.0f, 15.0f)))
+                        outlineStroke = strokeDp(widthInDp = 1.dp, pathEffect =  PathEffect.dashPathEffect(intervals = floatArrayOf(15.0f, 15.0f)))
                     )
                 }
 
@@ -188,7 +192,7 @@ fun DecoPlanGraph(
             yAxisTitle = { },
         ) {
 
-            AreaPlot(
+            AreaPlot2(
                 data = //listOf(DefaultPoint(0f, 0f)) +
                         divePlan.segments.map { segment ->
                             // End should be used here, but by shifting the whole graph 1 minute to the left,
@@ -210,7 +214,7 @@ fun DecoPlanGraph(
             )
 
             var runtime = 0L
-            LinePlot(
+            LinePlot2(
                 data = divePlan.segments.map { segment ->
                     DefaultPoint(runtime.toFloat(), -segment.startDepth.toFloat()).also {
                         runtime += segment.duration
@@ -241,7 +245,7 @@ fun DecoPlanGraph(
                 }
             }
 
-            LinePlot(
+            LinePlot2(
                 data = points,
                 lineStyle = LineStyle(
                     brush = SolidColor(MaterialTheme.colorScheme.outline),
@@ -262,15 +266,15 @@ private fun DecoPlanGraphPreview() {
 
     DecoPlanGraph(
         modifier = Modifier, divePlan = DivePlan(
-            segments = listOf(
+            segments = persistentListOf(
                 DiveSegment(0,5, 0.0, 25.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
 
                 DiveSegment(5,20, 25.0, 20.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
                 DiveSegment(25,20, 25.0, 0.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
 
                 ),
-            alternativeAccents = emptyMap(),
-            decoGasses = emptyList(),
+            alternativeAccents = persistentMapOf(),
+            decoGasses = persistentListOf(),
             configuration = Configuration(),
             totalCns = 0.0,
             totalOtu = 0.0

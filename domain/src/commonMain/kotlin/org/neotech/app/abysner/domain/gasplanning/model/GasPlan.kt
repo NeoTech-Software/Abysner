@@ -12,4 +12,6 @@
 
 package org.neotech.app.abysner.domain.gasplanning.model
 
-typealias GasPlan = List<CylinderGasRequirements>
+import kotlinx.collections.immutable.ImmutableList
+
+typealias GasPlan = ImmutableList<CylinderGasRequirements>

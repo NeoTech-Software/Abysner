@@ -53,6 +53,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
@@ -125,14 +127,14 @@ fun DecoPlanCardComponent(
                     }
                 } else {
 
-                    val items = listOf("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper}", "Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
+                    val items = persistentListOf("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper}", "Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
 
                     val preSelected = when {
                         divePlanSet.isDeeper && divePlanSet.isLonger -> arrayOf(0, 1)
                         divePlanSet.isDeeper -> arrayOf(0)
                         divePlanSet.isLonger -> arrayOf(1)
                         else -> emptyArray()
-                    }
+                    }.toImmutableList()
 
                     val multiChoiceRowState = rememberMultiChoiceSegmentedButtonRowState(preSelected)
 
@@ -417,7 +419,7 @@ fun DecoPlanCardComponentPreview() {
         )
 
         DecoPlanCardComponent(
-            divePlanSet = DivePlanSet(base = divePlan, deeper = null, longer = null, gasPlan = emptyList()),
+            divePlanSet = DivePlanSet(base = divePlan, deeper = null, longer = null, gasPlan = persistentListOf()),
             settings = SettingsModel(),
             planningException = null,
             isLoading = false,
