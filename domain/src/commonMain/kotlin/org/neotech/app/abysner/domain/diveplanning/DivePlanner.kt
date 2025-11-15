@@ -12,6 +12,9 @@
 
 package org.neotech.app.abysner.domain.diveplanning
 
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentList
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
@@ -40,9 +43,9 @@ class DivePlanner {
 
         if(plan.isEmpty()) {
             return DivePlan(
-                emptyList(),
-                emptyMap(),
-                decoGases,
+                persistentListOf(),
+                persistentMapOf(),
+                decoGases.toPersistentList(),
                 configuration,
                 0.0,
                 0.0
@@ -157,7 +160,7 @@ class DivePlanner {
         return DivePlan(
             segments = segments,
             alternativeAccents = decompressionPlanner.getAlternativeAccents(),
-            decoGasses = decoGases,
+            decoGasses = decoGases.toPersistentList(),
             configuration = configuration,
             totalCns = OxygenToxicityCalculator().calculateCns(segments, configuration.environment),
             totalOtu = OxygenToxicityCalculator().calculateOtu(segments, configuration.environment)

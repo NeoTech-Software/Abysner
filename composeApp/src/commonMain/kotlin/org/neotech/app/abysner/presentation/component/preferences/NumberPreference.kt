@@ -41,7 +41,7 @@ private fun NumberPreferencePreview() {
         var value by mutableIntStateOf(0)
 
         NumberPreference(
-            label = "Salinity",
+            label = "Salinity ($value)",
             description = "The type of water. Saltier water is heavier and increases pressure at depth.",
             onValueChanged = {
                 value = it

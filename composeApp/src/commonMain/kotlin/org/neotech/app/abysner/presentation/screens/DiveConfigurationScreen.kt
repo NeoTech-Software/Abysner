@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -117,7 +119,7 @@ fun DiveConfigurationScreen(
                         selectedItemIndex = Configuration.Algorithm.entries.indexOf(
                             configuration.algorithm
                         ),
-                        items = Configuration.Algorithm.entries,
+                        items = Configuration.Algorithm.entries.toImmutableList(),
                         itemToStringMapper = {
                             it.shortName
                         }
@@ -147,7 +149,7 @@ fun DiveConfigurationScreen(
                         label = "Salinity",
                         description = "The type of water. Saltier water is heavier and increases pressure at depth.",
                         selectedItemIndex = Salinity.entries.indexOf(configuration.salinity),
-                        items = Salinity.entries,
+                        items = Salinity.entries.toImmutableList(),
                         itemToStringMapper = {
                             buildAnnotatedString {
                                 appendBold(it.humanReadableName)
@@ -250,7 +252,7 @@ fun DiveConfigurationScreen(
                     SingleChoicePreference(
                         label = "Deco stop interval",
                         description = "The interval at which to make deco stops.",
-                        items = listOf(3, 6, 9),
+                        items = persistentListOf(3, 6, 9),
                         selectedItemIndex = when (configuration.decoStepSize) {
                             3 -> 0
                             6 -> 1
@@ -269,7 +271,7 @@ fun DiveConfigurationScreen(
                     SingleChoicePreference(
                         label = "Last deco stop",
                         description = "Depth at which the last deco stop will be made.",
-                        items = listOf(3, 6, 9),
+                        items = persistentListOf(3, 6, 9),
                         selectedItemIndex = when (configuration.lastDecoStopDepth) {
                             3 -> 0
                             6 -> 1
@@ -285,7 +287,7 @@ fun DiveConfigurationScreen(
                         }
                     }
 
-                    val allowedPPO2values = listOf(1.2, 1.3, 1.4, 1.5, 1.6)
+                    val allowedPPO2values = persistentListOf(1.2, 1.3, 1.4, 1.5, 1.6)
 
                     fun Iterable<Double>.indexByNearest(target: Double): Int? {
                         var bestMatch: Double? = null

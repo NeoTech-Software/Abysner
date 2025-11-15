@@ -27,6 +27,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.max
 import kotlin.math.min
 
@@ -41,6 +42,9 @@ internal fun GasBarChartLayout(
     graph: @Composable (modifier: Modifier) -> Unit,
 ) {
     // ConstraintLayout uses this internally, but is not yet available on Compose MultiPlatform
+    // In this specific case, using the MultiMeasureLayout is actually beneficial to achieve the
+    // desired layout in a performant way.
+    @Suppress("DEPRECATION")
     MultiMeasureLayout(
         modifier = modifier,
         content = {
@@ -111,7 +115,7 @@ internal fun StackedHorizontalBar(
     minValue: Float = 0f,
     maxValue: Float = 200f,
     offset: Float = 0f,
-    values: List<BarSection>,
+    values: ImmutableList<BarSection>,
     valueTransformation: (Int, Float) -> String = { _, value -> value.toString() }
 ) {
     // TextMeasurer for text measurement

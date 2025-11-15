@@ -12,6 +12,8 @@
 
 package org.neotech.app.abysner.domain.diveplanning.model
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.core.model.Configuration
@@ -23,9 +25,9 @@ import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import kotlin.math.ceil
 
 data class DivePlan(
-    val segments: List<DiveSegment>,
-    val alternativeAccents: Map<Int, List<DiveSegment>>,
-    val decoGasses: List<Cylinder>,
+    val segments: ImmutableList<DiveSegment>,
+    val alternativeAccents: ImmutableMap<Int, ImmutableList<DiveSegment>>,
+    val decoGasses: ImmutableList<Cylinder>,
     val configuration: Configuration,
     val totalCns: Double,
     val totalOtu: Double,

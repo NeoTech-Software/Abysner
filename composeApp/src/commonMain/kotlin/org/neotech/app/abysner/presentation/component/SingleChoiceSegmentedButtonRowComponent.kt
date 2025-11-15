@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Stable
 class SingleChoiceSegmentedButtonRowState(initialSelectedIndex: Int) {
@@ -39,7 +41,7 @@ fun rememberSingleChoiceSegmentedButtonRowState(initialSelectedIndex: Int): Sing
 @Composable
 fun <T> SingleChoiceSegmentedButtonRow(
     modifier: Modifier = Modifier,
-    items: List<T>,
+    items: ImmutableList<T>,
     singleChoiceSegmentedButtonRowState: SingleChoiceSegmentedButtonRowState = rememberSingleChoiceSegmentedButtonRowState(0),
     onClick: (item: T, index: Int) -> Unit =  { _, _ -> },
     label: @Composable (item: T, index: Int) -> Unit = { item, _ ->
@@ -68,7 +70,7 @@ fun <T> SingleChoiceSegmentedButtonRow(
 @Composable
 private fun SingleChoiceSegmentedButtonRowPreview() {
     SingleChoiceSegmentedButtonRow(
-        items = listOf("All", "Basics"),
+        items = persistentListOf("All", "Basics"),
         onClick = { _, _ ->
 
         }

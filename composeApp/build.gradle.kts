@@ -11,10 +11,7 @@
  */
 
 import com.google.devtools.ksp.gradle.KspAATask
-import com.google.devtools.ksp.gradle.KspTask
-import org.gradle.configurationcache.extensions.capitalized
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
@@ -116,6 +113,9 @@ kotlin {
             implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
 
+            // Collections
+            implementation(libs.kotlinx.collections.immutable)
+
             // File IO
             implementation(libs.okio)
 
@@ -169,6 +169,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
         getByName("release") {
             isMinifyEnabled = true
             proguardFiles(
@@ -178,6 +181,7 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         create("development") {
+            applicationIdSuffix = ".development"
             initWith(getByName("debug"))
             matchingFallbacks += listOf("release")
             isMinifyEnabled = true
@@ -283,15 +287,11 @@ abstract class GenerateVersionInfoTask @Inject constructor(
     }
 }
 
-
 val versionInfoProvider = tasks.register<GenerateVersionInfoTask>("generateVersionInfo") {
     buildNumber.set(abysnerBuildNumber)
     versionName.set(abysnerVersion)
 }
 
-tasks.withType(KspTask::class.java).configureEach {
-    dependsOn(versionInfoProvider)
-}
 tasks.withType(KspAATask::class.java).configureEach {
     dependsOn(versionInfoProvider)
 }

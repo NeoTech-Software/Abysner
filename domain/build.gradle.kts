@@ -54,6 +54,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.kotlinx.collections.immutable)
         }
     }
 }

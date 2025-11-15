@@ -12,6 +12,6 @@
 
 package org.neotech.app.abysner.domain.core.physics
 
-inline fun Double.asCubicFeetToLiters(): Double = this * 28.3168466
+fun Double.asCubicFeetToLiters(): Double = this * 28.3168466
 
-inline fun Double.asLitersToCubicFeet(): Double = this / 28.3168466
+fun Double.asLitersToCubicFeet(): Double = this / 28.3168466

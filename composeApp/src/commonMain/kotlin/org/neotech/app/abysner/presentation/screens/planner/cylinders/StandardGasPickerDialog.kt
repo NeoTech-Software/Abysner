@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.presentation.screens.planner.cylinders
 
 import androidx.compose.runtime.Composable
+import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreferenceDialog
 
@@ -33,7 +34,7 @@ fun StandardGasPickerDialog(
         onCancelButtonClicked = onDismissRequest,
         onDismissRequest = onDismissRequest,
         initialSelectedItemIndex = 0,
-        items = Gas.StandardGasses,
+        items = Gas.StandardGasses.toImmutableList(),
         itemToStringMapper = {
             "${it.diveIndustryName()} ($it)"
         }

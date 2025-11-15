@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.presentation.preview
 
+import kotlinx.collections.immutable.persistentListOf
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -26,10 +27,10 @@ object PreviewData {
             val divePlan = DivePlanner().apply {
                 configuration = Configuration()
             }.addDive(
-                plan = listOf(
+                plan = persistentListOf(
                     DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
                 ),
-                decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
+                decoGases = persistentListOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
             )
 
             val gasPlan = GasPlanner().calculateGasPlan(
