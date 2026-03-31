@@ -1,6 +1,6 @@
 [versions]
 ####### START: Android target specific #######
-agp = "8.13.1"
+agp = "9.0.0"
 android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
@@ -10,10 +10,10 @@ androidx-activityCompose = "1.11.0"
 ####### END:   Android target specific #######
 
 # Compose & Kotlin
-compose-plugin = "1.9.3"
-kotlin = "2.2.21"
+compose-plugin = "1.10.3"
+kotlin = "2.3.20"
 # KSP version should follow Kotlin version
-ksp = "2.3.2"
+ksp = "2.3.6"
 
 # Dependency Injection
 kotlinInject = "0.8.0"
@@ -42,6 +42,16 @@ jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lif
 
 # Material
 jetbrains-compose-material-icons = { module = "org.jetbrains.compose.material:material-icons-core", version = "1.7.3" }
+
+# Compose Multiplatform
+jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-plugin" }
+jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-plugin" }
+jetbrains-compose-material = { module = "org.jetbrains.compose.material:material", version.ref = "compose-plugin" }
+jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version = "1.9.0" }
+jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-plugin" }
+jetbrains-compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-plugin" }
+jetbrains-compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-plugin" }
+jetbrains-compose-components-ui-tooling-preview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "compose-plugin" }
 
 # Collections
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version = "0.4.0" }
@@ -79,7 +89,7 @@ markdown-render = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", 
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidKmpLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
