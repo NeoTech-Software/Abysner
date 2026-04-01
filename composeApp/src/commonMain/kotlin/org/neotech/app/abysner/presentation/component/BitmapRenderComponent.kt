@@ -12,21 +12,18 @@
 
 package org.neotech.app.abysner.presentation.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.layout
@@ -35,7 +32,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -70,12 +66,12 @@ class BitmapRenderController {
     }
 }
 
-val LocalBitmapRenderController = staticCompositionLocalOf {
-    BitmapRenderController()
+val LocalBitmapRenderController = staticCompositionLocalOf<BitmapRenderController> {
+    error("No BitmapRenderRoot found in the composition hierarchy.")
 }
 
 @Composable
-fun BitmapRenderRoot(content: @Composable () -> Unit) {
+fun BoxScope.BitmapRenderRoot(content: @Composable BoxScope.() -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val render = remember { BitmapRenderController() }
 
@@ -93,24 +89,24 @@ fun BitmapRenderRoot(content: @Composable () -> Unit) {
         }
     }
 
-    val action = actionState.value
-    if (action != null) {
-        RenderBitmap(
-            width = action.width,
-            height = action.height,
-            onRendered = {
-                actionState.value = null
-                coroutineScope.launch {
-                    action.onComplete(it)
+    CompositionLocalProvider(LocalBitmapRenderController provides render) {
+        this@BitmapRenderRoot.content()
+
+        val action = actionState.value
+        if (action != null) {
+            RenderBitmap(
+                    width = action.width,
+                    height = action.height,
+                    onRendered = {
+                        actionState.value = null
+                        coroutineScope.launch {
+                            action.onComplete(it)
+                        }
+                    }
+                ) {
+                    action.composable.invoke()
                 }
             }
-        ) {
-            action.composable.invoke()
-        }
-    }
-
-    CompositionLocalProvider(LocalBitmapRenderController provides render) {
-        content()
     }
 }
 
@@ -122,7 +118,12 @@ private fun RenderBitmap(
     composable: @Composable () -> Unit,
 ) {
     val graphicsLayer = rememberGraphicsLayer()
-    var graphicsLayerDrawn by remember { mutableStateOf(false) }
+    // A CONFLATED channel is used to send a signal from the draw phase to the coroutine that is
+    // waiting for drawing to be completed. trySend() in drawWithContent is safe: it is non-blocking
+    // and does not mutate Compose state, so it cannot trigger recomposition from within the draw
+    // phase.
+    val drawChannel = remember { Channel<Unit>(Channel.CONFLATED) }
+
     Box(
         modifier = Modifier
             .layout { measurable, constraints ->
@@ -161,24 +162,28 @@ private fun RenderBitmap(
                     placeable.place(0, 0)
                 }
             }
-            .background(Color.Transparent)
             .drawWithContent {
+                // Draw into the graphics layer only, keeping this composable invisible on screen.
                 graphicsLayer.record {
                     this@drawWithContent.drawContent()
                 }
-                graphicsLayerDrawn = true
+                // Signal the coroutine (started and suspended below) that the draw has completed.
+                drawChannel.trySend(Unit)
             }
     ) {
         composable()
     }
 
-    if(graphicsLayerDrawn) {
-        LaunchedEffect(true) {
-            // Not sure if this is entirely save to do, but it seems to work regardless.
-            val bitmap = withContext(Dispatchers.IO) {
-                graphicsLayer.toImageBitmap()
-            }
-            onRendered(bitmap)
+    LaunchedEffect(Unit) {
+        // Wait for the first recorded frame before capturing.
+        drawChannel.receive()
+
+        // toImageBitmap() is CPU-bound rasterization (Skia Picture -> pixel buffer). It is probably
+        // safe to call off the main thread because all draw commands were already captured
+        // synchronously by graphicsLayer.record() above.
+        val bitmap = withContext(Dispatchers.Default) {
+            graphicsLayer.toImageBitmap()
         }
+        onRendered(bitmap)
     }
 }
