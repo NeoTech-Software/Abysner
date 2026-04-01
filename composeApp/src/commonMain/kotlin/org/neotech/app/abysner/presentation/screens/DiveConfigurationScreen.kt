@@ -102,7 +102,7 @@ fun DiveConfigurationScreen(
 
                 }
             }
-        ) {
+        ) { paddingValues ->
             Box(
                 Modifier
                     .verticalScroll(rememberScrollState())
@@ -110,7 +110,7 @@ fun DiveConfigurationScreen(
 
                 val configuration by planningRepository.configuration.collectAsState()
 
-                Column(modifier = Modifier.padding(it)) {
+                Column(modifier = Modifier.padding(paddingValues)) {
                     SettingsSubTitle(subTitle = "Algorithm")
 
                     SingleChoicePreference(
@@ -284,6 +284,20 @@ fun DiveConfigurationScreen(
                     ) { lastDecoStopDepth ->
                         planningRepository.updateConfiguration {
                             it.copy(lastDecoStopDepth = lastDecoStopDepth)
+                        }
+                    }
+
+                    NumberPreference(
+                        label = "Gas switch time",
+                        description = "Adds a flat section at each depth where a gas switch occurs during decompression, to account for the time needed to switch gases.",
+                        initialValue = configuration.gasSwitchTime,
+                        minValue = 0,
+                        maxValue = 5,
+                        valueFormatter = { "$it min"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" min")
+                    ) { gasSwitchTime ->
+                        planningRepository.updateConfiguration {
+                            it.copy(gasSwitchTime = gasSwitchTime)
                         }
                     }
 

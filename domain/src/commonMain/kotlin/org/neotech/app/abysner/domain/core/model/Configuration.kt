@@ -34,6 +34,7 @@ data class Configuration(
     val gfLow: Double = 0.6,
     val gfHigh: Double = 0.7,
     val forceMinimalDecoStopTime: Boolean = true,
+    val gasSwitchTime: Int = 1,
     val useDecoGasBetweenSections: Boolean = false,
     val decoStepSize: Int = 3,
     val lastDecoStopDepth: Int = 3,

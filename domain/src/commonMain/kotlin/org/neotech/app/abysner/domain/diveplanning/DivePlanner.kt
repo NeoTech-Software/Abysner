@@ -60,6 +60,7 @@ class DivePlanner {
             decoStepSize = configuration.decoStepSize,
             lastDecoStopDepth = configuration.lastDecoStopDepth,
             forceMinimalDecoStopTime = configuration.forceMinimalDecoStopTime,
+            gasSwitchTime = configuration.gasSwitchTime,
             model = createDecompressionModel()
         )
         decompressionModelSnapshot?.let {
@@ -106,7 +107,6 @@ class DivePlanner {
                             it.depth.toDouble(),
                             it.cylinder,
                             timeLeftAtPlannedDepth,
-                            isDecompression = false,
                         )
                     }
                     decompressionPlanner.getSegments().last().ttsAfter = decompressionPlanner.calculateTimeToSurface()
@@ -117,12 +117,11 @@ class DivePlanner {
 
                     val timeLeftAtPlannedDepth = it.duration - timeToChange
 
-                    decompressionPlanner.addDepthChangePerMinute(
+                    decompressionPlanner.addDepthChange(
                         currentDepth,
                         it.depth.toDouble(),
                         it.cylinder,
                         timeToChange,
-                        isDecompression = false,
                     )
 
                     // TODO allow 0? And just not add the flat?
@@ -133,7 +132,6 @@ class DivePlanner {
                             it.depth.toDouble(),
                             it.cylinder,
                             timeLeftAtPlannedDepth,
-                            isDecompression = false,
                         )
                     }
                     decompressionPlanner.getSegments().last().ttsAfter = decompressionPlanner.calculateTimeToSurface()
@@ -144,7 +142,6 @@ class DivePlanner {
                     it.depth.toDouble(),
                     it.cylinder,
                     it.duration,
-                    isDecompression = false,
                 )
                 decompressionPlanner.getSegments().last().ttsAfter = decompressionPlanner.calculateTimeToSurface()
                 currentDepth = it.depth.toDouble()

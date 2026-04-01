@@ -41,7 +41,8 @@ fun Configuration.toResource() = ConfigurationResourceV1(
     altitude = altitude,
     algorithm = algorithm.preferenceValue,
     contingencyDeeper = contingencyDeeper,
-    contingencyLonger = contingencyLonger
+    contingencyLonger = contingencyLonger,
+    gasSwitchTime = gasSwitchTime
 )
 
 fun ConfigurationResourceV1.toModel() = Configuration(
@@ -62,7 +63,8 @@ fun ConfigurationResourceV1.toModel() = Configuration(
     altitude = altitude,
     algorithm = fromString<Configuration.Algorithm>(algorithm),
     contingencyDeeper = contingencyDeeper,
-    contingencyLonger = contingencyLonger
+    contingencyLonger = contingencyLonger,
+    gasSwitchTime = gasSwitchTime
 )
 
 

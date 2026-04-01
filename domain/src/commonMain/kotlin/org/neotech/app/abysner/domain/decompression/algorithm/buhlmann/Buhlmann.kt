@@ -211,7 +211,9 @@ data class TissueCompartment(
 
     fun addPressureChange(startPressure: Double, endPressure: Double, fO2: Double, fHe: Double, timeInMinutes: Int): Double {
         if (timeInMinutes <= 0) {
-            throw IllegalArgumentException("Invalid duration `$timeInMinutes` for on/off-gassing tissues. The minimum duration must be higher then 0.")
+            // A zero or negative duration makes no physical sense (no exposure has occurred), and
+            // would also cause a division by zero in pressureChangeInBarsPerMinute.
+            throw IllegalArgumentException("Invalid duration `$timeInMinutes` for on/off-gassing tissues. The minimum duration must be higher than 0.")
         }
         // Calculate nitrogen fraction (by just subtracting oxygen and helium)
         val fN2 = (1.0 - fO2) - fHe

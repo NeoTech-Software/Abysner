@@ -46,7 +46,7 @@ kotlin {
     }
 
     // Do not really support desktop, but this is required to get previews working.
-    jvm("desktop") {
+    jvm {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
             freeCompilerArgs.add("-Xexpect-actual-classes")
@@ -75,8 +75,8 @@ kotlin {
             implementation(libs.androidx.ui.tooling)
         }
 
-        val desktopMain by getting
-        desktopMain.dependencies {
+        val jvmMain by getting
+        jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
 
@@ -86,6 +86,10 @@ kotlin {
 
         commonMain.configure {
             kotlin.srcDir(project.layout.buildDirectory.file("generated/kotlin/version/"))
+        }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
         }
 
         commonMain.dependencies {

@@ -87,7 +87,7 @@ data class DivePlan(
 }
 
 fun List<DiveSegment>.totalDeco(): Int {
-    return filter { it.type == DiveSegment.Type.FLAT && it.isDecompression }.sumOf { it.duration }
+    return filter { it.isDecompressionStop }.sumOf { it.duration }
 }
 
 fun List<DiveSegment>.calculateAverageDepth(): Double {
@@ -100,11 +100,9 @@ private fun List<DiveSegment>.asString(): String {
     builder.appendLine("      Depth    Runtime    Duration    Gas")
     forEachIndexed { index, it ->
         val typeChar = when(it.type) {
-            DiveSegment.Type.FLAT -> if(it.isDecompression) {
-                '⏹'
-            } else {
-                '▶'
-            }
+            DiveSegment.Type.DECO_STOP -> '⏹'
+            DiveSegment.Type.GAS_SWITCH -> '⇄'
+            DiveSegment.Type.FLAT -> '▶'
             DiveSegment.Type.DECENT -> '▼'
             DiveSegment.Type.ASCENT -> '▲'
         }
@@ -120,9 +118,9 @@ private fun Any.spaced(spaces: Int): String {
         this.toString()
     } else {
         if(rawString.length > spaces) {
-            rawString.padEnd(spaces - 1, ' ').toString() + '…'
+            rawString.padEnd(spaces - 1, ' ') + '…'
         } else {
-            rawString.padEnd(spaces, ' ').toString()
+            rawString.padEnd(spaces, ' ')
         }
     }
 }

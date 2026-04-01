@@ -6,6 +6,7 @@ import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.diveplanning.DivePlannerTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * This is not a complete standalone test suite to test the Buhlmann algorithm, most of the
@@ -15,8 +16,8 @@ import kotlin.test.assertEquals
 class BuhlmannTest {
 
     @Test
-    fun testNdlCalculation() {
-        // These settings kinda mick the US Navy/PADI tables. What we use doesn't really mather for
+    fun ndlCalculation_matchesExpectedValues() {
+        // These settings kinda mimic the US Navy/PADI tables. What we use doesn't really matter for
         // this test, but this gives us something to compare against that is relatively well known.
         // There is no real comparing between Buhlmann and Navy tables, but this will make it close.
         val environment = Environment.SeaLevelSalt
@@ -43,6 +44,46 @@ class BuhlmannTest {
             assertEquals(expectedNdlTimes[index], ndlTime)
             // Reset model to clear tissues
             model.reset()
+        }
+    }
+
+    @Test
+    fun getCeiling_isIdempotent() {
+        // getCeiling() internally ratchets up the `lowestCeiling` field used for gradient-factor
+        // interpolation. Because the ratchet is monotonic and is applied before the return value
+        // is computed within the same call, the result must be identical on every subsequent call
+        // as long as no tissue loading has changed.
+        val environment = Environment.SeaLevelSalt
+        val model = Buhlmann(
+            version = Buhlmann.Version.ZH16C,
+            environment = environment,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+        )
+        model.addFlat(depthInMetersToBar(30.0, environment), Gas.Air, 30)
+
+        val first  = model.getCeiling()
+        val second = model.getCeiling()
+        val third  = model.getCeiling()
+
+        assertEquals(first,  second, "getCeiling() must be idempotent: 1st vs 2nd call differ")
+        assertEquals(second, third,  "getCeiling() must be idempotent: 2nd vs 3rd call differ")
+    }
+
+    @Test
+    fun addPressureChange_throwsForZeroDuration() {
+        val environment = Environment.SeaLevelSalt
+        val model = Buhlmann(
+            version = Buhlmann.Version.ZH16C,
+            environment = environment,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+        )
+        val depth = depthInMetersToBar(21.0, environment)
+        assertFailsWith<IllegalArgumentException>(
+            message = "Expected IllegalArgumentException for timeInMinutes=0"
+        ) {
+            model.addPressureChange(depth, depth, Gas.Nitrox50, timeInMinutes = 0)
         }
     }
 }

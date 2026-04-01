@@ -46,6 +46,7 @@ class DecompressionPlanner(
     val decoStepSize: Int,
     val lastDecoStopDepth: Int,
     val forceMinimalDecoStopTime: Boolean,
+    val gasSwitchTime: Int,
 ) {
 
     private var isCalculatingTts = false
@@ -77,29 +78,47 @@ class DecompressionPlanner(
         this.decoGasses.add(cylinder)
     }
 
-    fun addFlat(depth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
-        return addDepthChangePerMinute(depth, depth, gas, timeInMinutes, isDecompression)
+    fun addFlat(depth: Double, gas: Cylinder, timeInMinutes: Int) {
+        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.FLAT)
     }
 
-    fun addDepthChangePerMinute(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
-        if(calculateTissueChangesPerMinute && !isCalculatingTts) {
+    private fun addDecoStop(depth: Double, gas: Cylinder, timeInMinutes: Int) {
+        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.DECO_STOP)
+    }
+
+    private fun addGasSwitch(depth: Double, gas: Cylinder, timeInMinutes: Int) {
+        // A 0-duration segment is still emitted when gasSwitchTime = 0 so the instruction table
+        // can consistently show a gas switch row regardless of the configured switch time.
+        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.GAS_SWITCH)
+    }
+
+    fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int) {
+        require(startDepth != endDepth) { "Use addFlat() for flat segments, startDepth and endDepth must differ." }
+        val type = if (startDepth < endDepth) DiveSegment.Type.DECENT else DiveSegment.Type.ASCENT
+        return addDepthChangeInternal(startDepth, endDepth, gas, timeInMinutes, type)
+    }
+
+    private fun addDepthChangeInternal(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type) {
+        if(timeInMinutes > 0 && calculateTissueChangesPerMinute && !isCalculatingTts) {
             val diff = startDepth - endDepth
             repeat(timeInMinutes) {
                 val statDepthForThisMinute = startDepth - (diff * ((it) / timeInMinutes.toDouble()))
                 val endDepthForThisMinute = startDepth - (diff * ((it + 1) / timeInMinutes.toDouble()))
-                addDepthChange(statDepthForThisMinute, endDepthForThisMinute, gas, 1, isDecompression)
+                addDepthChange(statDepthForThisMinute, endDepthForThisMinute, gas, 1, type)
             }
         } else {
-            addDepthChange(startDepth, endDepth, gas, timeInMinutes, isDecompression)
+            addDepthChange(startDepth, endDepth, gas, timeInMinutes, type)
         }
     }
 
-    private fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, isDecompression: Boolean) {
+    private fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type) {
 
         val startPressure = depthInMetersToBar(startDepth, environment)
         val endPressure = depthInMetersToBar(endDepth, environment)
 
-        model.addPressureChange(startPressure, endPressure, gas.gas, timeInMinutes)
+        if (timeInMinutes > 0) {
+            model.addPressureChange(startPressure, endPressure, gas.gas, timeInMinutes)
+        }
 
         val ceiling = barToDepthInMeters(model.getCeiling(), environment)
 
@@ -111,7 +130,7 @@ class DecompressionPlanner(
                 startDepth = startDepth,
                 endDepth = endDepth,
                 cylinder = gas,
-                isDecompression = isDecompression,
+                type = type,
                 gfCeilingAtEnd = ceiling,
                 ttsAfter = -1
             )
@@ -157,9 +176,12 @@ class DecompressionPlanner(
             // Only start using the better gas when we reach a deco increment point
 
             if (betterDecoGas != null && betterDecoGas != gas && currentDepth.toInt() % decoStepSize == 0) {
+                // Gas switch time is spent on the old gas: the diver is still breathing the
+                // previous gas while preparing to switch (grabbing regulator, purging, etc.).
+                // The actual switch to the new gas happens after the gas switch time.
+                addGasSwitch(currentDepth, gas, gasSwitchTime)
                 gas = betterDecoGas
             }
-
 
             // targetDepth is to toDepth, unless there's a better gas to switch to on the way up,
             // then the target depth may be something between currentDepth and toDepth.
@@ -172,8 +194,7 @@ class DecompressionPlanner(
             var nextDecoGas: Cylinder?
             while(nextDepth >= targetDepth) {
                 nextDecoGas = decoGasses.findBestDecoGas(nextDepth, environment, maxppO2, maxEND)
-                // TODO don't hardcode 3 here, instead use the configuration!
-                if (nextDecoGas != null && nextDecoGas != gas && nextDepth.toInt() % 3 == 0) {
+                if (nextDecoGas != null && nextDecoGas != gas && nextDepth.toInt() % decoStepSize == 0) {
                     targetDepth = nextDepth //Only carry us up to the point where we can use this better gas.
                     break
                 }
@@ -192,21 +213,18 @@ class DecompressionPlanner(
             val duration = max(1, ceil(depthChange / ascentRateInMetersPerMinute).toInt())
 
             // println("Moving diver from $fromDepth to $targetDepth on gas $gas over $duration minutes.")
-            addDepthChangePerMinute(currentDepth, targetDepth, gas, duration, true)
-
-            // TODO Add gas switch time (settings)
-            //if(foundBetterGas && nextDecoGas != null) {
-            //    addFlat(targetDepth, nextDecoGas, 1, isDecompression = true)
-            //}
+            addDepthChange(currentDepth, targetDepth, gas, duration)
 
             currentDepth = targetDepth
         }
 
         val betterDecoGasName = decoGasses.findBestDecoGas(currentDepth, environment, maxppO2, maxEND)
-        // TODO remove hardcoded number 3
-        if (betterDecoGasName != null && betterDecoGasName != gas && currentDepth.toInt() % 3 == 0) {
+        if (betterDecoGasName != null && betterDecoGasName != gas && currentDepth.toInt() % decoStepSize == 0) {
+            // Gas switch time on the old gas before switching
+            addGasSwitch(currentDepth, gas, gasSwitchTime)
             gas = betterDecoGasName
         }
+
         return gas
     }
 
@@ -239,9 +257,19 @@ class DecompressionPlanner(
         if(ceiling > fromDepth) {
             // We have to stay at this depth first, do not change depths, but look for better gas.
             ceiling = fromDepth.toInt()
-            gas = decoGasses.findBestDecoGas(fromDepth, environment, maxPpO2, maxEquivalentNarcoticDepth) ?: gas
+            val betterGas = decoGasses.findBestDecoGas(fromDepth, environment, maxPpO2, maxEquivalentNarcoticDepth)
+            if (betterGas != null && betterGas != gas) {
+                // Gas switch time on the old gas before switching
+                addGasSwitch(fromDepth, gas, gasSwitchTime)
+                gas = betterGas
+            }
         } else {
-            gas = decoGasses.findBestDecoGas(fromDepth, environment, maxPpO2, maxEquivalentNarcoticDepth) ?: gas
+            val betterGas = decoGasses.findBestDecoGas(fromDepth, environment, maxPpO2, maxEquivalentNarcoticDepth)
+            if (betterGas != null && betterGas != gas) {
+                // Gas switch time on the old gas before switching
+                addGasSwitch(fromDepth, gas, gasSwitchTime)
+                gas = betterGas
+            }
             // Move the diver to the first ceiling (this may already be the surface)
 
             gas = addDecoDepthChange(
@@ -293,7 +321,7 @@ class DecompressionPlanner(
                 var stopTime = 0
                 while (ceiling > nextDecoDepth && ceiling > toDepth || (forceMinimalDecoStopTime && stopTime < 1)) {
                     // Add 1 minute of decompression and test the ceiling again, until the ceiling is higher.
-                    this.addFlat(currentDepth, gas, 1, isDecompression = true)
+                    this.addDecoStop(currentDepth, gas, 1)
                     stopTime++
 
                     // TODO: Should we calculate the gf based on the current stop depth, or the next stop depth we want to reach?

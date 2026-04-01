@@ -193,14 +193,9 @@ fun DecoPlanGraph(
         ) {
 
             AreaPlot2(
-                data = //listOf(DefaultPoint(0f, 0f)) +
-                        divePlan.segments.map { segment ->
-                            // End should be used here, but by shifting the whole graph 1 minute to the left,
-                            // it will never visually touch the dive line, which makes for a slightly nicer
-                            // UX (although be it a slightly less accurate graph (as long as the
-                            // underlying data is accurate this should not matter)
-                            DefaultPoint(segment.start.toFloat(), -segment.gfCeilingAtEnd.toFloat())
-                        } + DefaultPoint(divePlan.runtime.toFloat(), -divePlan.segments.last().gfCeilingAtEnd.toFloat()),
+                // Offset the gradient graph ever so slightly to the top so it does not interfere
+                // visually too much with the depth line, 0.25f is essentially equal to 25cm.
+                data = buildGfCeilingPlotPoints(divePlan.segments).offset(y = 0.25f).coerceIn(yMax = 0f),
                 lineStyle = LineStyle(
                     brush = SolidColor(MaterialTheme.colorScheme.error),
                     strokeWidth = 1.dp
@@ -213,13 +208,8 @@ fun DecoPlanGraph(
                 animationSpec = if(LocalInspectionMode.current) { none() } else { KoalaPlotTheme.animationSpec }
             )
 
-            var runtime = 0L
             LinePlot2(
-                data = divePlan.segments.map { segment ->
-                    DefaultPoint(runtime.toFloat(), -segment.startDepth.toFloat()).also {
-                        runtime += segment.duration
-                    }
-                } + DefaultPoint(runtime.toFloat(), -divePlan.segments.last().endDepth.toFloat()),
+                data = buildDepthProfilePlotPoints(divePlan.segments),
                 lineStyle = LineStyle(
                     brush = SolidColor(MaterialTheme.colorScheme.primary),
                     strokeWidth = 2.dp
@@ -227,26 +217,8 @@ fun DecoPlanGraph(
                 animationSpec = if(LocalInspectionMode.current) { none() } else { KoalaPlotTheme.animationSpec }
             )
 
-            var runningAverage = 0.0
-            var runningDuration = 0L
-
-            val points = divePlan.segments.flatMapIndexed { index: Int, segment: DiveSegment ->
-                val range = if (index < divePlan.segments.size - 1) {
-                    0..<segment.duration
-                } else {
-                    0..segment.duration
-                }
-                range.map {
-                    val depthAtMinute = segment.depthAt(it)
-                    runningAverage += depthAtMinute
-                    runningDuration += 1
-                    val runningAverageDepth = runningAverage / runningDuration
-                    DefaultPoint(runningDuration.toFloat() - 1, -runningAverageDepth.toFloat())
-                }
-            }
-
             LinePlot2(
-                data = points,
+                data = buildAverageDepthPlotPoints(divePlan.segments),
                 lineStyle = LineStyle(
                     brush = SolidColor(MaterialTheme.colorScheme.outline),
                     pathEffect = PathEffect.dashPathEffect(intervals = floatArrayOf(15.0f, 15.0f)),
@@ -267,10 +239,10 @@ private fun DecoPlanGraphPreview() {
     DecoPlanGraph(
         modifier = Modifier, divePlan = DivePlan(
             segments = persistentListOf(
-                DiveSegment(0,5, 0.0, 25.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
+                DiveSegment(0,5, 0.0, 25.0, cylinder, type = DiveSegment.Type.FLAT, gfCeilingAtEnd = 0.0),
 
-                DiveSegment(5,20, 25.0, 20.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
-                DiveSegment(25,20, 25.0, 0.0, cylinder, isDecompression = false, gfCeilingAtEnd = 0.0),
+                DiveSegment(5,20, 25.0, 20.0, cylinder, type = DiveSegment.Type.FLAT, gfCeilingAtEnd = 0.0),
+                DiveSegment(25,20, 25.0, 0.0, cylinder, type = DiveSegment.Type.FLAT, gfCeilingAtEnd = 0.0),
 
                 ),
             alternativeAccents = persistentMapOf(),
