@@ -185,7 +185,7 @@ fun List<Cylinder>.findBestDecoGas(depth: Double, environment: Environment, maxP
             // Gas is usable (todo min-OD check?)
             if (bestGas == null) {
                 bestGas = candidateGas
-            } else if(bestGas!!.gas.oxygenFraction < candidateGas.gas.oxygenFraction) {
+            } else if(bestGas.gas.oxygenFraction < candidateGas.gas.oxygenFraction) {
                 // Prefer the higher oxygen percentage
                 bestGas = candidateGas
             }

@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -11,11 +11,41 @@
  */
 
 plugins {
-    // this is necessary to avoid the plugins to be loaded multiple times
-    // in each subproject's classloader
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidKmpLibrary) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    // Applied to the root to produce an aggregated coverage report across all modules.
+    alias(libs.plugins.kover)
+}
+
+dependencies {
+    kover(project(":domain"))
+    kover(project(":composeApp"))
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                // Compose compiler-generated singleton holders — present in every file with
+                // @Preview or default-parameter composables.
+                classes("org.neotech.app.abysner.presentation.**ComposableSingletons*")
+                classes("androidx.compose.material3.ComposableSingletons*")
+
+                // kotlin-inject KSP-generated component implementations
+                // (InjectAppComponent, InjectPlatformComponentImpl, ...)
+                classes("org.neotech.app.abysner.di.Inject*")
+
+                // kotlinx.serialization compiler-generated $serializer objects
+                // Only the data module uses @Serializable (resources packages)
+                classes("org.neotech.app.abysner.data.**\$serializer")
+            }
+        }
+        total {
+            xml { onCheck = false }
+            html { onCheck = false }
+        }
+    }
 }

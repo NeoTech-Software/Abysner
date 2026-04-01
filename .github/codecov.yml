@@ -1,0 +1,22 @@
+coverage:
+  status:
+    project:
+      default: off
+      domain:
+        target: 70%
+        threshold: 1%
+        flags:
+          - domain
+      presentation:
+        target: 0%
+        threshold: 1%
+        flags:
+          - presentation
+
+flags:
+  domain:
+    paths:
+      - domain/
+  presentation:
+    paths:
+      - composeApp/

@@ -14,6 +14,7 @@ compose-plugin = "1.10.3"
 kotlin = "2.3.20"
 # KSP version should follow Kotlin version
 ksp = "2.3.6"
+kover = "0.9.8"
 
 # Dependency Injection
 kotlinInject = "0.8.0"
@@ -95,3 +96,4 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

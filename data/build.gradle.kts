@@ -17,7 +17,7 @@ plugins {
     alias(libs.plugins.androidKmpLibrary)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinx.serialization)
-    id("abysner.jacoco-conventions")
+    alias(libs.plugins.kover)
 }
 
 kotlin {
