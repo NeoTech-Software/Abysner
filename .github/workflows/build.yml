@@ -16,8 +16,23 @@ jobs:
           java-version: '21'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4.0.0
-      - name: Run JVM Tests
-        run: ./gradlew domain:jvmTest composeApp:jvmTest
+
+      - name: Run JVM Tests & Generate Coverage Reports
+        run: ./gradlew domain:koverXmlReport composeApp:koverXmlReport
+
+      - name: Upload domain coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: domain/build/reports/kover/report.xml
+          flags: domain
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload presentation coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: composeApp/build/reports/kover/report.xml
+          flags: presentation
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   android:
     name: Build Android
@@ -34,6 +49,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4.0.0
       - name: Build Android App
         run: ./gradlew androidApp:assembleDebug
+
   ios:
     name: Build iOS
     timeout-minutes: 40

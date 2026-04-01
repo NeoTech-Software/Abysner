@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    id("abysner.jacoco-conventions")
+    alias(libs.plugins.kover)
 }
 
 kotlin {
