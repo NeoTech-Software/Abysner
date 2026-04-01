@@ -30,6 +30,7 @@ import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAn
 import org.neotech.app.abysner.presentation.utilities.DestinationDefinition
 import org.neotech.app.abysner.presentation.utilities.NavHost
 import org.neotech.app.abysner.presentation.utilities.composable
+import androidx.compose.foundation.layout.Box
 import org.neotech.app.abysner.presentation.component.BitmapRenderRoot
 
 enum class Destinations(override val destinationName: String) : DestinationDefinition {
@@ -67,7 +68,8 @@ fun MainNavController(
 
     val navController = rememberNavController()
 
-    BitmapRenderRoot {
+    Box {
+        BitmapRenderRoot {
 
         NavHost(navController = navController, startDestination = startDestination) {
             composable(
@@ -118,5 +120,6 @@ fun MainNavController(
                 popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) }
             ) { termsAndConditionsScreen(navController) }
         }
+    }
     }
 }

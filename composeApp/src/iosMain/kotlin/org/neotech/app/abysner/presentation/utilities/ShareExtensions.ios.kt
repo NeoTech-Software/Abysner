@@ -18,15 +18,14 @@ import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.refTo
+import kotlinx.cinterop.staticCFunction
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.ColorType
 import org.jetbrains.skia.ImageInfo
 import platform.CoreGraphics.CGBitmapContextCreate
-import platform.CoreGraphics.CGBitmapContextCreateImage
 import platform.CoreGraphics.CGColorRenderingIntent
 import platform.CoreGraphics.CGColorSpaceCreateDeviceRGB
 import platform.CoreGraphics.CGColorSpaceRelease
@@ -59,12 +58,12 @@ import platform.posix.malloc
  * Which is licensed under Apache 2.0
  */
 @OptIn(ExperimentalForeignApi::class)
-fun ImageBitmap.toUiImage(): UIImage {
+fun ImageBitmap.toUiImage(scale: Double = 1.0): UIImage {
     val pixels = asSkiaBitmap().readPixels(
         ImageInfo(width, height, ColorType.RGBA_8888, ColorAlphaType.PREMUL, ColorSpace.sRGB)
     )!!
 
-    return createWithCGImage(pixels.refTo(0), width.toULong(), height.toULong())
+    return createWithCGImage(pixels.refTo(0), width.toULong(), height.toULong(), scale)
 }
 
 /**
@@ -72,7 +71,7 @@ fun ImageBitmap.toUiImage(): UIImage {
  * Which is licensed under Apache 2.0
  */
 @OptIn(ExperimentalForeignApi::class)
-private fun createWithCGImage(buffer: CValuesRef<ByteVar>, width: ULong, height: ULong): UIImage {
+private fun createWithCGImage(buffer: CValuesRef<ByteVar>, width: ULong, height: ULong, scale: Double): UIImage {
     val bufferLength = width * height * 4u
     val bitsPerComponent = 8uL
     val bitsPerPixel = 32uL
@@ -81,9 +80,9 @@ private fun createWithCGImage(buffer: CValuesRef<ByteVar>, width: ULong, height:
     val colorSpaceRef = CGColorSpaceCreateDeviceRGB()
     val bitmapInfo =
         kCGBitmapByteOrderDefault or CGImageAlphaInfo.kCGImageAlphaPremultipliedLast.value
-    val provider = CGDataProviderCreateWithData(null, buffer, bufferLength, null)
+    val srcProvider = CGDataProviderCreateWithData(null, buffer, bufferLength, null)
 
-    val iref = CGImageCreate(
+    val srcImage = CGImageCreate(
         width,
         height,
         bitsPerComponent,
@@ -91,7 +90,7 @@ private fun createWithCGImage(buffer: CValuesRef<ByteVar>, width: ULong, height:
         bytesPerRow,
         colorSpaceRef,
         bitmapInfo,
-        provider,
+        srcProvider,
         null,
         true,
         CGColorRenderingIntent.kCGRenderingIntentDefault
@@ -109,29 +108,50 @@ private fun createWithCGImage(buffer: CValuesRef<ByteVar>, width: ULong, height:
         bitmapInfo
     )!!
 
-    CGContextDrawImage(context, CGRectMake(0.0, 0.0, width.toDouble(), height.toDouble()), iref)
+    CGContextDrawImage(context, CGRectMake(0.0, 0.0, width.toDouble(), height.toDouble()), srcImage)
 
-    val imageRef = CGBitmapContextCreateImage(context)
+    // Release the source objects now that the draw is done.
+    CGImageRelease(srcImage)
+    CGContextRelease(context)
+    CGDataProviderRelease(srcProvider)
 
-    val scale = UIScreen.mainScreen.scale
+    // Create the final image with a release callback so Core Graphics frees the buffer when it is
+    // truly done with the pixel data.
+    val ownedProvider = CGDataProviderCreateWithData(
+        info = null,
+        data = pixels,
+        size = bufferLength,
+        releaseData = staticCFunction { _, data, _ -> free(data) }
+    )
+    val imageRef = CGImageCreate(
+        width,
+        height,
+        bitsPerComponent,
+        bitsPerPixel,
+        bytesPerRow,
+        colorSpaceRef,
+        bitmapInfo,
+        ownedProvider,
+        null,
+        true,
+        CGColorRenderingIntent.kCGRenderingIntentDefault
+    )
     val image = UIImage.imageWithCGImage(imageRef, scale, UIImageOrientation.UIImageOrientationUp)
 
     CGImageRelease(imageRef)
-    CGContextRelease(context)
+    CGDataProviderRelease(ownedProvider)
     CGColorSpaceRelease(colorSpaceRef)
-    CGImageRelease(iref)
-    CGDataProviderRelease(provider)
-    free(pixels)
     return image
 }
 
 actual suspend fun shareImageBitmap(image: ImageBitmap) {
+    // UIScreen.mainScreen must be read on the main thread.
+    val scale = UIScreen.mainScreen.scale
 
-    // Offload the file & bitmap handling a the IO dispatcher, including the creation of the
-    // UIActivityViewController, as that seems to take a long time to complete (more then a second
-    // sometimes).
-    val shareViewController: UIActivityViewController? = withContext(Dispatchers.IO) {
-        val uiImage: UIImage = image.toUiImage()
+    // Offload pixel conversion, PNG encoding and file writing to a background dispatcher.
+    // UIActivityViewController must be created and presented on the main thread.
+    val filePath: String? = withContext(Dispatchers.Default) {
+        val uiImage: UIImage = image.toUiImage(scale)
 
         val pngData: NSData? = UIImagePNGRepresentation(uiImage)
 
@@ -144,21 +164,25 @@ actual suspend fun shareImageBitmap(image: ImageBitmap) {
         val filePath = "$cachesDirectory/diveplan.png"
 
         if (pngData?.writeToFile(filePath, true) == true) {
-            UIActivityViewController(listOf(NSURL.fileURLWithPath(filePath)), null)
+            filePath
         } else {
             println("Error: Could not share image file because file could not be written or conversion to PNG failed.")
             null
         }
     }
 
-    if (shareViewController == null) {
+    if (filePath == null) {
         return
     }
 
-    val application = UIApplication.sharedApplication
-    application.keyWindow?.rootViewController?.presentViewController(
+    val shareViewController = UIActivityViewController(
+        activityItems = listOf(NSURL.fileURLWithPath(filePath)),
+        applicationActivities = null,
+    )
+
+    UIApplication.sharedApplication.keyWindow?.rootViewController?.presentViewController(
         shareViewController,
         true,
-        null
+        null,
     )
 }
