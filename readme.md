@@ -1,13 +1,15 @@
+[![Build](https://github.com/NeoTech-Software/abysner/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/NeoTech-Software/abysner/actions/workflows/build.yml)
+[![Coverage (core)](https://img.shields.io/codecov/c/github/NeoTech-Software/abysner/main?flag=domain&label=coverage%20(core))](https://app.codecov.io/gh/NeoTech-Software/abysner/flags)
+[![Coverage (ui)](https://img.shields.io/codecov/c/github/NeoTech-Software/abysner/main?flag=presentation&label=coverage%20(ui))](https://app.codecov.io/gh/NeoTech-Software/abysner/flags)
+
 ![Abysner - The open-source mobile dive planner](resources/readme-header.png)
   
 [![Get it on Google Play](resources/store-badge-google.svg)](https://play.google.com/store/apps/details?id=nl.neotech.app.abysner)
 [![Download on the App Store](resources/store-badge-apple.svg)](https://apps.apple.com/nl/app/abysner/id6636477320)
 
-**The decompression models we use and trust today to plan our dives are the result of literally centuries worth of collective research by thousands of people. There is a lot of software available to the public to plan dives, built on top of this collective research. However on Android and iOS the options are pretty limited, either behind an expensive paywall, closed-source or lack a good mobile friendly interface.**
+**The decompression models we use and trust today to plan our dives are the result of literally centuries worth of collective research by thousands of people. There is a lot of software available to the public to plan dives, built on top of this collective research. However on Android and iOS the options are pretty limited, either expensive, proprietary and closed-source, or lacking a good mobile-friendly interface.**
 
-Abysner was built with the goal of giving something back to the diving community. Abysner is open-source, free¹, and available on both Android and iOS. It was built using the best available cross-platform solution to date: Kotlin Multi-platform and Compose. The main goal of the app is not to be the most feature rich, instead it aims to be user friendly and simple.
-
-_¹See: [FAQ No. 4](#faq)_
+Abysner was built with the goal of giving something back to the diving community. Abysner is open-source and available on both Android and iOS. It was built using the best available cross-platform solution to date: Kotlin Multi-platform and Compose. The main goal of the app is not to be the most feature rich, instead it aims to be user friendly and simple.
 
 > **Disclaimer:** 
 > Diving is a potentially dangerous activity. Do not use this application without proper training in diving and decompression techniques. This application is in an early development stage, and we cannot guarantee that it is free of bugs. Always cross-validate any information presented by the application with reliable sources.
@@ -34,12 +36,14 @@ _¹See: [FAQ No. 4](#faq)_
     - Decompression stop intervals
     - Last deco stop
     - MAX PPO2 during deco and normal diving
+    - Gas switch time
 - Modern gas mixer for choosing gas mixes
     - MOD (oxygen and density based) are shown
 - Graph showing dive profile, average depth and ceiling information
 - Dive plan:
     - In basic or advanced mode
-    - Runtime, depth, duration, gasses, gas (switches), ascends, descends are all shown
+    - Runtime, depth, duration, gasses, gas switches, ascends, descends are all shown
+    - Gas switches always appear as individual rows
     - Time to deco (NDL limit)
 - Automatic contingency plan (longer & deeper)
     - Configurable extra time and depth
@@ -72,7 +76,7 @@ for the dive. This gas calculation is always based on the contingency plan (Deep
 and contains 2 things:
 
 - How much gas one diver needs to normally complete the contingency profile
-- How much extra gas is required to safely bring up an out-of-air diver from the wost-possible point during the dive.
+- How much extra gas is required to safely bring up an out-of-air diver from the worst-possible point during the dive.
 
 The extra gas is calculated based on the worst TTS in terms of gas usage (See: [FAQ No. 5](#faq)),
 however during a out-of-gas scenario your buddy may have a completely different SAC rate then normal
@@ -80,28 +84,18 @@ however during a out-of-gas scenario your buddy may have a completely different 
 using the emergency SAC rate, usually this is at least 2 times higher then your normal SAC rate.
 
 # Planned features
-_This list is by no means complete, prioritised or a commitment._
+_This list is by no means complete, prioritized or a commitment._
 
-- **Warnings:**
-  - Isobaric counterdiffusion warnings
-  - Overview of all dive warnings
-- **Localization:**
-  - Multi-language support
-  - Imperial units
-- **UX:**
-  - Clickable graphs with more details
-  - Option to choose theme (dark/light/auto)
-- **Planning:**
-  - Configurable SAC rate during deco
-  - Support for CCR (constant PPO2) diving
-  - Multi-dive planning and surface intervals
-  - VPM-B support
-  - Auto-time mode (time is automatically calculated for a section based on ascent/descent speed)
-- **Gas planning:**
-   - Automatic mix selection for planned sections
-- **Other:**
-   - NDL tables
-   - Gas blending calculator
+**In progress:**
+- Multi-dive planning and surface intervals _(surface interval calculations implemented)_
+
+**Ideas/planned:**
+- **Warnings:** Isobaric counterdiffusion warnings, overview of all dive warnings
+- **Localization:** Multi-language support, imperial units
+- **UX:** Clickable graphs with more details, option to choose theme (dark/light/auto)
+- **Planning:** Configurable SAC rate during deco, CCR (constant PPO2) support, VPM-B support, auto-time mode
+- **Gas planning:** Automatic mix selection for planned sections
+- **Other:** Gas blending calculator, automatically calculate the longest no-decompression recreational dive for a given depth and gas mix
 
 # Compared to other planners
 How do Abysner dive plans compare to dive plan created by other dive planners? Below are some
@@ -180,10 +174,11 @@ plan, see the plan specific tables for those.
 | ➘ | 30m   | 6min     | 6min    | 21/0 |
 | ➙ | 30m   | 24min    | 30min   | 21/0 |
 | ➚ | 21m   | 2min     | 32min   | 21/0 |
-| ➚ | 9m    | 3min     | 35min   | 50/0 |
-| ⏹ | 9m    | 2min     | 37min   | 50/0 |
-| ⏹ | 6m    | 11min    | 48min   | 50/0 |
-| ➚ | 0m    | 2min     | 50min   | 50/0 |
+| - | 21m   | 1min     | 33min   | 50/0 |
+| ➚ | 9m    | 3min     | 36min   | 50/0 |
+| ⏹ | 9m    | 1min     | 37min   | 50/0 |
+| ⏹ | 6m    | 12min    | 49min   | 50/0 |
+| ➚ | 0m    | 2min     | 51min   | 50/0 |
 **CNS**: 12%  
 **OTU**: 35
 </details>
@@ -192,7 +187,6 @@ plan, see the plan specific tables for those.
 <summary>Subsurface</summary>
 
 > **Observations:**  
-> - Subsurface adds 1 minute of gas switching time, which abysner does currently not. 
 > - Subsurface does not show descent to first stop, instead the descent duration is added to the decompression time.
 
 |   | Depth | Duration | Runtime | Gas  |
@@ -213,11 +207,13 @@ plan, see the plan specific tables for those.
 <summary>DIVESOFT.APP</summary>
 
 > **Observations:**
-> DIVESOFT.APP table is kinda confusing:
-> 'Stop time' not 'duration' is not shown ('stop time' does not include ascent time). Since the
-> table below shows duration, the duration for the DIVESOFT.APP table has been calculated by
-> subtracting the runtime in the previous row from the current row. (to make the table read similar
-> to Subsurface and Abysner)
+> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
+> that stop). The duration values in the table below have been derived by subtracting the previous
+> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
+>
+> DIVESOFT.APP does not appear to include a gas switch time. With gas switch time set to zero
+> Abysner produces the same total runtime (50min), though the individual stop distributions differ
+> ever so slightly.
 
 |   | Depth | Duration | Runtime | Gas  |
 |---|-------|----------|---------|------|
@@ -249,10 +245,11 @@ plan, see the plan specific tables for those.
 | ➘ | 45m   | 9min     | 9min    | 21/35 |
 | ➙ | 45m   | 6min     | 15min   | 21/35 |
 | ➚ | 21m   | 5min     | 20min   | 21/35 |
-| ➚ | 6m    | 3min     | 23min   | 50/0  |
-| ⏹ | 6m    | 3min     | 26min   | 50/0  |
-| ⏹ | 3m    | 5min     | 31min   | 50/0  |
-| ➚ | 3m    | 1min     | 32min   | 50/0  |
+| - | 21m   | 1min     | 21min   | 50/0  |
+| ➚ | 6m    | 3min     | 24min   | 50/0  |
+| ⏹ | 6m    | 2min     | 26min   | 50/0  |
+| ⏹ | 3m    | 6min     | 32min   | 50/0  |
+| ➚ | 0m    | 1min     | 33min   | 50/0  |
 **CNS**: 9%  
 **OTU**: 25
 </details>
@@ -261,7 +258,6 @@ plan, see the plan specific tables for those.
 <summary>Subsurface</summary>
 
 > **Observations:**  
-> - Subsurface adds 1 minute of gas switching time, which abysner does currently not.
 > - Subsurface does not show descent to first stop, instead the descent duration is added to the decompression time.
 
 |   | Depth | Duration | Runtime | Gas   |
@@ -282,11 +278,13 @@ plan, see the plan specific tables for those.
 <summary>DIVESOFT.APP</summary>
 
 > **Observations:**
-> DIVESOFT.APP table is kinda confusing:
-> 'Stop time' not 'duration' is not shown ('stop time' does not include ascent time). Since the
-> table below shows duration, the duration for the DIVESOFT.APP table has been calculated by
-> subtracting the runtime in the previous row from the current row. (to make the table read similar
-> to Subsurface and Abysner)
+> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
+> that stop). The duration values in the table below have been derived by subtracting the previous
+> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
+>
+> DIVESOFT.APP does not appear to include a gas switch time. With gas switch time set to one minute
+> Abysner produces the same total runtime (33min), though the individual stop distributions differ
+> ever so slightly.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -319,23 +317,22 @@ plan, see the plan specific tables for those.
 | ➘ | 60m   | 12min    | 12min   | 18/45 |
 | ➙ | 60m   | 8min     | 20min   | 18/45 |
 | ➚ | 21m   | 8min     | 28min   | 18/45 |
-| ⏹ | 21m   | 1min     | 29min   | 50/0  |
+| - | 21m   | 1min     | 29min   | 50/0  |
 | ⏹ | 18m   | 2min     | 31min   | 50/0  |
 | ⏹ | 15m   | 2min     | 33min   | 50/0  |
 | ⏹ | 12m   | 2min     | 35min   | 50/0  |
-| ⏹ | 9m    | 3min     | 38min   | 50/0  |
-| ⏹ | 6m    | 6min     | 44min   | 50/0  |
-| ⏹ | 3m    | 12min    | 56min   | 50/0  |
-| ➚ | 0m    | 1min     | 57min   | 50/0  |
+| ⏹ | 9m    | 4min     | 39min   | 50/0  |
+| ⏹ | 6m    | 6min     | 45min   | 50/0  |
+| ⏹ | 3m    | 12min    | 57min   | 50/0  |
+| ➚ | 0m    | 1min     | 58min   | 50/0  |
 **CNS**: 16%  
-**OTU**: 43
+**OTU**: 42
 </details>
 
 <details>
 <summary>Subsurface</summary>
 
 > **Observations:**  
-> - Subsurface adds 1 minute of gas switching time, which abysner does currently not.
 > - Subsurface does not show descent to first stop, instead the descent duration is added to the decompression time.
 > - Subsurface seems to calculate altitude pressure differently, Abysner uses 1013 hPa at sea level and calculates the pressure at altitude assuming constant temperature of 15 degrees celsius, this is slightly different compared to Subsurface, however the difference is small and should not impact the plan much.
 
@@ -360,15 +357,12 @@ plan, see the plan specific tables for those.
 <summary>DIVESOFT.APP</summary>
 
 > **Observations:**
-> DIVESOFT.APP does not support setting an altitude! This plan has been based on 0 meters instead of
-> 1000 meters used in the other planners.
-> 
-> 
-> DIVESOFT.APP table is kinda confusing:
-> 'Stop time' not 'duration' is not shown ('stop time' does not include ascent time). Since the
-> table below shows duration, the duration for the DIVESOFT.APP table has been calculated by
-> subtracting the runtime in the previous row from the current row. (to make the table read similar
-> to Subsurface and Abysner)
+> DIVESOFT.APP does not support setting an altitude. This plan has been based on 0 meters instead
+> of 1000 meters used in the other planners.
+>
+> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
+> that stop). The duration values in the table below have been derived by subtracting the previous
+> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -460,11 +454,9 @@ Out:
 <summary>DIVESOFT.APP</summary>
 
 > **Observations:**
-> DIVESOFT.APP table is kinda confusing:
-> 'Stop time' not 'duration' is not shown ('stop time' does not include ascent time). Since the
-> table below shows duration, the duration for the DIVESOFT.APP table has been calculated by
-> subtracting the runtime in the previous row from the current row. (to make the table read similar
-> to Subsurface and Abysner)
+> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
+> that stop). The duration values in the table below have been derived by subtracting the previous
+> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -541,23 +533,20 @@ that, so the answer is no.
 <details>
 <summary><strong>4. Is abysner free?</strong></summary>
 
-A big misconception about free open-source software, is that it is supposed to be without payment.
-But this is not the intention of free open-source software. Abysner is free in the sense that you
-are allowed to distribute it freely, and do with it whatever you want as long as you don't break the
-AGPLv3 license terms and conditions. The channels I personally use to distribute official builds
-(Play Store and App Store) require a tiny fee (not gratis). This has mainly to do with the fees
-that Apple is asking me  to pay on a yearly basis, and to cover some of the costs associated with
-running an open-source project or building an app in general, such as a domain name, development
-tools, hardware to test on etc. However should you feel like this payment is too much, then you are
-free to build the software yourself or get a pre-built package from somebody else (that's the free
-part).
+Abysner is open-source, licensed under AGPLv3. You are free to use, build, modify, and redistribute
+it under the terms of that license (that is the "free" part).
+
+The official builds distributed through the Play Store and App Store do carry a small fee. This
+covers Apple's yearly developer fee and helps offset other project costs such as a domain name,
+development tools, and hardware to test on. If you'd rather not pay, you are welcome to build it
+yourself from source or obtain a build from someone else. The license explicitly allows this.
 </details>
 
 
 <details>
 <summary><strong>5. Gas calculation for extra/reserve gas is based on the the worst-possible point during a dive, what is this point?</strong></summary>
 
-**TLDR: The TTL that consumes the most gas.**
+**TLDR: The TTS that consumes the most gas.**
 
 Most people will tell you this a point during the deepest part of the dive, or more precise at the
 end of the planned bottom time (just before final ascent). However with multi-level dive profiles
@@ -572,7 +561,7 @@ super short? While a slightly shallower but longer section causes actual decompr
 > worst-possible point to ascent anymore, since your deco obligation at the 40 meter part is still
 > essentially non-existent. However at the end of the 30 meter section you have about 6
 > minutes of deco to complete (with a 50% mix). So those are 6 extra minutes of gas usage, compared
-> to ascending from 40 meters, yes the gas usage is shallower, but there is more time to breath more
+> to ascending from 40 meters, yes the gas usage is shallower, but there is more time to breathe more
 > gas as well. So is the deepest section still the worst?
 
 To correctly calculate the worst-possible ascent point during a dive Abysner uses TTS, also known as
@@ -585,6 +574,11 @@ TTS points, then takes the maximum numbers for each mix. These maximum numbers a
 calculating the reserve gas requirements.
 </details>
 
+
+# Contributing
+Contributions are welcome! Please note that all contributors are required to sign a [Contributor License Agreement (CLA)](cla.txt) before their pull request can be merged. The CLA process is automated via [CLA Assistant](https://github.com/contributor-assistant/github-action) and will prompt you automatically when you open a pull request.
+
+Please be aware that submitting a contribution does not guarantee it will be accepted. I reserve the right to decline any pull request for any reason, including but not limited to differences in vision, scope, or direction for the project.
 
 # Credits
 Credit where credit is due. I would not have been able to create this application without the wonderful resources already on the internet. I will try to keep this list up-to-date as much as possible.
