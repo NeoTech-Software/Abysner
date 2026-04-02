@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2025 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -110,11 +110,10 @@ fun GasPlanCardComponent(
                 } else {
                     val gasRequirements = divePlanSet.gasPlan
 
+                    var showCylinderDetails: Int? by remember(gasRequirements) { mutableStateOf(null) }
 
-                    var showCylinderDetails: CylinderGasRequirements? by remember { mutableStateOf(null) }
-
-                    if (showCylinderDetails != null) {
-                        GasUsageDetailsDialog(showCylinderDetails!!) {
+                    showCylinderDetails?.let { index ->
+                        GasUsageDetailsDialog(gasPlan = gasRequirements, index = index) {
                             showCylinderDetails = null
                         }
                     }
@@ -122,22 +121,21 @@ fun GasPlanCardComponent(
                     GasPlanBarChart(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         gasPlan = gasRequirements,
-                    ) {
-                        showCylinderDetails = it
+                    ) { index, _ ->
+                        showCylinderDetails = index
                     }
 
-                    /*
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        GasPieChart(
-                            modifier = Modifier.widthIn(max = 350.dp),
-                            gasRequirement = gasRequirements
-                        )
-                    }
+                    Text(
+                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                            .padding(horizontal = 16.dp),
+                        text = "Totals (ℓ)",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                    )
 
-                     */
+                    GasTotalsTable(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        gasPlan = gasRequirements,
+                    )
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
@@ -203,71 +201,85 @@ fun CylindersTable(
     Table(
         modifier = modifier,
         header = {
-            Text(
-                modifier = Modifier.weight(0.1f),
-                text = "No.",
-            )
-            Text(
-                modifier = Modifier.weight(0.15f),
-                text = "Mix",
-            )
-            Text(
-                modifier = Modifier.weight(0.2f),
-                text = "Size (ℓ)",
-            )
-            Text(
-                modifier = Modifier.weight(0.35f),
-                text = "Usage (bar)"
-            )
+            Text(modifier = Modifier.weight(0.3f), text = "Mix")
+            Text(modifier = Modifier.weight(0.3f), text = "Size (ℓ)")
+            Text(modifier = Modifier.weight(0.4f), text = "Usage (bar)")
         }
     ) {
+        rows(divePlanSet.gasPlan, key = { it.cylinder.uniqueIdentifier }) { usage ->
+            Text(
+                modifier = Modifier.weight(0.3f),
+                text = usage.cylinder.gas.toString(),
+            )
+            Text(
+                modifier = Modifier.weight(0.3f),
+                text = DecimalFormat.format(1, usage.cylinder.waterVolume),
+            )
 
-        val gasRequirements = divePlanSet.gasPlan
-        gasRequirements.forEachIndexed { index, usage ->
-            row {
-                Text(
-                    modifier = Modifier.weight(0.1f),
-                    text = (index + 1).toString(),
-                )
-                Text(
-                    modifier = Modifier.weight(0.15f),
-                    text = usage.cylinder.gas.toString(),
-                )
-                val size = DecimalFormat.format(1, usage.cylinder.waterVolume)
-                Text(
-                    modifier = Modifier.weight(0.2f),
-                    text = size,
-                )
+            // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
+            val endPressureBase = usage.cylinder.pressureAfter(volumeUsage = usage.normalRequirement)
+            val endPressure = usage.cylinder.pressureAfter(volumeUsage = usage.totalGasRequirement)
+            val startPressure = DecimalFormat.format(0, usage.cylinder.pressure)
 
-                // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
-                val endPressureBase = usage.cylinder.pressureAfter(volumeUsage = usage.normalRequirement)
-                val endPressure = usage.cylinder.pressureAfter(volumeUsage = usage.totalGasRequirement)
-
-                val startPressure = DecimalFormat.format(0, usage.cylinder.pressure)
-
-                var alertSeverity: AlertSeverity = AlertSeverity.NONE
-                val pressureText = buildAnnotatedString {
-                    if (endPressureBase == null && endPressure == null) {
-                        alertSeverity = AlertSeverity.ERROR
-                        append("$startPressure > empty")
-                        appendIcon(IconFont.WARNING)
-                    } else if(endPressure == null && endPressureBase != null) {
-                        alertSeverity = AlertSeverity.WARNING
-                        append("$startPressure > ${endPressureBase.format(0)} (")
-                        appendIcon(IconFont.WARNING)
-                        append("0)")
-                    } else {
-                        alertSeverity = AlertSeverity.NONE
-                        append("$startPressure > ${endPressureBase!!.format(0)} (${endPressure!!.format(0)})")
-                    }
+            var alertSeverity: AlertSeverity = AlertSeverity.NONE
+            val pressureText = buildAnnotatedString {
+                if (endPressureBase == null && endPressure == null) {
+                    alertSeverity = AlertSeverity.ERROR
+                    append("$startPressure > empty")
+                    appendIcon(IconFont.WARNING)
+                } else if (endPressure == null && endPressureBase != null) {
+                    alertSeverity = AlertSeverity.WARNING
+                    append("$startPressure > ${endPressureBase.format(0)} (")
+                    appendIcon(IconFont.WARNING)
+                    append("0)")
+                } else {
+                    alertSeverity = AlertSeverity.NONE
+                    append("$startPressure > ${endPressureBase!!.format(0)} (${endPressure!!.format(0)})")
                 }
-
-                TextAlert(
-                    modifier = Modifier.weight(0.35f),
-                    alertSeverity = alertSeverity,
-                    text = pressureText
-                )
             }
+
+            TextAlert(
+                modifier = Modifier.weight(0.4f),
+                alertSeverity = alertSeverity,
+                text = pressureText,
+            )
+        }
+    }
+}
+
+@Composable
+fun GasTotalsTable(
+    modifier: Modifier = Modifier,
+    gasPlan: List<CylinderGasRequirements>,
+) {
+    Table(
+        modifier = modifier,
+        header = {
+            Text(modifier = Modifier.weight(0.17f), text = "Mix")
+            Text(modifier = Modifier.weight(0.29f), text = "Available")
+            Text(modifier = Modifier.weight(0.19f), text = "Normal")
+            Text(modifier = Modifier.weight(0.27f), text = "Emergency")
+        }
+    ) {
+        rows(gasPlan.groupBy { it.cylinder.gas }.toList(), key = { (gas, _) -> gas }) { (gas, entries) ->
+            val totalNormal = entries.sumOf { it.normalRequirement }
+            val totalRequired = entries.sumOf { it.totalGasRequirement }
+            val totalCapacity = entries.sumOf { it.cylinder.capacity() }
+
+            val alertSeverity = when {
+                totalNormal > totalCapacity -> AlertSeverity.ERROR
+                totalRequired > totalCapacity -> AlertSeverity.WARNING
+                else -> AlertSeverity.NONE
+            }
+
+            Text(modifier = Modifier.weight(0.17f), text = gas.toString())
+            Text(modifier = Modifier.weight(0.29f), text = DecimalFormat.format(0, totalCapacity))
+            Text(modifier = Modifier.weight(0.19f), text = "-${DecimalFormat.format(0, totalNormal)}")
+            TextAlert(
+                modifier = Modifier.weight(0.27f),
+                alertSeverity = alertSeverity,
+                text = "-${DecimalFormat.format(0, totalRequired)}",
+            )
         }
     }
 }
@@ -280,71 +292,41 @@ fun GasLimitsTable(
     Table(
         modifier = modifier,
         header = {
-            Text(
-                modifier = Modifier.weight(0.15f),
-                text = "Mix",
-            )
-            Text(
-                modifier = Modifier.weight(0.3f),
-                text = "Depth (m)",
-            )
-            Text(
-                modifier = Modifier.weight(0.35f),
-                text = "Density (g/ℓ)",
-            )
-            Text(
-                modifier = Modifier.weight(0.2f),
-                text = "PPO2"
-            )
+            Text(modifier = Modifier.weight(0.2f), text = "Mix")
+            Text(modifier = Modifier.weight(0.3f), text = "Depth (m)")
+            Text(modifier = Modifier.weight(0.3f), text = "Density (g/ℓ)")
+            Text(modifier = Modifier.weight(0.2f), text = "PPO2")
         }
     ) {
+        rows(
+            divePlanSet.base.maximumGasDensities.distinct().sortedBy { it.gas.oxygenFraction },
+            key = { it.gas },
+        ) { gasAtDepth ->
+            Text(modifier = Modifier.weight(0.2f), text = gasAtDepth.gas.toString())
+            Text(modifier = Modifier.weight(0.3f), text = "${gasAtDepth.depth.toInt()}m")
 
-        (divePlanSet.base.maximumGasDensities)
-            .distinct().sortedBy { it.gas.oxygenFraction }.forEach {
-
-                row {
-                    Text(
-                        modifier = Modifier.weight(0.15f),
-                        text = it.gas.toString(),
-                    )
-
-                    Text(
-                        modifier = Modifier.weight(0.3f),
-                        text = "${it.depth.toInt()}m",
-                    )
-
-                    val density = DecimalFormat.format(2, it.density)
-
-                    val alertSeverityDensity =
-                        if (it.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.01)) {
-                            AlertSeverity.ERROR
-                        } else if (it.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.01)) {
-                            AlertSeverity.WARNING
-                        } else {
-                            AlertSeverity.NONE
-                        }
-
-                    TextAlert(
-                        alertSeverity = alertSeverityDensity,
-                        modifier = Modifier.weight(0.35f),
-                        text = density,
-                    )
-
-                    val ppo2 = DecimalFormat.format(2, it.ppo2)
-                    val alertSeverityPPO2 =
-                        if (it.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.01)) {
-                            AlertSeverity.ERROR
-                        } else {
-                            AlertSeverity.NONE
-                        }
-
-                    TextAlert(
-                        alertSeverity = alertSeverityPPO2,
-                        modifier = Modifier.weight(0.2f),
-                        text = ppo2,
-                    )
-                }
+            val alertSeverityDensity = when {
+                gasAtDepth.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.01) -> AlertSeverity.ERROR
+                gasAtDepth.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.01) -> AlertSeverity.WARNING
+                else -> AlertSeverity.NONE
             }
+            TextAlert(
+                modifier = Modifier.weight(0.3f),
+                alertSeverity = alertSeverityDensity,
+                text = DecimalFormat.format(2, gasAtDepth.density),
+            )
+
+            val alertSeverityPPO2 = if (gasAtDepth.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.01)) {
+                AlertSeverity.ERROR
+            } else {
+                AlertSeverity.NONE
+            }
+            TextAlert(
+                modifier = Modifier.weight(0.2f),
+                alertSeverity = alertSeverityPPO2,
+                text = DecimalFormat.format(2, gasAtDepth.ppo2),
+            )
+        }
     }
 }
 

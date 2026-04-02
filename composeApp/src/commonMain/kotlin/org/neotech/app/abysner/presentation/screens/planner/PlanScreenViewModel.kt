@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -104,7 +104,11 @@ class PlanScreenViewModel(
     init {
         viewModelScope.launch(context = Dispatchers.IO) {
 
-            inputState.value = planningRepository.getDivePlanInput() ?: defaultDivePlanInputModel
+            val loaded = planningRepository.getDivePlanInput() ?: defaultDivePlanInputModel
+            inputState.value = loaded.copy(
+                // Cylinder locked state is not stored, so recalculate it.
+                cylinders = recomputeCylinderState(loaded.plannedProfile, loaded.cylinders)
+            )
             //delay(1000)
             isLoading.value = false
             inputState.debounce(1000).collectLatest {
@@ -117,10 +121,30 @@ class PlanScreenViewModel(
         }
     }
 
-    private fun updateCylinderUsage(segments: List<DiveProfileSection>, cylinders: List<PlannedCylinderModel>): List<PlannedCylinderModel> {
-        val inUse = segments.map { it.cylinder }
-        return cylinders.map {
-            it.copy(isInUse = inUse.contains(it.cylinder))
+    private fun recomputeCylinderState(segments: List<DiveProfileSection>, cylinders: List<PlannedCylinderModel>): List<PlannedCylinderModel> {
+        val gasesInUse = segments.gasesInUse()
+        val autoCheckedGases = mutableSetOf<Gas>()
+
+        val updated = cylinders.map { planned ->
+            val gas = planned.cylinder.gas
+            val shouldAutoCheck = gas in gasesInUse
+                && gas !in autoCheckedGases
+                && cylinders.checkedCylinderCountFor(gas) == 0
+
+            if (shouldAutoCheck) {
+                autoCheckedGases.add(gas)
+                planned.copy(isChecked = true)
+            } else {
+                planned
+            }
+        }
+
+        return updated.map { planned ->
+            planned.copy(
+                isLocked = planned.isChecked
+                    && planned.cylinder.gas in gasesInUse
+                    && updated.checkedCylinderCountFor(planned.cylinder.gas) == 1
+            )
         }
     }
 
@@ -131,7 +155,7 @@ class PlanScreenViewModel(
             }
             it.copy(
                 plannedProfile = newSegments,
-                cylinders = updateCylinderUsage(newSegments, it.cylinders)
+                cylinders = recomputeCylinderState(newSegments, it.cylinders)
             )
         }
     }
@@ -141,7 +165,7 @@ class PlanScreenViewModel(
             val newSegments = it.plannedProfile.plus(diveProfileSection)
             it.copy(
                 plannedProfile = newSegments,
-                cylinders = updateCylinderUsage(newSegments, it.cylinders)
+                cylinders = recomputeCylinderState(newSegments, it.cylinders)
             )
         }
     }
@@ -153,21 +177,22 @@ class PlanScreenViewModel(
             }
             it.copy(
                 plannedProfile = newSegments,
-                cylinders = updateCylinderUsage(newSegments, it.cylinders)
+                cylinders = recomputeCylinderState(newSegments, it.cylinders)
             )
         }
     }
 
     fun addCylinder(cylinder: Cylinder) {
         inputState.update {
+            val newCylinders = it.cylinders.plus(
+                PlannedCylinderModel(
+                    cylinder = cylinder,
+                    isChecked = false,
+                    isLocked = false
+                )
+            ).sortedBy { gas -> gas.cylinder.gas.oxygenFraction }
             it.copy(
-                cylinders = it.cylinders.plus(
-                    PlannedCylinderModel(
-                        cylinder = cylinder,
-                        isChecked = false,
-                        isInUse = false
-                    )
-                ).sortedBy { gas -> gas.cylinder.gas.oxygenFraction }
+                cylinders = recomputeCylinderState(it.plannedProfile, newCylinders)
             )
         }
     }
@@ -176,35 +201,39 @@ class PlanScreenViewModel(
         inputState.update { inputState ->
             val index = inputState.cylinders.indexOfFirst { it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier }
             val item = inputState.cylinders[index]
-            inputState.copy(
-                cylinders = inputState.cylinders.toMutableList().apply {
-                    set(index, item.copy(cylinder = cylinder))
-                },
-                plannedProfile = inputState.plannedProfile.map {
-                    if (it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier) {
-                        it.copy(cylinder = cylinder)
-                    } else {
-                        it
-                    }
+            val newCylinders = inputState.cylinders.toMutableList().apply {
+                set(index, item.copy(cylinder = cylinder))
+            }
+            val newProfile = inputState.plannedProfile.map {
+                if (it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier) {
+                    it.copy(cylinder = cylinder)
+                } else {
+                    it
                 }
+            }
+            inputState.copy(
+                cylinders = recomputeCylinderState(newProfile, newCylinders),
+                plannedProfile = newProfile
             )
         }
     }
 
     fun toggleCylinder(cylinder: Cylinder, enabled: Boolean) {
         inputState.update { inputState ->
-            if (inputState.plannedProfile.any { it.cylinder == cylinder }) {
-                // Cylinder is in used, do not allow toggle.
+            val currentModel = inputState.cylinders.find { it.cylinder == cylinder }
+            if (currentModel?.isLocked == true) {
+                // Last checked cylinder of a gas used in a segment — do not allow toggle.
                 inputState
             } else {
-                inputState.copy(
-                    cylinders = inputState.cylinders.map { pair ->
-                        if (pair.cylinder == cylinder) {
-                            pair.copy(isChecked = enabled)
-                        } else {
-                            pair
-                        }
+                val newCylinders = inputState.cylinders.map { pair ->
+                    if (pair.cylinder == cylinder) {
+                        pair.copy(isChecked = enabled)
+                    } else {
+                        pair
                     }
+                }
+                inputState.copy(
+                    cylinders = recomputeCylinderState(inputState.plannedProfile, newCylinders)
                 )
             }
         }
@@ -212,14 +241,16 @@ class PlanScreenViewModel(
 
     fun removeCylinder(gas: Cylinder) {
         inputState.update { inputState ->
-            if (inputState.plannedProfile.any { it.cylinder == gas }) {
-                // Cylinder is in used, do not allow removal.
+            val currentModel = inputState.cylinders.find { it.cylinder == gas }
+            if (currentModel?.isLocked == true) {
+                // Last checked cylinder of a gas used in a segment — do not allow removal.
                 inputState
             } else {
+                val newCylinders = inputState.cylinders.toMutableList().apply {
+                    removeAll { pair -> pair.cylinder == gas }
+                }
                 inputState.copy(
-                    cylinders = inputState.cylinders.toMutableList().apply {
-                        removeAll { pair -> pair.cylinder == gas }
-                    }
+                    cylinders = recomputeCylinderState(inputState.plannedProfile, newCylinders)
                 )
             }
         }
@@ -248,11 +279,11 @@ class PlanScreenViewModel(
                     )
                 }
 
-                val decoGasses = inputState.cylinders.filter { it.isChecked }.map { it.cylinder }
+                val cylinders = inputState.cylinders.filter { it.isChecked }.map { it.cylinder }
 
                 val adjustedPlan = planner.addDive(
                     plan = segmentsAdjusted,
-                    decoGases = decoGasses,
+                    cylinders = cylinders,
                 )
 
                 val gasPlan = GasPlanner().calculateGasPlan(adjustedPlan)
@@ -301,17 +332,17 @@ private val defaultCylinderAir = Cylinder.steel12Liter(gas = Gas.Air, pressure =
 private val defaultCylinders: List<PlannedCylinderModel> = listOf(
     PlannedCylinderModel(
         cylinder = defaultCylinderAir,
-        isInUse = true,
+        isLocked = true,
         isChecked = true
     ),
     PlannedCylinderModel(
         cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50, pressure = 207.0),
-        isInUse = false,
+        isLocked = false,
         isChecked = true
     ),
     PlannedCylinderModel(
         cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80, pressure = 207.0),
-        isInUse = false,
+        isLocked = false,
         isChecked = false
     )
 )
@@ -334,3 +365,10 @@ private val defaultDivePlanInputModel = DivePlanInputModel(
 
 
 private const val SUBSCRIPTION_TIME_OUT: Long = 5 * 60 * 1000
+
+private fun List<DiveProfileSection>.gasesInUse(): Set<Gas> =
+    mapTo(mutableSetOf()) { it.cylinder.gas }
+
+private fun List<PlannedCylinderModel>.checkedCylinderCountFor(gas: Gas): Int =
+    count { it.cylinder.gas == gas && it.isChecked }
+

@@ -26,11 +26,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -43,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -51,6 +48,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Configuration
@@ -58,7 +56,6 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
@@ -112,9 +109,18 @@ fun SegmentPickerBottomSheet(
                     text = "Dive segment"
                 )
 
-                var cylinder: Cylinder by remember {
-                    mutableStateOf(initialValue?.cylinder ?: cylinders.first())
+                val availableCylinders = remember(cylinders) {
+                    cylinders.distinctBy { it.gas }.sortedBy { it.gas.oxygenFraction }.toImmutableList()
                 }
+
+                // Match by gas instead of identity: availableCylinders is deduplicated, so the
+                // exact cylinder object from initialValue may differ.
+                val initialCylinder = initialValue?.cylinder?.gas?.let { gas ->
+                    availableCylinders.firstOrNull { it.gas == gas }
+                        ?: error("Gas $gas from initialValue not found in availableCylinders.")
+                }
+
+                var selectedCylinder: Cylinder by remember { mutableStateOf(initialCylinder ?: availableCylinders.first()) }
 
                 var depth by remember {
                     mutableIntStateOf(initialValue?.depth ?: 10)
@@ -135,7 +141,7 @@ fun SegmentPickerBottomSheet(
 
                 GasPropertiesComponent(
                     modifier = Modifier.padding(vertical = 16.dp),
-                    gas = cylinder.gas,
+                    gas = selectedCylinder.gas,
                     maxDensity = maxDensity,
                     maxPPO2 = maxPPO2,
                     maxPPO2Secondary = null,
@@ -145,20 +151,20 @@ fun SegmentPickerBottomSheet(
 
                 DropDown(
                     modifier = Modifier.fillMaxWidth(),
-                    label = "Cylinder",
-                    selectedValue = cylinder,
-                    items = cylinders,
+                    label = "Gas",
+                    selectedValue = selectedCylinder,
+                    items = availableCylinders,
                     selectedText = {
-                        it?.buildGasText() ?: AnnotatedString("")
+                        it?.gas?.buildText() ?: AnnotatedString("")
                     },
-                    dropdownRow = { _, gas ->
+                    dropdownRow = { _, cylinder ->
                         Text(
                             style = MaterialTheme.typography.bodyLarge,
-                            text = gas.buildGasText()
+                            text = cylinder.gas.buildText()
                         )
                     },
-                    onSelectionChanged = { _, gas ->
-                        cylinder = gas
+                    onSelectionChanged = { _, cylinder ->
+                        selectedCylinder = cylinder
                     }
                 )
 
@@ -201,7 +207,7 @@ fun SegmentPickerBottomSheet(
                     )
                 }
 
-                val gas = cylinder.gas
+                val gas = selectedCylinder.gas
 
                 var anyErrorMessage = errorMessageDepth.value ?: errorMessageTime.value
 
@@ -255,7 +261,7 @@ fun SegmentPickerBottomSheet(
                                 DiveProfileSection(
                                     duration = time,
                                     depth = depth,
-                                    cylinder = cylinder
+                                    cylinder = selectedCylinder
                                 )
                             )
                             scope.launch {
@@ -272,13 +278,17 @@ fun SegmentPickerBottomSheet(
 }
 
 @Composable
-private fun Cylinder.buildGasText() = buildAnnotatedString {
-    withStyle(MaterialTheme.typography.bodyExtraLarge.toSpanStyle()) {
-        append(gas.toString())
+private fun Gas.buildText(): AnnotatedString {
+    // Capture before entering the builder lambda — inside buildAnnotatedString the implicit
+    // receiver becomes AnnotatedString.Builder, so toString() would resolve to that instead.
+    val name = diveIndustryName()
+    val mix = toString()
+    return buildAnnotatedString {
+        withStyle(MaterialTheme.typography.bodyExtraLarge.toSpanStyle()) {
+            append(name)
+        }
+        append(" ($mix)")
     }
-    val liters = DecimalFormat.format(1, waterVolume)
-    val pressure = DecimalFormat.format(0, pressure)
-    append(" (${liters}l @ ${pressure}bar)")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

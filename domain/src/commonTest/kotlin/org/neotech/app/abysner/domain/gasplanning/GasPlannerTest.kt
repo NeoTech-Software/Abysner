@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -26,7 +26,7 @@ import kotlin.test.assertTrue
 class GasPlannerTest {
 
     @Test
-    fun testFindPotentialWorstCaseTtsPointsScenario1() {
+    fun findPotentialWorstCaseTtsPoints_returnsNonDominatedScenariosAtEachDepth() {
 
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
@@ -55,7 +55,7 @@ class GasPlannerTest {
                 DiveProfileSection(10, 20, bottomGas),
                 DiveProfileSection(30, 20, bottomGas)
             ),
-            decoGases = listOf(bottomGas, decoGas)
+            cylinders = listOf(bottomGas, decoGas)
         )
 
         // at T=10 and D=50.0: TTS=11
@@ -63,7 +63,7 @@ class GasPlannerTest {
         // at T=21 and D=20.0: TTS=6
         // at T=51 and D=20.0: TTS=14
 
-        // TTS at 51 minutes in the dive (20 meters) is longer then the TTS at 11 minutes in the
+        // TTS at 51 minutes in the dive (20 meters) is longer than the TTS at 11 minutes in the
         // dive, at depth 50 meters! However the depth of 50 meters could still require more gas due
         // to the depth in general (but figuring out this is done in 'calculateGasPlan' in the
         // GasPlanner)
@@ -75,7 +75,7 @@ class GasPlannerTest {
     }
 
     @Test
-    fun testFindPotentialWorstCaseTtsPointsScenario2() {
+    fun findPotentialWorstCaseTtsPoints_returnsOnlyDeepestWorstCaseScenario() {
 
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
 
@@ -102,12 +102,12 @@ class GasPlannerTest {
                 // +3 + 3 (contingency plan)
                 DiveProfileSection(18, 23, bottomGas),
             ),
-            decoGases = listOf(bottomGas)
+            cylinders = listOf(bottomGas)
         )
 
         // at T=15 and D=10.0: TTS=2
         // at T=30 and D=15.0: TTS=3
-        // at T=48 and D=23.0: TTS=7
+        // at T=48 and D=23.0: TTS=15
 
         val ttsWorstCaseScenarios = GasPlanner().findPotentialWorstCaseTtsPoints(divePlan)
         assertEquals(1, ttsWorstCaseScenarios.size)
@@ -119,9 +119,9 @@ class GasPlannerTest {
      * Making sure the calculated volumes and pressures are as expected.
      */
     @Test
-    fun testBarUsage() {
+    fun calculateGasPlan_calculatesCorrectGasRequirements() {
 
-        val bottomGas = Cylinder(Gas.Air, 200, 22)
+        val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val decoGas = Cylinder(Gas.Nitrox50, 207, 7)
 
         val divePlanner = DivePlanner()
@@ -145,12 +145,104 @@ class GasPlannerTest {
             plan = listOf(
                 DiveProfileSection(30, 50, bottomGas),
             ),
-            decoGases = listOf(bottomGas, decoGas)
+            cylinders = listOf(bottomGas, decoGas)
         )
 
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
         assertEquals(3769.0, gasPlan[0].totalGasRequirement, tenthAtDecimalPoint(0))
         assertEquals(4131.0, gasPlan[1].totalGasRequirement, tenthAtDecimalPoint(0))
+    }
+
+    /**
+     * Test for GitHub issue: https://github.com/NeoTech-Software/Abysner/issues/55
+     *
+     * When a diver configures doubles or sidemount (two cylinders with the same gas mix), the gas
+     * plan must split the total requirement evenly across them (when they have equal capacity).
+     */
+    @Test
+    fun calculateGasPlan_distributesSameMixGasEquallyAcrossIdenticalCylinders() {
+        val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0)
+
+        val config = Configuration(
+            sacRate = 14.0,
+            maxPPO2 = 1.4,
+            maxPPO2Deco = 1.6,
+            maxEND = 30.0,
+            maxAscentRate = 5.0,
+            maxDescentRate = 10.0,
+            gfLow = 0.4,
+            gfHigh = 0.8,
+            forceMinimalDecoStopTime = true,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            salinity = Salinity.WATER_FRESH,
+            algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
+            gasSwitchTime = 0
+        )
+
+        val bottomGasOne = Cylinder.steel12Liter(Gas.Air)
+        val bottomGasTwo = Cylinder.steel12Liter(Gas.Air)
+        val gasPlan = GasPlanner().calculateGasPlan(
+            DivePlanner(config).addDive(
+                plan = listOf(DiveProfileSection(30, 50, bottomGasOne)),
+                cylinders = listOf(bottomGasOne, bottomGasTwo, decoGas)
+            )
+        )
+
+        // Gas plan must list both Air cylinders — previously only one appeared
+        val airEntries = gasPlan.filter { it.cylinder.gas == Gas.Air }
+        assertEquals(2, airEntries.size)
+
+        // Since both cylinders are identical each must receive exactly half
+        assertEquals(airEntries[0].normalRequirement, airEntries[1].normalRequirement, tenthAtDecimalPoint(0))
+        assertEquals(airEntries[0].extraEmergencyRequirement, airEntries[1].extraEmergencyRequirement, tenthAtDecimalPoint(0))
+    }
+
+    /**
+     * Test for GitHub issue: https://github.com/NeoTech-Software/Abysner/issues/55
+     *
+     * A recreational diver carries a 12 L steel back mount and an AL63 stage, both filled with
+     * Air. The gas requirement is distributed proportionally to each cylinder's capacity.
+     */
+    @Test
+    fun calculateGasPlan_distributesSameMixGasProportionallyToCapacity() {
+        val config = Configuration(
+            sacRate = 14.0,
+            maxPPO2 = 1.4,
+            maxPPO2Deco = 1.6,
+            maxEND = 30.0,
+            maxAscentRate = 5.0,
+            maxDescentRate = 10.0,
+            gfLow = 0.8,
+            gfHigh = 1.0,
+            forceMinimalDecoStopTime = true,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            salinity = Salinity.WATER_FRESH,
+            algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
+            gasSwitchTime = 0
+        )
+
+        val backMount = Cylinder.steel12Liter(Gas.Air)
+        val stage = Cylinder.aluminium63Cuft(Gas.Air)
+
+        val divePlan = DivePlanner(config).addDive(
+            plan = listOf(DiveProfileSection(25, 20, backMount)),
+            cylinders = listOf(backMount, stage)
+        )
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+
+        val airEntries = gasPlan.filter { it.cylinder.gas == Gas.Air }
+        assertEquals(2, airEntries.size)
+
+        val backMountEntry = airEntries.first { it.cylinder.waterVolume == backMount.waterVolume }
+        val stageEntry = airEntries.first { it.cylinder.waterVolume == stage.waterVolume }
+
+        // Proportional distribution: the ratio of requirements must match the ratio of capacities
+        val expectedRatio = backMount.capacity() / stage.capacity()
+        val actualRatio   = backMountEntry.totalGasRequirement / stageEntry.totalGasRequirement
+
+        assertEquals(expectedRatio, actualRatio, tenthAtDecimalPoint(2))
     }
 }

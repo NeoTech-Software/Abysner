@@ -74,9 +74,6 @@ class DecompressionPlanner(
         this.decoGasses.addAll(gasses)
     }
 
-    fun addCylinder(cylinder: Cylinder) {
-        this.decoGasses.add(cylinder)
-    }
 
     fun addFlat(depth: Double, gas: Cylinder, timeInMinutes: Int) {
         return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.FLAT)

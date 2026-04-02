@@ -162,7 +162,7 @@ fun PlannerScreen(
 
                     SegmentsCardComponent(
                         segments = viewState.segments,
-                        addAllowed = viewState.availableGas.any { it.isChecked },
+                        addAllowed = viewState.availableGas.isNotEmpty(),
                         onAddSegment = {
                             segmentBeingEdited.value = null
                             showSegmentPickerBottomSheet.value = true
@@ -236,7 +236,7 @@ private fun ShowSegmentPickerBottomSheet(
             maxPPO2 = configuration.maxPPO2,
             maxDensity = Gas.MAX_GAS_DENSITY,
             environment = configuration.environment,
-            cylinders = viewState.availableGas.filter { it.isChecked }.map { it.cylinder }.toImmutableList(),
+            cylinders = viewState.availableGas.map { it.cylinder }.toImmutableList(),
             previousDepth = viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
             configuration = configuration,
             onAddOrUpdateDiveSegment = {

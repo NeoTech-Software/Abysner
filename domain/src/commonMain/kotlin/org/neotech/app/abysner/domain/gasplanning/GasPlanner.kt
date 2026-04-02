@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2025 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -15,6 +15,7 @@ package org.neotech.app.abysner.domain.gasplanning
 import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
+import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
@@ -27,7 +28,7 @@ import kotlin.math.max
 class GasPlanner {
 
     /**
-     * Given a [DivePlan] find the potential worst-case spots to ascent from, by comparing TTS values
+     * Given a [DivePlan] find the potential worst-case spots to ascend from, by comparing TTS values
      * at various depths. This returns a List of [DiveSegments][DiveSegment] with the highest TTS
      * values, as well as spots during the dive that have a lower TTS value but are deeper.
      */
@@ -78,20 +79,17 @@ class GasPlanner {
         // diver is at the maximum TTS at those depths
         val outOfAirScenarios = worstCaseGasLossScenarios.map { maxTtsSegment ->
 
-            // For each TTS calculated the dive plan should have a accent schedule, retrieve it and use it to calculate gas usage.
+            // For each TTS calculated the dive plan should have an ascent schedule, retrieve it and use it to calculate gas usage.
             val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
 
-            // This only calculates the gas usage for the emergency accent itself, for the diver
-            // that needs the gas (is out-of-air). It does not take into account that sometimes
-            // because of a emergency the dive could end sooner then expected, which also saves you
-            // some gas. However since usually the worst case scenario for a out-of-gas situation is
-            // at the end of the dive (deepest and longest point), this probably cancels out enough
-            // to be of no significance, and by not accounting for it we are on the safe side of
-            // things.
+            // This only calculates the gas needed for the emergency ascent itself, for the diver
+            // that is out-of-air. Any out-of-air event occurring earlier in the dive would require
+            // ascending from a shallower depth or lower TTS, and therefore less emergency gas,
+            // so computing from the worst-case point is inherently conservative.
             ascent?.calculateGasRequirementsPerCylinder(
                 divePlan.configuration.sacRateOutOfAir,
                 divePlan.configuration.environment
-            ) ?: error("DivePlan does not have alternative accent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
+            ) ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
         }
 
         val extraRequiredForWorstCaseOutOfAir = mutableMapOf<Cylinder, Double>()
@@ -99,11 +97,56 @@ class GasPlanner {
             scenario.mergeInto(extraRequiredForWorstCaseOutOfAir, ::max)
         }
 
-        return baseLine.map {
-            // It may happen that for a specific gas no extra is required, hence the default to 0.0
-            // liters if that gas is not found.
-            CylinderGasRequirements(it.key, it.value, extraRequiredForWorstCaseOutOfAir[it.key] ?: 0.0)
-        }.toImmutableList()
+        // Pool total gas requirements by gas mix rather than by individual cylinder identity.
+        //
+        // The decompression planner currently always selects one representative cylinder per gas
+        // mix via List<Cylinder>.findBestDecoGas(). When the user has multiple cylinders with the
+        // same mix (e.g. doubles for back mount diving or sidemount diving), the other cylinder(s)
+        // never appear in any DiveSegment and are therefore invisible to the raw baseLine gas
+        // requirement map.
+        //
+        // By pooling requirements by Gas and then redistributing proportionally to each cylinder's
+        // capacity, we correctly spread the usage across all same-mix cylinders.
+        //
+        // Note: this does not address the scenario where, once a cylinder is empty, a less-than-ideal
+        // gas may still be breathed for the remainder of the dive. Fixing that requires a significant
+        // change in the planner.
+        val normalByGas = mutableMapOf<Gas, Double>()
+        baseLine.forEach { (cylinder, req) ->
+            normalByGas.updateOrInsert(cylinder.gas, req, Double::plus)
+        }
+        val emergencyByGas = mutableMapOf<Gas, Double>()
+        extraRequiredForWorstCaseOutOfAir.forEach { (cylinder, req) ->
+            emergencyByGas.updateOrInsert(cylinder.gas, req, Double::plus)
+        }
+
+        val cylindersByGas = divePlan.cylinders.groupBy { it.gas }
+
+        return cylindersByGas
+            // Some cylinders may never appear in any segment (planner did not use the cylinder), in
+            // which case it has no entry in normalByGas and no gas requirement to report. Thus we
+            // filter those out.
+            .filter { (gas, _) -> gas in normalByGas }
+            .flatMap { (gas, cylinders) ->
+                distributeProportionally(
+                    cylinders = cylinders,
+                    totalNormal = normalByGas.getValue(gas),
+                    totalEmergency = emergencyByGas[gas] ?: 0.0,
+                )
+            }
+            .toImmutableList()
+    }
+
+    private fun distributeProportionally(
+        cylinders: List<Cylinder>,
+        totalNormal: Double,
+        totalEmergency: Double,
+    ): List<CylinderGasRequirements> {
+        val totalCapacity = cylinders.sumOf { it.capacity() }
+        return cylinders.map { cylinder ->
+            val fraction = cylinder.capacity() / totalCapacity
+            CylinderGasRequirements(cylinder, totalNormal * fraction, totalEmergency * fraction)
+        }
     }
 
     private fun List<DiveSegment>.calculateGasRequirementsPerCylinder(sac: Double, environment: Environment): Map<Cylinder, Double> {
@@ -112,9 +155,7 @@ class GasPlanner {
             val pressure = depthInMetersToBar(it.averageDepth, environment)
             val sacAtDepth = sac * pressure.value
             val liters = it.duration * sacAtDepth
-            requiredLitersByGas.updateOrInsert(it.cylinder, liters) { currentValue, newValue ->
-                currentValue + newValue
-            }
+            requiredLitersByGas.updateOrInsert(it.cylinder, liters, Double::plus)
         }
         return requiredLitersByGas
     }
