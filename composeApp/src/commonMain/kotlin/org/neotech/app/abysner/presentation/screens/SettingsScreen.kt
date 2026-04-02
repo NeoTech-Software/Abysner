@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -39,9 +39,12 @@ import androidx.navigation.compose.rememberNavController
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.settings.SettingsRepository
+import org.neotech.app.abysner.domain.settings.model.ThemeMode
 import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTitle
+import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreference
 import org.neotech.app.abysner.presentation.component.preferences.SwitchPreference
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import kotlinx.collections.immutable.toImmutableList
 
 typealias SettingsScreen = @Composable (navController: NavHostController) -> Unit
 
@@ -76,7 +79,7 @@ fun SettingsScreen(
 
                 }
             }
-        ) {
+        ) { scaffoldPadding ->
             Box(
                 Modifier
                     .verticalScroll(rememberScrollState())
@@ -84,7 +87,20 @@ fun SettingsScreen(
 
                 val settings by settingsRepository.settings.collectAsState()
 
-                Column(modifier = Modifier.padding(it)) {
+                Column(modifier = Modifier.padding(scaffoldPadding)) {
+                    SettingsSubTitle(subTitle = "Appearance")
+
+                    SingleChoicePreference(
+                        label = "Theme",
+                        description = "Change the app's overall appearance to dark, light or follow the system.",
+                        items = ThemeMode.entries.toImmutableList(),
+                        selectedItemIndex = ThemeMode.entries.indexOf(settings.themeMode),
+                        itemToStringMapper = { it.humanReadableName },
+                        onItemPicked = { picked ->
+                            settingsRepository.updateSettings { it.copy(themeMode = picked) }
+                        },
+                    )
+
                     SettingsSubTitle(subTitle = "Deco plan")
 
                     SwitchPreference(

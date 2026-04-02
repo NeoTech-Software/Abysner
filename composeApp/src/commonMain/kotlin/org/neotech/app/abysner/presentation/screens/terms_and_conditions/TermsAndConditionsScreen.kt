@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -118,7 +118,7 @@ fun TermsAndConditionsScreen(
                 EventEffect(viewState.acceptAndNavigate) { accepted ->
                     if (accepted) {
                         navController.navigate(Destinations.PLANNER.destinationName) {
-                            popUpTo(Destinations.TERMS_AND_CONDITIONS.destinationName) {
+                            popUpTo(Destinations.TERMS_AND_CONDITIONS_INITIAL.destinationName) {
                                 inclusive = true
                             }
                         }

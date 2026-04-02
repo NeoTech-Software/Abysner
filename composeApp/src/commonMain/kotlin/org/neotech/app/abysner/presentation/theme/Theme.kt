@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2025 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -31,6 +31,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import org.neotech.app.abysner.domain.settings.model.ThemeMode
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -116,16 +117,22 @@ internal val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun AbysnerTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean? = null,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = getColorScheme(dynamicColor, darkTheme)
+    val resolvedDarkTheme = darkTheme ?: when (LocalThemeMode.current) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
 
-    applyPlatformSpecificThemeConfiguration(colorScheme, darkTheme)
+    val colorScheme = getColorScheme(dynamicColor, resolvedDarkTheme)
 
-    val customColors = if (darkTheme) {
+    applyPlatformSpecificThemeConfiguration(colorScheme, resolvedDarkTheme)
+
+    val customColors = if (resolvedDarkTheme) {
         CustomColors(warning = warningDark, onWarning = onWarningDark)
     } else {
         CustomColors(warning = warningLight, onWarning = onWarningLight)
@@ -140,7 +147,7 @@ fun AbysnerTheme(
     val iconFont = fontFamilyIconFont()
 
     CompositionLocalProvider(
-        LocalIsDarkTheme provides darkTheme,
+        LocalIsDarkTheme provides resolvedDarkTheme,
         LocalIconFont provides iconFont,
         LocalCustomColors provides customColors,
         LocalCustomTypography provides customTypography
@@ -154,6 +161,8 @@ fun AbysnerTheme(
 }
 
 internal val LocalIsDarkTheme = staticCompositionLocalOf { false }
+
+val LocalThemeMode = staticCompositionLocalOf { ThemeMode.SYSTEM }
 
 
 @Composable

@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -13,18 +13,28 @@
 package org.neotech.app.abysner.presentation
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.settings.SettingsRepository
+import org.neotech.app.abysner.domain.settings.model.SettingsModel
 
 @Inject
 class MainNavControllerViewModel(
-    settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository
 ): ViewModel() {
 
-    // TODO: This is a bit dirty, but I want to avoid a flashing screen. A better approach would
-    //       be to load this information during the splash screen.
-    val areTermsAndConditionsAccepted: Boolean = runBlocking {
-        settingsRepository.getSettings().termsAndConditionsAccepted
-    }
+    val settings: StateFlow<SettingsModel> = settingsRepository.settings
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            // Read on the main thread in a blocking manner to ensure the correct initial value is
+            // available immediately, preventing a theme or terms & conditions flicker on startup.
+            // This is an acceptable reason to read on the main thread, ideally this would happen
+            // during the system splash screen.
+            initialValue = runBlocking { settingsRepository.getSettings() }
+        )
 }

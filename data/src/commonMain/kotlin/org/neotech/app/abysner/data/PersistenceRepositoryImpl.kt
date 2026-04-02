@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -18,7 +18,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import me.tatarka.inject.annotations.Inject
 import okio.Path
@@ -53,10 +53,11 @@ inline fun <reified T: SerializableResource> MutablePreferences.setJson(key: Pre
 }
 
 inline fun <reified T: SerializableResource> Preferences.getJson(key: Preferences.Key<String>): T? {
-    val rawValue = get(key)
-    return if(rawValue != null) {
+    val rawValue = get(key) ?: return null
+    return try {
         Json.decodeFromString<T>(rawValue)
-    } else {
+    } catch (e: SerializationException) {
+        println("WARNING: Failed to deserialize preference key '${key.name}', falling back to null. Cause: $e")
         null
     }
 }

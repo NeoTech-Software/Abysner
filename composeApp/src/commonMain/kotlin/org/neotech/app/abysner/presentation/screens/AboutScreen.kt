@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -297,7 +297,7 @@ fun AboutScreen(
 
                     appendLine()
                     pushLink(LinkAnnotation.Clickable(tag = "terms_and_conditions") { link ->
-                        navController.navigate(Destinations.TERMS_AND_CONDITIONS_VIEW.destinationName)
+                        navController.navigate(Destinations.TERMS_AND_CONDITIONS.destinationName)
                     })
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)) {
                         append("Terms & Conditions")
