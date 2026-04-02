@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024-2026 Neotech
+ * Copyright (C) 2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,8 +12,10 @@
 
 package org.neotech.app.abysner.domain.settings.model
 
-data class SettingsModel(
-    val showBasicDecoTable: Boolean = false,
-    val termsAndConditionsAccepted: Boolean = true,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-)
+enum class ThemeMode(val humanReadableName: String) {
+    SYSTEM("System"),
+    LIGHT("Light"),
+    DARK("Dark")
+}
+
+

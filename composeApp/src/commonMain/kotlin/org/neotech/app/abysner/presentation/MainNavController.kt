@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,11 +12,10 @@
 
 package org.neotech.app.abysner.presentation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import me.tatarka.inject.annotations.Inject
@@ -27,9 +26,12 @@ import org.neotech.app.abysner.presentation.screens.planner.PlannerScreen
 import org.neotech.app.abysner.presentation.screens.DiveConfigurationScreen
 import org.neotech.app.abysner.presentation.screens.SettingsScreen
 import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsScreen
+import org.neotech.app.abysner.presentation.theme.LocalThemeMode
 import org.neotech.app.abysner.presentation.utilities.DestinationDefinition
 import org.neotech.app.abysner.presentation.utilities.NavHost
-import org.neotech.app.abysner.presentation.utilities.composable
+import org.neotech.app.abysner.presentation.utilities.fadeComposable
+import org.neotech.app.abysner.presentation.utilities.rootComposable
+import org.neotech.app.abysner.presentation.utilities.slideComposable
 import androidx.compose.foundation.layout.Box
 import org.neotech.app.abysner.presentation.component.BitmapRenderRoot
 
@@ -39,7 +41,7 @@ enum class Destinations(override val destinationName: String) : DestinationDefin
     APP_CONFIGURATION("app-configuration"),
     ABOUT("about"),
     TERMS_AND_CONDITIONS("terms-and-conditions"),
-    TERMS_AND_CONDITIONS_VIEW("terms-and-conditions-view")
+    TERMS_AND_CONDITIONS_INITIAL("terms-and-conditions-initial")
 }
 
 typealias MainNavController = @Composable () -> Unit
@@ -61,65 +63,29 @@ fun MainNavController(
         viewModelCreator()
     }
 
-    val startDestination = when(viewModel.areTermsAndConditionsAccepted) {
-        false -> Destinations.TERMS_AND_CONDITIONS
+    val startDestination = when (viewModel.settings.value.termsAndConditionsAccepted) {
+        false -> Destinations.TERMS_AND_CONDITIONS_INITIAL
         true -> Destinations.PLANNER
     }
 
     val navController = rememberNavController()
 
-    Box {
-        BitmapRenderRoot {
+    val settings by viewModel.settings.collectAsState()
 
-        NavHost(navController = navController, startDestination = startDestination) {
-            composable(
-                route = Destinations.PLANNER,
-                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) },
-                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) }
-            ) { plannerScreen(navController) }
+    CompositionLocalProvider(LocalThemeMode provides settings.themeMode) {
+        Box {
+            BitmapRenderRoot {
+                NavHost(navController = navController, startDestination = startDestination) {
+                    rootComposable(Destinations.PLANNER) { plannerScreen(navController) }
 
-            composable(
-                route = Destinations.DIVE_CONFIGURATION,
-                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) },
-                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) }
-            ) { diveConfigurationScreen(navController) }
+                    slideComposable(Destinations.DIVE_CONFIGURATION) { diveConfigurationScreen(navController) }
+                    slideComposable(Destinations.APP_CONFIGURATION) { settingsScreen(navController) }
+                    slideComposable(Destinations.ABOUT) { aboutScreen(navController) }
+                    slideComposable(Destinations.TERMS_AND_CONDITIONS) { termsAndConditionsScreen(navController) }
 
-            composable(
-                route = Destinations.APP_CONFIGURATION,
-                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) },
-                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) }
-            ) { settingsScreen(navController) }
-
-            composable(
-                route = Destinations.ABOUT,
-                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) },
-                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) }
-            ) { aboutScreen(navController) }
-
-            composable(
-                route = Destinations.TERMS_AND_CONDITIONS,
-                enterTransition = { fadeIn() },
-                exitTransition = { fadeOut() },
-                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) },
-                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) }
-            ) { termsAndConditionsScreen(navController) }
-
-            composable(
-                route = Destinations.TERMS_AND_CONDITIONS_VIEW,
-                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween()) },
-                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) },
-                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween()) }
-            ) { termsAndConditionsScreen(navController) }
+                    fadeComposable(Destinations.TERMS_AND_CONDITIONS_INITIAL) { termsAndConditionsScreen(navController) }
+                }
+            }
         }
-    }
     }
 }
