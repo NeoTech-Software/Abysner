@@ -78,7 +78,7 @@ class DivePlannerTest {
             DiveProfileSection(duration = 30, 30, bottomGas)
         )
 
-        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas))
+        val divePlan = divePlanner.addDive(plannedSections, listOf(bottomGas, decoGas))
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
