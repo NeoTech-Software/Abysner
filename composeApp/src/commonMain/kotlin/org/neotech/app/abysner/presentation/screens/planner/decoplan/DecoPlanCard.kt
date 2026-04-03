@@ -77,6 +77,8 @@ import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegment
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.screens.planner.ConfigurationSummeryDialog
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.theme.onWarning
+import org.neotech.app.abysner.presentation.theme.warning
 import kotlin.math.ceil
 
 @Composable
@@ -220,16 +222,50 @@ fun DecoPlanOxygenToxicityDisplay(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
+        // CNS thresholds based on NOAA Diving Manual (1991): 90% issues a warning color as it
+        // approaches the limit, 100% issues an error color as it is at or over the limit. See
+        // OxygenToxicityCalculator for details and references.
+        val (cnsContainerColor, cnsValueColor) = when {
+            cns >= 100.0 -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
+            cns >= 90.0  -> MaterialTheme.colorScheme.warning to MaterialTheme.colorScheme.onWarning
+            else         -> Color.Unspecified to Color.Unspecified
+        }
+        val cnsDisplayValue = ceil(cns)
+        val cnsDisplay = if (cnsDisplayValue > 999.0) {
+            ">999%"
+        } else {
+            "${cnsDisplayValue.format(0)}%"
+        }
+
         BigNumberDisplay(
             modifier = Modifier.width(96.dp),
             size = BigNumberSize.EXTRA_SMALL,
-            value = "${ceil(cns).format(0)}%",
+            value = cnsDisplay,
+            valueColor = cnsValueColor,
+            containerColor = cnsContainerColor,
             label = "CNS"
         )
+
+        // OTU threshold based on NOAA Diving Manual (1991): 300 OTU is the recommended conservative
+        // maximum for a single day of repetitive diving. No error color is used since there is no
+        // clear consensus on what value would warrant one for pulmonary oxygen toxicity.
+        val (otuContainerColor, otuValueColor) = when {
+            otu >= 300.0 -> MaterialTheme.colorScheme.warning to MaterialTheme.colorScheme.onWarning
+            else         -> Color.Unspecified to Color.Unspecified
+        }
+        val otuDisplayValue = ceil(otu)
+        val otuDisplay = if (otuDisplayValue > 999.0) {
+            ">999"
+        } else {
+            otuDisplayValue.format(0)
+        }
+
         BigNumberDisplay(
             modifier = Modifier.width(96.dp),
             size = BigNumberSize.EXTRA_SMALL,
-            value = ceil(otu).format(0),
+            value = otuDisplay,
+            valueColor = otuValueColor,
+            containerColor = otuContainerColor,
             label = "OTU"
         )
     }
