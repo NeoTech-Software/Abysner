@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -124,6 +124,7 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         const val MAX_RECOMMENDED_GAS_DENSITY = 5.2
         const val MAX_GAS_DENSITY = 6.2
         const val MAX_PPO2 = 1.6
+        const val MIN_PPO2 = 0.16
 
         val Air = Gas(oxygenFraction = 0.21, heliumFraction = 0.0)
         val Nitrox28 = Gas(oxygenFraction = 0.28, heliumFraction = 0.0)
@@ -167,29 +168,3 @@ private const val DENSITY_N2 = 1.251
  * Density He = 4.00 g/mole x 1 mole/22.4 L = 0.178 g/L
  */
 private const val DENSITY_HE = 0.178
-
-/**
- * Returns the best gas in the list based on MOD and END.
- *
- * @return the best gas for the given depth, salinity, maximum ppo2 and maximum END, this may return
- *         null if no gasses match these criteria. If multiple gasses match the gas with the highest
- *         PPO2 is chosen (to have the maximum off gassing effect).
- */
-fun List<Cylinder>.findBestDecoGas(depth: Double, environment: Environment, maxPPO2: Double, maxEND: Double): Cylinder? {
-    var bestGas: Cylinder? = null
-    forEach { candidateGas ->
-        // TODO be safe and use 'floor' instead of 'round'?
-        val mod = round(candidateGas.gas.oxygenMod(maxPPO2, environment))
-        val end = round(candidateGas.gas.endInMeters(depth, environment))
-        if (depth <= mod && end <= maxEND) {
-            // Gas is usable (todo min-OD check?)
-            if (bestGas == null) {
-                bestGas = candidateGas
-            } else if(bestGas.gas.oxygenFraction < candidateGas.gas.oxygenFraction) {
-                // Prefer the higher oxygen percentage
-                bestGas = candidateGas
-            }
-        }
-    }
-    return bestGas
-}

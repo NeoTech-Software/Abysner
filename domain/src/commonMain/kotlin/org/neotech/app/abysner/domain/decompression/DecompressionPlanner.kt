@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -19,7 +19,7 @@ import kotlinx.collections.immutable.toPersistentMap
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.core.model.findBestDecoGas
+import org.neotech.app.abysner.domain.core.model.findBetterGasOrFallback
 import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
@@ -172,7 +172,7 @@ class DecompressionPlanner(
 
         while (currentDepth > toDepth) {
             // Check if there is a better gas to breath at the current depth
-            val betterDecoGas = decoGasses.findBestDecoGas(currentDepth, environment, maxppO2, maxEND)
+            val betterDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
             // Only start using the better gas when we reach a deco increment point
 
             if (betterDecoGas != null && betterDecoGas != gas && currentDepth.toInt() % decoStepSize == 0) {
@@ -193,7 +193,7 @@ class DecompressionPlanner(
             var nextDepth = currentDepth - 1
             var nextDecoGas: Cylinder?
             while(nextDepth >= targetDepth) {
-                nextDecoGas = decoGasses.findBestDecoGas(nextDepth, environment, maxppO2, maxEND)
+                nextDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = nextDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
                 if (nextDecoGas != null && nextDecoGas != gas && nextDepth.toInt() % decoStepSize == 0) {
                     targetDepth = nextDepth //Only carry us up to the point where we can use this better gas.
                     break
@@ -218,7 +218,7 @@ class DecompressionPlanner(
             currentDepth = targetDepth
         }
 
-        val betterDecoGasName = decoGasses.findBestDecoGas(currentDepth, environment, maxppO2, maxEND)
+        val betterDecoGasName = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
         if (betterDecoGasName != null && betterDecoGasName != gas && currentDepth.toInt() % decoStepSize == 0) {
             // Gas switch time on the old gas before switching
             addGasSwitch(currentDepth, gas, gasSwitchTime)
@@ -257,14 +257,14 @@ class DecompressionPlanner(
         if(ceiling > fromDepth) {
             // We have to stay at this depth first, do not change depths, but look for better gas.
             ceiling = fromDepth.toInt()
-            val betterGas = decoGasses.findBestDecoGas(fromDepth, environment, maxPpO2, maxEquivalentNarcoticDepth)
+            val betterGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
             if (betterGas != null && betterGas != gas) {
                 // Gas switch time on the old gas before switching
                 addGasSwitch(fromDepth, gas, gasSwitchTime)
                 gas = betterGas
             }
         } else {
-            val betterGas = decoGasses.findBestDecoGas(fromDepth, environment, maxPpO2, maxEquivalentNarcoticDepth)
+            val betterGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
             if (betterGas != null && betterGas != gas) {
                 // Gas switch time on the old gas before switching
                 addGasSwitch(fromDepth, gas, gasSwitchTime)
