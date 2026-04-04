@@ -99,24 +99,23 @@ private fun Gas.toResource() = DivePlanInputResourceV1.GasResource(
 )
 
 fun DivePlanInputResourceV1.toModel(): DivePlanInputModel {
-
-    val inUse = profile.map { it.cylinderIdentifier }.toSet()
-    val cylinders = cylinders.map { it.toModel(inUse.contains(it.cylinder.uniqueIdentifier)) }
-
+    val cylinders = cylinders.map { it.toModel() }
     return DivePlanInputModel(
         deeper = deeper,
         longer = longer,
         cylinders = cylinders,
         plannedProfile = profile.map {
-            it.toModel(cylinders.find { cylinder -> cylinder.cylinder.uniqueIdentifier == it.cylinderIdentifier  }!!.cylinder)
+            it.toModel(cylinders.find { cylinder -> cylinder.cylinder.uniqueIdentifier == it.cylinderIdentifier }!!.cylinder)
         }
     )
 }
 
-private fun DivePlanInputResourceV1.CheckableCylinderResource.toModel(isInUse: Boolean) = PlannedCylinderModel(
+private fun DivePlanInputResourceV1.CheckableCylinderResource.toModel() = PlannedCylinderModel(
     cylinder = cylinder.toModel(),
     isChecked = checked,
-    isInUse = isInUse
+
+    // Will be recalculated by the ViewModel
+    isLocked = false,
 )
 
 private fun DivePlanInputResourceV1.ProfileSegmentResource.toModel(cylinder: Cylinder) = DiveProfileSection(

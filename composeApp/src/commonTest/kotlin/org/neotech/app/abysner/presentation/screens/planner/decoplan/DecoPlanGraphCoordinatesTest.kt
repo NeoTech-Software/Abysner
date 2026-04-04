@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -46,7 +46,7 @@ class DecoPlanGraphCoordinatesTest {
         )
         return divePlanner.addDive(
             plan = listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
-            decoGases = listOf(decoGas),
+            cylinders = listOf(decoGas),
         )
     }
 
@@ -66,7 +66,7 @@ class DecoPlanGraphCoordinatesTest {
         )
         return divePlanner.addDive(
             plan = listOf(DiveProfileSection(duration = 20, 20, bottomGas)),
-            decoGases = emptyList(),
+            cylinders = emptyList(),
         )
     }
 

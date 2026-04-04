@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2025 Neotech
+ * Copyright (C) 2025-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -97,7 +97,7 @@ fun GasBarChartPreview() = PreviewWrapper {
 fun GasPlanBarChart(
     modifier: Modifier = Modifier,
     gasPlan: GasPlan,
-    onGasBarClicked: (CylinderGasRequirements) -> Unit = {},
+    onGasBarClicked: (Int, CylinderGasRequirements) -> Unit = { _, _ -> },
 ) {
     Column(modifier = modifier) {
         FlowLegend(
@@ -187,7 +187,7 @@ fun GasPlanBarChart(
                     modifier = Modifier.padding(end = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    gasPlan.forEachIndexed { index, gas ->
+                    gasPlan.forEach { gas ->
                         Text(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.weight(1f)
@@ -213,11 +213,11 @@ fun GasPlanBarChart(
                     )
 
                 }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    gasPlan.forEach {
+                    gasPlan.forEachIndexed { index, it ->
                         Box(contentAlignment = Alignment.Center) {
                             GasUsageBar(
                                 modifier = Modifier.height(36.dp).clickable {
-                                    onGasBarClicked(it)
+                                    onGasBarClicked(index, it)
                                 },
                                 cylinderGasRequirements = it,
                                 maxValue = max,

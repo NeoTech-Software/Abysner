@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -27,7 +27,7 @@ import kotlin.math.ceil
 data class DivePlan(
     val segments: ImmutableList<DiveSegment>,
     val alternativeAccents: ImmutableMap<Int, ImmutableList<DiveSegment>>,
-    val decoGasses: ImmutableList<Cylinder>,
+    val cylinders: ImmutableList<Cylinder>,
     val configuration: Configuration,
     val totalCns: Double,
     val totalOtu: Double,

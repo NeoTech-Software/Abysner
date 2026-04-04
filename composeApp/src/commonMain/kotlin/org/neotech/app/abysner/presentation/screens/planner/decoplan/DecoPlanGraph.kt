@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -246,7 +246,7 @@ private fun DecoPlanGraphPreview() {
 
                 ),
             alternativeAccents = persistentMapOf(),
-            decoGasses = persistentListOf(),
+            cylinders = persistentListOf(),
             configuration = Configuration(),
             totalCns = 0.0,
             totalOtu = 0.0

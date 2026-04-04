@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -30,7 +30,7 @@ object PreviewData {
                 plan = persistentListOf(
                     DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
                 ),
-                decoGases = persistentListOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
+                cylinders = persistentListOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
             )
 
             val gasPlan = GasPlanner().calculateGasPlan(

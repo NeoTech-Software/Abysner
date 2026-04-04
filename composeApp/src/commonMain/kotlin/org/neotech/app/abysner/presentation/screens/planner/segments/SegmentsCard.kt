@@ -80,9 +80,9 @@ fun SegmentsCardComponent(
             ) {
 
                 val message = if(!addAllowed) {
-                   "You must add (and select) at least one cylinder before creating the dive profile."
+                   "Add a cylinder first, then build your dive profile here."
                 } else if(segments.isEmpty()) {
-                   "Add at least one section to your dive profile to see your deco & gas plan."
+                   "No segments yet, add one to see your deco & gas plan!"
                 } else {
                     null
                 }

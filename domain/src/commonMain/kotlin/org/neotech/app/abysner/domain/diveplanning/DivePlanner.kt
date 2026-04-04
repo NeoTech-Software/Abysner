@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -30,22 +30,22 @@ import kotlin.time.Duration
  * turn the user provided dive profile into segments usable by the decompression planner. It also
  * adds multi-level dive handling.
  */
-class DivePlanner {
-
-    var configuration = Configuration()
+class DivePlanner(
+    var configuration: Configuration = Configuration()
+) {
 
     private var decompressionModelSnapshot: DecompressionModel.Snapshot? = null
 
     fun addDive(
         plan: List<DiveProfileSection>,
-        decoGases: List<Cylinder>,
+        cylinders: List<Cylinder>,
     ): DivePlan {
 
         if(plan.isEmpty()) {
             return DivePlan(
                 persistentListOf(),
                 persistentMapOf(),
-                decoGases.toPersistentList(),
+                cylinders.toPersistentList(),
                 configuration,
                 0.0,
                 0.0
@@ -67,9 +67,7 @@ class DivePlanner {
             decompressionPlanner.setDecompressionModelSnapshot(it)
         }
 
-        decoGases.forEach {
-            decompressionPlanner.addCylinder(it)
-        }
+        decompressionPlanner.setDecoGasses(cylinders)
 
         var currentDepth = 0.0
         plan.forEach {
@@ -157,7 +155,7 @@ class DivePlanner {
         return DivePlan(
             segments = segments,
             alternativeAccents = decompressionPlanner.getAlternativeAccents(),
-            decoGasses = decoGases.toPersistentList(),
+            cylinders = cylinders.toPersistentList(),
             configuration = configuration,
             totalCns = OxygenToxicityCalculator().calculateCns(segments, configuration.environment),
             totalOtu = OxygenToxicityCalculator().calculateOtu(segments, configuration.environment)

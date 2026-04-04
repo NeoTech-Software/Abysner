@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -297,52 +297,38 @@ fun DecoPlanTable(
     divePlan: DivePlan,
     settings: SettingsModel,
 ) {
-    Table(modifier = modifier,
+
+    Table(
+        modifier = modifier,
         header = {
             TextWithStartIcon(
-                modifier = Modifier.weight(0.2f),
+                modifier = Modifier.weight(0.25f),
                 text = "Depth",
                 icon = ColorPainter(Color.Transparent),
             )
-            Text(
-                modifier = Modifier.weight(0.2f),
-                text = "Runtime",
-            )
-            Text(
-                modifier = Modifier.weight(0.2f),
-                text = "Duration",
-            )
-            TextWithStartIcon(
-                modifier = Modifier.weight(0.2f),
-                text = "Gas",
-                icon = ColorPainter(Color.Transparent),
-            )
+            Text(modifier = Modifier.weight(0.2f), text = "Runtime")
+            Text(modifier = Modifier.weight(0.2f), text = "Duration")
+            Text(modifier = Modifier.weight(0.15f), text = "Gas")
         }
     ) {
-
         val segments = divePlan.segmentsCollapsed
             .toMutableList()
             .compactSimilarSegments(compactAscentsBetweenDecoStops = settings.showBasicDecoTable)
 
-        segments.forEachIndexed { index, diveSegment ->
-
-            // For gas switch segments, resolve the target gas the diver is switching to, so the
-            // table reads as an instruction ("switch to Nx50") rather than showing the old gas that
-            // is used for the tissue loading calculation.
+        rowsIndexed(segments, key = { _, segment -> segment.start }) { index, diveSegment ->
+            // For gas switch segments show the gas the diver is switching to, rather than the gas
+            // currently being breathed. The actual switch happens at the end of the section, so the
+            // row reads as an instruction (e.g. "switch to Nx50").
             val displayGas = if (diveSegment.isGasSwitch) {
-                // Theoretically speaking this should not occur, a gas switch is never the last
-                // segment in a dive
                 segments.getOrNull(index + 1)?.cylinder?.gas ?: diveSegment.cylinder.gas
             } else {
                 diveSegment.cylinder.gas
             }
-            row {
-                DecoPlanRow(
-                    diveSegment = diveSegment,
-                    runtime = diveSegment.end,
-                    gas = displayGas,
-                )
-            }
+            DecoPlanRow(
+                diveSegment = diveSegment,
+                runtime = diveSegment.end,
+                gas = displayGas,
+            )
         }
     }
 }
@@ -381,7 +367,7 @@ private fun RowScope.DecoPlanRow(
     }
 
     TextWithStartIcon(
-        modifier = Modifier.weight(0.2f),
+        modifier = Modifier.weight(0.25f),
         text = diveSegment.endDepth.toString(),
         icon = painterResource(resource = typeIcon)
     )
@@ -393,9 +379,8 @@ private fun RowScope.DecoPlanRow(
         modifier = Modifier.weight(0.2f),
         text = "+${diveSegment.duration}",
     )
-
     Text(
-        modifier = Modifier.weight(0.2f),
+        modifier = Modifier.weight(0.15f),
         text = gas.toString(),
     )
 }
@@ -411,7 +396,7 @@ fun DecoPlanCardComponentPreview() {
             plan = listOf(
                 DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
             ),
-            decoGases = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
+            cylinders = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
         )
 
         DecoPlanCardComponent(

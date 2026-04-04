@@ -24,5 +24,10 @@ data class DivePlanInputModel(
 data class PlannedCylinderModel(
     val cylinder: Cylinder,
     val isChecked: Boolean,
-    val isInUse: Boolean,
+    /**
+     * True only when this is the last checked cylinder of a gas mix that is referenced in a
+     * planned segment. When true the checkbox and delete controls are disabled/hidden, preventing
+     * the planner from being left without any cylinder of that gas.
+     */
+    val isLocked: Boolean,
 )
