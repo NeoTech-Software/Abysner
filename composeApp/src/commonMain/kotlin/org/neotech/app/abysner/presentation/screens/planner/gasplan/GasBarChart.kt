@@ -12,7 +12,7 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.gasplan
 
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.presentation.utilities.PreviewWrapper
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.koalaplot.core.Symbol
 import io.github.koalaplot.core.legend.FlowLegend
+import io.github.koalaplot.core.legend.FlowLegend2
 import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
 import kotlinx.collections.immutable.persistentListOf
 import org.neotech.app.abysner.domain.core.model.Cylinder
@@ -100,7 +101,7 @@ fun GasPlanBarChart(
     onGasBarClicked: (Int, CylinderGasRequirements) -> Unit = { _, _ -> },
 ) {
     Column(modifier = modifier) {
-        FlowLegend(
+        FlowLegend2(
             modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally),
             itemCount = 3,
             label = {

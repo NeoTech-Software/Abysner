@@ -12,10 +12,11 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.decoplan
 
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,23 +32,23 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.koalaplot.core.Symbol
-import io.github.koalaplot.core.legend.FlowLegend
+import io.github.koalaplot.core.legend.FlowLegend2
 import io.github.koalaplot.core.line.AreaBaseline
-import io.github.koalaplot.core.line.AreaPlot
 import io.github.koalaplot.core.line.AreaPlot2
-import io.github.koalaplot.core.line.LinePlot
 import io.github.koalaplot.core.line.LinePlot2
 import io.github.koalaplot.core.style.AreaStyle
 import io.github.koalaplot.core.style.KoalaPlotTheme
 import io.github.koalaplot.core.style.LineStyle
 import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
-import io.github.koalaplot.core.xygraph.DefaultPoint
+import io.github.koalaplot.core.xygraph.AxisContent
 import io.github.koalaplot.core.xygraph.FloatLinearAxisModel
+import io.github.koalaplot.core.xygraph.GridStyle
 import io.github.koalaplot.core.xygraph.XYGraph
 import io.github.koalaplot.core.xygraph.rememberAxisStyle
 import kotlinx.collections.immutable.persistentListOf
@@ -115,7 +116,7 @@ fun DecoPlanGraph(
     
     Column {
 
-        FlowLegend(
+        FlowLegend2(
             modifier = Modifier.padding(horizontal = 16.dp).align(Alignment.CenterHorizontally),
             itemCount = 3,
             label = {
@@ -156,40 +157,50 @@ fun DecoPlanGraph(
 
 
         XYGraph(
-            xAxisStyle = xaxisStyle,
-            yAxisStyle = yaxisStyle,
             modifier = modifier,
-            horizontalMajorGridLineStyle = null,
-            verticalMajorGridLineStyle = null,
-            horizontalMinorGridLineStyle = null,
-            verticalMinorGridLineStyle = null,
             xAxisModel = FloatLinearAxisModel(
                 minorTickCount = 1,
                 minimumMajorTickIncrement = 1f,
                 minimumMajorTickSpacing = 48.dp,
-                range = 0f..divePlan.runtime.toFloat(),
+                range = 0f..maxOf(divePlan.runtime.toFloat(), 1f),
             ),
-            yAxisModel = FloatLinearAxisModel(
-                minorTickCount = 4,
-                range = -(divePlan.maximumDepth.toFloat() * 1.05f)..(divePlan.maximumDepth.toFloat() * 0.05f),
-                minimumMajorTickSpacing = 24.dp,
-                minimumMajorTickIncrement = 1f,
-            ),
-            xAxisLabels = {
-                Text(
-                    it.toInt().toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = textAndAxisColor
+            yAxisModel = run {
+                val maxDepth = maxOf(divePlan.maximumDepth.toFloat(), 1f)
+                FloatLinearAxisModel(
+                    minorTickCount = 4,
+                    range = -(maxDepth * 1.05f)..(maxDepth * 0.05f),
+                    minimumMajorTickSpacing = 24.dp,
+                    minimumMajorTickIncrement = 1f,
                 )
             },
-            yAxisLabels = {
-                Text(
-                    it.absoluteValue.toInt().toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = textAndAxisColor
-                )
-            },
-            yAxisTitle = { },
+            xAxisContent = AxisContent(
+                style = xaxisStyle,
+                labels = {
+                    Text(
+                        it.toInt().toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = textAndAxisColor
+                    )
+                },
+                title = {},
+            ),
+            yAxisContent = AxisContent(
+                style = yaxisStyle,
+                labels = {
+                    Text(
+                        it.absoluteValue.toInt().toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = textAndAxisColor
+                    )
+                },
+                title = {},
+            ),
+            gridStyle = GridStyle(
+                horizontalMajorStyle = null,
+                horizontalMinorStyle = null,
+                verticalMajorStyle = null,
+                verticalMinorStyle = null,
+            ),
         ) {
 
             AreaPlot2(
@@ -200,7 +211,7 @@ fun DecoPlanGraph(
                     brush = SolidColor(MaterialTheme.colorScheme.error),
                     strokeWidth = 1.dp
                 ),
-                areaBaseline = AreaBaseline.ConstantLine(0.0f),
+                areaBaseline = AreaBaseline.HorizontalLine(0.0f),
                 areaStyle = AreaStyle(
                     brush = SolidColor(MaterialTheme.colorScheme.error),
                     alpha = 0.5f
@@ -236,20 +247,62 @@ private fun DecoPlanGraphPreview() {
 
     val cylinder = Cylinder.steel12Liter(Gas.Air)
 
-    DecoPlanGraph(
-        modifier = Modifier, divePlan = DivePlan(
-            segments = persistentListOf(
-                DiveSegment(0,5, 0.0, 25.0, cylinder, type = DiveSegment.Type.FLAT, gfCeilingAtEnd = 0.0),
-
-                DiveSegment(5,20, 25.0, 20.0, cylinder, type = DiveSegment.Type.FLAT, gfCeilingAtEnd = 0.0),
-                DiveSegment(25,20, 25.0, 0.0, cylinder, type = DiveSegment.Type.FLAT, gfCeilingAtEnd = 0.0),
-
+    Surface {
+        DecoPlanGraph(
+            modifier = Modifier.height(164.dp), divePlan = DivePlan(
+                segments = persistentListOf(
+                    DiveSegment(
+                        0,
+                        3,
+                        0.0,
+                        25.0,
+                        cylinder,
+                        type = DiveSegment.Type.DECENT,
+                        gfCeilingAtEnd = 0.0
+                    ),
+                    DiveSegment(
+                        3,
+                        20,
+                        25.0,
+                        25.0,
+                        cylinder,
+                        type = DiveSegment.Type.FLAT,
+                        gfCeilingAtEnd = 3.0
+                    ),
+                    DiveSegment(
+                        23,
+                        3,
+                        25.0,
+                        5.0,
+                        cylinder,
+                        type = DiveSegment.Type.ASCENT,
+                        gfCeilingAtEnd = 2.0
+                    ),
+                    DiveSegment(
+                        26,
+                        3,
+                        5.0,
+                        5.0,
+                        cylinder,
+                        type = DiveSegment.Type.DECO_STOP,
+                        gfCeilingAtEnd = 1.0
+                    ),
+                    DiveSegment(
+                        29,
+                        1,
+                        5.0,
+                        0.0,
+                        cylinder,
+                        type = DiveSegment.Type.ASCENT,
+                        gfCeilingAtEnd = 0.0
+                    ),
                 ),
-            alternativeAccents = persistentMapOf(),
-            cylinders = persistentListOf(),
-            configuration = Configuration(),
-            totalCns = 0.0,
-            totalOtu = 0.0
+                alternativeAccents = persistentMapOf(),
+                cylinders = persistentListOf(),
+                configuration = Configuration(),
+                totalCns = 0.0,
+                totalOtu = 0.0
+            )
         )
-    )
+    }
 }

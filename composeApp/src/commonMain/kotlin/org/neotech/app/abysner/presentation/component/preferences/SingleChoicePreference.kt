@@ -36,7 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
 import org.neotech.app.abysner.presentation.component.toAnnotatedString

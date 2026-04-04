@@ -23,7 +23,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -129,11 +129,13 @@ fun AboutScreen(
             }
         ) { insets ->
 
+            val isPreview = LocalInspectionMode.current
+
             val infiniteTransition = rememberInfiniteTransition()
 
             val wave1HorizontalMovementAnimation by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
+                initialValue = if (isPreview) 0.5f else 0f,
+                targetValue = if (isPreview) 0.5f else 1f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(10000, easing = LinearEasing),
                     repeatMode = RepeatMode.Restart
@@ -141,8 +143,8 @@ fun AboutScreen(
             )
 
             val wave2HorizontalMovementAnimation by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
+                initialValue = if (isPreview) 0.5f else 0f,
+                targetValue = if (isPreview) 0.5f else 1f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(15000, easing = LinearEasing),
                     repeatMode = RepeatMode.Restart
@@ -150,8 +152,8 @@ fun AboutScreen(
             )
 
             val wave2VerticalMovementAnimation by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
+                initialValue = if (isPreview) 0.5f else 0f,
+                targetValue = if (isPreview) 0.5f else 1f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(3000, easing = FastOutSlowInEasing),
                     repeatMode = RepeatMode.Reverse
@@ -159,7 +161,7 @@ fun AboutScreen(
             )
 
             val animationStarted = rememberSaveable { mutableStateOf(false) }
-            val cameraVerticalPanAnimation = remember { Animatable(if(animationStarted.value) { 1f} else { 0f }) }
+            val cameraVerticalPanAnimation = remember { Animatable(if(animationStarted.value || isPreview) { 1f} else { 0f }) }
 
             LaunchedEffect(cameraVerticalPanAnimation) {
                 animationStarted.value = true

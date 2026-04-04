@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -83,6 +83,7 @@ import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentPick
 import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentsCardComponent
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconSet
+import org.neotech.app.abysner.presentation.component.BitmapRenderController
 import org.neotech.app.abysner.presentation.component.LocalBitmapRenderController
 import org.neotech.app.abysner.presentation.utilities.shareImageBitmap
 
@@ -406,7 +407,8 @@ private fun PlannerScreenPreview() {
     }
 
     CompositionLocalProvider(
-        LocalViewModelStoreOwner provides fakeOwner
+        LocalViewModelStoreOwner provides fakeOwner,
+        LocalBitmapRenderController provides remember { BitmapRenderController() },
     ) {
         PlannerScreen(
             viewModelCreator = {

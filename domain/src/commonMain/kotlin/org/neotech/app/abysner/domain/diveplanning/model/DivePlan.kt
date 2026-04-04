@@ -40,11 +40,11 @@ data class DivePlan(
 
     val deepestCeiling: Double = segments.maxOfOrNull { it.gfCeilingAtEnd } ?: 0.0
 
-    val segmentsCollapsed = segments.toMutableList().compactSimilarSegments()
+    val segmentsCollapsed: List<DiveSegment> = segments.toMutableList().compactSimilarSegments().toList()
 
     val isEmpty = segments.isEmpty()
 
-    val maximumDepth: Double = segmentsCollapsed.maxByOrNull { it.startDepth }?.startDepth ?: 0.0
+    val maximumDepth: Double = segmentsCollapsed.maxOfOrNull { it.maxDepth } ?: 0.0
     val runtime: Int = segmentsCollapsed.sumOf { it.duration }
 
     val maxTimeToSurface: DiveSegment? = segments.maxByOrNull { it.ttsAfter }
