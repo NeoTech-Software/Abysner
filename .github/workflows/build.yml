@@ -1,6 +1,19 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -17,20 +30,22 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4.0.0
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run JVM Tests & Generate Coverage Reports
         run: ./gradlew domain:koverXmlReport composeApp:koverXmlReport
 
       - name: Upload domain coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
+        continue-on-error: true
         with:
           files: domain/build/reports/kover/report.xml
           flags: domain
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload presentation coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
+        continue-on-error: true
         with:
           files: composeApp/build/reports/kover/report.xml
           flags: presentation
@@ -48,6 +63,7 @@ jobs:
 
   android:
     name: Build Android
+    needs: test
     timeout-minutes: 40
     runs-on: ubuntu-latest
     steps:
@@ -58,12 +74,13 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4.0.0
+        uses: gradle/actions/setup-gradle@v4
       - name: Build Android App
         run: ./gradlew androidApp:assembleDebug
 
   ios:
     name: Build iOS
+    needs: test
     timeout-minutes: 40
     runs-on: macos-latest
     steps:
@@ -74,7 +91,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4.0.0
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build iOS
         run: |
