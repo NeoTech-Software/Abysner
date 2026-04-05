@@ -140,7 +140,7 @@ class CompactSimilarSegmentsTest {
             travelSegment(start = 5, startDepth = 9.0, endDepth = 6.0, duration = 1),
             flatSegment(start = 6,  depth = 6.0, duration = 10, type = DiveSegment.Type.DECO_STOP),
         )
-        val result = segments.compactSimilarSegments(compactAscentsBetweenDecoStops = true)
+        val result = segments.compactSimilarSegments(compactAscentsAndStops = true)
         assertEquals(2, result.size, "Expected ascent to be merged into the shallower deco stop")
         result.assertSegment(1, DiveSegment.Type.DECO_STOP, startDepth = 6.0, endDepth = 6.0, duration = 11, gas = airCylinder)
     }
@@ -148,12 +148,59 @@ class CompactSimilarSegmentsTest {
     @Test
     fun compactSimilarSegments_doesNotMergeAscentBetweenDecoStopsWhenDisabled() {
         val segments = mutableListOf(
-            flatSegment(start = 0,  depth = 9.0, duration = 5,  type = DiveSegment.Type.DECO_STOP),
+            flatSegment(start = 0, depth = 9.0, duration = 5, type = DiveSegment.Type.DECO_STOP),
             travelSegment(start = 5, startDepth = 9.0, endDepth = 6.0, duration = 1),
-            flatSegment(start = 6,  depth = 6.0, duration = 10, type = DiveSegment.Type.DECO_STOP),
+            flatSegment(start = 6, depth = 6.0, duration = 10, type = DiveSegment.Type.DECO_STOP),
         )
-        val result = segments.compactSimilarSegments(compactAscentsBetweenDecoStops = false)
+        val result = segments.compactSimilarSegments(compactAscentsAndStops = false)
         assertEquals(3, result.size, "Expected segments to remain separate when compacting is disabled")
+    }
+
+    @Test
+    fun compactSimilarSegments_mergesGasSwitchIntoFollowingDecoStopWhenEnabled() {
+        val segments = mutableListOf(
+            flatSegment(start = 0, depth = 9.0, duration = 1, type = DiveSegment.Type.GAS_SWITCH, cylinder = airCylinder),
+            flatSegment(start = 1, depth = 9.0, duration = 5, type = DiveSegment.Type.DECO_STOP, cylinder = nitroxCylinder),
+        )
+        val result = segments.compactSimilarSegments(compactAscentsAndStops = true)
+        assertEquals(1, result.size, "Expected gas switch and deco stop to be merged")
+        result.assertSegment(0, DiveSegment.Type.GAS_SWITCH, startDepth = 9.0, endDepth = 9.0, duration = 6, gas = airCylinder)
+    }
+
+    @Test
+    fun compactSimilarSegments_doesNotMergeGasSwitchIntoDecoStopWhenDisabled() {
+        val segments = mutableListOf(
+            flatSegment(start = 0, depth = 9.0, duration = 1, type = DiveSegment.Type.GAS_SWITCH, cylinder = airCylinder),
+            flatSegment(start = 1, depth = 9.0, duration = 5, type = DiveSegment.Type.DECO_STOP, cylinder = nitroxCylinder),
+        )
+        val result = segments.compactSimilarSegments(compactAscentsAndStops = false)
+        assertEquals(2, result.size, "Expected gas switch and deco stop to remain separate when compacting is disabled")
+    }
+
+    @Test
+    fun compactSimilarSegments_mergesAscentBetweenGasSwitchAndDecoStop() {
+        val segments = mutableListOf(
+            flatSegment(start = 0, depth = 9.0, duration = 1, type = DiveSegment.Type.GAS_SWITCH, cylinder = airCylinder),
+            travelSegment(start = 1, startDepth = 9.0, endDepth = 6.0, duration = 1, cylinder = airCylinder),
+            flatSegment(start = 2, depth = 6.0, duration = 10, type = DiveSegment.Type.DECO_STOP,  cylinder = nitroxCylinder),
+        )
+        val result = segments.compactSimilarSegments(compactAscentsAndStops = true)
+        assertEquals(2, result.size, "Expected ascent to be folded into the shallower deco stop")
+        result.assertSegment(0, DiveSegment.Type.GAS_SWITCH, startDepth = 9.0, endDepth = 9.0, duration = 1,  gas = airCylinder)
+        result.assertSegment(1, DiveSegment.Type.DECO_STOP,  startDepth = 6.0, endDepth = 6.0, duration = 11, gas = nitroxCylinder)
+    }
+
+    @Test
+    fun compactSimilarSegments_mergesAscentBetweenDecoStopAndGasSwitch() {
+        val segments = mutableListOf(
+            flatSegment(start = 0, depth = 9.0, duration = 5, type = DiveSegment.Type.DECO_STOP, cylinder = airCylinder),
+            travelSegment(start = 5, startDepth = 9.0, endDepth = 6.0, duration = 1, cylinder = airCylinder),
+            flatSegment(start = 6, depth = 6.0, duration = 1, type = DiveSegment.Type.GAS_SWITCH, cylinder = nitroxCylinder),
+        )
+        val result = segments.compactSimilarSegments(compactAscentsAndStops = true)
+        assertEquals(2, result.size, "Expected ascent to be folded into the shallower gas switch")
+        result.assertSegment(0, DiveSegment.Type.DECO_STOP,  startDepth = 9.0, endDepth = 9.0, duration = 5, gas = airCylinder)
+        result.assertSegment(1, DiveSegment.Type.GAS_SWITCH, startDepth = 6.0, endDepth = 6.0, duration = 2, gas = nitroxCylinder)
     }
 }
 

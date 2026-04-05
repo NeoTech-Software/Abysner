@@ -24,29 +24,21 @@ import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 
 object PreviewData {
 
+    private val airCylinder = Cylinder.steel12Liter(gas = Gas.Air)
+    private val nitrox50Cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50)
+    private val nitrox80Cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80)
+
     val divePlan1Segments by lazy {
         persistentListOf(
-            DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
+            DiveProfileSection(16, 45, airCylinder),
         )
     }
 
     val divePlan1Cylinders by lazy {
         listOf(
-            PlannedCylinderModel(
-                cylinder = Cylinder.steel12Liter(gas = Gas.Air, pressure = 232.0),
-                isLocked = true,
-                isChecked = true
-            ),
-            PlannedCylinderModel(
-                cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50, pressure = 207.0),
-                isLocked = false,
-                isChecked = true
-            ),
-            PlannedCylinderModel(
-                cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80, pressure = 207.0),
-                isLocked = false,
-                isChecked = false
-            ),
+            PlannedCylinderModel(cylinder = airCylinder, isLocked = true, isChecked = true),
+            PlannedCylinderModel(cylinder = nitrox50Cylinder, isLocked = false, isChecked = true),
+            PlannedCylinderModel(cylinder = nitrox80Cylinder, isLocked = false, isChecked = false),
         )
     }
 
@@ -56,6 +48,42 @@ object PreviewData {
         }.addDive(
             plan = divePlan1Segments,
             cylinders = divePlan1Cylinders.filter { it.isChecked }.map { it.cylinder },
+        )
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+        DivePlanSet(
+            base = divePlan,
+            deeper = null,
+            longer = null,
+            gasPlan = gasPlan
+        )
+    }
+
+    val divePlan2Segments by lazy {
+        persistentListOf(DiveProfileSection(35, 68, airCylinder))
+    }
+
+    val divePlan2Cylinders by lazy {
+        listOf(
+            PlannedCylinderModel(cylinder = airCylinder, isLocked = true, isChecked = true),
+            PlannedCylinderModel(cylinder = nitrox50Cylinder, isLocked = false, isChecked = true),
+            PlannedCylinderModel(cylinder = nitrox80Cylinder, isLocked = false, isChecked = true),
+        )
+    }
+
+    /**
+     * A deliberately extreme dive plan designed to trigger the maximum number of warnings in the
+     * UI for preview/testing purposes.
+     */
+    val divePlan2: DivePlanSet by lazy {
+        val divePlan = DivePlanner(Configuration(
+            // Aggressive gradient factors to trigger warnings and errors without making the profile
+            // too long
+            gfLow = 0.85,
+            gfHigh = 0.90
+        ))
+            .addDive(
+                plan = divePlan2Segments,
+                cylinders = divePlan2Cylinders.filter { it.isChecked }.map { it.cylinder },
         )
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
         DivePlanSet(

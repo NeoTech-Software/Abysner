@@ -23,3 +23,10 @@ fun PlannerScreenScreenshotTest() {
     PlannerScreenPreview()
 }
 
+@PreviewTest
+@PreviewForScreenshotTestsMaxHeight
+@Composable
+fun PlannerScreenWithWarningsScreenshotTest() {
+    PlannerScreenWithWarningsPreview()
+}
+
