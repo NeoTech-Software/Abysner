@@ -1,6 +1,6 @@
 # Terms and Conditions for Abysner
 
-**Last Updated:** 9 august 2024
+**Last Updated:** 5 April 2026
 
 ## Introduction
 Welcome to Abysner! Before you can use the App, you must review and agree to the following Terms and Conditions. By clicking the "Accept" button, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree, please click "Decline" and do not use the App. Please read the Terms and Conditions carefully.
@@ -46,4 +46,4 @@ The Owner reserves the right to modify these Terms and Conditions at any time. I
 These Terms and Conditions shall be governed by and construed in accordance with the laws of The Netherlands. Any disputes arising from or in connection with these terms shall be subject to the exclusive jurisdiction of the courts in The Netherlands.
 
 ## 7. Contact Information
-If you have any questions or concerns about these Terms and Conditions, please contact us at [info@abysner.nl](mailto:info@abysner.nl).
+If you have any questions or concerns about these Terms and Conditions, please contact us at [info@abysner.app](mailto:info@abysner.app).
