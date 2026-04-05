@@ -56,6 +56,12 @@ class OxygenToxicityCalculator {
      * logarithmic timescale).
      *
      * Based on: https://thetheoreticaldiver.org/wordpress/index.php/2019/08/15/calculating-oxygen-cns-toxicity/
+     *
+     * Note: In 2025 research suggested relaxing the ppO2 = 1.3 bar single-exposure limit from
+     * 180 to 240 min. If the NOAA table is updated accordingly, the ppO2 ≤ 1.5 curve fit below
+     * should be re-fitted against the new values.
+     * "Revised guideline for CNS oxygen toxicity exposure limits when using an inspired PO2 of
+     * 1.3 atmospheres." https://doi.org/10.28920/dhm55.3.262-270
      */
     private fun getCnsPpo2Slope(ppO2: Double): Double {
         if(ppO2 <= 1.5) {

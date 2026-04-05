@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import org.neotech.app.abysner.presentation.component.core.ifUnspecified
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFontFamilyResolver
@@ -70,6 +71,8 @@ fun BigNumberDisplay(
      */
     widestEstimatedValue: String? = null,
     label: String,
+    valueColor: Color = Color.Unspecified,
+    containerColor: Color = Color.Unspecified,
     onClick: (() -> Unit)? = null,
     showDropDown: Boolean = false
 ) {
@@ -101,7 +104,7 @@ fun BigNumberDisplay(
         },
         enabled = onClick != null,
         modifier = modifier,
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = containerColor.ifUnspecified(MaterialTheme.colorScheme.primaryContainer),
         shape = MaterialTheme.shapes.large,
     ) {
 
@@ -135,7 +138,7 @@ fun BigNumberDisplay(
                         }
                     ),
                     widestEstimatedText = widestEstimatedValue,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = valueColor.ifUnspecified(MaterialTheme.colorScheme.primary),
                     style = style,
                     text = value,
                 )

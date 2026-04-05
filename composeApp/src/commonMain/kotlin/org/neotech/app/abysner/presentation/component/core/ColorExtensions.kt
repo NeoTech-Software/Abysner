@@ -16,6 +16,7 @@ import androidx.annotation.Size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import org.neotech.app.abysner.presentation.theme.LocalIsDarkTheme
@@ -23,6 +24,12 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
+
+fun Color.ifUnspecified(fallback: Color): Color = if (isUnspecified) {
+    fallback
+} else {
+    this
+}
 
 fun Color.preMixedWith(color: Color): Color {
     val colorInSameColorSpace = if(colorSpace != color.colorSpace) {
