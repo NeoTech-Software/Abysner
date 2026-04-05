@@ -33,17 +33,24 @@ plugins {
     alias(libs.plugins.kover)
 }
 
+composeCompiler {
+    stabilityConfigurationFiles.add(project.layout.projectDirectory.file("compose-stability.conf"))
+}
+
 kotlin {
 
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
-    android {
+    androidLibrary {
         namespace = "nl.neotech.app.abysner.composeapp"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
-        androidResources.enable = true
+
+        androidResources {
+            enable = true
+        }
     }
 
     // Do not really support desktop, but this is required to get previews working.
@@ -71,9 +78,7 @@ kotlin {
     sourceSets {
 
         androidMain.dependencies {
-            implementation(libs.jetbrains.compose.ui.tooling.preview)
             implementation(libs.androidx.startup.runtime)
-            implementation(libs.androidx.ui.tooling)
         }
 
         val jvmMain by getting
@@ -107,7 +112,7 @@ kotlin {
             implementation(libs.jetbrains.compose.material)
             implementation(libs.jetbrains.compose.ui)
             implementation(libs.jetbrains.compose.components.resources)
-            implementation(libs.jetbrains.compose.components.ui.tooling.preview)
+            implementation(libs.jetbrains.compose.ui.tooling.preview)
 
             implementation(libs.jetbrains.compose.material3)
             implementation(libs.jetbrains.compose.material.icons)
@@ -154,7 +159,10 @@ dependencies {
     }.forEach {
         add("ksp${it.targetName.capitalizeFirstCharacter()}", libs.kotlinInject.compilerKsp)
     }
+
+    androidRuntimeClasspath(libs.jetbrains.compose.ui.tooling)
 }
+
 
 abstract class GenerateVersionInfoTask @Inject constructor(
     private val execOperations: ExecOperations

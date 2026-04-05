@@ -24,7 +24,6 @@ android {
     namespace = "nl.neotech.app.abysner"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-
     defaultConfig {
         applicationId = "nl.neotech.app.abysner"
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -96,7 +95,5 @@ android {
 dependencies {
     implementation(project(":composeApp"))
     implementation(libs.androidx.activity.compose)
-
-    debugImplementation(libs.androidx.ui.tooling)
 }
 

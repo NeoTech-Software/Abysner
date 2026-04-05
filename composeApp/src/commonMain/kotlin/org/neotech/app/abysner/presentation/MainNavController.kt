@@ -19,7 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import me.tatarka.inject.annotations.Inject
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.di.AppScope
 import org.neotech.app.abysner.presentation.screens.AboutScreen
 import org.neotech.app.abysner.presentation.screens.planner.PlannerScreen
