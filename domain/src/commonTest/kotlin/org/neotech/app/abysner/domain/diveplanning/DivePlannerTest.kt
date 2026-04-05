@@ -228,9 +228,46 @@ class DivePlannerTest {
         plan.assertSegment(11, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 15, gas = bottomGas)
         plan.assertSegment(12, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = bottomGas)
     }
+
+    @Test
+    fun gasSwitchBetweenIdenticalGasMixes_doesNotOccur() {
+        val cylinder1 = Cylinder.steel12Liter(Gas.Air)
+        val cylinder2 = Cylinder.steel12Liter(Gas.Air)
+
+        val planner = DivePlanner(
+            Configuration(
+                maxAscentRate = 5.0,
+                maxDescentRate = 5.0,
+                gfLow = 0.3, gfHigh = 0.7,
+                salinity = Salinity.WATER_FRESH,
+                algorithm = Algorithm.BUHLMANN_ZH16C,
+                decoStepSize = 3,
+                lastDecoStopDepth = 3,
+                gasSwitchTime = 1,
+            )
+        )
+
+        // Both cylinders are in the list: the user-planned segment uses cylinder2, the
+        // decompression planner will have both cylinders available, but with cylinder1 first in the
+        // list. A switch to that first cylinder should not occur, since the gas mixes are the same.
+        val divePlan = planner.addDive(
+            plan = listOf(DiveProfileSection(duration = 20, depth = 20, cylinder = cylinder2)),
+            cylinders = listOf(cylinder1, cylinder2),
+        )
+
+        val gasSwitchSegments = divePlan.segmentsCollapsed.filter { it.type == DiveSegment.Type.GAS_SWITCH }
+        assertEquals(0, gasSwitchSegments.size, "Expected no GAS_SWITCH between identical gas mixes, found switch(es) at: ${gasSwitchSegments.map { "${it.endDepth}m" }}")
+    }
 }
 
-fun List<DiveSegment>.assertSegment(index: Int, type: DiveSegment.Type, startDepth: Double, endDepth: Double, duration: Int, gas: Cylinder) {
+fun List<DiveSegment>.assertSegment(
+    index: Int,
+    type: DiveSegment.Type,
+    startDepth: Double,
+    endDepth: Double,
+    duration: Int,
+    gas: Cylinder
+) {
     val actual = this[index]
     assertEquals(type, actual.type, "Segment $index: type mismatch")
     assertEquals(startDepth, actual.startDepth, "Segment $index: startDepth mismatch")
