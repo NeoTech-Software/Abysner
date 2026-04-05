@@ -306,8 +306,8 @@ fun GasLimitsTable(
             Text(modifier = Modifier.weight(0.3f), text = "${gasAtDepth.depth.toInt()}m")
 
             val alertSeverityDensity = when {
-                gasAtDepth.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.01) -> AlertSeverity.ERROR
-                gasAtDepth.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.01) -> AlertSeverity.WARNING
+                gasAtDepth.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.001) -> AlertSeverity.ERROR
+                gasAtDepth.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.001) -> AlertSeverity.WARNING
                 else -> AlertSeverity.NONE
             }
             TextAlert(
@@ -316,7 +316,7 @@ fun GasLimitsTable(
                 text = DecimalFormat.format(2, gasAtDepth.density),
             )
 
-            val alertSeverityPPO2 = if (gasAtDepth.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.01)) {
+            val alertSeverityPPO2 = if (gasAtDepth.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.001)) {
                 AlertSeverity.ERROR
             } else {
                 AlertSeverity.NONE
