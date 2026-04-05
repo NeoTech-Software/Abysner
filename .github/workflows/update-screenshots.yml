@@ -1,0 +1,59 @@
+name: Update Screenshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-screenshots:
+    name: Update Screenshot References
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Update Screenshot Tests
+        run: ./gradlew androidApp:updateDebugScreenshotTest
+
+      - name: Commit updated screenshots to new branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          SOURCE_BRANCH="${{ github.ref_name }}"
+          TARGET_BRANCH="${SOURCE_BRANCH}-update-screenshots"
+
+          if [[ "$SOURCE_BRANCH" == "main" ]]; then
+            echo "::error::Screenshots on 'main' must be updated through a PR, not directly via this workflow."
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --heads origin "$TARGET_BRANCH" > /dev/null 2>&1; then
+            echo "::error::Branch '$TARGET_BRANCH' already exists. Please review and delete it before running this workflow again."
+            exit 1
+          fi
+
+          git checkout -b "$TARGET_BRANCH"
+          git add androidApp/src/screenshotTestDebug/reference/
+
+          if git diff --cached --quiet; then
+            echo "No screenshot changes detected, nothing to commit."
+          else
+            git commit -m "Update screenshot test references"
+            git push origin "$TARGET_BRANCH"
+            echo "Pushed updated screenshots to branch: $TARGET_BRANCH"
+          fi
