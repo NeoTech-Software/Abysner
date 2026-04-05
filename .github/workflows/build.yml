@@ -4,12 +4,14 @@ on: [push, pull_request]
 
 jobs:
   test:
-    name: Run JVM Tests
+    name: Run JVM Tests & Validate Screenshots
     timeout-minutes: 40
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -33,6 +35,16 @@ jobs:
           files: composeApp/build/reports/kover/report.xml
           flags: presentation
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Validate Screenshot Tests
+        run: ./gradlew androidApp:validateDebugScreenshotTest
+
+      - name: Upload screenshot diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-diffs
+          path: androidApp/build/reports/screenshotTest/
 
   android:
     name: Build Android

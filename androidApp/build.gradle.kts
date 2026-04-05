@@ -18,6 +18,8 @@ val abysnerBuildNumber: String by project.properties
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.screenshot)
+    id("screenshot-reference-cleanup")
 }
 
 android {
@@ -89,11 +91,22 @@ android {
     buildFeatures {
         compose = true
     }
+
+    @Suppress("UnstableApiUsage")
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
+screenshotTests {
+    imageDifferenceThreshold = 0.005f // 0.5%
+}
 
 dependencies {
     implementation(project(":composeApp"))
     implementation(libs.androidx.activity.compose)
+
+    screenshotTestImplementation(libs.screenshot.validation.api)
+    screenshotTestImplementation(libs.androidx.ui.tooling)
+    screenshotTestImplementation(libs.jetbrains.compose.material3)
+    screenshotTestImplementation(project(":domain"))
 }
 

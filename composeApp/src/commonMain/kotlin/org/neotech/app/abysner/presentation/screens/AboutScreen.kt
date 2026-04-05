@@ -265,7 +265,7 @@ fun AboutScreen(
 
                         Image(modifier = Modifier.size(100.dp), painter = painterResource(Res.drawable.abysner_logo), contentDescription = null)
                         Text(text = "Abysner", style = MaterialTheme.typography.displayLarge)
-                        Text(modifier = Modifier.padding(top = 4.dp), text = getVersionString(), style = MaterialTheme.typography.bodySmall.copy(color = grayTextColor))
+                        Text(modifier = Modifier.padding(top = 4.dp), text = if (isPreview) "0.0.0-test (preview)" else getVersionString(), style = MaterialTheme.typography.bodySmall.copy(color = grayTextColor))
                         Text(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(top = 32.dp),

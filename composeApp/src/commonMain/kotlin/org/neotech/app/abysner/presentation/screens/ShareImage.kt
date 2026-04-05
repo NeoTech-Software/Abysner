@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -166,7 +167,11 @@ fun ShareImage(
                         modifier = Modifier.padding(top = 16.dp)
                             .align(Alignment.CenterHorizontally),
                         textAlign = TextAlign.Center,
-                        text = "Created with Abysner for ${platform().humanReadable} ${VersionInfo.VERSION_NAME} (${VersionInfo.COMMIT_HASH})\non ${date.format(LocalDate.Formats.ISO)}"
+                        text = if (LocalInspectionMode.current) {
+                            "Created with Abysner for Android 0.0.0-test (preview)\non 2026-04-05"
+                        } else {
+                            "Created with Abysner for ${platform().humanReadable} ${VersionInfo.VERSION_NAME} (${VersionInfo.COMMIT_HASH})\non ${date.format(LocalDate.Formats.ISO)}"
+                        }
                     )
                 }
             }
@@ -177,9 +182,9 @@ fun ShareImage(
 
 @Preview
 @Composable
-private fun ShareImagePreview() {
+fun ShareImagePreview() {
     ShareImage(
-        divePlan = PreviewData.divePlan,
+        divePlan = PreviewData.divePlan1,
         settingsModel = SettingsModel(
             showBasicDecoTable = true,
             termsAndConditionsAccepted = true

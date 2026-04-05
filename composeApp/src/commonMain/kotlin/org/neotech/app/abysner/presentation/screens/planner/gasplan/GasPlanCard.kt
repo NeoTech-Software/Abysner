@@ -335,7 +335,7 @@ fun GasLimitsTable(
 private fun GasPlanCardComponentPreview() {
     AbysnerTheme {
         GasPlanCardComponent(
-            divePlanSet = PreviewData.divePlan,
+            divePlanSet = PreviewData.divePlan1,
             planningException = null,
             isLoading = false
         )
