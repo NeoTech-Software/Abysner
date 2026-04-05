@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -39,6 +40,7 @@ import androidx.navigation.compose.rememberNavController
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.settings.SettingsRepository
+import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.settings.model.ThemeMode
 import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTitle
 import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreference
@@ -54,6 +56,21 @@ typealias SettingsScreen = @Composable (navController: NavHostController) -> Uni
 fun SettingsScreen(
     settingsRepository: SettingsRepository,
     @Assisted navController: NavHostController = rememberNavController()
+) {
+    val settings by settingsRepository.settings.collectAsState()
+    SettingsScreen(
+        navController = navController,
+        settings = settings,
+        updateSettings = settingsRepository::updateSettings,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(
+    navController: NavHostController = rememberNavController(),
+    settings: SettingsModel,
+    updateSettings: ((SettingsModel) -> SettingsModel) -> Unit,
 ) {
     AbysnerTheme {
         Scaffold(
@@ -85,8 +102,6 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                val settings by settingsRepository.settings.collectAsState()
-
                 Column(modifier = Modifier.padding(scaffoldPadding)) {
                     SettingsSubTitle(subTitle = "Appearance")
 
@@ -97,7 +112,7 @@ fun SettingsScreen(
                         selectedItemIndex = ThemeMode.entries.indexOf(settings.themeMode),
                         itemToStringMapper = { it.humanReadableName },
                         onItemPicked = { picked ->
-                            settingsRepository.updateSettings { it.copy(themeMode = picked) }
+                            updateSettings { it.copy(themeMode = picked) }
                         },
                     )
 
@@ -108,13 +123,20 @@ fun SettingsScreen(
                         value = "Display a simpler deco plan, by removing less important details such as ascents between deco stops.",
                         isChecked = settings.showBasicDecoTable,
                         onCheckedChanged = { checked ->
-                            settingsRepository.updateSettings {
-                                it.copy(showBasicDecoTable = checked)
-                            }
+                            updateSettings { it.copy(showBasicDecoTable = checked) }
                         }
                     )
                 }
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun SettingsScreenPreview() {
+    SettingsScreen(
+        settings = SettingsModel(),
+        updateSettings = {}
+    )
 }

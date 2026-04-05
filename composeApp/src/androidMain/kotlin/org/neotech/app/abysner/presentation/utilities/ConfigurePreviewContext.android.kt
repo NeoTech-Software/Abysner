@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -10,15 +10,13 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
+package org.neotech.app.abysner.presentation.utilities
+
+import androidx.compose.runtime.Composable
+import org.jetbrains.compose.resources.PreviewContextConfigurationEffect
+
+@Composable
+actual fun ConfigurePreviewContext() {
+    PreviewContextConfigurationEffect()
 }
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
-    }
-}

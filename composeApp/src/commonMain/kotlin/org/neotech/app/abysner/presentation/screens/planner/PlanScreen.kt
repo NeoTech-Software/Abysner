@@ -52,26 +52,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
-import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
-import org.neotech.app.abysner.domain.settings.SettingsRepository
+import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.screens.ShareImage
@@ -85,31 +80,60 @@ import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconSet
 import org.neotech.app.abysner.presentation.component.BitmapRenderController
 import org.neotech.app.abysner.presentation.component.LocalBitmapRenderController
+import org.neotech.app.abysner.presentation.preview.DEVICE_PHONE_MAX_HEIGHT
+import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.utilities.shareImageBitmap
 
 typealias PlannerScreen = @Composable (navController: NavHostController) -> Unit
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Inject
 @Composable
 fun PlannerScreen(
     viewModelCreator: () -> PlanScreenViewModel,
     @Assisted navController: NavHostController = rememberNavController()
 ) {
-
     val viewModel = viewModel {
         viewModelCreator()
     }
 
     val viewState: PlanScreenViewModel.ViewState by viewModel.uiState.collectAsState()
 
+    PlannerScreen(
+        viewState = viewState,
+        navController = navController,
+        onAddCylinder = { viewModel.addCylinder(it) },
+        onUpdateCylinder = { viewModel.updateCylinder(it) },
+        onRemoveCylinder = { viewModel.removeCylinder(it) },
+        onToggleCylinder = { cylinder, isChecked -> viewModel.toggleCylinder(cylinder, isChecked) },
+        onAddSegment = { viewModel.addSegment(it) },
+        onUpdateSegment = { index, segment -> viewModel.updateSegment(index, segment) },
+        onRemoveSegment = { viewModel.removeSegment(it) },
+        onContingencyInputChanged = { deeper, longer -> viewModel.setContingency(deeper, longer) },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlannerScreen(
+    viewState: PlanScreenViewModel.ViewState,
+    navController: NavHostController = rememberNavController(),
+    onAddCylinder: (Cylinder) -> Unit = {},
+    onUpdateCylinder: (Cylinder) -> Unit = {},
+    onRemoveCylinder: (Cylinder) -> Unit = {},
+    onToggleCylinder: (Cylinder, Boolean) -> Unit = { _, _ -> },
+    onAddSegment: (DiveProfileSection) -> Unit = {},
+    onUpdateSegment: (Int, DiveProfileSection) -> Unit = { _, _ -> },
+    onRemoveSegment: (Int) -> Unit = {},
+    onContingencyInputChanged: (Boolean, Boolean) -> Unit = { _, _ -> },
+) {
+
+    val showCylinderPickerBottomSheet = remember { mutableStateOf(false) }
+    val cylinderBeingEdited: MutableState<Cylinder?> = remember { mutableStateOf(null) }
+
+    val segmentBeingEdited: MutableState<Int?> = remember { mutableStateOf(null) }
+    val showSegmentPickerBottomSheet = remember { mutableStateOf(false) }
+
     AbysnerTheme {
-
-        val showCylinderPickerBottomSheet = remember { mutableStateOf(false) }
-        val cylinderBeingEdited: MutableState<Cylinder?> = remember { mutableStateOf(null) }
-
-        val segmentBeingEdited: MutableState<Int?> = remember { mutableStateOf(null) }
-        val showSegmentPickerBottomSheet = remember { mutableStateOf(false) }
 
         Scaffold(
             topBar = {
@@ -150,10 +174,10 @@ fun PlannerScreen(
                             showCylinderPickerBottomSheet.value = true
                         },
                         onRemoveCylinder = { gas ->
-                            viewModel.removeCylinder(gas)
+                            onRemoveCylinder(gas)
                         },
                         onCylinderChecked = { gas, isChecked ->
-                            viewModel.toggleCylinder(gas, isChecked)
+                            onToggleCylinder(gas, isChecked)
                         },
                         onEditCylinder = { gas ->
                             cylinderBeingEdited.value = gas
@@ -169,7 +193,7 @@ fun PlannerScreen(
                             showSegmentPickerBottomSheet.value = true
                         },
                         onRemoveSegment = { index, _ ->
-                            viewModel.removeSegment(index)
+                            onRemoveSegment(index)
                         },
                         onEditSegment = { index, _ ->
                             segmentBeingEdited.value = index
@@ -183,7 +207,7 @@ fun PlannerScreen(
                         planningException = viewState.divePlanSet.exceptionOrNull(),
                         isLoading = viewState.isCalculatingDivePlan,
                         onContingencyInputChanged = { deeper, longer ->
-                            viewModel.setContingency(deeper, longer)
+                            onContingencyInputChanged(deeper, longer)
                         }
                     )
                     GasPlanCardComponent(
@@ -198,15 +222,17 @@ fun PlannerScreen(
                 show = showCylinderPickerBottomSheet,
                 configuration = viewState.configuration,
                 cylinderBeingEdited = cylinderBeingEdited,
-                viewModel = viewModel,
+                onAddCylinder = onAddCylinder,
+                onUpdateCylinder = onUpdateCylinder,
             )
 
             ShowSegmentPickerBottomSheet(
                 show = showSegmentPickerBottomSheet,
                 configuration = viewState.configuration,
                 segmentBeingEdited = segmentBeingEdited,
-                viewModel = viewModel,
-                viewState = viewState
+                viewState = viewState,
+                onAddSegment = onAddSegment,
+                onUpdateSegment = onUpdateSegment,
             )
         }
     }
@@ -220,7 +246,8 @@ private fun ShowSegmentPickerBottomSheet(
     viewState: PlanScreenViewModel.ViewState,
     segmentBeingEdited: MutableState<Int?>,
     configuration: Configuration,
-    viewModel: PlanScreenViewModel,
+    onAddSegment: (DiveProfileSection) -> Unit,
+    onUpdateSegment: (Int, DiveProfileSection) -> Unit,
 ) {
     if (show.value) {
 
@@ -242,9 +269,9 @@ private fun ShowSegmentPickerBottomSheet(
             configuration = configuration,
             onAddOrUpdateDiveSegment = {
                 if (segmentBeingEdited.value != null) {
-                    viewModel.updateSegment(segmentBeingEdited.value!!, it)
+                    onUpdateSegment(segmentBeingEdited.value!!, it)
                 } else {
-                    viewModel.addSegment(it)
+                    onAddSegment(it)
                 }
             }
         ) {
@@ -260,7 +287,8 @@ private fun ShowCylinderPickerBottomSheet(
     show: MutableState<Boolean>,
     configuration: Configuration,
     cylinderBeingEdited: MutableState<Cylinder?>,
-    viewModel: PlanScreenViewModel,
+    onAddCylinder: (Cylinder) -> Unit,
+    onUpdateCylinder: (Cylinder) -> Unit,
 ) {
     if (show.value) {
 
@@ -275,9 +303,9 @@ private fun ShowCylinderPickerBottomSheet(
             maxPPO2Secondary = configuration.maxPPO2Deco,
             onAddOrUpdateCylinder = {
                 if (cylinderBeingEdited.value != null) {
-                    viewModel.updateCylinder(it)
+                    onUpdateCylinder(it)
                 } else {
-                    viewModel.addCylinder(it)
+                    onAddCylinder(it)
                 }
             }
         ) {
@@ -375,45 +403,21 @@ private fun RowScope.AppBarActions(
     }
 }
 
-@Preview
+@Preview(device = DEVICE_PHONE_MAX_HEIGHT)
 @Composable
-private fun PlannerScreenPreview() {
-
-    val planningRepository = object : PlanningRepository {
-        override val configuration = MutableStateFlow(Configuration())
-
-        override fun updateConfiguration(updateBlock: (Configuration) -> Configuration) = Unit
-
-        override suspend fun getDivePlanInput(): DivePlanInputModel? = null
-
-        override fun setDivePlanInput(divePlanInputModel: DivePlanInputModel) = Unit
-    }
-
-    val settingsRepository = object : SettingsRepository {
-        override val settings = MutableStateFlow(SettingsModel())
-
-        override suspend fun setTermsAndConditionsAccepted(accepted: Boolean) {
-        }
-
-        override suspend fun getSettings(): SettingsModel = settings.value
-
-        override fun updateSettings(updateBlock: (SettingsModel) -> SettingsModel) = Unit
-    }
-
-    val fakeOwner = remember {
-        object : ViewModelStoreOwner {
-            override val viewModelStore: ViewModelStore = ViewModelStore()
-        }
-    }
-
+fun PlannerScreenPreview() {
     CompositionLocalProvider(
-        LocalViewModelStoreOwner provides fakeOwner,
         LocalBitmapRenderController provides remember { BitmapRenderController() },
     ) {
         PlannerScreen(
-            viewModelCreator = {
-                PlanScreenViewModel(planningRepository, settingsRepository)
-            }
+            viewState = PlanScreenViewModel.ViewState(
+                isLoading = false,
+                isCalculatingDivePlan = false,
+                segments = PreviewData.divePlan1Segments,
+                availableGas = PreviewData.divePlan1Cylinders,
+                configuration = PreviewData.divePlan1.configuration,
+                divePlanSet = Result.success(PreviewData.divePlan1)
+            )
         )
     }
 }

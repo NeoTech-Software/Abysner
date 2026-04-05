@@ -19,28 +19,50 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 
 object PreviewData {
-    val divePlan: DivePlanSet
-        get() {
-            val divePlan = DivePlanner().apply {
-                configuration = Configuration()
-            }.addDive(
-                plan = persistentListOf(
-                    DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
-                ),
-                cylinders = persistentListOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
-            )
 
-            val gasPlan = GasPlanner().calculateGasPlan(
-                divePlan
-            )
-            return DivePlanSet(
-                base = divePlan,
-                deeper = null,
-                longer = null,
-                gasPlan = gasPlan
-            )
-        }
+    val divePlan1Segments by lazy {
+        persistentListOf(
+            DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
+        )
+    }
+
+    val divePlan1Cylinders by lazy {
+        listOf(
+            PlannedCylinderModel(
+                cylinder = Cylinder.steel12Liter(gas = Gas.Air, pressure = 232.0),
+                isLocked = true,
+                isChecked = true
+            ),
+            PlannedCylinderModel(
+                cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50, pressure = 207.0),
+                isLocked = false,
+                isChecked = true
+            ),
+            PlannedCylinderModel(
+                cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80, pressure = 207.0),
+                isLocked = false,
+                isChecked = false
+            ),
+        )
+    }
+
+    val divePlan1: DivePlanSet by lazy {
+        val divePlan = DivePlanner().apply {
+            configuration = Configuration()
+        }.addDive(
+            plan = divePlan1Segments,
+            cylinders = divePlan1Cylinders.filter { it.isChecked }.map { it.cylinder },
+        )
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+        DivePlanSet(
+            base = divePlan,
+            deeper = null,
+            longer = null,
+            gasPlan = gasPlan
+        )
+    }
 }

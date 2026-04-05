@@ -1,10 +1,11 @@
 [versions]
 ####### START: Android target specific #######
-agp = "9.0.1"
+agp = "9.1.0"
 android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
 uiTooling = "1.10.6"
+screenshot = "0.0.1-alpha14"
 startupRuntime = "1.2.0"
 androidx-activityCompose = "1.13.0"
 ####### END:   Android target specific #######
@@ -63,6 +64,7 @@ jetbrains-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime"
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startupRuntime" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
 ####### END:   Android target specific #######
 
 # Graphs & Plots
@@ -77,19 +79,20 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore", version
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.10.0" }
 
-
 # File IO
 okio = { module = "com.squareup.okio:okio", version = "3.17.0" }
 
 # User data folder access
 appdirs = { module = "ca.gosyer:kotlin-multiplatform-appdirs", version = "2.0.0" }
 
+# Markdown
 markdown-parser = { module = "org.jetbrains:markdown", version = "0.7.3" }
 markdown-render = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version = "0.39.2" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidKmpLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}

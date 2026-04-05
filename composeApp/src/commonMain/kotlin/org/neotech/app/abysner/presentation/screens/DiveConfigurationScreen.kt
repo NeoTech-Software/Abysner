@@ -78,6 +78,21 @@ fun DiveConfigurationScreen(
     planningRepository: PlanningRepository,
     @Assisted navController: NavHostController = rememberNavController()
 ) {
+    val configuration by planningRepository.configuration.collectAsState()
+    DiveConfigurationScreen(
+        navController = navController,
+        configuration = configuration,
+        updateConfiguration = planningRepository::updateConfiguration,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DiveConfigurationScreen(
+    navController: NavHostController = rememberNavController(),
+    configuration: Configuration,
+    updateConfiguration: ((Configuration) -> Configuration) -> Unit,
+) {
     AbysnerTheme {
         Scaffold(
             topBar = {
@@ -108,7 +123,6 @@ fun DiveConfigurationScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                val configuration by planningRepository.configuration.collectAsState()
 
                 Column(modifier = Modifier.padding(paddingValues)) {
                     SettingsSubTitle(subTitle = "Algorithm")
@@ -124,9 +138,7 @@ fun DiveConfigurationScreen(
                             it.shortName
                         }
                     ) { algorithm ->
-                        planningRepository.updateConfiguration {
-                            it.copy(algorithm = algorithm)
-                        }
+                        updateConfiguration { it.copy(algorithm = algorithm) }
                     }
 
                     GradientFactorPreference(
@@ -135,7 +147,7 @@ fun DiveConfigurationScreen(
                         gfLow = (configuration.gfLow * 100.0).toInt(),
                         gfHigh = (configuration.gfHigh * 100.0).toInt(),
                     ) { gfLowNew, gfHighNew ->
-                        planningRepository.updateConfiguration {
+                        updateConfiguration {
                             it.copy(
                                 gfLow = gfLowNew / 100.0,
                                 gfHigh = gfHighNew / 100.0
@@ -160,9 +172,7 @@ fun DiveConfigurationScreen(
                             it.humanReadableName
                         }
                     ) { salinity ->
-                        planningRepository.updateConfiguration {
-                            it.copy(salinity = salinity)
-                        }
+                        updateConfiguration { it.copy(salinity = salinity) }
                     }
 
                     NumberPreference(
@@ -174,9 +184,7 @@ fun DiveConfigurationScreen(
                         valueFormatter = { "$it m"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" m")
                     ) { altitude ->
-                        planningRepository.updateConfiguration {
-                            it.copy(altitude = altitude.toDouble())
-                        }
+                        updateConfiguration { it.copy(altitude = altitude.toDouble()) }
                     }
 
 
@@ -190,9 +198,7 @@ fun DiveConfigurationScreen(
                         valueFormatter = { "$it m/min"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" m/min")
                     ) { ascentRate ->
-                        planningRepository.updateConfiguration {
-                            it.copy(maxAscentRate = ascentRate.toDouble())
-                        }
+                        updateConfiguration { it.copy(maxAscentRate = ascentRate.toDouble()) }
                     }
                     NumberPreference(
                         label = "Descent speed",
@@ -202,10 +208,8 @@ fun DiveConfigurationScreen(
                         maxValue = 40,
                         valueFormatter = { "$it m/min"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" m/min")
-                    ) {descentRate ->
-                        planningRepository.updateConfiguration {
-                            it.copy(maxDescentRate = descentRate.toDouble())
-                        }
+                    ) { descentRate ->
+                        updateConfiguration { it.copy(maxDescentRate = descentRate.toDouble()) }
                     }
                     NumberPreference(
                         label = "Gas usage",
@@ -216,9 +220,7 @@ fun DiveConfigurationScreen(
                         valueFormatter = { "$it l/min"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" l/min")
                     ) { sacRate ->
-                        planningRepository.updateConfiguration {
-                            it.copy(sacRate = sacRate.toDouble())
-                        }
+                        updateConfiguration { it.copy(sacRate = sacRate.toDouble()) }
                     }
 
                     NumberPreference(
@@ -230,9 +232,7 @@ fun DiveConfigurationScreen(
                         valueFormatter = { "$it l/min"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" l/min")
                     ) { sacRate ->
-                        planningRepository.updateConfiguration {
-                            it.copy(sacRateOutOfAir = sacRate.toDouble())
-                        }
+                        updateConfiguration { it.copy(sacRateOutOfAir = sacRate.toDouble()) }
                     }
 
                     SettingsSubTitle(subTitle = "Decompression & Planing")
@@ -243,9 +243,7 @@ fun DiveConfigurationScreen(
                         value = "If while ascending to a deco stop the diver already off-gassed enough, force a minimal deco stop of 1 minute instead of skipping the stop.",
                         isChecked = configuration.forceMinimalDecoStopTime
                     ) { isChecked ->
-                        planningRepository.updateConfiguration {
-                            it.copy(forceMinimalDecoStopTime = isChecked)
-                        }
+                        onConfigurationChanged(configuration.copy(forceMinimalDecoStopTime = isChecked))
                     }
                      */
 
@@ -263,9 +261,7 @@ fun DiveConfigurationScreen(
                             "$it m"
                         }
                     ) { decoStepSize ->
-                        planningRepository.updateConfiguration {
-                            it.copy(decoStepSize = decoStepSize)
-                        }
+                        updateConfiguration { it.copy(decoStepSize = decoStepSize) }
                     }
 
                     SingleChoicePreference(
@@ -282,9 +278,7 @@ fun DiveConfigurationScreen(
                             "$it m"
                         }
                     ) { lastDecoStopDepth ->
-                        planningRepository.updateConfiguration {
-                            it.copy(lastDecoStopDepth = lastDecoStopDepth)
-                        }
+                        updateConfiguration { it.copy(lastDecoStopDepth = lastDecoStopDepth) }
                     }
 
                     NumberPreference(
@@ -296,9 +290,7 @@ fun DiveConfigurationScreen(
                         valueFormatter = { "$it min"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" min")
                     ) { gasSwitchTime ->
-                        planningRepository.updateConfiguration {
-                            it.copy(gasSwitchTime = gasSwitchTime)
-                        }
+                        updateConfiguration { it.copy(gasSwitchTime = gasSwitchTime) }
                     }
 
                     val allowedPPO2values = persistentListOf(1.2, 1.3, 1.4, 1.5, 1.6)
@@ -327,9 +319,7 @@ fun DiveConfigurationScreen(
                             "$it"
                         }
                     ) { maxPPO2Travel ->
-                        planningRepository.updateConfiguration {
-                            it.copy(maxPPO2 = maxPPO2Travel)
-                        }
+                        updateConfiguration { it.copy(maxPPO2 = maxPPO2Travel) }
                     }
 
                     SingleChoicePreference(
@@ -341,9 +331,7 @@ fun DiveConfigurationScreen(
                             "$it"
                         }
                     ) { maxPPO2 ->
-                        planningRepository.updateConfiguration {
-                            it.copy(maxPPO2Deco = maxPPO2)
-                        }
+                        updateConfiguration { it.copy(maxPPO2Deco = maxPPO2) }
                     }
 
                     SettingsSubTitle(subTitle = "Multi-level")
@@ -353,9 +341,7 @@ fun DiveConfigurationScreen(
                         value = "If ascending from one section of a multi-level dive to another allow the automatic usage of deco gas. Gas will be switched back to the chosen gas for that section once the desired depth is reached.",
                         isChecked = configuration.useDecoGasBetweenSections
                     ) { isChecked ->
-                        planningRepository.updateConfiguration {
-                            it.copy(useDecoGasBetweenSections = isChecked)
-                        }
+                        updateConfiguration { it.copy(useDecoGasBetweenSections = isChecked) }
                     }
 
                     SettingsSubTitle(subTitle = "Contingency plan")
@@ -369,9 +355,7 @@ fun DiveConfigurationScreen(
                         valueFormatter = { "$it m"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" m")
                     ) { deeper ->
-                        planningRepository.updateConfiguration {
-                            it.copy(contingencyDeeper = deeper)
-                        }
+                        updateConfiguration { it.copy(contingencyDeeper = deeper) }
                     }
 
                     NumberPreference(
@@ -383,9 +367,7 @@ fun DiveConfigurationScreen(
                         valueFormatter = { "$it min"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" min")
                     ) { longer ->
-                        planningRepository.updateConfiguration {
-                            it.copy(contingencyLonger = longer)
-                        }
+                        updateConfiguration { it.copy(contingencyLonger = longer) }
                     }
 
                 }
@@ -503,6 +485,15 @@ fun GradientFactorPreferenceDialog(
 
 @Preview
 @Composable
+fun DiveConfigurationScreenPreview() {
+    DiveConfigurationScreen(
+        configuration = Configuration(),
+        updateConfiguration = {}
+    )
+}
+
+@Preview
+@Composable
 fun GradientFactorPreferenceDialogPreview() {
     GradientFactorPreferenceDialog(
         title = "Gradient factor",
@@ -510,10 +501,3 @@ fun GradientFactorPreferenceDialogPreview() {
         gfHigh = 70
     )
 }
-
-
-
-
-
-
-

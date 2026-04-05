@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.presentation.screens.terms_and_conditions
 
+import abysner.composeapp.generated.resources.Res
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -47,6 +49,7 @@ import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownPadding
+import kotlinx.coroutines.runBlocking
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -58,6 +61,7 @@ import org.neotech.app.abysner.presentation.component.core.withoutBottom
 import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.ViewState
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.EventEffect
+import org.neotech.app.abysner.presentation.utilities.ConfigurePreviewContext
 import org.neotech.app.abysner.presentation.utilities.closeApp
 import org.neotech.app.abysner.presentation.utilities.consumed
 
@@ -199,54 +203,11 @@ fun TermsAndConditionsScreen(
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 @Preview
-private fun TermsAndConditionsScreenPreview() {
-
-    val terms = """
-        # Lorem Ipsum Dolor Sit Amet
-
-        **Lorem Ipsum:** Consectetur Adipiscing Elit
-
-        ## Lorem Ipsum
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
-
-        ## 1. Lorem Ipsum
-
-        - **Lorem:** Lorem ipsum dolor sit amet.
-        - **Ipsum:** Consectetur adipiscing elit.
-        - **Dolor:** Sed do eiusmod tempor.
-        - **Sit:** Incididunt ut labore et.
-        - **Amet:** Dolore magna aliqua.
-        - **Consectetur:** Ut enim ad minim veniam.
-
-        ## 2. Lorem Ipsum
-        Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-
-        ## 3. Lorem Ipsum
-
-        ### 3.1. Lorem Ipsum
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-
-        ### 3.2. Lorem Ipsum Dolor
-        Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-
-        ## 4. Lorem Ipsum
-
-        ### 4.1. Lorem Ipsum
-        Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-        ### 4.2. Lorem Ipsum Dolor
-        Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-
-        ## 5. Lorem Ipsum
-        Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse.
-
-        ## 6. Lorem Ipsum
-        Sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet.
-
-        ## 7. Lorem Ipsum
-        Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, [lorem@ipsum.dolor](mailto:lorem@ipsum.dolor).
-
-    """.trimIndent()
+fun TermsAndConditionsScreenPreview() {
+    ConfigurePreviewContext()
+    val terms = runBlocking {
+        Res.readBytes("files/terms-and-conditions.md").decodeToString()
+    }
 
     TermsAndConditionsScreen(
         navController = rememberNavController(),

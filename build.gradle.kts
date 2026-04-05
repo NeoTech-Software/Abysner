@@ -15,6 +15,7 @@ plugins {
     alias(libs.plugins.androidKmpLibrary) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
     alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.screenshot) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     // Applied to the root to produce an aggregated coverage report across all modules.
     alias(libs.plugins.kover)
