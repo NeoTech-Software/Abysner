@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
+import org.neotech.app.abysner.presentation.utilities.combine
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -63,9 +64,6 @@ class PlanScreenViewModel(
         flow = inputState,
         flow2 = planningRepository.configuration,
     ) { inputState, configuration, ->
-        // For now it seems the recalculation is so fast, that showing a loading state is kinda pointless.
-        // Maybe instead of a full loading status, a small indicator somewhere can show whether or
-        // not recalculation is happening?
         isCalculatingDivePlan.value = true
         val result = measureTimedValue {
             calculateDivePlan(inputState, configuration)
@@ -85,20 +83,22 @@ class PlanScreenViewModel(
             Result.success(null)
         )
 
-    val uiState: StateFlow<ViewState> =
-        combine(inputState, divePlanSet, isCalculatingDivePlan, isLoading, settingsRepository.settings) { input, divePlan, isCalculatingDivePlan, isLoading, settings ->
-            ViewState(
+    val uiState: StateFlow<UiState> =
+        combine(inputState, divePlanSet, isLoading, isCalculatingDivePlan, settingsRepository.settings, planningRepository.configuration) {
+            input, divePlan, isLoading, isCalculatingDivePlan, settings, configuration ->
+            UiState(
                 segments = input.plannedProfile,
                 availableGas = input.cylinders,
                 isCalculatingDivePlan = isCalculatingDivePlan,
                 divePlanSet = divePlan,
                 isLoading = isLoading,
-                settingsModel = settings
+                settingsModel = settings,
+                configuration = configuration,
             )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            initialValue = ViewState()
+            initialValue = UiState()
         )
 
     init {
@@ -314,7 +314,7 @@ class PlanScreenViewModel(
         }
     }
 
-    data class ViewState(
+    data class UiState(
         val segments: List<DiveProfileSection> = defaultProfile,
         val availableGas: List<PlannedCylinderModel> = defaultCylinders,
         val divePlanSet: Result<DivePlanSet?> = Result.success(null),

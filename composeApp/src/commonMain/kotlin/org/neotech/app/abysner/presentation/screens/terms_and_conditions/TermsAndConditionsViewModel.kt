@@ -30,7 +30,7 @@ class TermsAndConditionsViewModel(
     private val settingsRepository: SettingsRepository,
 ): ViewModel() {
 
-    val viewState = MutableStateFlow<ViewState>(ViewState.Loading)
+    val uiState = MutableStateFlow<UiState>(UiState.Loading)
 
     init {
         loadTermsAndConditions()
@@ -43,7 +43,7 @@ class TermsAndConditionsViewModel(
         //       without requiring a network connection on first start.
         viewModelScope.launch {
             // This should not fail, yes it is IO, but the file should always be available, don't catch any error?
-            viewState.value = ViewState.Content(
+            uiState.value = UiState.Content(
                 accepted = settingsRepository.getSettings().termsAndConditionsAccepted,
                 termsAndConditionsText = Res.readBytes("files/terms-and-conditions.md").decodeToString(),
                 acceptAndNavigate = consumed<Boolean>()
@@ -54,14 +54,14 @@ class TermsAndConditionsViewModel(
     fun acceptTermsAndConditions(accepted: Boolean) {
         viewModelScope.launch {
             settingsRepository.setTermsAndConditionsAccepted(accepted)
-            viewState.updateType<ViewState, ViewState.Content> {
+            uiState.updateType<UiState, UiState.Content> {
                 it.copy(acceptAndNavigate = event(accepted, ::onHandledAcceptOrDeclineNavigation))
             }
         }
     }
 
     private fun onHandledAcceptOrDeclineNavigation() {
-        viewState.updateType<ViewState, ViewState.Content> {
+        uiState.updateType<UiState, UiState.Content> {
             it.copy(acceptAndNavigate = consumed<Boolean>())
         }
     }
@@ -76,13 +76,13 @@ class TermsAndConditionsViewModel(
         }
     }
 
-    sealed class ViewState {
-        data object Loading: ViewState()
+    sealed class UiState {
+        data object Loading: UiState()
 
         data class Content(
             val accepted: Boolean,
             val termsAndConditionsText: String,
             val acceptAndNavigate: StateEvent<Boolean>,
-        ): ViewState()
+        ): UiState()
     }
 }
