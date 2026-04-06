@@ -58,7 +58,7 @@ import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.onlyBottom
 import org.neotech.app.abysner.presentation.component.core.withoutBottom
-import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.ViewState
+import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.UiState
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.EventEffect
 import org.neotech.app.abysner.presentation.utilities.ConfigurePreviewContext
@@ -75,10 +75,10 @@ fun TermsAndConditionsScreen(
     viewModelCreator: () -> TermsAndConditionsViewModel,
 ) {
     val viewModel = viewModel { viewModelCreator() }
-    val viewState: ViewState = viewModel.viewState.collectAsState().value
+    val uiState: UiState = viewModel.uiState.collectAsState().value
     TermsAndConditionsScreen(
         navController = navController,
-        viewState = viewState,
+        uiState = uiState,
         onAcceptTermsAndConditions = { viewModel.acceptTermsAndConditions(true) },
         onDeclineTermsAndConditions = { viewModel.acceptTermsAndConditions(false) },
     )
@@ -89,7 +89,7 @@ fun TermsAndConditionsScreen(
 @Composable
 fun TermsAndConditionsScreen(
     navController: NavHostController = rememberNavController(),
-    viewState: ViewState,
+    uiState: UiState,
     onAcceptTermsAndConditions: () -> Unit,
     onDeclineTermsAndConditions: () -> Unit,
 ) {
@@ -118,8 +118,8 @@ fun TermsAndConditionsScreen(
             }
         ) { insets ->
 
-            if (viewState is ViewState.Content) {
-                EventEffect(viewState.acceptAndNavigate) { accepted ->
+            if (uiState is UiState.Content) {
+                EventEffect(uiState.acceptAndNavigate) { accepted ->
                     if (accepted) {
                         navController.navigate(Destinations.PLANNER.destinationName) {
                             popUpTo(Destinations.TERMS_AND_CONDITIONS_INITIAL.destinationName) {
@@ -137,12 +137,12 @@ fun TermsAndConditionsScreen(
                 verticalArrangement = Arrangement.Center
             ) {
 
-                if (viewState is ViewState.Content) {
+                if (uiState is UiState.Content) {
                     Markdown(
-                        modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(16.dp).ifTrue(viewState.accepted) {
+                        modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(16.dp).ifTrue(uiState.accepted) {
                             padding(insets.onlyBottom())
                         },
-                        content = viewState.termsAndConditionsText,
+                        content = uiState.termsAndConditionsText,
                         colors = markdownColor(),
                         padding = markdownPadding(
                             block = 8.dp
@@ -164,7 +164,7 @@ fun TermsAndConditionsScreen(
                         )
                     )
 
-                    if (!viewState.accepted) {
+                    if (!uiState.accepted) {
 
                         Surface(
                             shadowElevation = 8.dp
@@ -211,7 +211,7 @@ fun TermsAndConditionsScreenPreview() {
 
     TermsAndConditionsScreen(
         navController = rememberNavController(),
-        viewState = ViewState.Content(
+        uiState = UiState.Content(
             accepted = false,
             termsAndConditionsText = terms,
             consumed<Boolean>()

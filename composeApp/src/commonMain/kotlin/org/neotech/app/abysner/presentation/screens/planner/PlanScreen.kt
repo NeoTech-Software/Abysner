@@ -96,10 +96,10 @@ fun PlannerScreen(
         viewModelCreator()
     }
 
-    val viewState: PlanScreenViewModel.ViewState by viewModel.uiState.collectAsState()
+    val uiState: PlanScreenViewModel.UiState by viewModel.uiState.collectAsState()
 
     PlannerScreen(
-        viewState = viewState,
+        uiState = uiState,
         navController = navController,
         onAddCylinder = { viewModel.addCylinder(it) },
         onUpdateCylinder = { viewModel.updateCylinder(it) },
@@ -115,7 +115,7 @@ fun PlannerScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlannerScreen(
-    viewState: PlanScreenViewModel.ViewState,
+    uiState: PlanScreenViewModel.UiState,
     navController: NavHostController = rememberNavController(),
     onAddCylinder: (Cylinder) -> Unit = {},
     onUpdateCylinder: (Cylinder) -> Unit = {},
@@ -149,12 +149,12 @@ fun PlannerScreen(
                             }
                         },
                         actions = {
-                            AppBarActions(viewState, navController, viewState.settingsModel)
+                            AppBarActions(uiState, navController, uiState.settingsModel)
                         })
                 }
             }
         ) { paddingValues ->
-            AnimatedVisibility(!viewState.isLoading, enter = fadeIn(), exit = fadeOut()) {
+            AnimatedVisibility(!uiState.isLoading, enter = fadeIn(), exit = fadeOut()) {
                 Column(
                     modifier = Modifier
                         .verticalScroll(rememberScrollState())
@@ -169,7 +169,7 @@ fun PlannerScreen(
                 ) {
 
                     CylinderSelectionCardComponent(
-                        gases = viewState.availableGas,
+                        gases = uiState.availableGas,
                         onAddCylinder = {
                             showCylinderPickerBottomSheet.value = true
                         },
@@ -186,8 +186,8 @@ fun PlannerScreen(
                     )
 
                     SegmentsCardComponent(
-                        segments = viewState.segments,
-                        addAllowed = viewState.availableGas.isNotEmpty(),
+                        segments = uiState.segments,
+                        addAllowed = uiState.availableGas.isNotEmpty(),
                         onAddSegment = {
                             segmentBeingEdited.value = null
                             showSegmentPickerBottomSheet.value = true
@@ -202,25 +202,25 @@ fun PlannerScreen(
                     )
 
                     DecoPlanCardComponent(
-                        divePlanSet = viewState.divePlanSet.getOrNull(),
-                        settings = viewState.settingsModel,
-                        planningException = viewState.divePlanSet.exceptionOrNull(),
-                        isLoading = viewState.isCalculatingDivePlan,
+                        divePlanSet = uiState.divePlanSet.getOrNull(),
+                        settings = uiState.settingsModel,
+                        planningException = uiState.divePlanSet.exceptionOrNull(),
+                        isLoading = uiState.isCalculatingDivePlan,
                         onContingencyInputChanged = { deeper, longer ->
                             onContingencyInputChanged(deeper, longer)
                         }
                     )
                     GasPlanCardComponent(
-                        isLoading = viewState.isCalculatingDivePlan,
-                        divePlanSet = viewState.divePlanSet.getOrNull(),
-                        planningException = viewState.divePlanSet.exceptionOrNull(),
+                        isLoading = uiState.isCalculatingDivePlan,
+                        divePlanSet = uiState.divePlanSet.getOrNull(),
+                        planningException = uiState.divePlanSet.exceptionOrNull(),
                     )
                 }
             }
 
             ShowCylinderPickerBottomSheet(
                 show = showCylinderPickerBottomSheet,
-                configuration = viewState.configuration,
+                configuration = uiState.configuration,
                 cylinderBeingEdited = cylinderBeingEdited,
                 onAddCylinder = onAddCylinder,
                 onUpdateCylinder = onUpdateCylinder,
@@ -228,9 +228,9 @@ fun PlannerScreen(
 
             ShowSegmentPickerBottomSheet(
                 show = showSegmentPickerBottomSheet,
-                configuration = viewState.configuration,
+                configuration = uiState.configuration,
                 segmentBeingEdited = segmentBeingEdited,
-                viewState = viewState,
+                uiState = uiState,
                 onAddSegment = onAddSegment,
                 onUpdateSegment = onUpdateSegment,
             )
@@ -243,7 +243,7 @@ fun PlannerScreen(
 @Composable
 private fun ShowSegmentPickerBottomSheet(
     show: MutableState<Boolean>,
-    viewState: PlanScreenViewModel.ViewState,
+    uiState: PlanScreenViewModel.UiState,
     segmentBeingEdited: MutableState<Int?>,
     configuration: Configuration,
     onAddSegment: (DiveProfileSection) -> Unit,
@@ -253,8 +253,8 @@ private fun ShowSegmentPickerBottomSheet(
 
         val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-        val initial = segmentBeingEdited.value?.let { viewState.segments[it] }
-        val previousIndex = (segmentBeingEdited.value ?: (viewState.segments.size)) - 1
+        val initial = segmentBeingEdited.value?.let { uiState.segments[it] }
+        val previousIndex = (segmentBeingEdited.value ?: (uiState.segments.size)) - 1
 
 
         SegmentPickerBottomSheet(
@@ -264,8 +264,8 @@ private fun ShowSegmentPickerBottomSheet(
             maxPPO2 = configuration.maxPPO2,
             maxDensity = Gas.MAX_GAS_DENSITY,
             environment = configuration.environment,
-            cylinders = viewState.availableGas.map { it.cylinder }.toImmutableList(),
-            previousDepth = viewState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
+            cylinders = uiState.availableGas.map { it.cylinder }.toImmutableList(),
+            previousDepth = uiState.segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
             configuration = configuration,
             onAddOrUpdateDiveSegment = {
                 if (segmentBeingEdited.value != null) {
@@ -317,14 +317,14 @@ private fun ShowCylinderPickerBottomSheet(
 
 @Composable
 private fun RowScope.AppBarActions(
-    viewState: PlanScreenViewModel.ViewState,
+    uiState: PlanScreenViewModel.UiState,
     navController: NavHostController,
     settings: SettingsModel,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val bitmapRenderController = LocalBitmapRenderController.current
 
-    val plan = viewState.divePlanSet.getOrNull()
+    val plan = uiState.divePlanSet.getOrNull()
     if (plan != null && plan.isEmpty.not()) {
         IconButton(onClick = {
             coroutineScope.launch {
@@ -410,7 +410,7 @@ fun PlannerScreenPreview() {
         LocalBitmapRenderController provides remember { BitmapRenderController() },
     ) {
         PlannerScreen(
-            viewState = PlanScreenViewModel.ViewState(
+            uiState = PlanScreenViewModel.UiState(
                 isLoading = false,
                 isCalculatingDivePlan = false,
                 segments = PreviewData.divePlan1Segments,
@@ -433,7 +433,7 @@ fun PlannerScreenWithWarningsPreview() {
         LocalBitmapRenderController provides remember { BitmapRenderController() },
     ) {
         PlannerScreen(
-            viewState = PlanScreenViewModel.ViewState(
+            uiState = PlanScreenViewModel.UiState(
                 isLoading = false,
                 isCalculatingDivePlan = false,
                 segments = PreviewData.divePlan2Segments,
@@ -445,4 +445,3 @@ fun PlannerScreenWithWarningsPreview() {
         )
     }
 }
-
