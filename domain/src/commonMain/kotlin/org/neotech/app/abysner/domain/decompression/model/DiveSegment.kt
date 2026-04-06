@@ -64,6 +64,9 @@ data class DiveSegment(
     val isGasSwitch: Boolean
         get() = type == Type.GAS_SWITCH
 
+    val isStop: Boolean
+        get() = isDecompressionStop || isGasSwitch
+
     fun depthAt(duration: Int): Double {
         require(duration >= 0 && duration <= this.duration)
         if (startDepth == endDepth) {
@@ -117,11 +120,15 @@ fun List<DiveSegment>.subList(fromTimeStamp: Int): List<DiveSegment> {
  * taken from the last merged segment, so any deeper ceiling that occurred earlier within the
  * merged span is lost.
  *
- * @param compactAscentsBetweenDecoStops If true, a single ascending segment between two deco stops
- *                                       is folded into the shallower stop.
+ * @param compactAscentsAndStops If true, merges a [DiveSegment.Type.GAS_SWITCH] immediately
+ *                               followed by a [DiveSegment.Type.DECO_STOP] at the same depth into
+ *                               a single [DiveSegment.Type.GAS_SWITCH] segment, and folds a single
+ *                               [DiveSegment.Type.ASCENT] segment sandwiched between two
+ *                               [DiveSegment.isStop] segments into the shallower stop/switch,
+ *                               absorbing the ascent time into that stop's duration.
  */
 fun MutableList<DiveSegment>.compactSimilarSegments(
-    compactAscentsBetweenDecoStops: Boolean = false
+    compactAscentsAndStops: Boolean = false
 ): MutableList<DiveSegment> {
 
     // Maximum delta between travel speeds for them to be considered equal.
@@ -156,9 +163,27 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             this[i] = combinedSegment
             this.removeAt(i + 1)
         } else if (
-            compactAscentsBetweenDecoStops &&
+            compactAscentsAndStops &&
+            currentSegment.isGasSwitch &&
+            nextSegment.isDecompressionStop &&
+            currentSegment.endDepth == nextSegment.startDepth
+        ) {
+            // A gas switch followed by a deco stop at the same depth: absorb the stop into the
+            // switch so both appear as a single row. The cylinder is kept from the switch segment
+            // (old gas), so the display logic can still derive the new gas from the  segment that
+            // follows the merged one.
+            // TODO perhaps the compactAscentsAndStops true case should be a separate extra function
+            //      purely for display purposes?
+            val combinedSegment = currentSegment.copy(
+                duration = currentSegment.duration + nextSegment.duration,
+                gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
+            )
+            this[i] = combinedSegment
+            this.removeAt(i + 1)
+        } else if (
+            compactAscentsAndStops &&
             currentSegment.type == DiveSegment.Type.ASCENT &&
-            nextSegment.isDecompressionStop && getOrNull(i - 1)?.isDecompressionStop == true
+            nextSegment.isStop && getOrNull(i - 1)?.isStop == true
         ) {
             // Previous and next segments are both stops, make this segment the next stop instead.
             val combinedSegment = DiveSegment(
@@ -168,7 +193,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
                 duration = currentSegment.duration + nextSegment.duration,
                 cylinder = nextSegment.cylinder,
                 gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
-                type = DiveSegment.Type.DECO_STOP,
+                type = nextSegment.type,
             )
             this[i] = combinedSegment
             this.removeAt(i + 1)

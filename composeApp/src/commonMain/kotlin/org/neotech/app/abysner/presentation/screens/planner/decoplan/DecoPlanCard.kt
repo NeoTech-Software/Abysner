@@ -349,7 +349,7 @@ fun DecoPlanTable(
     ) {
         val segments = divePlan.segmentsCollapsed
             .toMutableList()
-            .compactSimilarSegments(compactAscentsBetweenDecoStops = settings.showBasicDecoTable)
+            .compactSimilarSegments(compactAscentsAndStops = settings.showBasicDecoTable)
 
         rowsIndexed(segments, key = { _, segment -> segment.start }) { index, diveSegment ->
             // For gas switch segments show the gas the diver is switching to, rather than the gas

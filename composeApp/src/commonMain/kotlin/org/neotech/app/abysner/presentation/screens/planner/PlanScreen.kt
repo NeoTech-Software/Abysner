@@ -421,3 +421,28 @@ fun PlannerScreenPreview() {
         )
     }
 }
+
+/**
+ * Preview that shows the planner screen with a dive plan designed to trigger as many warnings
+ * as possible. See [PreviewData.divePlan2] for details.
+ */
+@Preview(device = DEVICE_PHONE_MAX_HEIGHT)
+@Composable
+fun PlannerScreenWithWarningsPreview() {
+    CompositionLocalProvider(
+        LocalBitmapRenderController provides remember { BitmapRenderController() },
+    ) {
+        PlannerScreen(
+            viewState = PlanScreenViewModel.ViewState(
+                isLoading = false,
+                isCalculatingDivePlan = false,
+                segments = PreviewData.divePlan2Segments,
+                availableGas = PreviewData.divePlan2Cylinders,
+                configuration = PreviewData.divePlan2.configuration,
+                divePlanSet = Result.success(PreviewData.divePlan2),
+                settingsModel = SettingsModel(showBasicDecoTable = true)
+            )
+        )
+    }
+}
+
