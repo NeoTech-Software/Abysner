@@ -24,11 +24,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: false
+
+      - name: Setup Git LFS
+        run: git lfs install
+
+        # Only pull the screenshot reference PNGs, skip unrelated LFS files to save on bandwidth.
+      - name: Pull screenshot LFS files
+        run: git lfs pull --include="androidApp/src/screenshotTestDebug/reference/"
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 

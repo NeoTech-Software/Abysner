@@ -15,8 +15,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: false
           ref: ${{ github.ref }}
+
+      # LFS is not enabled on checkout (lfs: false) intentionally, we don't need to download all LFS
+      # objects (e.g. resources/ or store-art/), in fact we don't even need any objects. We only
+      # need the LFS clean filter to be active so that newly generated screenshot PNGs are committed
+      # as LFS pointers rather than raw files. Running `git lfs install` sets up that filter without
+      # pulling anything. This saves on bandwidth.
+      - name: Setup Git LFS
+        run: git lfs install
 
       - uses: actions/setup-java@v4
         with:
