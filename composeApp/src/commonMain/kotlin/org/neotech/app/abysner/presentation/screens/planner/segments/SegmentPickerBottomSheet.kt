@@ -64,10 +64,48 @@ import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberIn
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.component.core.pluralsStringBuilder
 import org.neotech.app.abysner.presentation.theme.bodyExtraLarge
+import org.neotech.app.abysner.presentation.utilities.ModalTarget
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SegmentPickerBottomSheet(
+internal fun SegmentPickerBottomSheetHost(
+    show: ModalTarget<Int>?,
+    configuration: Configuration,
+    segments: List<DiveProfileSection>,
+    cylinders: ImmutableList<Cylinder>,
+    onDismiss: () -> Unit,
+    onAddSegment: (DiveProfileSection) -> Unit,
+    onUpdateSegment: (Int, DiveProfileSection) -> Unit,
+) {
+    if (show != null) {
+        val editIndex = (show as? ModalTarget.Edit)?.value
+        val initial = editIndex?.let { segments[it] }
+        val previousIndex = (editIndex ?: segments.size) - 1
+        SegmentPickerBottomSheet(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            isAdd = initial == null,
+            initialValue = initial,
+            maxPPO2 = configuration.maxPPO2,
+            maxDensity = Gas.MAX_GAS_DENSITY,
+            environment = configuration.environment,
+            cylinders = cylinders,
+            previousDepth = segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
+            configuration = configuration,
+            onAddOrUpdateDiveSegment = {
+                if (editIndex != null) {
+                    onUpdateSegment(editIndex, it)
+                } else {
+                    onAddSegment(it)
+                }
+            },
+            onDismiss = onDismiss
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SegmentPickerBottomSheet(
     isAdd: Boolean = true,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     initialValue: DiveProfileSection?,
@@ -78,7 +116,7 @@ fun SegmentPickerBottomSheet(
     previousDepth: Double,
     configuration: Configuration,
     onAddOrUpdateDiveSegment: (gas: DiveProfileSection) -> Unit = {},
-    onDismissRequest: () -> Unit = {},
+    onDismiss: () -> Unit = {},
 ) {
     require(cylinders.isNotEmpty()) {
         "SegmentPickerBottomSheet was shown with an empty list of cylinders, this is not supported."
@@ -88,7 +126,7 @@ fun SegmentPickerBottomSheet(
 
     ModalBottomSheet(
         sheetState = sheetState,
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onDismiss,
     ) {
 
         val textFieldPositions = mutableStateMapOf<String, LayoutCoordinates>()
@@ -245,7 +283,7 @@ fun SegmentPickerBottomSheet(
                     onSecondary = {
                         scope.launch {
                             sheetState.hide()
-                            onDismissRequest()
+                            onDismiss()
                         }
                     },
                     onPrimary = {
@@ -258,7 +296,7 @@ fun SegmentPickerBottomSheet(
                         )
                         scope.launch {
                             sheetState.hide()
-                            onDismissRequest()
+                            onDismiss()
                         }
                     },
                 )
@@ -269,8 +307,6 @@ fun SegmentPickerBottomSheet(
 
 @Composable
 private fun Gas.buildText(): AnnotatedString {
-    // Capture before entering the builder lambda — inside buildAnnotatedString the implicit
-    // receiver becomes AnnotatedString.Builder, so toString() would resolve to that instead.
     val name = diveIndustryName()
     val mix = toString()
     return buildAnnotatedString {
@@ -294,11 +330,19 @@ private fun SegmentPickerBottomSheetPreview() {
         previousDepth = 0.0,
         configuration = Configuration(),
         environment = Environment.Default,
-        initialValue = DiveProfileSection(10, 15, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
+        initialValue = DiveProfileSection(
+            10,
+            15,
+            Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)
+        ),
         cylinders = persistentListOf(
             Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0),
-            Cylinder(gas = Gas.Nitrox50, pressure = 207.0, waterVolume = Cylinder.AL80_WATER_VOLUME),
-            Cylinder(gas =Gas.Nitrox80, pressure = 207.0, waterVolume = Cylinder.AL63_WATER_VOLUME)
+            Cylinder(
+                gas = Gas.Nitrox50,
+                pressure = 207.0,
+                waterVolume = Cylinder.AL80_WATER_VOLUME
+            ),
+            Cylinder(gas = Gas.Nitrox80, pressure = 207.0, waterVolume = Cylinder.AL63_WATER_VOLUME)
         )
     )
 }

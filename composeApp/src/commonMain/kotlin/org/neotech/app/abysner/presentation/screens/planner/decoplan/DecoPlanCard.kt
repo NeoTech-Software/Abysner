@@ -75,7 +75,6 @@ import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
 import org.neotech.app.abysner.presentation.getUserReadableMessage
-import org.neotech.app.abysner.presentation.screens.planner.ConfigurationSummeryDialog
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
@@ -201,7 +200,7 @@ fun DecoPlanCardComponent(
                         }
 
                         if (showConfigurationInfo) {
-                            ConfigurationSummeryDialog(configuration = divePlanSet.configuration) {
+                            DecoPlanConfigurationSummeryDialog(configuration = divePlanSet.configuration) {
                                 showConfigurationInfo = false
                             }
                         }

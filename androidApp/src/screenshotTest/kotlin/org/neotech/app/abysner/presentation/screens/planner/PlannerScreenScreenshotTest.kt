@@ -14,6 +14,7 @@ package org.neotech.app.abysner.presentation.screens.planner
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import org.neotech.app.abysner.presentation.PreviewForScreenshotTestsFoldableDefaultHeight
 import org.neotech.app.abysner.presentation.PreviewForScreenshotTestsMaxHeight
 
 @PreviewTest
@@ -28,5 +29,12 @@ fun PlannerScreenScreenshotTest() {
 @Composable
 fun PlannerScreenWithWarningsScreenshotTest() {
     PlannerScreenWithWarningsPreview()
+}
+
+@PreviewTest
+@PreviewForScreenshotTestsFoldableDefaultHeight
+@Composable
+fun PlannerScreenFoldableScreenshotTest() {
+    PlannerScreenFoldablePreview()
 }
 

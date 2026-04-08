@@ -10,7 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.presentation.screens.planner.surfaceinterval
+package org.neotech.app.abysner.presentation.screens.planner.diveconfiguration
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,20 +41,56 @@ import kotlinx.coroutines.launch
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.textfield.DurationInputField
+import org.neotech.app.abysner.presentation.utilities.ModalTarget
+import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 /**
  * A bottom sheet for configuring a dive, currently allows editing the surface interval and
  * optionally deleting it.
- *
- * @param initialValue Pre-filled surface interval duration. `null` indicates the first dive, the
- *                     interval field is hidden and a clean-tissues explanation is shown.
- * @param onDelete     If not null a "Delete" button is shown
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DiveConfigurationBottomSheet(
+internal fun DiveConfigurationBottomSheetHost(
+    show: ModalTarget<Int>?,
+    dives: List<DivePlanInputModel>,
+    onAddDive: (Duration) -> Unit,
+    onUpdateSurfaceInterval: (Int, Duration) -> Unit,
+    onRemoveDive: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (show != null) {
+        val editIndex = (show as? ModalTarget.Edit)?.value
+        DiveConfigurationBottomSheet(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            title = "Dive ${(editIndex ?: dives.size) + 1}",
+            initialValue = when (show) {
+                is ModalTarget.Add -> 60.minutes
+                is ModalTarget.Edit -> dives.getOrNull(show.value)?.surfaceIntervalBefore
+            },
+            onConfirm = { duration ->
+                if (editIndex != null) {
+                    onUpdateSurfaceInterval(editIndex, duration)
+                } else {
+                    onAddDive(duration)
+                }
+            },
+            onDismiss = onDismiss,
+            onDelete = editIndex?.let { { onRemoveDive(it) } },
+        )
+    }
+}
+
+
+/**
+ * @param initialValue Pre-filled surface interval duration. `null` indicates the first dive, the
+ *                     interval field is hidden and a clean-tissues explanation is shown.
+ * @param onDelete     If not null a "Delete" button is shown.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DiveConfigurationBottomSheet(
     sheetState: SheetState = rememberStandardBottomSheetState(),
     title: String,
     initialValue: Duration? = 60.minutes,
@@ -202,4 +238,3 @@ private fun DiveConfigurationBottomSheetFirstDivePreview() {
         onDelete = {},
     )
 }
-

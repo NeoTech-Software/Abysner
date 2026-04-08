@@ -89,10 +89,9 @@ class PlanScreenViewModelTest {
 
         viewModel.addDive(60.minutes)
 
-        assertEquals(2, viewModel.uiState.value.diveCount)
+        assertEquals(2, viewModel.uiState.value.dives.size)
         assertEquals(1, viewModel.uiState.value.selectedDiveIndex)
-        assertEquals(1, viewModel.uiState.value.surfaceIntervals.size)
-        assertEquals(60.minutes, viewModel.uiState.value.surfaceIntervals[0])
+        assertEquals(60.minutes, viewModel.uiState.value.dives[1].surfaceIntervalBefore)
     }
 
     @Test
@@ -104,8 +103,8 @@ class PlanScreenViewModelTest {
         viewModel.addDive(60.minutes)
         viewModel.removeDive(1)
 
-        assertEquals(1, viewModel.uiState.value.diveCount)
-        assertEquals(0, viewModel.uiState.value.surfaceIntervals.size)
+        assertEquals(1, viewModel.uiState.value.dives.size)
+        assertEquals(null, viewModel.uiState.value.dives[0].surfaceIntervalBefore)
         assertEquals(0, viewModel.uiState.value.selectedDiveIndex)
     }
 
@@ -118,8 +117,8 @@ class PlanScreenViewModelTest {
         viewModel.addDive(60.minutes)
         viewModel.removeDive(0)
 
-        assertEquals(1, viewModel.uiState.value.diveCount)
-        assertEquals(0, viewModel.uiState.value.surfaceIntervals.size)
+        assertEquals(1, viewModel.uiState.value.dives.size)
+        assertEquals(null, viewModel.uiState.value.dives[0].surfaceIntervalBefore)
     }
 
     @Test
@@ -128,11 +127,11 @@ class PlanScreenViewModelTest {
 
         collectForTest(viewModel.uiState)
 
-        assertEquals(1, viewModel.uiState.value.diveCount)
+        assertEquals(1, viewModel.uiState.value.dives.size)
 
         viewModel.removeDive(0)
 
-        assertEquals(1, viewModel.uiState.value.diveCount)
+        assertEquals(1, viewModel.uiState.value.dives.size)
     }
 
     @Test
