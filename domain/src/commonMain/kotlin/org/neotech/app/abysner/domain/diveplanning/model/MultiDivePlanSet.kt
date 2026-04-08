@@ -10,19 +10,17 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.domain.diveplanning
+package org.neotech.app.abysner.domain.diveplanning.model
 
-import kotlinx.coroutines.flow.StateFlow
 import org.neotech.app.abysner.domain.core.model.Configuration
-import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 
-interface PlanningRepository {
+data class MultiDivePlanSet(
+    val divePlanSets: List<DivePlanSet>,
+) {
+    val isEmpty: Boolean = divePlanSets.all { it.isEmpty }
 
-    val configuration: StateFlow<Configuration>
-
-    fun updateConfiguration(updateBlock: (Configuration) -> Configuration)
-
-    fun setMultiDivePlanInput(model: MultiDivePlanInputModel)
-
-    suspend fun getMultiDivePlanInput(): MultiDivePlanInputModel?
+    // Configuration should be the same for all dives, from the UI not possible to change this.
+    // In the future we probably want to support different configurations per dive
+    val configuration: Configuration = divePlanSets.first().configuration
 }
+

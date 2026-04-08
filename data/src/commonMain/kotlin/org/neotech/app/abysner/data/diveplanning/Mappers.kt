@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -14,14 +14,18 @@ package org.neotech.app.abysner.data.diveplanning
 
 import org.neotech.app.abysner.data.diveplanning.resources.ConfigurationResourceV1
 import org.neotech.app.abysner.data.diveplanning.resources.DivePlanInputResourceV1
+import org.neotech.app.abysner.data.diveplanning.resources.MultiDivePlanInputResourceV1
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.persistence.fromString
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 fun Configuration.toResource() = ConfigurationResourceV1(
     sacRate = sacRate,
@@ -72,7 +76,8 @@ fun DivePlanInputModel.toResource() = DivePlanInputResourceV1(
     deeper = deeper,
     longer = longer,
     cylinders = cylinders.map { it.toResource() },
-    profile = plannedProfile.map { it.toResource() }
+    profile = plannedProfile.map { it.toResource() },
+    surfaceIntervalBeforeMinutes = surfaceIntervalBefore?.inWholeMinutes?.toInt(),
 )
 
 private fun DiveProfileSection.toResource() = DivePlanInputResourceV1.ProfileSegmentResource(
@@ -106,9 +111,18 @@ fun DivePlanInputResourceV1.toModel(): DivePlanInputModel {
         cylinders = cylinders,
         plannedProfile = profile.map {
             it.toModel(cylinders.find { cylinder -> cylinder.cylinder.uniqueIdentifier == it.cylinderIdentifier }!!.cylinder)
-        }
+        },
+        surfaceIntervalBefore = surfaceIntervalBeforeMinutes?.toDuration(DurationUnit.MINUTES),
     )
 }
+
+fun MultiDivePlanInputModel.toResource() = MultiDivePlanInputResourceV1(
+    dives = dives.map { it.toResource() },
+)
+
+fun MultiDivePlanInputResourceV1.toModel() = MultiDivePlanInputModel(
+    dives = dives.map { it.toModel() },
+)
 
 private fun DivePlanInputResourceV1.CheckableCylinderResource.toModel() = PlannedCylinderModel(
     cylinder = cylinder.toModel(),

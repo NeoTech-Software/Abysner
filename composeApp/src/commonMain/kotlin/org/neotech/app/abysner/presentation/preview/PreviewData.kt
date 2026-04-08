@@ -30,7 +30,7 @@ object PreviewData {
 
     val divePlan1Segments by lazy {
         persistentListOf(
-            DiveProfileSection(16, 45, airCylinder),
+            DiveProfileSection(25, 30, airCylinder),
         )
     }
 

@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.domain.diveplanning.model
 
+import kotlin.time.Duration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 
 data class DivePlanInputModel(
@@ -19,6 +20,10 @@ data class DivePlanInputModel(
     val longer: Boolean,
     val plannedProfile: List<DiveProfileSection>,
     val cylinders: List<PlannedCylinderModel>,
+    /**
+     * The surface interval before this dive, null if there was no preceding dive.
+     */
+    val surfaceIntervalBefore: Duration?,
 )
 
 data class PlannedCylinderModel(

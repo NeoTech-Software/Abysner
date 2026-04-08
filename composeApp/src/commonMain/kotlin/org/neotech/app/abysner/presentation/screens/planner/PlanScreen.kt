@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -41,17 +42,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -67,8 +76,10 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.Destinations
+import org.neotech.app.abysner.presentation.component.DefaultPathwayButtonItem
 import org.neotech.app.abysner.presentation.screens.ShareImage
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderPickerBottomSheet
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
@@ -76,13 +87,18 @@ import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanCar
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentPickerBottomSheet
 import org.neotech.app.abysner.presentation.screens.planner.segments.SegmentsCardComponent
+import org.neotech.app.abysner.presentation.screens.planner.surfaceinterval.DiveConfigurationBottomSheet
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconSet
 import org.neotech.app.abysner.presentation.component.BitmapRenderController
 import org.neotech.app.abysner.presentation.component.LocalBitmapRenderController
+import org.neotech.app.abysner.presentation.component.PathwayButtonsComponent
+import org.neotech.app.abysner.presentation.component.appbar.UnboundedBox
+import org.neotech.app.abysner.presentation.component.core.toPx
 import org.neotech.app.abysner.presentation.preview.DEVICE_PHONE_MAX_HEIGHT
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.utilities.shareImageBitmap
+import kotlin.time.Duration
 
 typealias PlannerScreen = @Composable (navController: NavHostController) -> Unit
 
@@ -109,6 +125,10 @@ fun PlannerScreen(
         onUpdateSegment = { index, segment -> viewModel.updateSegment(index, segment) },
         onRemoveSegment = { viewModel.removeSegment(it) },
         onContingencyInputChanged = { deeper, longer -> viewModel.setContingency(deeper, longer) },
+        onSelectDive = { viewModel.selectDive(it) },
+        onAddDive = { viewModel.addDive(it) },
+        onRemoveDive = { viewModel.removeDive(it) },
+        onUpdateSurfaceInterval = { i, d -> viewModel.updateSurfaceInterval(i, d) },
     )
 }
 
@@ -125,39 +145,98 @@ fun PlannerScreen(
     onUpdateSegment: (Int, DiveProfileSection) -> Unit = { _, _ -> },
     onRemoveSegment: (Int) -> Unit = {},
     onContingencyInputChanged: (Boolean, Boolean) -> Unit = { _, _ -> },
+    onSelectDive: (Int) -> Unit = {},
+    onAddDive: (Duration) -> Unit = {},
+    onRemoveDive: (Int) -> Unit = {},
+    onUpdateSurfaceInterval: (Int, Duration) -> Unit = { _, _ -> },
 ) {
-
-    val showCylinderPickerBottomSheet = remember { mutableStateOf(false) }
-    val cylinderBeingEdited: MutableState<Cylinder?> = remember { mutableStateOf(null) }
-
-    val segmentBeingEdited: MutableState<Int?> = remember { mutableStateOf(null) }
-    val showSegmentPickerBottomSheet = remember { mutableStateOf(false) }
 
     AbysnerTheme {
 
+        val showCylinderPickerBottomSheet = remember { mutableStateOf(false) }
+        val cylinderBeingEdited: MutableState<Cylinder?> = remember { mutableStateOf(null) }
+
+        val segmentBeingEdited: MutableState<Int?> = remember { mutableStateOf(null) }
+        val showSegmentPickerBottomSheet = remember { mutableStateOf(false) }
+
+        var showSurfaceIntervalPicker by remember { mutableStateOf(false) }
+        var diveBeingEdited: Int? by remember { mutableStateOf(null) }
+
+        val scrollState = rememberScrollState()
+        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
         Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
                 Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.background) {
-                    TopAppBar(
-                        title = {
-                            Column {
-                                Text("Abysner")
-                                Text(
-                                    style = MaterialTheme.typography.labelSmall,
-                                    text = "The open-source dive planner"
-                                )
+                    Column {
+                        TopAppBar(
+                            title = {
+                                Column {
+                                    Text("Abysner")
+                                    Text(
+                                        style = MaterialTheme.typography.labelSmall,
+                                        text = "The open-source dive planner"
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color.Unspecified,
+                                scrolledContainerColor = Color.Unspecified
+                            ),
+                            actions = {
+                                AppBarActions(uiState, navController, uiState.settingsModel)
+                            },
+                        )
+
+                        val height = 64.dp.toPx()
+
+                        SideEffect {
+                            if (scrollBehavior.state.heightOffsetLimit != -height) {
+                                scrollBehavior.state.heightOffsetLimit = -height
                             }
-                        },
-                        actions = {
-                            AppBarActions(uiState, navController, uiState.settingsModel)
-                        })
+                        }
+
+                        val offset = with(LocalDensity.current) { scrollBehavior.state.heightOffset.toDp() }
+
+                        // Allow children to be unbounded, so they take up as much space as they
+                        // need, so that when the box itself shrinks the children do not chance size.
+                        UnboundedBox(
+                            modifier = Modifier.clipToBounds().height(64.dp + offset).alpha(1f - scrollBehavior.state.collapsedFraction),
+                            constrainChildrenVertical = false,
+                            alignment = Alignment.BottomStart
+                        ) {
+                            PathwayButtonsComponent(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                selectedButton = uiState.selectedDiveIndex,
+                                buttonLabels = List(uiState.diveCount) { i ->
+                                    DefaultPathwayButtonItem(
+                                        buttonLabel = "Dive ${i + 1}",
+                                        nextConnectorLabel = uiState.surfaceIntervals.getOrNull(i)?.toHHMM() ?: "",
+                                    )
+                                },
+                                onClick = { index, _ ->
+                                    if (index == uiState.selectedDiveIndex) {
+                                        // Tapping the already-selected dive opens the edit sheet
+                                        // (same condition as before: there must be something to edit).
+                                        if (index > 0 || uiState.diveCount > 1) {
+                                            diveBeingEdited = index
+                                        }
+                                    } else {
+                                        onSelectDive(index)
+                                    }
+                                },
+                                onAddClicked = { showSurfaceIntervalPicker = true },
+                            )
+                        }
+                    }
                 }
             }
         ) { paddingValues ->
             AnimatedVisibility(!uiState.isLoading, enter = fadeIn(), exit = fadeOut()) {
                 Column(
                     modifier = Modifier
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .windowInsetsPadding(
                             androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(
                                 WindowInsetsSides.Horizontal
@@ -202,9 +281,10 @@ fun PlannerScreen(
                     )
 
                     DecoPlanCardComponent(
-                        divePlanSet = uiState.divePlanSet.getOrNull(),
+                        divePlanSet = uiState.selectedDivePlanSet.getOrNull(),
                         settings = uiState.settingsModel,
-                        planningException = uiState.divePlanSet.exceptionOrNull(),
+                        planningException = uiState.selectedDivePlanSet.exceptionOrNull()
+                            ?: uiState.multiDivePlanSet.exceptionOrNull(),
                         isLoading = uiState.isCalculatingDivePlan,
                         onContingencyInputChanged = { deeper, longer ->
                             onContingencyInputChanged(deeper, longer)
@@ -212,8 +292,8 @@ fun PlannerScreen(
                     )
                     GasPlanCardComponent(
                         isLoading = uiState.isCalculatingDivePlan,
-                        divePlanSet = uiState.divePlanSet.getOrNull(),
-                        planningException = uiState.divePlanSet.exceptionOrNull(),
+                        divePlanSet = uiState.selectedDivePlanSet.getOrNull(),
+                        planningException = uiState.selectedDivePlanSet.exceptionOrNull(),
                     )
                 }
             }
@@ -234,6 +314,32 @@ fun PlannerScreen(
                 onAddSegment = onAddSegment,
                 onUpdateSegment = onUpdateSegment,
             )
+
+            if (showSurfaceIntervalPicker) {
+                DiveConfigurationBottomSheet(
+                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                    title = "Dive ${uiState.diveCount + 1}",
+                    onConfirm = { duration: Duration -> onAddDive(duration) },
+                    onDismiss = { showSurfaceIntervalPicker = false },
+                )
+            }
+
+            val editIndex = diveBeingEdited
+            if (editIndex != null) {
+                val currentInterval = if (editIndex > 0) {
+                    uiState.surfaceIntervals.getOrNull(editIndex - 1)
+                } else {
+                    null
+                }
+                DiveConfigurationBottomSheet(
+                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                    title = "Dive ${editIndex + 1}",
+                    initialValue = currentInterval,
+                    onConfirm = { duration: Duration -> onUpdateSurfaceInterval(editIndex, duration) },
+                    onDismiss = { diveBeingEdited = null },
+                    onDelete = { onRemoveDive(editIndex) },
+                )
+            }
         }
     }
 }
@@ -324,7 +430,7 @@ private fun RowScope.AppBarActions(
     val coroutineScope = rememberCoroutineScope()
     val bitmapRenderController = LocalBitmapRenderController.current
 
-    val plan = uiState.divePlanSet.getOrNull()
+    val plan = uiState.selectedDivePlanSet.getOrNull()
     if (plan != null && plan.isEmpty.not()) {
         IconButton(onClick = {
             coroutineScope.launch {
@@ -403,10 +509,15 @@ private fun RowScope.AppBarActions(
     }
 }
 
+private fun Duration.toHHMM(): String {
+    val h = inWholeHours
+    val m = inWholeMinutes % 60
+    return if (h > 0) "${h}h ${m}m" else "${m}m"
+}
+
 @Preview(device = DEVICE_PHONE_MAX_HEIGHT)
 @Composable
-fun PlannerScreenPreview() {
-    CompositionLocalProvider(
+fun PlannerScreenPreview() {    CompositionLocalProvider(
         LocalBitmapRenderController provides remember { BitmapRenderController() },
     ) {
         PlannerScreen(
@@ -416,7 +527,8 @@ fun PlannerScreenPreview() {
                 segments = PreviewData.divePlan1Segments,
                 availableGas = PreviewData.divePlan1Cylinders,
                 configuration = PreviewData.divePlan1.configuration,
-                divePlanSet = Result.success(PreviewData.divePlan1)
+                selectedDivePlanSet = Result.success(PreviewData.divePlan1),
+                multiDivePlanSet = Result.success(MultiDivePlanSet(divePlanSets = listOf(PreviewData.divePlan1)))
             )
         )
     }
@@ -439,7 +551,8 @@ fun PlannerScreenWithWarningsPreview() {
                 segments = PreviewData.divePlan2Segments,
                 availableGas = PreviewData.divePlan2Cylinders,
                 configuration = PreviewData.divePlan2.configuration,
-                divePlanSet = Result.success(PreviewData.divePlan2),
+                selectedDivePlanSet = Result.success(PreviewData.divePlan2),
+                multiDivePlanSet = Result.success(MultiDivePlanSet(divePlanSets = listOf(PreviewData.divePlan2))),
                 settingsModel = SettingsModel(showBasicDecoTable = true)
             )
         )
