@@ -39,9 +39,11 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
@@ -53,7 +55,37 @@ import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTran
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CylinderPickerBottomSheet(
+internal fun CylinderPickerBottomSheetHost(
+    show: ModalTarget<Cylinder>?,
+    configuration: Configuration,
+    onDismiss: () -> Unit,
+    onAddCylinder: (Cylinder) -> Unit,
+    onUpdateCylinder: (Cylinder) -> Unit,
+) {
+    if (show != null) {
+        val cylinderBeingEdited = (show as? ModalTarget.Edit)?.value
+        CylinderPickerBottomSheet(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            isAdd = cylinderBeingEdited == null,
+            initialValue = cylinderBeingEdited,
+            environment = configuration.environment,
+            maxPPO2 = configuration.maxPPO2,
+            maxPPO2Secondary = configuration.maxPPO2Deco,
+            onAddOrUpdateCylinder = {
+                if (cylinderBeingEdited != null) {
+                    onUpdateCylinder(it)
+                } else {
+                    onAddCylinder(it)
+                }
+            },
+            onDismiss = onDismiss
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CylinderPickerBottomSheet(
     isAdd: Boolean,
     initialValue: Cylinder?,
     environment: Environment,
@@ -61,11 +93,11 @@ fun CylinderPickerBottomSheet(
     maxPPO2Secondary: Double,
     sheetState: SheetState = rememberStandardBottomSheetState(),
     onAddOrUpdateCylinder: (cylinder: Cylinder) -> Unit = {},
-    onDismissRequest: () -> Unit = {},
+    onDismiss: () -> Unit = {},
 ) {
     ModalBottomSheet(
         sheetState = sheetState,
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onDismiss,
     ) {
         CylinderPickerBottomSheetContent(
             isAdd = isAdd,
@@ -75,7 +107,7 @@ fun CylinderPickerBottomSheet(
             maxPPO2Secondary = maxPPO2Secondary,
             sheetState = sheetState,
             onAddOrUpdateCylinder = onAddOrUpdateCylinder,
-            onDismissRequest = onDismissRequest
+            onDismissRequest = onDismiss
         )
     }
 }

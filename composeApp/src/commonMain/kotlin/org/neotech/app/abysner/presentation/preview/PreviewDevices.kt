@@ -19,3 +19,7 @@ import androidx.compose.ui.tooling.preview.Devices
  */
 const val DEVICE_PHONE_MAX_HEIGHT = "spec:width=411dp,height=2250dp"
 
+/**
+ * Same as [Devices.FOLDABLE] but in landscape but extremely long (in landscape).
+ */
+const val DEVICE_FOLDABLE_MAX_HEIGHT = "spec:width=841dp,height=2250dp,dpi=420"

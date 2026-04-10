@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.presentation.screens.planner
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
@@ -180,8 +181,7 @@ class PlanScreenViewModel(
         val selectedDive = input.model.dives[input.selectedDiveIndex]
         UiState(
             selectedDiveIndex = input.selectedDiveIndex,
-            diveCount = input.model.dives.size,
-            surfaceIntervals = input.model.dives.drop(1).mapNotNull { it.surfaceIntervalBefore },
+            dives = input.model.dives,
             segments = selectedDive.plannedProfile,
             availableGas = selectedDive.cylinders,
             isCalculatingDivePlan = isCalc,
@@ -244,10 +244,10 @@ class PlanScreenViewModel(
         Result.failure(e)
     }
 
+    @Immutable
     data class UiState(
         val selectedDiveIndex: Int = 0,
-        val diveCount: Int = 1,
-        val surfaceIntervals: List<Duration> = emptyList(),
+        val dives: List<DivePlanInputModel> = listOf(defaultDivePlanInputModel),
         val segments: List<DiveProfileSection> = defaultProfile,
         val availableGas: List<PlannedCylinderModel> = defaultCylinders,
         val multiDivePlanSet: Result<MultiDivePlanSet?> = Result.success(null),
