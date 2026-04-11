@@ -47,8 +47,10 @@ interface DecompressionModel {
      * @param endPressure end pressure (depth) in bars (including atmospheric pressure)
      * @param gas the gas being breathe by the diver during this section.
      * @param timeInMinutes the timeInMinutes this section takes.
+     * @param ccrSetpoint the set-point for keeping a constant PPO2 during this pressure change (if
+     * null open-circuit behavior is assumed)
      */
-    fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int)
+    fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int, ccrSetpoint: Double? = null)
 
     /**
      * Calculates and returns the current tissue ceiling in bars (including atmospheric pressure)

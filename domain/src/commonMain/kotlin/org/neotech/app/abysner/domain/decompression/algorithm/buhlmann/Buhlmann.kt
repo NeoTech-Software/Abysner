@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -61,19 +61,18 @@ class Buhlmann(
     /**
      * Add a descending, ascending or flat section of the dive to tissues.
      *
-     * @param startPressure start depth in meters from the surface.
-     * @param endPressure end depth in meters from the surface.
+     * @param startPressure start pressure (depth) in bars (including atmospheric pressure)
+     * @param endPressure end pressure (depth) in bars (including atmospheric pressure)
      * @param gas the gas being breathe by the diver during this section.
      * @param timeInMinutes the timeInMinutes this section takes.
+     * @param ccrSetpoint the set-point for keeping a constant PPO2 during this pressure change (if
+     * null open-circuit behavior is assumed)
      */
-    override fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int) {
+    override fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int, ccrSetpoint: Double?) {
         val fO2 = gas.oxygenFraction
         val fHe = gas.heliumFraction
-
-        var loadChange = 0.0
         tissues.forEach {
-            val tissueChange = it.addPressureChange(startPressure.value, endPressure.value, fO2, fHe, timeInMinutes)
-            loadChange += tissueChange
+            it.addPressureChange(startPressure.value, endPressure.value, fO2, fHe, timeInMinutes, ccrSetpoint)
         }
     }
 
@@ -209,37 +208,27 @@ data class TissueCompartment(
     private var pTotal: Double = pNitrogen + pHelium
 ) {
 
-    fun addPressureChange(startPressure: Double, endPressure: Double, fO2: Double, fHe: Double, timeInMinutes: Int): Double {
-        if (timeInMinutes <= 0) {
-            // A zero or negative duration makes no physical sense (no exposure has occurred), and
-            // would also cause a division by zero in pressureChangeInBarsPerMinute.
-            throw IllegalArgumentException("Invalid duration `$timeInMinutes` for on/off-gassing tissues. The minimum duration must be higher than 0.")
-        }
-        // Calculate nitrogen fraction (by just subtracting oxygen and helium)
-        val fN2 = (1.0 - fO2) - fHe
-        if (fN2 < 0.0) {
-            throw IllegalArgumentException("Invalid gas mix `$fO2/$fHe` for on/off-gassing tissues, oxygen and helium should together never exceed 1.0 (100% of the gas mix).")
+    fun addPressureChange(startPressure: Double, endPressure: Double, fO2: Double, fHe: Double, timeInMinutes: Int, ccrSetpoint: Double? = null): Double {
+        // A zero or negative duration makes no physical sense (no exposure has occurred), and
+        // would also cause a division by zero in pressureChangeInBarsPerMinute.
+        require(timeInMinutes > 0) {
+            "Invalid duration `$timeInMinutes` for on/off-gassing tissues. The minimum duration must be higher than 0."
         }
 
-        // The code below assumes a non-constant partial pressure for oxygen and helium.
-        // However with CCR the oxygen fraction remains constant, causing the nitrogen fraction to
-        // change constantly.
-        // Instead of Schreiners equation for CCR it may make more sens to instead simulate the
-        // constant oxygen fraction by using small time increments at constant pressure.
-        // TODO: Once CCR support is added consider making the time increments smaller (seconds)?
-        // https://thetheoreticaldiver.org/wordpress/index.php/2017/11/30/ccr-schreiner-equation/
+        // Calculate nitrogen fraction (by just subtracting oxygen and helium)
+        val fN2 = (1.0 - fO2) - fHe
+        require(fN2 >= 0.0) {
+            "Invalid gas mix `$fO2/$fHe` for on/off-gassing tissues, oxygen and helium should together never exceed 1.0 (100% of the gas mix)."
+        }
 
         val depthChangeInBarsPerMinute = pressureChangeInBarsPerMinute(startPressure, endPressure, timeInMinutes)
 
-        // Calculate nitrogen loading
-        var gasRate = partialPressure(depthChangeInBarsPerMinute, fN2)
-        var pGas = partialPressure(startPressure, fN2)
-        this.pNitrogen = schreinerEquation(pNitrogen, pGas, timeInMinutes, parameters.n2HalfTime, gasRate)
-
-        // Calculate helium loading
-        gasRate = partialPressure(depthChangeInBarsPerMinute, fHe)
-        pGas = partialPressure(startPressure, fHe)
-        this.pHelium = schreinerEquation(pHelium, pGas, timeInMinutes, parameters.heHalfTime, gasRate)
+        if (ccrSetpoint != null) {
+            addPressureChangeCcr(startPressure, endPressure, fO2, fN2, fHe, timeInMinutes, depthChangeInBarsPerMinute, ccrSetpoint)
+        } else {
+            // oxygen fraction is irrelevant for OC tissue loading
+            addPressureChangeOc(startPressure, fN2, fHe, timeInMinutes, depthChangeInBarsPerMinute)
+        }
 
         val prevTotal = this.pTotal
         // Calculate total loading
@@ -247,6 +236,191 @@ data class TissueCompartment(
 
         // Return the difference of load added.
         return this.pTotal - prevTotal
+    }
+
+    private fun addPressureChangeOc(
+        startPressure: Double,
+        fN2: Double,
+        fHe: Double,
+        timeInMinutes: Int,
+        depthChangeInBarsPerMinute: Double
+    ) {
+        this.pNitrogen = schreinerEquation(
+            initialTissuePressure = pNitrogen,
+            inspiredGasPressure = partialPressure(startPressure, fN2),
+            time = timeInMinutes.toDouble(),
+            halfTime = parameters.n2HalfTime,
+            inspiredGasRate = partialPressure(depthChangeInBarsPerMinute, fN2),
+        )
+        this.pHelium = schreinerEquation(
+            initialTissuePressure = pHelium,
+            inspiredGasPressure = partialPressure(startPressure, fHe),
+            time = timeInMinutes.toDouble(),
+            halfTime = parameters.heHalfTime,
+            inspiredGasRate = partialPressure(depthChangeInBarsPerMinute, fHe),
+        )
+    }
+
+    /**
+     * CCR tissue loading for inert gases (N₂ and He). Internally uses [schreinerEquation] by
+     * computing an effective inspired gas pressure and rate via [ccrSchreinerInputs], which
+     * linearizes the CCR inert gas input so the same Schreiner equation applies to both OC and CCR.
+     *
+     * Three cases are handled (see [ccrSchreinerInputs]:
+     * - No ambient-setpoint transition: a single [schreinerEquation] call covers the full segment.
+     * - Ascent through the setpoint: the segment is split at the point where ambient equals the
+     *   setpoint. Below the setpoint the CCR equation applies, above it the loop is pure oxygen and
+     *   different inspired gas pressure and rate are required (effectively both zero).
+     * - Descent through the setpoint: same split in reverse, pure oxygen first, then normal loading.
+     *
+     * The split is necessary because the setpoint cannot be maintained above the ambient pressure.
+     */
+    private fun addPressureChangeCcr(
+        startPressure: Double,
+        endPressure: Double,
+        fO2: Double,
+        fN2: Double,
+        fHe: Double,
+        timeInMinutes: Int,
+        depthChangeInBarsPerMinute: Double,
+        ccrSetpoint: Double,
+    ) {
+        val setpointEffective = ccrSetpoint + waterVapourPressure
+        val isAscentWhileCrossingSetpoint = startPressure > setpointEffective && endPressure < setpointEffective
+        val isDescentWhileCrossingSetpoint = startPressure < setpointEffective && endPressure > setpointEffective
+
+        if (isAscentWhileCrossingSetpoint) {
+            val timeBelow = (startPressure - setpointEffective) / (startPressure - endPressure) * timeInMinutes
+            val timeAbove = timeInMinutes - timeBelow
+
+            // Sub-segment 1 (below): set-point maintained normally
+            val (inspiredNitrogenPressureCross, inspiredNitrogenRateCross) = ccrSchreinerInputs(
+                startPressure = startPressure,
+                pressureRate = depthChangeInBarsPerMinute,
+                inertFraction = fN2,
+                oxygenFractionDiluent = fO2,
+                setpoint = setpointEffective,
+            )
+            val pN2AtCross = schreinerEquation(
+                initialTissuePressure = pNitrogen,
+                inspiredGasPressure = inspiredNitrogenPressureCross,
+                time = timeBelow,
+                halfTime = parameters.n2HalfTime,
+                inspiredGasRate = inspiredNitrogenRateCross,
+            )
+
+            val (inspiredHeliumPressureCross, inspiredHeliumRateCross) = ccrSchreinerInputs(
+                startPressure = startPressure,
+                pressureRate = depthChangeInBarsPerMinute,
+                inertFraction = fHe,
+                oxygenFractionDiluent = fO2,
+                setpoint = setpointEffective,
+            )
+            val pHeAtCross = schreinerEquation(
+                initialTissuePressure = pHelium,
+                inspiredGasPressure = inspiredHeliumPressureCross,
+                time = timeBelow,
+                halfTime = parameters.heHalfTime,
+                inspiredGasRate = inspiredHeliumRateCross,
+            )
+
+            // Sub-segment 2 (above): ambient above setpoint, setpoint maxes on pure oxygen (no more loading)
+            this.pNitrogen = schreinerEquation(
+                initialTissuePressure = pN2AtCross,
+                inspiredGasPressure = 0.0,
+                time = timeAbove,
+                halfTime = parameters.n2HalfTime,
+                inspiredGasRate = 0.0,
+            )
+            this.pHelium = schreinerEquation(
+                initialTissuePressure = pHeAtCross,
+                inspiredGasPressure = 0.0,
+                time = timeAbove,
+                halfTime = parameters.heHalfTime,
+                inspiredGasRate = 0.0,
+            )
+        } else if (isDescentWhileCrossingSetpoint) {
+            val timeAbove = (setpointEffective - startPressure) / (endPressure - startPressure) * timeInMinutes
+            val timeBelow = timeInMinutes - timeAbove
+
+            // Sub-segment 1 (above): setpoint maxes on pure oxygen (no inert gas loading)
+            val pN2AtCross = schreinerEquation(
+                initialTissuePressure = pNitrogen,
+                inspiredGasPressure = 0.0,
+                time = timeAbove,
+                halfTime = parameters.n2HalfTime,
+                inspiredGasRate = 0.0,
+            )
+            val pHeAtCross = schreinerEquation(
+                initialTissuePressure = pHelium,
+                inspiredGasPressure = 0.0,
+                time = timeAbove,
+                halfTime = parameters.heHalfTime,
+                inspiredGasRate = 0.0,
+            )
+
+            // Sub-segment 2 (below): set-point maintained normally
+            val (inspiredNitrogenPressureBelow, inspiredNitrogenRateBelow) = ccrSchreinerInputs(
+                startPressure = setpointEffective,
+                pressureRate = depthChangeInBarsPerMinute,
+                inertFraction = fN2,
+                oxygenFractionDiluent = fO2,
+                setpoint = setpointEffective,
+            )
+            this.pNitrogen = schreinerEquation(
+                initialTissuePressure = pN2AtCross,
+                inspiredGasPressure = inspiredNitrogenPressureBelow,
+                time = timeBelow,
+                halfTime = parameters.n2HalfTime,
+                inspiredGasRate = inspiredNitrogenRateBelow,
+            )
+
+            val (inspiredHeliumPressureBelow, inspiredHeliumRateBelow) = ccrSchreinerInputs(
+                startPressure = setpointEffective,
+                pressureRate = depthChangeInBarsPerMinute,
+                inertFraction = fHe,
+                oxygenFractionDiluent = fO2,
+                setpoint = setpointEffective,
+            )
+            this.pHelium = schreinerEquation(
+                initialTissuePressure = pHeAtCross,
+                inspiredGasPressure = inspiredHeliumPressureBelow,
+                time = timeBelow,
+                halfTime = parameters.heHalfTime,
+                inspiredGasRate = inspiredHeliumRateBelow,
+            )
+        } else {
+            // No ambient-setpoint transition
+
+            val (inspiredNitrogenPressure, inspiredNitrogenRate) = ccrSchreinerInputs(
+                startPressure = startPressure,
+                pressureRate = depthChangeInBarsPerMinute,
+                inertFraction = fN2,
+                oxygenFractionDiluent = fO2,
+                setpoint = setpointEffective,
+            )
+            this.pNitrogen = schreinerEquation(
+                initialTissuePressure = pNitrogen,
+                inspiredGasPressure = inspiredNitrogenPressure,
+                time = timeInMinutes.toDouble(),
+                halfTime = parameters.n2HalfTime,
+                inspiredGasRate = inspiredNitrogenRate,
+            )
+            val (inspiredHeliumPressure, inspiredHeliumRate) = ccrSchreinerInputs(
+                startPressure = startPressure,
+                pressureRate = depthChangeInBarsPerMinute,
+                inertFraction = fHe,
+                oxygenFractionDiluent = fO2,
+                setpoint = setpointEffective,
+            )
+            this.pHelium = schreinerEquation(
+                initialTissuePressure = pHelium,
+                inspiredGasPressure = inspiredHeliumPressure,
+                time = timeInMinutes.toDouble(),
+                halfTime = parameters.heHalfTime,
+                inspiredGasRate = inspiredHeliumRate,
+            )
+        }
     }
 
     /**
