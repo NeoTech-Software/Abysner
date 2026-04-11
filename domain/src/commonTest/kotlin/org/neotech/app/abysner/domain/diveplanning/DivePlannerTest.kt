@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -27,7 +27,7 @@ import kotlin.test.assertEquals
 class DivePlannerTest {
 
     @Test
-    fun referencePlan1() {
+    fun referencePlan1_producesExpectedSegments() {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(
@@ -57,7 +57,7 @@ class DivePlannerTest {
     }
 
     @Test
-    fun referencePlan2() {
+    fun referencePlan2_producesExpectedSegments() {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
         val divePlanner = DivePlanner()
@@ -98,7 +98,7 @@ class DivePlannerTest {
     }
 
     @Test
-    fun referencePlan3() {
+    fun referencePlan3_producesExpectedSegments() {
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
         val divePlanner = DivePlanner()
@@ -137,7 +137,7 @@ class DivePlannerTest {
     }
 
     @Test
-    fun referencePlan4() {
+    fun referencePlan4_producesExpectedSegments() {
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix1845)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
         val divePlanner = DivePlanner()
@@ -184,7 +184,7 @@ class DivePlannerTest {
     }
 
     @Test
-    fun referencePlan5() {
+    fun referencePlan5_producesExpectedSegments() {
         val bottomGas = Cylinder.steel12Liter(Gas(0.21, 0.20))
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(

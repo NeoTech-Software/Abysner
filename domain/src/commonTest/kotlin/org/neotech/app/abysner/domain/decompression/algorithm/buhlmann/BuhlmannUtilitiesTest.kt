@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 class BuhlmannUtilitiesTest {
 
     @Test
-    fun getWaterVapourPressureTest() {
+    fun waterVapourPressureInBars_returnsExpectedValueAt37Celsius() {
         assertEquals(0.0625993025768047, waterVapourPressureInBars(37.0))
     }
 }

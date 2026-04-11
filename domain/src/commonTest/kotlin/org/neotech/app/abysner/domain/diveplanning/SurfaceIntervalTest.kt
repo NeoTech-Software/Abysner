@@ -14,7 +14,7 @@ import kotlin.time.toDuration
 class SurfaceIntervalTest {
 
     @Test
-    fun surfaceIntervalTest() {
+    fun addSurfaceInterval_increasesSubsequentDiveDecoTime() {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val divePlanner = DivePlanner()
         divePlanner.configuration = Configuration(

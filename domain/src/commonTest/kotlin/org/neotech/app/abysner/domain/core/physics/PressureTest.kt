@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -20,7 +20,7 @@ import kotlin.test.assertEquals
 class PressureTest {
 
     @Test
-    fun testDepthInMetersToBars() {
+    fun depthInMetersToBar_convertsCorrectly() {
         // 10 meters (pure water)
         assertEquals(1.9939, depthInMetersToBar(10.0, Environment.Default).value, DOUBLE_TOLERANCE)
 
@@ -29,13 +29,13 @@ class PressureTest {
     }
 
     @Test
-    fun testAltitudeToPressure() {
+    fun altitudeToPressure_convertsCorrectly() {
         assertEquals(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL, altitudeToPressure(0.0), tenthAtDecimalPoint(4))
         assertEquals(0.7099843196815809, altitudeToPressure(3000.0), DOUBLE_TOLERANCE)
     }
 
     @Test
-    fun testPressureToAltitude() {
+    fun pressureToAltitude_convertsCorrectly() {
         assertEquals(0.0, pressureToAltitude(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL), DOUBLE_TOLERANCE)
         assertEquals(3000.0, pressureToAltitude(0.7099843196815809), DOUBLE_TOLERANCE)
     }

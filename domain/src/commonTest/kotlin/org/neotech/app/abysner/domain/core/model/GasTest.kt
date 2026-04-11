@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 class GasTest {
 
     @Test
-    fun test() {
+    fun oxygenMod_returnsCorrectModForOxygen() {
         assertEquals(
             5.98,
             Gas.Oxygen.oxygenMod(1.6, Environment.Default),
@@ -29,7 +29,7 @@ class GasTest {
     }
 
     @Test
-    fun nitrogenCalculation() {
+    fun nitrogenFraction_isComputedFromOxygenAndHelium() {
         val newGas = Gas(oxygenFraction = 21f / 100.0, heliumFraction = 0f / 100.0)
         val nitrogenPercentage = (newGas.nitrogenFraction * 100.0).toInt()
         println(nitrogenPercentage)
