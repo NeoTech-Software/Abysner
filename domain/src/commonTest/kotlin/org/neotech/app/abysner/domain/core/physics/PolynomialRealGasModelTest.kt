@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -21,7 +21,7 @@ import kotlin.test.assertEquals
 class PolynomialRealGasModelTest {
 
     @Test
-    fun test_pressure_to_volume_and_back() {
+    fun getGasVolume_andGetGasPressure_roundTripCorrectly() {
         val model = PolynomialRealGasModel()
 
         fun test(pressure: Double) {

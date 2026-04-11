@@ -26,7 +26,7 @@ class DurationInputBehaviorTest {
     private val behavior = DurationInputBehavior()
 
     @Test
-    fun typingFourDigitsFromEmptyFillsField() {
+    fun type_fourDigitsFromEmptyFillsField() {
         textField("00:00", 0)
             .type("1").assert("10:00")
             .type("1").assert("11:00")
@@ -37,142 +37,142 @@ class DurationInputBehaviorTest {
     }
 
     @Test
-    fun typeAtEndOfHoursOverflowsIntoMinutes() {
+    fun type_atEndOfHoursOverflowsIntoMinutes() {
         textField("12:34", 2).type("1").assert("12:14").assert(4)
     }
 
     @Test
-    fun typeInMiddleOfHoursDoesNotOverflowIntoMinutes() {
+    fun type_inMiddleOfHoursDoesNotOverflowIntoMinutes() {
         textField("12:34", 1).type("5").assert("15:34").assert(2)
     }
 
     @Test
-    fun typeAtStartOfHoursDoesNotOverflowIntoMinutes() {
+    fun type_atStartOfHoursDoesNotOverflowIntoMinutes() {
         textField("12:34", 0).type("5").assert("51:34").assert(1)
     }
 
     @Test
-    fun typeNonAsciiDigitIsFiltered() {
+    fun type_nonAsciiDigitIsFiltered() {
         textField("01:23", 2).type("\u0663").assert("01:23").assert(2)
     }
 
     @Test
-    fun backspaceOnSingleHourDigitReplacesWithZero() {
+    fun backspace_onSingleHourDigitReplacesWithZero() {
         textField("09:12", 2).backspace().assert("00:12").assert(1)
     }
 
     @Test
-    fun backspaceOnFirstHourDigitReplacesWithZero() {
+    fun backspace_onFirstHourDigitReplacesWithZero() {
         textField("12:34", 1).backspace().assert("02:34").assert(0)
     }
 
     @Test
-    fun backspaceOnSecondHourDigitReplacesWithZero() {
+    fun backspace_onSecondHourDigitReplacesWithZero() {
         textField("12:34", 2).backspace().assert("10:34").assert(1)
     }
 
     @Test
-    fun backspaceOnFirstMinuteDigitReplacesWithZero() {
+    fun backspace_onFirstMinuteDigitReplacesWithZero() {
         textField("01:34", 4).backspace().assert("01:04").assert(3)
     }
 
     @Test
-    fun backspaceOnSecondMinuteDigitReplacesWithZero() {
+    fun backspace_onSecondMinuteDigitReplacesWithZero() {
         textField("01:34", 5).moveCursor(5).backspace().assert("01:30").assert(4)
     }
 
     @Test
-    fun backspaceBeforeColonDeletesSecondHourDigit() {
+    fun backspace_beforeColonDeletesSecondHourDigit() {
         textField("12:34", 2).backspace().assert("10:34").assert(1)
     }
 
     @Test
-    fun backspaceAfterColonHopsBackOverColon() {
+    fun backspace_afterColonHopsBackOverColon() {
         textField("12:34", 3).backspace().assert("12:34").assert(2)
     }
 
     @Test
-    fun selectAllAndTypeOneDigit() {
+    fun selectAllAndType_oneDigitStartsFilling() {
         textField("12:34").selectAllAndType("5").assert("05:00").assert(2)
     }
 
     @Test
-    fun selectAllAndTypeFourDigits() {
+    fun selectAllAndType_fourDigitsFillsField() {
         textField("12:34").selectAllAndType("9876").assert("98:76").assert(5)
     }
 
     @Test
-    fun selectAllAndDelete() {
+    fun selectAllAndType_emptyInputResetsToZero() {
         textField("12:34").selectAllAndType("").assert("00:00").assert(0)
     }
 
     @Test
-    fun deleteBeforeColonDoesNotRemoveColon() {
+    fun delete_beforeColonDoesNotRemoveColon() {
         textField("01:23", 2).delete().assert("01:23").assert(2)
     }
 
     @Test
-    fun fromDurationNullCursorAtStart() {
+    fun fromDuration_nullCursorAtStart() {
         DurationInputBehavior.fromDuration(null).assert("00:00").assert(0)
     }
 
     @Test
-    fun fromDurationZeroCursorAtStart() {
+    fun fromDuration_zeroCursorAtStart() {
         DurationInputBehavior.fromDuration(Duration.ZERO).assert("00:00").assert(0)
     }
 
     @Test
-    fun fromDurationWithDurationCursorAtEnd() {
+    fun fromDuration_withDurationCursorAtEnd() {
         DurationInputBehavior.fromDuration(1.hours + 30.minutes).assert("01:30").assert(5)
     }
 
     @Test
-    fun fromDurationClampsAt99Hours59Minutes() {
+    fun fromDuration_clampsAt99Hours59Minutes() {
         DurationInputBehavior.fromDuration(100.hours).assert("99:59").assert(5)
     }
 
     @Test
-    fun toDurationNormal() {
+    fun toDuration_convertsHoursAndMinuteString() {
         assertEquals(1.hours + 30.minutes, DurationInputBehavior.toDuration(textField("01:30")))
     }
 
     @Test
-    fun toDurationTwoDigitHours() {
+    fun toDuration_handlesDoubleDigitHours() {
         assertEquals(12.hours + 5.minutes, DurationInputBehavior.toDuration(textField("12:05")))
     }
 
     @Test
-    fun toDurationZeroReturnsZeroDuration() {
+    fun toDuration_zeroBothFieldsReturnsZeroDuration() {
         assertEquals(Duration.ZERO, DurationInputBehavior.toDuration(textField("00:00")))
     }
 
     @Test
-    fun toDurationEmptyHoursReturnsNull() {
+    fun toDuration_emptyHoursReturnsNull() {
         assertNull(DurationInputBehavior.toDuration(textField(":30")))
     }
 
     @Test
-    fun toDurationEmptyMinutesReturnsNull() {
+    fun toDuration_emptyMinutesReturnsNull() {
         assertNull(DurationInputBehavior.toDuration(textField("12:")))
     }
 
     @Test
-    fun toDurationMinutesOver59ReturnsNull() {
+    fun toDuration_minutesOver59ReturnsNull() {
         assertNull(DurationInputBehavior.toDuration(textField("01:60")))
     }
 
     @Test
-    fun toDurationHoursOver99ReturnsNull() {
+    fun toDuration_hoursOver99ReturnsNull() {
         assertNull(DurationInputBehavior.toDuration(textField("100:00")))
     }
 
     @Test
-    fun toDurationNonNumericReturnsNull() {
+    fun toDuration_nonNumericInputReturnsNull() {
         assertNull(DurationInputBehavior.toDuration(textField("ab:cd")))
     }
 
     @Test
-    fun processValueWithNullPreviousValue() {
+    fun processValue_withNullPreviousValueDefaultsToNewValue() {
         // In our usage this should not really happen, but processValue handles it.
         val result = behavior.processValue(null, textField("01:23"))
         assertEquals("01:23", result.text)

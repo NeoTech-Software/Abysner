@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 class CylinderTest {
 
     @Test
-    fun test_capacityCalculation() {
+    fun capacityAt_returnsCorrectCapacity() {
         // Steel 12 liter tank
         val cylinder = Cylinder(Gas.Air, 232.0, 12.0)
 
@@ -27,7 +27,7 @@ class CylinderTest {
     }
 
     @Test
-    fun test_pressureCalculation() {
+    fun pressureAt_returnsCorrectPressure() {
         // Steel 12 liter tank
         val cylinder = Cylinder(Gas.Air, 232.0, 12.0)
 
