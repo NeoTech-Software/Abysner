@@ -35,10 +35,10 @@ class SurfaceIntervalTest {
         val divePlan2 = divePlanner.addDive(plannedDive, emptyList())
 
 
-        assertEquals(45, divePlan1.runtime)
+        assertEquals(43, divePlan1.runtime)
 
         // Dive plan 2 is the same as dive plan 1, except that it has to take into account tissues
         // from the previous dive (dive plan 1), as the surface interval is short.
-        assertEquals(64, divePlan2.runtime)
+        assertEquals(59, divePlan2.runtime)
     }
 }

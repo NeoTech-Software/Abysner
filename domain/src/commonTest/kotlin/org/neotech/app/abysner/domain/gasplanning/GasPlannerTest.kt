@@ -61,7 +61,7 @@ class GasPlannerTest {
         // at T=10 and D=50.0: TTS=11
         // at T=11 and D=50.0: TTS=12
         // at T=21 and D=20.0: TTS=6
-        // at T=51 and D=20.0: TTS=14
+        // at T=51 and D=20.0: TTS=13
 
         // TTS at 51 minutes in the dive (20 meters) is longer than the TTS at 11 minutes in the
         // dive, at depth 50 meters! However the depth of 50 meters could still require more gas due
@@ -71,7 +71,7 @@ class GasPlannerTest {
         val ttsWorstCaseScenarios = GasPlanner().findPotentialWorstCaseTtsPoints(divePlan)
         assertEquals(2, ttsWorstCaseScenarios.size)
         assertTrue { ttsWorstCaseScenarios.any { it.end == 11 && it.endDepth == 50.0 && it.ttsAfter == 12 } }
-        assertTrue { ttsWorstCaseScenarios.any { it.end == 51 && it.endDepth == 20.0 && it.ttsAfter == 14 } }
+        assertTrue { ttsWorstCaseScenarios.any { it.end == 51 && it.endDepth == 20.0 && it.ttsAfter == 13 } }
     }
 
     @Test
@@ -107,11 +107,11 @@ class GasPlannerTest {
 
         // at T=15 and D=10.0: TTS=2
         // at T=30 and D=15.0: TTS=3
-        // at T=48 and D=23.0: TTS=15
+        // at T=48 and D=23.0: TTS=12
 
         val ttsWorstCaseScenarios = GasPlanner().findPotentialWorstCaseTtsPoints(divePlan)
         assertEquals(1, ttsWorstCaseScenarios.size)
-        assertTrue { ttsWorstCaseScenarios.any { it.end == 48 && it.endDepth == 23.0 && it.ttsAfter == 15 } }
+        assertTrue { ttsWorstCaseScenarios.any { it.end == 48 && it.endDepth == 23.0 && it.ttsAfter == 12 } }
     }
 
     /**
@@ -150,8 +150,8 @@ class GasPlannerTest {
 
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
-        assertEquals(3769.0, gasPlan[0].totalGasRequirement, tenthAtDecimalPoint(0))
-        assertEquals(4131.0, gasPlan[1].totalGasRequirement, tenthAtDecimalPoint(0))
+        assertEquals(3770.0, gasPlan[0].totalGasRequirement, tenthAtDecimalPoint(0))
+        assertEquals(3824.0, gasPlan[1].totalGasRequirement, tenthAtDecimalPoint(0))
     }
 
     /**

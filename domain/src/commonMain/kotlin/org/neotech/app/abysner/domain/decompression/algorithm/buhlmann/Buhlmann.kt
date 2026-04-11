@@ -203,7 +203,7 @@ data class TissueCompartment(
     /**
      * Initial nitrogen load assumes fully saturated (equilibrium), regardless of atmospheric pressure.
      */
-    private var pNitrogen: Double = partialPressure(environment.atmosphericPressure, 0.79) - waterVapourPressure,
+    private var pNitrogen: Double = partialPressure(environment.atmosphericPressure - waterVapourPressure, 0.79),
     private var pHelium: Double = 0.0,
     private var pTotal: Double = pNitrogen + pHelium
 ) {
@@ -245,16 +245,21 @@ data class TissueCompartment(
         timeInMinutes: Int,
         depthChangeInBarsPerMinute: Double
     ) {
+        // Inspired gas pressure: subtract alveolar water vapor pressure from ambient before
+        // applying gas fractions (water vapor displaces the entire gas mixture, not just one
+        // component).
+        val inspiredPressure = startPressure - waterVapourPressure
+
         this.pNitrogen = schreinerEquation(
             initialTissuePressure = pNitrogen,
-            inspiredGasPressure = partialPressure(startPressure, fN2),
+            inspiredGasPressure = partialPressure(inspiredPressure, fN2),
             time = timeInMinutes.toDouble(),
             halfTime = parameters.n2HalfTime,
             inspiredGasRate = partialPressure(depthChangeInBarsPerMinute, fN2),
         )
         this.pHelium = schreinerEquation(
             initialTissuePressure = pHelium,
-            inspiredGasPressure = partialPressure(startPressure, fHe),
+            inspiredGasPressure = partialPressure(inspiredPressure, fHe),
             time = timeInMinutes.toDouble(),
             halfTime = parameters.heHalfTime,
             inspiredGasRate = partialPressure(depthChangeInBarsPerMinute, fHe),
