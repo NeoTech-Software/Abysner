@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -36,8 +36,8 @@ interface DecompressionModel {
      *
      * @see addPressureChange
      */
-    fun addFlat(pressureAtDepth: Pressure, gas: Gas, timeInMinutes: Int) {
-        addPressureChange(pressureAtDepth, pressureAtDepth, gas, timeInMinutes)
+    fun addFlat(pressureAtDepth: Pressure, gas: Gas, timeInMinutes: Int, ccrSetpoint: Double? = null) {
+        addPressureChange(pressureAtDepth, pressureAtDepth, gas, timeInMinutes, ccrSetpoint)
     }
 
     /**
@@ -62,7 +62,7 @@ interface DecompressionModel {
      * gas, with the current tissue loading as starting point. This method will not alter the
      * current tissue loading, after returning tissues will be reset to their original state.
      */
-    fun getNoDecompressionLimit(depth: Pressure, gas: Gas): Int
+    fun getNoDecompressionLimit(depth: Pressure, gas: Gas, ccrSetpoint: Double? = null): Int
 
     /**
      * Reset the model (e.g. in case of Buhlmann this effectively resets all the tissue compartments).

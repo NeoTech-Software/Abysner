@@ -43,7 +43,7 @@ class BuhlmannCcrTest {
         val ocCeiling = ocModel.getCeiling()
         val ccrCeiling = ccrModel.getCeiling()
 
-        // Assert CCR ceiling is lower, since CCR uses a constant PPO2 that is higher than the PPO2
+        // Assert CCR ceiling is lower, since CCR uses a constant ppO2 that is higher than the ppO2
         // of air at 30 meters it reduces inert gas loading.
         assertTrue(
             ccrCeiling.value < ocCeiling.value,
@@ -133,5 +133,36 @@ class BuhlmannCcrTest {
         // According to other planning software this should lead to about 13 minutes of bottom time
         // without hitting deco
         assertEquals(13, minutesAtBottom)
+    }
+
+    @Test
+    fun getNoDecompressionLimit_ccrIsLongerThanOc() {
+        val ocModel = createModel()
+        val ccrModel = createModel()
+
+        val depth = depthInMetersToBar(30.0, environment)
+
+        val ocNdl = ocModel.getNoDecompressionLimit(depth, Gas.Air)
+        val ccrNdl = ccrModel.getNoDecompressionLimit(depth, Gas.Air, ccrSetpoint = 1.3)
+
+        // At 30m with air the OC ppO2 is about 0.84 bar, so a 1.3 bar setpoint displaces
+        // significantly more inert gas with O2, resulting in slower tissue loading and a longer
+        // NDL. This would not hold if the setpoint were below the OC ppO2.
+        assertTrue(
+            ccrNdl > ocNdl,
+            "CCR NDL ($ccrNdl min) should be longer than OC NDL ($ocNdl min) at the same depth"
+        )
+    }
+
+    @Test
+    fun getNoDecompressionLimit_ccrDoesNotAlterTissueState() {
+        val model = createModel()
+        val depth = depthInMetersToBar(30.0, environment)
+
+        val ceilingBefore = model.getCeiling()
+        model.getNoDecompressionLimit(depth, Gas.Air, ccrSetpoint = 1.3)
+        val ceilingAfter = model.getCeiling()
+
+        assertEquals(ceilingBefore.value, ceilingAfter.value)
     }
 }

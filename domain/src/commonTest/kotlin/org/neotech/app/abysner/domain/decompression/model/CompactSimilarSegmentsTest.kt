@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.domain.decompression.model
 
+import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.assertSegment
@@ -30,6 +31,7 @@ class CompactSimilarSegmentsTest {
         type: DiveSegment.Type = DiveSegment.Type.FLAT,
         cylinder: Cylinder = airCylinder,
         gfCeilingAtEnd: Double = 0.0,
+        breathingMode: BreathingMode = BreathingMode.OpenCircuit,
     ) = DiveSegment(
         start = start,
         duration = duration,
@@ -38,6 +40,7 @@ class CompactSimilarSegmentsTest {
         cylinder = cylinder,
         gfCeilingAtEnd = gfCeilingAtEnd,
         type = type,
+        breathingMode = breathingMode,
     )
 
     private fun travelSegment(
@@ -47,6 +50,7 @@ class CompactSimilarSegmentsTest {
         duration: Int,
         cylinder: Cylinder = airCylinder,
         gfCeilingAtEnd: Double = 0.0,
+        breathingMode: BreathingMode = BreathingMode.OpenCircuit,
     ) = DiveSegment(
         start = start,
         duration = duration,
@@ -55,6 +59,7 @@ class CompactSimilarSegmentsTest {
         cylinder = cylinder,
         gfCeilingAtEnd = gfCeilingAtEnd,
         type = if (startDepth < endDepth) DiveSegment.Type.DECENT else DiveSegment.Type.ASCENT,
+        breathingMode = breathingMode,
     )
 
     @Test
@@ -201,6 +206,49 @@ class CompactSimilarSegmentsTest {
         assertEquals(2, result.size, "Expected ascent to be folded into the shallower gas switch")
         result.assertSegment(0, DiveSegment.Type.DECO_STOP,  startDepth = 9.0, endDepth = 9.0, duration = 5, gas = airCylinder)
         result.assertSegment(1, DiveSegment.Type.GAS_SWITCH, startDepth = 6.0, endDepth = 6.0, duration = 2, gas = nitroxCylinder)
+    }
+
+    @Test
+    fun compactSimilarSegments_doesNotMergeFlatSegmentsOfDifferentBreathingMode() {
+        val segments = mutableListOf(
+            flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = BreathingMode.OpenCircuit),
+            flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = BreathingMode.ClosedCircuit(1.3)),
+        )
+        val result = segments.compactSimilarSegments()
+        assertEquals(2, result.size, "Expected segments with different breathing modes to remain separate")
+    }
+
+    @Test
+    fun compactSimilarSegments_mergesFlatSegmentsOfSameBreathingMode() {
+        val ccr = BreathingMode.ClosedCircuit(1.3)
+        val segments = mutableListOf(
+            flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = ccr),
+            flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = ccr),
+        )
+        val result = segments.compactSimilarSegments()
+        assertEquals(1, result.size, "Expected CCR segments with same setpoint to be merged")
+        assertEquals(5, result[0].duration)
+        assertEquals(ccr, result[0].breathingMode)
+    }
+
+    @Test
+    fun compactSimilarSegments_doesNotMergeTravelSegmentsOfDifferentBreathingMode() {
+        val segments = mutableListOf(
+            travelSegment(start = 0, startDepth = 9.0, endDepth = 6.0, duration = 1, breathingMode = BreathingMode.ClosedCircuit(1.3)),
+            travelSegment(start = 1, startDepth = 6.0, endDepth = 3.0, duration = 1, breathingMode = BreathingMode.OpenCircuit),
+        )
+        val result = segments.compactSimilarSegments()
+        assertEquals(2, result.size, "Expected travel segments with different breathing modes to remain separate")
+    }
+
+    @Test
+    fun compactSimilarSegments_doesNotMergeFlatSegmentsWithDifferentSetpoints() {
+        val segments = mutableListOf(
+            flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = BreathingMode.ClosedCircuit(0.7)),
+            flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = BreathingMode.ClosedCircuit(1.3)),
+        )
+        val result = segments.compactSimilarSegments()
+        assertEquals(2, result.size, "Expected CCR segments with different setpoints to remain separate")
     }
 }
 
