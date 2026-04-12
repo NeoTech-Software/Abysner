@@ -66,7 +66,7 @@ class GasSwitchTimeTest {
         plan.assertSegment(4, DiveSegment.Type.ASCENT,    startDepth = 21.0, endDepth = 9.0,  duration = 3,  gas = decoGas)
         plan.assertSegment(5, DiveSegment.Type.DECO_STOP, startDepth = 9.0,  endDepth = 9.0,  duration = 1,  gas = decoGas)
         plan.assertSegment(6, DiveSegment.Type.ASCENT,    startDepth = 9.0,  endDepth = 6.0,  duration = 1,  gas = decoGas)
-        plan.assertSegment(7, DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 11, gas = decoGas)
+        plan.assertSegment(7, DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 10, gas = decoGas)
         plan.assertSegment(8, DiveSegment.Type.ASCENT,    startDepth = 6.0,  endDepth = 0.0,  duration = 2,  gas = decoGas)
     }
 

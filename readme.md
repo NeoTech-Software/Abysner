@@ -177,8 +177,8 @@ plan, see the plan specific tables for those.
 | - | 21m   | 1min     | 33min   | 50/0 |
 | ➚ | 9m    | 3min     | 36min   | 50/0 |
 | ⏹ | 9m    | 1min     | 37min   | 50/0 |
-| ⏹ | 6m    | 12min    | 49min   | 50/0 |
-| ➚ | 0m    | 2min     | 51min   | 50/0 |
+| ⏹ | 6m    | 11min    | 48min   | 50/0 |
+| ➚ | 0m    | 2min     | 50min   | 50/0 |
 **CNS**: 12%  
 **OTU**: 35
 </details>
@@ -248,8 +248,8 @@ plan, see the plan specific tables for those.
 | - | 21m   | 1min     | 21min   | 50/0  |
 | ➚ | 6m    | 3min     | 24min   | 50/0  |
 | ⏹ | 6m    | 2min     | 26min   | 50/0  |
-| ⏹ | 3m    | 6min     | 32min   | 50/0  |
-| ➚ | 0m    | 1min     | 33min   | 50/0  |
+| ⏹ | 3m    | 5min     | 31min   | 50/0  |
+| ➚ | 0m    | 1min     | 32min   | 50/0  |
 **CNS**: 9%  
 **OTU**: 25
 </details>
@@ -283,8 +283,8 @@ plan, see the plan specific tables for those.
 > row's runtime from the current row, to make it consistent with Subsurface and Abysner.
 >
 > DIVESOFT.APP does not appear to include a gas switch time. With gas switch time set to one minute
-> Abysner produces the same total runtime (33min), though the individual stop distributions differ
-> ever so slightly.
+> Abysner produces total runtime of 32min, compared to 33min for DIVESOFT.APP. The individual stop
+> distributions differ ever so slightly.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -318,23 +318,24 @@ plan, see the plan specific tables for those.
 | ➙ | 60m   | 8min     | 20min   | 18/45 |
 | ➚ | 21m   | 8min     | 28min   | 18/45 |
 | - | 21m   | 1min     | 29min   | 50/0  |
-| ⏹ | 18m   | 2min     | 31min   | 50/0  |
-| ⏹ | 15m   | 2min     | 33min   | 50/0  |
-| ⏹ | 12m   | 2min     | 35min   | 50/0  |
-| ⏹ | 9m    | 4min     | 39min   | 50/0  |
-| ⏹ | 6m    | 6min     | 45min   | 50/0  |
-| ⏹ | 3m    | 12min    | 57min   | 50/0  |
-| ➚ | 0m    | 1min     | 58min   | 50/0  |
-**CNS**: 16%  
-**OTU**: 42
+| ➚ | 15m   | 2min     | 31min   | 50/0  |
+| ⏹ | 15m   | 1min     | 32min   | 50/0  |
+| ⏹ | 12m   | 2min     | 34min   | 50/0  |
+| ⏹ | 9m    | 4min     | 38min   | 50/0  |
+| ⏹ | 6m    | 6min     | 44min   | 50/0  |
+| ⏹ | 3m    | 12min    | 56min   | 50/0  |
+| ➚ | 0m    | 1min     | 57min   | 50/0  |
+**CNS**: 15%  
+**OTU**: 40
 </details>
 
 <details>
 <summary>Subsurface</summary>
 
-> **Observations:**  
-> - Subsurface does not show descent to first stop, instead the descent duration is added to the decompression time.
-> - Subsurface seems to calculate altitude pressure differently, Abysner uses 1013 hPa at sea level and calculates the pressure at altitude assuming constant temperature of 15 degrees celsius, this is slightly different compared to Subsurface, however the difference is small and should not impact the plan much.
+> **Observations:**
+> - Atmospheric pressure was set to 900 mbar directly in Subsurface to match Abysner's barometric
+>   formula result for 1000 meter altitude, eliminating it as a variable in the comparison.
+> - The remaining stop-time differences (12m, 6m, 3m) seem to be algorithmic.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -342,15 +343,20 @@ plan, see the plan specific tables for those.
 | ➙ | 60m   | 8min     | 20min   | 18/45 |
 | ➚ | 21m   | 8min     | 28min   | 18/45 |
 | - | 21m   | 1min     | 29min   | 50/0  |
-| ⏹ | 15m   | 3min     | 32min   | 50/0  |
-| ⏹ | 12m   | 2min     | 34min   | 50/0  |
-| ⏹ | 9m    | 5min     | 39min   | 50/0  |
-| ⏹ | 6m    | 8min     | 47min   | 50/0  |
-| ⏹ | 3m    | 14min    | 61min   | 50/0  |
-| ➚ | 0m    | 1min     | 62min   | 50/0  |
-**CNS**: 16%  
-**OTU**: 43  
-*Subsurface (6.0.5214-CICD-release)*
+| ➚ | 15m   | 2min     | 31min   | 50/0  |
+| ⏹ | 15m   | 1min     | 32min   | 50/0  |
+| ➚ | 12m   | 1min     | 33min   | 50/0  |
+| ⏹ | 12m   | 2min     | 35min   | 50/0  |
+| ➚ | 9m    | 1min     | 36min   | 50/0  |
+| ⏹ | 9m    | 3min     | 39min   | 50/0  |
+| ➚ | 6m    | 1min     | 40min   | 50/0  |
+| ⏹ | 6m    | 7min     | 47min   | 50/0  |
+| ➚ | 3m    | 1min     | 48min   | 50/0  |
+| ⏹ | 3m    | 14min    | 62min   | 50/0  |
+| ➚ | 0m    | 1min     | 63min   | 50/0  |
+**CNS**: 17%  
+**OTU**: 46  
+*Subsurface (6.0.5576-CICD-release)*
 </details>
 
 <details>
@@ -422,9 +428,9 @@ Out:
 | ➙ | 40m   | 2min     | 32min   | 21/20 |
 | ➚ | 9m    | 7min     | 39min   | 21/20 |
 | ⏹ | 9m    | 3min     | 42min   | 21/20 |
-| ⏹ | 6m    | 7min     | 49min   | 21/20 |
-| ⏹ | 3m    | 16min    | 65min   | 21/20 |
-| ➚ | 0m    | 1min     | 66min   | 21/20 |
+| ⏹ | 6m    | 6min     | 48min   | 21/20 |
+| ⏹ | 3m    | 15min    | 63min   | 21/20 |
+| ➚ | 0m    | 1min     | 64min   | 21/20 |
 **CNS**: 9%  
 **OTU**: 26
 </details>

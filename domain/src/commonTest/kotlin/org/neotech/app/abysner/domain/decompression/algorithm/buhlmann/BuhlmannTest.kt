@@ -32,9 +32,9 @@ class BuhlmannTest {
         val depths = listOf(10, 12, 14, 16, 18, 20, 22, 25, 30, 35, 40, 42)
 
         // Expected NDL times
-        val expectedNdlTimes = listOf(294, 150, 95, 71, 55, 42, 34, 25, 16, 12, 9, 8)
+        val expectedNdlTimes = listOf(409, 176, 107, 77, 59, 45, 36, 26, 17, 12, 9, 8)
         // Real PADI values:          219, 147, 98, 72, 56, 45, 37, 29, 20, 14, 9, 8
-        // Difference:                +75, +3,  -3, -1, -1, -3, -3, -4, -4, -2, 0, 0
+        // Difference:                +190, +29, +9, +5, +3,  0, -1, -3, -3, -2, 0, 0
 
         depths.forEachIndexed { index, depth ->
             val ndlTime = model.getNoDecompressionLimit(
