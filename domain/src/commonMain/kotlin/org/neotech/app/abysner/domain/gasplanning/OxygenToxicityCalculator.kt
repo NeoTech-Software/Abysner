@@ -20,9 +20,8 @@ import kotlin.math.pow
 
 /**
  * This class contains routines for calculating CNS and OTU loading, it is mostly based on 2 blog
- * posts written by by Robert C. Helling (which again is based on Erik Baker his work) and an
- * open-source implementation of Robert C. Hellings blog posts that is MIT licensed called
- * GasPlanner (by Jiri Pokorny):
+ * posts written by Robert Helling (which again is based on Erik Baker his work) and an open-source
+ * implementation of Helling's blog posts that is MIT licensed called GasPlanner (by Jiri Pokorny):
  *
  * - http://web.archive.org/web/20170708072206/https://www.shearwater.com/wp-content/uploads/2012/08/Oxygen_Toxicity_Calculations.pdf
  * - https://thetheoreticaldiver.org/wordpress/index.php/2019/08/15/calculating-oxygen-cns-toxicity/
