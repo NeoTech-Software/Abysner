@@ -114,14 +114,14 @@ class Buhlmann(
         return currentCeiling
     }
 
-    override fun getNoDecompressionLimit(depth: Pressure, gas: Gas): Int {
+    override fun getNoDecompressionLimit(depth: Pressure, gas: Gas, ccrSetpoint: Double?): Int {
         // Take a snapshot of the tissues to restore at a later moment
         val snapshot = snapshot()
         var minutesAdded = 0
         // Load tissues at given depth minutes by minute until the ceiling is below the surface.
         while(getCeiling().value <= environment.atmosphericPressure) {
             minutesAdded++
-            addFlat(depth, gas, 1)
+            addFlat(depth, gas, 1, ccrSetpoint)
         }
         reset(snapshot)
         return minutesAdded

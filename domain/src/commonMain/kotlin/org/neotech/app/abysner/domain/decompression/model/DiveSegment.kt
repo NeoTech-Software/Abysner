@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2025 Neotech
+ * Copyright (C) 2025-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.domain.decompression.model
 
+import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.utilities.equalsDelta
 import kotlin.math.max
@@ -47,6 +48,12 @@ data class DiveSegment(
      * and the semantic purpose (deco stop, gas switch).
      */
     val type: Type,
+
+    /**
+     * Whether this segment is breathed open-circuit or closed-circuit (with a specific setpoint).
+     * Used by O₂ toxicity calculations and gas planning to determine the ppO₂ model.
+     */
+    val breathingMode: BreathingMode = BreathingMode.OpenCircuit,
 
     val travelSpeed: Double = (startDepth - endDepth) / duration.toDouble(),
 
@@ -142,7 +149,8 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             currentSegment.type.isFlat &&
             currentSegment.type == nextSegment.type &&
             currentSegment.endDepth == nextSegment.startDepth &&
-            currentSegment.cylinder == nextSegment.cylinder
+            currentSegment.cylinder == nextSegment.cylinder &&
+            currentSegment.breathingMode == nextSegment.breathingMode
         ) {
             val combinedSegment = currentSegment.copy(
                 duration = currentSegment.duration + nextSegment.duration,
@@ -153,7 +161,8 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
         } else if (
             currentSegment.travelSpeed.equalsDelta(nextSegment.travelSpeed, maxTravelSpeedDelta) &&
             currentSegment.endDepth == nextSegment.startDepth &&
-            currentSegment.cylinder == nextSegment.cylinder
+            currentSegment.cylinder == nextSegment.cylinder &&
+            currentSegment.breathingMode == nextSegment.breathingMode
         ) {
             val combinedSegment = currentSegment.copy(
                 endDepth = nextSegment.endDepth,
@@ -194,6 +203,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
                 cylinder = nextSegment.cylinder,
                 gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
                 type = nextSegment.type,
+                breathingMode = nextSegment.breathingMode,
             )
             this[i] = combinedSegment
             this.removeAt(i + 1)
