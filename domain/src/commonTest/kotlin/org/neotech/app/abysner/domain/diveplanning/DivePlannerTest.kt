@@ -13,9 +13,11 @@
 package org.neotech.app.abysner.domain.diveplanning
 
 
+import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Configuration.Algorithm
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
@@ -256,6 +258,149 @@ class DivePlannerTest {
         val gasSwitchSegments = divePlan.segmentsCollapsed.filter { it.type == DiveSegment.Type.GAS_SWITCH }
         assertEquals(0, gasSwitchSegments.size, "Expected no GAS_SWITCH between identical gas mixes, found switch(es) at: ${gasSwitchSegments.map { "${it.endDepth}m" }}")
     }
+
+    @Test
+    fun referencePlan6Ccr_producesExpectedSegments() {
+        val diluent = Cylinder.aluminium80Cuft(Gas.Air)
+        val planner = DivePlanner(Configuration(
+            maxAscentRate = 5.0,
+            maxDescentRate = 5.0,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+            salinity = Salinity.WATER_SALT,
+            algorithm = Algorithm.BUHLMANN_ZH16C,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            ccrLowSetpoint = 0.7,
+            ccrHighSetpoint = 1.2,
+        ))
+
+        val plan = planner.addDive(
+            listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
+            listOf(diluent),
+            diveMode = DiveMode.CLOSED_CIRCUIT
+        )
+        val segments = plan.segmentsCollapsed
+
+        // println(plan.toString(compact = false))
+
+        assertEquals(6.754, plan.totalCns, tenthAtDecimalPoint(3))
+        assertEquals(20.510, plan.totalOtu, tenthAtDecimalPoint(3))
+
+        val low = BreathingMode.ClosedCircuit(0.7)
+        val high = BreathingMode.ClosedCircuit(1.2)
+
+        segments.assertSegment(0, DiveSegment.Type.DECENT,    startDepth = 0.0,  endDepth = 30.0, duration = 6,  gas = diluent, breathingMode = low)
+        segments.assertSegment(1, DiveSegment.Type.FLAT,      startDepth = 30.0, endDepth = 30.0, duration = 24, gas = diluent, breathingMode = high)
+        segments.assertSegment(2, DiveSegment.Type.ASCENT,    startDepth = 30.0, endDepth = 6.0,  duration = 5,  gas = diluent, breathingMode = high)
+        segments.assertSegment(3, DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(4, DiveSegment.Type.ASCENT,    startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(5, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(6, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = high)
+    }
+
+    /**
+     * Same setup as reference plan 6 but with open-circuit bailout for the final ascent. The bottom
+     * portion stays on the loop, the ascent switches to OC and uses the best available gas(es).
+     */
+    @Test
+    fun referencePlan7CcrBailout_producesExpectedSegments() {
+        val diluent = Cylinder.aluminium80Cuft(Gas.Air)
+        val planner = DivePlanner(Configuration(
+            maxAscentRate = 5.0,
+            maxDescentRate = 5.0,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+            salinity = Salinity.WATER_SALT,
+            algorithm = Algorithm.BUHLMANN_ZH16C,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            ccrLowSetpoint = 0.7,
+            ccrHighSetpoint = 1.2,
+        ))
+
+        val plan = planner.addDive(
+            listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
+            listOf(diluent),
+            diveMode = DiveMode.CLOSED_CIRCUIT,
+            bailout = true
+        )
+        val segments = plan.segmentsCollapsed
+
+        // println(plan.toString(compact = false))
+
+        assertEquals(7.139, plan.totalCns, tenthAtDecimalPoint(3))
+        assertEquals(21.450, plan.totalOtu, tenthAtDecimalPoint(3))
+
+        val low = BreathingMode.ClosedCircuit(0.7)
+        val high = BreathingMode.ClosedCircuit(1.2)
+        val oc = BreathingMode.OpenCircuit
+
+        // Bottom portion stays on the loop (identical to reference plan 6)
+        segments.assertSegment(0, DiveSegment.Type.DECENT,     startDepth = 0.0,  endDepth = 30.0, duration = 6,  gas = diluent, breathingMode = low)
+        segments.assertSegment(1, DiveSegment.Type.FLAT,       startDepth = 30.0, endDepth = 30.0, duration = 24, gas = diluent, breathingMode = high)
+        // Bailout: 1-minute problem-solving time, then OC ascent with more deco than CCR
+        segments.assertSegment(2, DiveSegment.Type.GAS_SWITCH, startDepth = 30.0, endDepth = 30.0, duration = 1,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(3, DiveSegment.Type.ASCENT,     startDepth = 30.0, endDepth = 9.0,  duration = 5,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(4, DiveSegment.Type.DECO_STOP,  startDepth = 9.0,  endDepth = 9.0,  duration = 1,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(5, DiveSegment.Type.ASCENT,     startDepth = 9.0,  endDepth = 6.0,  duration = 1,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(6, DiveSegment.Type.DECO_STOP,  startDepth = 6.0,  endDepth = 6.0,  duration = 3,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(7, DiveSegment.Type.ASCENT,     startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(8, DiveSegment.Type.DECO_STOP,  startDepth = 3.0,  endDepth = 3.0,  duration = 7,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(9, DiveSegment.Type.ASCENT,     startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = oc)
+    }
+
+    @Test
+    fun referencePlan8Ccr_producesExpectedSegments() {
+        val diluent = Cylinder.steel12Liter(Gas(0.10, 0.70))
+        val planner = DivePlanner(Configuration(
+            maxAscentRate = 5.0,
+            maxDescentRate = 5.0,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+            salinity = Salinity.WATER_SALT,
+            algorithm = Algorithm.BUHLMANN_ZH16C,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            ccrLowSetpoint = 0.7,
+            ccrHighSetpoint = 1.2,
+        ))
+
+        val plan = planner.addDive(
+            listOf(DiveProfileSection(duration = 20, depth = 60, cylinder = diluent)),
+            listOf(diluent),
+            diveMode = DiveMode.CLOSED_CIRCUIT
+        )
+        val segments = plan.segmentsCollapsed
+
+        // println(plan.toString(compact = false))
+
+        assertEquals(2.764, plan.totalCns, tenthAtDecimalPoint(3))
+        assertEquals(6.113, plan.totalOtu, tenthAtDecimalPoint(3))
+
+        val low = BreathingMode.ClosedCircuit(0.7)
+        val high = BreathingMode.ClosedCircuit(1.2)
+
+        segments.assertSegment(0,  DiveSegment.Type.DECENT,    startDepth = 0.0,  endDepth = 60.0, duration = 12, gas = diluent, breathingMode = low)
+        segments.assertSegment(1,  DiveSegment.Type.FLAT,      startDepth = 60.0, endDepth = 60.0, duration = 8,  gas = diluent, breathingMode = high)
+        segments.assertSegment(2,  DiveSegment.Type.ASCENT,    startDepth = 60.0, endDepth = 24.0, duration = 8,  gas = diluent, breathingMode = high)
+        segments.assertSegment(3,  DiveSegment.Type.DECO_STOP, startDepth = 24.0, endDepth = 24.0, duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(4,  DiveSegment.Type.ASCENT,    startDepth = 24.0, endDepth = 21.0, duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(5,  DiveSegment.Type.DECO_STOP, startDepth = 21.0, endDepth = 21.0, duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(6,  DiveSegment.Type.ASCENT,    startDepth = 21.0, endDepth = 18.0, duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(7,  DiveSegment.Type.DECO_STOP, startDepth = 18.0, endDepth = 18.0, duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(8,  DiveSegment.Type.ASCENT,    startDepth = 18.0, endDepth = 15.0, duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(9,  DiveSegment.Type.DECO_STOP, startDepth = 15.0, endDepth = 15.0, duration = 2,  gas = diluent, breathingMode = high)
+        segments.assertSegment(10, DiveSegment.Type.ASCENT,    startDepth = 15.0, endDepth = 12.0, duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(11, DiveSegment.Type.DECO_STOP, startDepth = 12.0, endDepth = 12.0, duration = 4,  gas = diluent, breathingMode = high)
+        segments.assertSegment(12, DiveSegment.Type.ASCENT,    startDepth = 12.0, endDepth = 9.0,  duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(13, DiveSegment.Type.DECO_STOP, startDepth = 9.0,  endDepth = 9.0,  duration = 5,  gas = diluent, breathingMode = high)
+        segments.assertSegment(14, DiveSegment.Type.ASCENT,    startDepth = 9.0,  endDepth = 6.0,  duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(15, DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 7,  gas = diluent, breathingMode = high)
+        segments.assertSegment(16, DiveSegment.Type.ASCENT,    startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(17, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 12, gas = diluent, breathingMode = high)
+        segments.assertSegment(18, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = high)
+    }
 }
 
 fun List<DiveSegment>.assertSegment(
@@ -264,7 +409,8 @@ fun List<DiveSegment>.assertSegment(
     startDepth: Double,
     endDepth: Double,
     duration: Int,
-    gas: Cylinder
+    gas: Cylinder,
+    breathingMode: BreathingMode = BreathingMode.OpenCircuit,
 ) {
     val actual = this[index]
     assertEquals(type, actual.type, "Segment $index: type mismatch")
@@ -272,4 +418,5 @@ fun List<DiveSegment>.assertSegment(
     assertEquals(endDepth, actual.endDepth, "Segment $index: endDepth mismatch")
     assertEquals(duration, actual.duration, "Segment $index: duration mismatch")
     assertEquals(gas, actual.cylinder, "Segment $index: gas mismatch")
+    assertEquals(breathingMode, actual.breathingMode, "Segment $index: breathingMode mismatch")
 }

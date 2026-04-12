@@ -16,6 +16,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.collections.immutable.toPersistentMap
+import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.Environment
@@ -75,46 +76,46 @@ class DecompressionPlanner(
     }
 
 
-    fun addFlat(depth: Double, gas: Cylinder, timeInMinutes: Int) {
-        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.FLAT)
+    fun addFlat(depth: Double, gas: Cylinder, timeInMinutes: Int, breathingMode: BreathingMode) {
+        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.FLAT, breathingMode)
     }
 
-    private fun addDecoStop(depth: Double, gas: Cylinder, timeInMinutes: Int) {
-        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.DECO_STOP)
+    private fun addDecoStop(depth: Double, gas: Cylinder, timeInMinutes: Int, breathingMode: BreathingMode) {
+        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.DECO_STOP, breathingMode)
     }
 
-    private fun addGasSwitch(depth: Double, gas: Cylinder, timeInMinutes: Int) {
+    private fun addGasSwitch(depth: Double, gas: Cylinder, timeInMinutes: Int, breathingMode: BreathingMode) {
         // A 0-duration segment is still emitted when gasSwitchTime = 0 so the instruction table
         // can consistently show a gas switch row regardless of the configured switch time.
-        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.GAS_SWITCH)
+        return addDepthChangeInternal(depth, depth, gas, timeInMinutes, DiveSegment.Type.GAS_SWITCH, breathingMode)
     }
 
-    fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int) {
+    fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, breathingMode: BreathingMode) {
         require(startDepth != endDepth) { "Use addFlat() for flat segments, startDepth and endDepth must differ." }
         val type = if (startDepth < endDepth) DiveSegment.Type.DECENT else DiveSegment.Type.ASCENT
-        return addDepthChangeInternal(startDepth, endDepth, gas, timeInMinutes, type)
+        return addDepthChangeInternal(startDepth, endDepth, gas, timeInMinutes, type, breathingMode)
     }
 
-    private fun addDepthChangeInternal(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type) {
+    private fun addDepthChangeInternal(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type, breathingMode: BreathingMode) {
         if(timeInMinutes > 0 && calculateTissueChangesPerMinute && !isCalculatingTts) {
             val diff = startDepth - endDepth
             repeat(timeInMinutes) {
                 val statDepthForThisMinute = startDepth - (diff * ((it) / timeInMinutes.toDouble()))
                 val endDepthForThisMinute = startDepth - (diff * ((it + 1) / timeInMinutes.toDouble()))
-                addDepthChange(statDepthForThisMinute, endDepthForThisMinute, gas, 1, type)
+                addDepthChange(statDepthForThisMinute, endDepthForThisMinute, gas, 1, type, breathingMode)
             }
         } else {
-            addDepthChange(startDepth, endDepth, gas, timeInMinutes, type)
+            addDepthChange(startDepth, endDepth, gas, timeInMinutes, type, breathingMode)
         }
     }
 
-    private fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type) {
+    private fun addDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type, breathingMode: BreathingMode) {
 
         val startPressure = depthInMetersToBar(startDepth, environment)
         val endPressure = depthInMetersToBar(endDepth, environment)
 
         if (timeInMinutes > 0) {
-            model.addPressureChange(startPressure, endPressure, gas.gas, timeInMinutes)
+            model.addPressureChange(startPressure, endPressure, gas.gas, timeInMinutes, breathingMode.ccrSetpointOrNull)
         }
 
         val ceiling = barToDepthInMeters(model.getCeiling(), environment)
@@ -129,13 +130,14 @@ class DecompressionPlanner(
                 cylinder = gas,
                 type = type,
                 gfCeilingAtEnd = ceiling,
+                breathingMode = breathingMode,
                 ttsAfter = -1
             )
         )
         this.runtime += timeInMinutes
     }
 
-    fun calculateTimeToSurface(): Int {
+    fun calculateTimeToSurface(breathingMode: BreathingMode): Int {
         // TODO this is not an ideal method to acquire this information, as we generate a lot
         //      of info we don't need.
 
@@ -150,7 +152,7 @@ class DecompressionPlanner(
         var alternativeAscentSegments: List<DiveSegment> = emptyList()
         val start = runtime
         val result = resetAfter {
-            calculateDecompression(toDepth = 0).sumOf { it.duration }.also {
+            calculateDecompression(toDepth = 0, breathingMode = breathingMode).sumOf { it.duration }.also {
                 alternativeAscentSegments = segments.subList(start).toList()
             }
         }
@@ -162,40 +164,47 @@ class DecompressionPlanner(
     /**
      * Move diver from [fromDepth] to the next ceiling depth [toDepth]. During which a gas change
      * may occur as the diver reaches depths at which a different gas may be better to breath.
+     * Gas switching is skipped when [breathingMode] is [BreathingMode.ClosedCircuit], since the
+     * diver stays on the loop.
      */
-    private fun addDecoDepthChange(fromDepth: Double, toDepth: Double, maxppO2: Double, maxEND: Double, fromGas: Cylinder, ascentRateInMetersPerMinute: Double): Cylinder {
+    private fun addDecoDepthChange(fromDepth: Double, toDepth: Double, maxppO2: Double, maxEND: Double, fromGas: Cylinder, ascentRateInMetersPerMinute: Double, breathingMode: BreathingMode): Cylinder {
+        val isCcr = breathingMode is BreathingMode.ClosedCircuit
         var gas = fromGas
         var currentDepth = fromDepth
 
         while (currentDepth > toDepth) {
-            // Check if there is a better gas to breath at the current depth
-            val betterDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
-            // Only start using the better gas when we reach a deco increment point
+            if (!isCcr) {
+                // Check if there is a better gas to breath at the current depth
+                val betterDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+                // Only start using the better gas when we reach a deco increment point
 
-            if (betterDecoGas != null && betterDecoGas.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
-                // Gas switch time is spent on the old gas: the diver is still breathing the
-                // previous gas while preparing to switch (grabbing regulator, purging, etc.).
-                // The actual switch to the new gas happens after the gas switch time.
-                addGasSwitch(currentDepth, gas, gasSwitchTime)
-                gas = betterDecoGas
+                if (betterDecoGas != null && betterDecoGas.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
+                    // Gas switch time is spent on the old gas: the diver is still breathing the
+                    // previous gas while preparing to switch (grabbing regulator, purging, etc.).
+                    // The actual switch to the new gas happens after the gas switch time.
+                    addGasSwitch(currentDepth, gas, gasSwitchTime, breathingMode)
+                    gas = betterDecoGas
+                }
             }
 
             // targetDepth is to toDepth, unless there's a better gas to switch to on the way up,
             // then the target depth may be something between currentDepth and toDepth.
             var targetDepth = toDepth
 
-            // Figure out if before we reach the targetDepth anything needs to happen (gas switch)
-            // We do this by descending with increments of 1 meter and checking if there is a better
-            // gas available at each depth.
-            var nextDepth = currentDepth - 1
-            var nextDecoGas: Cylinder?
-            while(nextDepth >= targetDepth) {
-                nextDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = nextDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
-                if (nextDecoGas != null && nextDecoGas.gas != gas.gas && nextDepth.toInt() % decoStepSize == 0) {
-                    targetDepth = nextDepth //Only carry us up to the point where we can use this better gas.
-                    break
+            if (!isCcr) {
+                // Figure out if before we reach the targetDepth anything needs to happen (gas switch)
+                // We do this by descending with increments of 1 meter and checking if there is a better
+                // gas available at each depth.
+                var nextDepth = currentDepth - 1
+                var nextDecoGas: Cylinder?
+                while(nextDepth >= targetDepth) {
+                    nextDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = nextDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+                    if (nextDecoGas != null && nextDecoGas.gas != gas.gas && nextDepth.toInt() % decoStepSize == 0) {
+                        targetDepth = nextDepth //Only carry us up to the point where we can use this better gas.
+                        break
+                    }
+                    nextDepth--
                 }
-                nextDepth--
             }
 
             // At this point we are either at the target depth, or our target depth has changed due to a gas switch that needs to happen.
@@ -210,16 +219,18 @@ class DecompressionPlanner(
             val duration = max(1, ceil(depthChange / ascentRateInMetersPerMinute).toInt())
 
             // println("Moving diver from $fromDepth to $targetDepth on gas $gas over $duration minutes.")
-            addDepthChange(currentDepth, targetDepth, gas, duration)
+            addDepthChange(currentDepth, targetDepth, gas, duration, breathingMode)
 
             currentDepth = targetDepth
         }
 
-        val betterDecoGasName = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
-        if (betterDecoGasName != null && betterDecoGasName.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
-            // Gas switch time on the old gas before switching
-            addGasSwitch(currentDepth, gas, gasSwitchTime)
-            gas = betterDecoGasName
+        if (!isCcr) {
+            val betterDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+            if (betterDecoGas != null && betterDecoGas.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
+                // Gas switch time on the old gas before switching
+                addGasSwitch(currentDepth, gas, gasSwitchTime, breathingMode)
+                gas = betterDecoGas
+            }
         }
 
         return gas
@@ -227,7 +238,9 @@ class DecompressionPlanner(
 
     fun calculateDecompression(
         toDepth: Int,
+        breathingMode: BreathingMode,
     ): List<DiveSegment> {
+        val isCcr = breathingMode is BreathingMode.ClosedCircuit
         var gas: Cylinder
         val fromDepth: Double
         if (this.segments.isEmpty()) {
@@ -242,31 +255,49 @@ class DecompressionPlanner(
         }
         val segmentSizeStart = this.segments.size
 
+        // For bailout (transitioning from CCR to OC), select the best available bailout cylinder
+        // and emit a GAS_SWITCH with duration 1 (a minimal problem-solving time for coming off the
+        // loop and switching to the bailout regulator).
+        // TODO: Should this be configurable, or even tied to the existing Configuration.gasSwitchTime?
+        val isBailout = !isCcr && segments.last().breathingMode is BreathingMode.ClosedCircuit
+        if (isBailout) {
+            val bestBailoutGas = decoGasses.findBetterGasOrFallback(
+                currentCylinder = null,
+                depth = fromDepth,
+                environment = environment,
+                maxPPO2 = maxPpO2,
+                maxEND = maxEquivalentNarcoticDepth
+            )
+            if (bestBailoutGas != null) {
+                addGasSwitch(fromDepth, gas, 1, breathingMode)
+                gas = bestBailoutGas
+            }
+        }
+
         if(toDepth > fromDepth) {
             throw IllegalArgumentException("Cannot calculate decompression as the target depth ($toDepth meter) is deeper then the current depth ($fromDepth meter). Add an descending depth change first!")
         }
 
         // Get the current ceiling:
-        var ceiling = findFirstDecoCeiling(fromDepth, decoStepSize, lastDecoStopDepth, maxPpO2, maxEquivalentNarcoticDepth, gas, ascentRate)
+        var ceiling = findFirstDecoCeiling(fromDepth, decoStepSize, lastDecoStopDepth, maxPpO2, maxEquivalentNarcoticDepth, gas, ascentRate, breathingMode)
+
+        // Check if there is a better gas to switch to at the current depth before
+        // ascending. Gas switching is skipped in CCR mode (diver stays on the loop).
+        if (!isCcr) {
+            val betterGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
+            if (betterGas != null && betterGas.gas != gas.gas) {
+                // Gas switch time on the old gas before switching
+                addGasSwitch(fromDepth, gas, gasSwitchTime, breathingMode)
+                gas = betterGas
+            }
+        }
 
         // Don't allow ceiling below start depth
         // TODO get this depth from the previous section endDepth?
         if(ceiling > fromDepth) {
-            // We have to stay at this depth first, do not change depths, but look for better gas.
+            // We have to stay at this depth first, do not change depths.
             ceiling = fromDepth.toInt()
-            val betterGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
-            if (betterGas != null && betterGas.gas != gas.gas) {
-                // Gas switch time on the old gas before switching
-                addGasSwitch(fromDepth, gas, gasSwitchTime)
-                gas = betterGas
-            }
         } else {
-            val betterGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
-            if (betterGas != null && betterGas.gas != gas.gas) {
-                // Gas switch time on the old gas before switching
-                addGasSwitch(fromDepth, gas, gasSwitchTime)
-                gas = betterGas
-            }
             // Move the diver to the first ceiling (this may already be the surface)
 
             gas = addDecoDepthChange(
@@ -275,7 +306,8 @@ class DecompressionPlanner(
                 maxPpO2,
                 maxEquivalentNarcoticDepth,
                 gas,
-                ascentRate
+                ascentRate,
+                breathingMode
             )
         }
         // Keep making deco stops until the deco ceiling is above the surface
@@ -318,7 +350,7 @@ class DecompressionPlanner(
                 var stopTime = 0
                 while (ceiling > nextDecoDepth && ceiling > toDepth || (forceMinimalDecoStopTime && stopTime < 1)) {
                     // Add 1 minute of decompression and test the ceiling again, until the ceiling is higher.
-                    this.addDecoStop(currentDepth, gas, 1)
+                    this.addDecoStop(currentDepth, gas, 1, breathingMode)
                     stopTime++
 
                     // TODO: Should we calculate the gf based on the current stop depth, or the next stop depth we want to reach?
@@ -342,7 +374,7 @@ class DecompressionPlanner(
                     }
                 }
             }
-            gas = this.addDecoDepthChange(currentDepth, ceiling.toDouble(), maxPpO2, maxEquivalentNarcoticDepth, gas, ascentRate)
+            gas = this.addDecoDepthChange(currentDepth, ceiling.toDouble(), maxPpO2, maxEquivalentNarcoticDepth, gas, ascentRate, breathingMode)
         }
 
         return if(segments.size == segmentSizeStart) {
@@ -360,7 +392,8 @@ class DecompressionPlanner(
         maxPpO2: Double,
         maxEquivalentNarcoticDepth: Double,
         gas: Cylinder,
-        ascentRate: Double
+        ascentRate: Double,
+        breathingMode: BreathingMode,
     ): Int {
 
         var ceiling: Int = getDecoCeiling(decoStepSize, lastDecoStopDepth)
@@ -382,7 +415,8 @@ class DecompressionPlanner(
                     maxPpO2,
                     maxEquivalentNarcoticDepth,
                     gas,
-                    ascentRate
+                    ascentRate,
+                    breathingMode
                 )
 
                 // Check new ceiling (could already be higher)
