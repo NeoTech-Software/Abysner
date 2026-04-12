@@ -14,8 +14,10 @@ package org.neotech.app.abysner.domain.diveplanning.model
 
 import kotlin.time.Duration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 
 data class DivePlanInputModel(
+    val diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     val deeper: Boolean,
     val longer: Boolean,
     val plannedProfile: List<DiveProfileSection>,

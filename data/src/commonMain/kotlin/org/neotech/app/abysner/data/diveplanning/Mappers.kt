@@ -17,6 +17,7 @@ import org.neotech.app.abysner.data.diveplanning.resources.DivePlanInputResource
 import org.neotech.app.abysner.data.diveplanning.resources.MultiDivePlanInputResourceV1
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
@@ -73,6 +74,7 @@ fun ConfigurationResourceV1.toModel() = Configuration(
 
 
 fun DivePlanInputModel.toResource() = DivePlanInputResourceV1(
+    diveMode = diveMode.preferenceValue,
     deeper = deeper,
     longer = longer,
     cylinders = cylinders.map { it.toResource() },
@@ -106,6 +108,7 @@ private fun Gas.toResource() = DivePlanInputResourceV1.GasResource(
 fun DivePlanInputResourceV1.toModel(): DivePlanInputModel {
     val cylinders = cylinders.map { it.toModel() }
     return DivePlanInputModel(
+        diveMode = fromString<DiveMode>(diveMode),
         deeper = deeper,
         longer = longer,
         cylinders = cylinders,

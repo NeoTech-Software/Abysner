@@ -18,6 +18,7 @@ import org.neotech.app.abysner.data.SerializableResource
 @Serializable
 data class DivePlanInputResourceV1(
     val version: Int = 1,
+    val diveMode: String = "open-circuit",
     val deeper: Boolean,
     val longer: Boolean,
     val cylinders: List<CheckableCylinderResource>,
