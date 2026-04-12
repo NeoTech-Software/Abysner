@@ -1,0 +1,17 @@
+**/build/
+.gradle/
+.kotlin/
+.idea/
+*.iml
+.DS_Store
+xcuserdata/
+*.xcodeproj/
+*.xcworkspace/
+iosApp/
+androidApp/src/
+composeApp/release/
+keystore.properties
+abysner-release.p12
+local.properties
+store-art/
+resources/
