@@ -15,8 +15,10 @@ package org.neotech.app.abysner.domain.diveplanning
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentList
+import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
@@ -39,7 +41,17 @@ class DivePlanner(
     fun addDive(
         plan: List<DiveProfileSection>,
         cylinders: List<Cylinder>,
+        diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
+        bailout: Boolean = false,
     ): DivePlan {
+
+        require(!bailout || diveMode == DiveMode.CLOSED_CIRCUIT) {
+            "Bailout is only applicable to closed-circuit dives"
+        }
+
+        val breathingMode = diveMode.breathingMode(configuration.ccrHighSetpoint)
+        val descentBreathingMode = diveMode.breathingMode(configuration.ccrLowSetpoint)
+        val isCcr = breathingMode is BreathingMode.ClosedCircuit
 
         if(plan.isEmpty()) {
             return DivePlan(
@@ -88,10 +100,10 @@ class DivePlanner(
                         // Only allow the listed bottom gas to get to this segment
                         // This is similar to what MultiDeco does
                         decompressionPlanner.setDecoGasses(listOf(it.cylinder))
-                        decompressionPlanner.calculateDecompression(toDepth = it.depth)
+                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode)
                         decompressionPlanner.setDecoGasses(gasses)
                     } else {
-                        decompressionPlanner.calculateDecompression(toDepth = it.depth)
+                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode)
                     }
 
                     val timeSpend = decompressionPlanner.runtime - runtime
@@ -105,9 +117,10 @@ class DivePlanner(
                             it.depth.toDouble(),
                             it.cylinder,
                             timeLeftAtPlannedDepth,
+                            breathingMode,
                         )
                     }
-                    decompressionPlanner.getSegments().last().ttsAfter = decompressionPlanner.calculateTimeToSurface()
+                    decompressionPlanner.assignTts(breathingMode, isCcr)
 
                 } else {
                     // Descending
@@ -120,6 +133,7 @@ class DivePlanner(
                         it.depth.toDouble(),
                         it.cylinder,
                         timeToChange,
+                        descentBreathingMode,
                     )
 
                     // TODO allow 0? And just not add the flat?
@@ -130,9 +144,10 @@ class DivePlanner(
                             it.depth.toDouble(),
                             it.cylinder,
                             timeLeftAtPlannedDepth,
+                            breathingMode,
                         )
                     }
-                    decompressionPlanner.getSegments().last().ttsAfter = decompressionPlanner.calculateTimeToSurface()
+                    decompressionPlanner.assignTts(breathingMode, isCcr)
                 }
                 currentDepth = it.depth.toDouble()
             } else {
@@ -140,14 +155,21 @@ class DivePlanner(
                     it.depth.toDouble(),
                     it.cylinder,
                     it.duration,
+                    breathingMode,
                 )
-                decompressionPlanner.getSegments().last().ttsAfter = decompressionPlanner.calculateTimeToSurface()
+                decompressionPlanner.assignTts(breathingMode, isCcr)
                 currentDepth = it.depth.toDouble()
             }
         }
 
-        // Bring diver to surface
-        decompressionPlanner.calculateDecompression(toDepth = 0)
+        // Bring diver to surface. For bailout, the final ascent is OC. The bailout detection in
+        // calculateDecompression will select the best OC (bailout) gas.
+        val ascentBreathingMode = if (bailout && isCcr) {
+            BreathingMode.OpenCircuit
+        } else {
+            breathingMode
+        }
+        decompressionPlanner.calculateDecompression(toDepth = 0, breathingMode = ascentBreathingMode)
 
         val segments = decompressionPlanner.getSegments()
 
@@ -185,6 +207,22 @@ class DivePlanner(
             gfLow = configuration.gfLow,
             gfHigh = configuration.gfHigh,
         )
+    }
+
+    private fun DiveMode.breathingMode(setpoint: Double): BreathingMode = when (this) {
+        DiveMode.OPEN_CIRCUIT -> BreathingMode.OpenCircuit
+        DiveMode.CLOSED_CIRCUIT -> BreathingMode.ClosedCircuit(setpoint)
+    }
+
+    private fun DecompressionPlanner.assignTts(breathingMode: BreathingMode, isCcr: Boolean) {
+        val lastSegment = getSegments().last()
+        lastSegment.ttsAfter = calculateTimeToSurface(breathingMode)
+        if (isCcr) {
+            // OC bailout TTS: time to surface if the diver comes off the loop now. This second call
+            // overwrites the alternative ascent stored for this timestamp, which is intentional:
+            // the OC bailout ascent is the one that matters for emergency gas planning.
+            lastSegment.ttsBailoutAfter = calculateTimeToSurface(BreathingMode.OpenCircuit)
+        }
     }
 
     open class PlanningException(message: String? = null) : Exception(message)

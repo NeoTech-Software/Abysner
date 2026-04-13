@@ -22,10 +22,7 @@ sealed class BreathingMode {
         }
     }
 
-    /**
-     * Returns the closed-circuit setpoint or null if the breathing mode is open circuit.
-     */
-    val ccrSetpoint: Double?
+    val ccrSetpointOrNull: Double?
         get() = (this as? ClosedCircuit)?.setpoint
 }
 
