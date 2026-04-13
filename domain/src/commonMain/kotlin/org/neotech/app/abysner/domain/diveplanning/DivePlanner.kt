@@ -186,8 +186,8 @@ class DivePlanner(
             alternativeAccents = decompressionPlanner.getAlternativeAccents(),
             cylinders = cylinders.toPersistentList(),
             configuration = configuration,
-            totalCns = OxygenToxicityCalculator().calculateCns(segments, configuration.environment),
-            totalOtu = OxygenToxicityCalculator().calculateOtu(segments, configuration.environment)
+            totalCns = OxygenToxicityCalculator.calculateCns(segments, configuration.environment),
+            totalOtu = OxygenToxicityCalculator.calculateOtu(segments, configuration.environment)
         )
     }
 

@@ -16,30 +16,14 @@ import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import kotlin.math.round
 
 /**
- * Returns the best gas in the list for the current depth, based on given O2 MOD [maxPPO2] and END
- * ([maxEND]) constraints.
+ * Returns the best gas in the list for the current depth, based on O2 MOD [maxPPO2] and END
+ * [maxEND] constraints. Picks the highest O2 fraction that satisfies both. If nothing satisfies
+ * the END constraint, the END constraint is dropped and the highest-O2 gas within MOD is returned
+ * instead. Returns null if no gas satisfies the O2 MOD at all.
  *
- * This functions tracks two separate best candidates:
- *  - Ideal: satisfies both O2 MOD and END constraints → highest O2 fraction wins.
- *  - Fallback: if ideal does not satisfy any gas the END constraint is dropped → highest O2 fraction wins.
- *
- * Returns null when no candidate satisfies the O2 MOD. Callers that want automatic fallback
- * behavior can use [findBetterGasOrFallback] instead.
- *
- * A word on density:
- * Enriched gases (e.g. EANx 50) are inherently denser than air at any given depth, because
- * O2 is heavier than N2. Including density as a constraint would therefore always bias the
- * algorithm away from the higher-O2 deco gases that are specifically chosen for their superior
- * off-gassing effect. In practice this is usually a non-issue: a gas's O2 MOD already limits it to
- * depths where its density is within safe limits. However, if the user selects a non-ideal gas for
- * a section of the dive, the decompression ascent planned automatically may ping between different
- * gases due to the density constraints.
- *
- * Regardless, density is surfaced to the user as a warning in the limits table so they can make
- * informed planning choices, but for the above reasons it does not influence automatic gas
- * selection at runtime.
- *
- * @return the best cylinder for the given depth, or null if no cylinder satisfies the O2 MOD.
+ * Density is intentionally not included as a constraint here: higher-O2 deco gases are denser, so
+ * including density would bias the selection away from exactly the gases chosen for their
+ * off-gassing properties. Density warnings are shown to the user separately.
  */
 fun List<Cylinder>.findBestGas(depth: Double, environment: Environment, maxPPO2: Double, maxEND: Double): Cylinder? {
     var ideal: Cylinder? = null
@@ -68,14 +52,9 @@ fun List<Cylinder>.findBestGas(depth: Double, environment: Environment, maxPPO2:
 }
 
 /**
- * Last-resort fallback when [findBestGas] returns null (no gas satisfies the O2 MOD at depth). If
- * any non-hypoxic candidates exist (PPO2 ≥ [minPPO2] at [depth]), the one with the lowest O2
- * fraction is returned to minimize O2 toxicity. If all candidates are hypoxic, the one with the
- * highest O2 fraction is returned instead, as it produces the highest PPO2 and is therefore the
- * least hypoxic option available.
- *
- * @return the safest cylinder from an oxygen point of view for the given depth, or null if the list
- * is empty.
+ * Last-resort fallback when [findBestGas] returns null (no gas satisfies the O2 MOD at this depth).
+ * Prefers the lowest-O2 non-hypoxic candidate to minimize toxicity risk. If everything is hypoxic,
+ * picks the highest-O2 option as the least-bad choice. Returns null if the list is empty.
  */
 internal fun List<Cylinder>.findBreathableFallbackGas(
     depth: Double,
@@ -92,16 +71,8 @@ internal fun List<Cylinder>.findBreathableFallbackGas(
 }
 
 /**
- * Convenience combination of [findBestGas] and [findBreathableFallbackGas]. Returns the best gas
- * for the given depth. If no gas satisfies the O2 MOD, falls back to [findBreathableFallbackGas],
- * but only when the fallback gas is genuinely better than [currentCylinder].
- *
- * "Better" is defined by the same criteria [findBreathableFallbackGas] uses to rank candidates: if
- * [currentCylinder] is already an equal or better choice than the fallback, it is returned instead
- * and no switch occurs.
- *
- * @return the best or fallback gas for the given depth, or [currentCylinder] if no switch is
- * warranted, or null if both the list and [currentCylinder] are null/empty.
+ * Combines [findBestGas] with [findBreathableFallbackGas]. Only switches to the fallback if it is
+ * actually a better choice than [currentCylinder] (lower O2 fraction when MOD is already exceeded).
  */
 fun List<Cylinder>.findBetterGasOrFallback(currentCylinder: Cylinder?, depth: Double, environment: Environment, maxPPO2: Double, maxEND: Double, minPPO2: Double = Gas.MIN_PPO2): Cylinder? {
     val best = findBestGas(depth, environment, maxPPO2, maxEND)

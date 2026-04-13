@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.domain.core.model
 
-import org.neotech.app.abysner.domain.tenthAtDecimalPoint
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -23,7 +22,7 @@ class CylinderTest {
         // Steel 12 liter tank
         val cylinder = Cylinder(Gas.Air, 232.0, 12.0)
 
-        assertEquals(2316.0, cylinder.capacityAt(pressure = 200.0), DOUBLE_PRECISION_DELTA)
+        assertEquals(2316.0, cylinder.capacityAt(pressure = 200.0), 1.0)
     }
 
     @Test
@@ -31,8 +30,6 @@ class CylinderTest {
         // Steel 12 liter tank
         val cylinder = Cylinder(Gas.Air, 232.0, 12.0)
 
-        assertEquals(99.0, cylinder.pressureAt(volume = 1200.0), DOUBLE_PRECISION_DELTA)
+        assertEquals(99.0, cylinder.pressureAt(volume = 1200.0), 1.0)
     }
 }
-
-private val DOUBLE_PRECISION_DELTA = tenthAtDecimalPoint(0)

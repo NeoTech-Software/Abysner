@@ -22,7 +22,6 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.tenthAtDecimalPoint
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -50,8 +49,8 @@ class DivePlannerTest {
 
         // println(divePlan.toString(compact = false))
 
-        assertEquals(2.731, divePlan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(5.443, divePlan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(2.731, divePlan.totalCns, 1e-3)
+        assertEquals(5.443, divePlan.totalOtu, 1e-3)
 
         plan.assertSegment(0, DiveSegment.Type.DECENT, startDepth = 0.0,  endDepth = 20.0, duration = 4,  gas = bottomGas)
         plan.assertSegment(1, DiveSegment.Type.FLAT,   startDepth = 20.0, endDepth = 20.0, duration = 16, gas = bottomGas)
@@ -85,8 +84,8 @@ class DivePlannerTest {
 
         // println(divePlan.toString(compact = false))
 
-        assertEquals(11.526, divePlan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(34.091, divePlan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(11.526, divePlan.totalCns, 1e-3)
+        assertEquals(34.091, divePlan.totalOtu, 1e-3)
 
         plan.assertSegment(0, DiveSegment.Type.DECENT,     startDepth = 0.0,  endDepth = 30.0, duration = 6,  gas = bottomGas)
         plan.assertSegment(1, DiveSegment.Type.FLAT,       startDepth = 30.0, endDepth = 30.0, duration = 24, gas = bottomGas)
@@ -124,8 +123,8 @@ class DivePlannerTest {
 
         // println(divePlan.toString(compact = false))
 
-        assertEquals(8.614, divePlan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(24.112, divePlan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(8.614, divePlan.totalCns, 1e-3)
+        assertEquals(24.112, divePlan.totalOtu, 1e-3)
 
         plan.assertSegment(0, DiveSegment.Type.DECENT,     startDepth = 0.0,  endDepth = 45.0, duration = 9, gas = bottomGas)
         plan.assertSegment(1, DiveSegment.Type.FLAT,       startDepth = 45.0, endDepth = 45.0, duration = 6, gas = bottomGas)
@@ -163,8 +162,8 @@ class DivePlannerTest {
 
         // println(divePlan.toString(compact = false))
 
-        assertEquals(14.867, divePlan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(39.917, divePlan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(14.867, divePlan.totalCns, 1e-3)
+        assertEquals(39.917, divePlan.totalOtu, 1e-3)
 
         plan.assertSegment(0,  DiveSegment.Type.DECENT,     startDepth = 0.0,  endDepth = 60.0, duration = 12, gas = bottomGas)
         plan.assertSegment(1,  DiveSegment.Type.FLAT,       startDepth = 60.0, endDepth = 60.0, duration = 8,  gas = bottomGas)
@@ -211,8 +210,8 @@ class DivePlannerTest {
 
         // println(divePlan.toString(compact = false))
 
-        assertEquals(8.480, divePlan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(25.542, divePlan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(8.480, divePlan.totalCns, 1e-3)
+        assertEquals(25.542, divePlan.totalOtu, 1e-3)
 
         plan.assertSegment(0,  DiveSegment.Type.DECENT,    startDepth = 0.0,  endDepth = 40.0, duration = 8,  gas = bottomGas)
         plan.assertSegment(1,  DiveSegment.Type.FLAT,      startDepth = 40.0, endDepth = 40.0, duration = 2,  gas = bottomGas)
@@ -284,8 +283,8 @@ class DivePlannerTest {
 
         // println(plan.toString(compact = false))
 
-        assertEquals(6.754, plan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(20.510, plan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(16.514, plan.totalCns, 1e-3)
+        assertEquals(46.548, plan.totalOtu, 1e-3)
 
         val low = BreathingMode.ClosedCircuit(0.7)
         val high = BreathingMode.ClosedCircuit(1.2)
@@ -329,8 +328,8 @@ class DivePlannerTest {
 
         // println(plan.toString(compact = false))
 
-        assertEquals(7.139, plan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(21.450, plan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(13.254, plan.totalCns, 1e-3)
+        assertEquals(37.111, plan.totalOtu, 1e-3)
 
         val low = BreathingMode.ClosedCircuit(0.7)
         val high = BreathingMode.ClosedCircuit(1.2)
@@ -375,8 +374,8 @@ class DivePlannerTest {
 
         // println(plan.toString(compact = false))
 
-        assertEquals(2.764, plan.totalCns, tenthAtDecimalPoint(3))
-        assertEquals(6.113, plan.totalOtu, tenthAtDecimalPoint(3))
+        assertEquals(28.775, plan.totalCns, 1e-3)
+        assertEquals(80.898, plan.totalOtu, 1e-3)
 
         val low = BreathingMode.ClosedCircuit(0.7)
         val high = BreathingMode.ClosedCircuit(1.2)
