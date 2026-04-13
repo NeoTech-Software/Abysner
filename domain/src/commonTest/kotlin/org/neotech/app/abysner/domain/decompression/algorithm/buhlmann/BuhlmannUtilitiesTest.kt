@@ -31,7 +31,7 @@ class BuhlmannUtilitiesTest {
     /**
      * A diver ascending from a deco stop with a 1.3 bar setpoint. Once ambient drops below
      * 1.3 bar (around 3 meters), the setpoint can no longer be maintained and the loop
-     * transitions to pure O₂, so no inert gas is inspired.
+     * transitions to pure O2, so no inert gas is inspired.
      */
     @Test
     fun ccrSchreinerInputs_returnsZeroWhenAmbientBelowSetpoint() {
@@ -113,7 +113,7 @@ class BuhlmannUtilitiesTest {
      *
      * Note: No water vapor correction, since that responsibility lies elsewhere in the code base.
      *
-     * Tests the same four ZH-16C N₂ compartments (half-times 5.0, 18.5, 54.3, 635.0 min) as found
+     * Tests the same four ZH-16C N2 compartments (half-times 5.0, 18.5, 54.3, 635.0 min) as found
      * in the forum post.
      */
     @Test

@@ -13,7 +13,6 @@
 package org.neotech.app.abysner.domain.core.physics
 
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.tenthAtDecimalPoint
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -30,7 +29,7 @@ class PressureTest {
 
     @Test
     fun altitudeToPressure_convertsCorrectly() {
-        assertEquals(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL, altitudeToPressure(0.0), tenthAtDecimalPoint(4))
+        assertEquals(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL, altitudeToPressure(0.0), 1e-4)
         assertEquals(0.7099843196815809, altitudeToPressure(3000.0), DOUBLE_TOLERANCE)
     }
 
@@ -41,4 +40,4 @@ class PressureTest {
     }
 }
 
-private val DOUBLE_TOLERANCE = tenthAtDecimalPoint(4)
+private val DOUBLE_TOLERANCE = 1e-4

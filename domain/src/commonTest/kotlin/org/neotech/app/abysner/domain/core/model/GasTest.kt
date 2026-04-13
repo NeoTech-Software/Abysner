@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.domain.core.model
 
-import org.neotech.app.abysner.domain.tenthAtDecimalPoint
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -108,4 +107,4 @@ class GasTest {
     }
 }
 
-private val DOUBLE_PRECISION_DELTA = tenthAtDecimalPoint(2)
+private val DOUBLE_PRECISION_DELTA = 1e-2

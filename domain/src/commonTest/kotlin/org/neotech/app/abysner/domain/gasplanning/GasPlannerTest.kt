@@ -18,7 +18,6 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.tenthAtDecimalPoint
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -150,8 +149,8 @@ class GasPlannerTest {
 
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
-        assertEquals(3770.0, gasPlan[0].totalGasRequirement, tenthAtDecimalPoint(0))
-        assertEquals(3824.0, gasPlan[1].totalGasRequirement, tenthAtDecimalPoint(0))
+        assertEquals(3770.0, gasPlan[0].totalGasRequirement, 1.0)
+        assertEquals(3824.0, gasPlan[1].totalGasRequirement, 1.0)
     }
 
     /**
@@ -195,8 +194,8 @@ class GasPlannerTest {
         assertEquals(2, airEntries.size)
 
         // Since both cylinders are identical each must receive exactly half
-        assertEquals(airEntries[0].normalRequirement, airEntries[1].normalRequirement, tenthAtDecimalPoint(0))
-        assertEquals(airEntries[0].extraEmergencyRequirement, airEntries[1].extraEmergencyRequirement, tenthAtDecimalPoint(0))
+        assertEquals(airEntries[0].normalRequirement, airEntries[1].normalRequirement, 1.0)
+        assertEquals(airEntries[0].extraEmergencyRequirement, airEntries[1].extraEmergencyRequirement, 1.0)
     }
 
     /**
@@ -243,6 +242,6 @@ class GasPlannerTest {
         val expectedRatio = backMount.capacity() / stage.capacity()
         val actualRatio   = backMountEntry.totalGasRequirement / stageEntry.totalGasRequirement
 
-        assertEquals(expectedRatio, actualRatio, tenthAtDecimalPoint(2))
+        assertEquals(expectedRatio, actualRatio, 1e-2)
     }
 }

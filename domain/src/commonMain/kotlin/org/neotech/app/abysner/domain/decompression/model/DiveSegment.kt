@@ -51,7 +51,7 @@ data class DiveSegment(
 
     /**
      * Whether this segment is breathed open-circuit or closed-circuit (with a specific setpoint).
-     * Used by O₂ toxicity calculations and gas planning to determine the ppO₂ model.
+     * Used by O2 toxicity calculations and gas planning to determine the ppO2 model.
      */
     val breathingMode: BreathingMode = BreathingMode.OpenCircuit,
 

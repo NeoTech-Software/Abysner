@@ -14,7 +14,6 @@ package org.neotech.app.abysner.domain.core.physics
 
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.tenthAtDecimalPoint
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -36,4 +35,4 @@ class PolynomialRealGasModelTest {
     }
 }
 
-private val DOUBLE_TOLERANCE = tenthAtDecimalPoint(6)
+private val DOUBLE_TOLERANCE = 1e-6

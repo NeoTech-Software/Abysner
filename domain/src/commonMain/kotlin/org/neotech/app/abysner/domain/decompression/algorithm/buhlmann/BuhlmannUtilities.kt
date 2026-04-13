@@ -78,11 +78,8 @@ internal fun pressureChangeInBarsPerMinute(beginPressure: Double, endPressure: D
 
 /**
  * Performs the Schreiner equation for one inert gas type and calculates the inert gas pressure in a
- * compartment.
- *
- * **Water vapor pressure**:
- * This function is unaware of water vapor pressure. The caller must subtract water vapor pressure
- * from ambient pressure before computing [inspiredGasPressure] and [inspiredGasRate] (see
+ * compartment. This function is unaware of water vapor pressure, the caller must subtract it from
+ * ambient before computing [inspiredGasPressure] and [inspiredGasRate] (see
  * [TissueCompartment.addPressureChange]).
  *
  * @param initialTissuePressure the initial partial inert gas pressure for this compartment.
@@ -90,8 +87,6 @@ internal fun pressureChangeInBarsPerMinute(beginPressure: Double, endPressure: D
  * @param halfTime the half-time for this compartment in minutes.
  * @param inspiredGasRate the rate at which the inspired inert gas partial pressure changes per
  * minute (due to depth change).
- *
- * @return the new partial inert gas pressure in this compartment.
  */
 internal fun schreinerEquation(initialTissuePressure: Double, inspiredGasPressure: Double, time: Double, halfTime: Double, inspiredGasRate: Double): Double {
     val timeConstant = ln(2.0) / halfTime
@@ -102,48 +97,36 @@ internal fun schreinerEquation(initialTissuePressure: Double, inspiredGasPressur
  * Computes the effective inspired inert gas pressure and its rate of change for a CCR segment,
  * for use as drop-in replacements for the OC values passed to [schreinerEquation].
  *
- * **Water vapor pressure**:
- * This function is unaware of water vapor pressure (likewise [schreinerEquation]). The caller must
- * add water vapor pressure to the setpoint before passing it in.
- *
- * **Ambient-setpoint transitions**:
- * This function assumes the entire segment stays on one side of the setpoint pressure (ambient
- * stays above or below the setpoint for the full segment). If a segment crosses the setpoint
- * during ascent or descent, the caller must split it into two sub-segments at the point where
- * ambient equals the setpoint, and call this function separately for each.
- *
- * **Why this works**:
- * On OC the inspired inert gas fraction is fixed, so the inspired inert gas partial pressure
- * changes linearly with ambient pressure. On CCR the O₂ partial pressure is held constant at the
- * setpoint, so the inert gas partial pressure is:
+ * On OC the inspired inert gas fraction is fixed, so the inspired partial pressure changes linearly
+ * with ambient pressure. On CCR the O2 partial pressure is held constant at the setpoint, so the
+ * inert gas partial pressure becomes:
  *
  * ```
  * (ambient - setpoint) * inertFraction / (1 - oxygenFractionDiluent)
  * ```
  *
- * Where `(ambient - setpoint)` is the pressure left for non-O₂ gases. Since `inertFraction` is
- * defined relative to the whole diluent (including its O₂), dividing by `(1 - oxygenFractionDiluent)`
- * rescales it to exclude the diluent's O₂, which is already accounted for in the setpoint.
+ * `(ambient - setpoint)` is the pressure left over for non-O2 gases. Since `inertFraction` is
+ * relative to the whole diluent (including its O2), dividing by `(1 - oxygenFractionDiluent)`
+ * rescales it to exclude the diluent O2 that the setpoint already accounts for. The result is
+ * still linear in ambient pressure, so the same Schreiner equation applies to both OC and CCR,
+ * just with different starting values and slope.
  *
- * Since ambient pressure changes linearly during a segment, the inspired inert gas pressure is also
- * linear in time, with a constant rate of change. The Schreiner equation solves for any linear
- * input, so the same equation handles both OC and CCR: only the starting value and slope differ.
+ * Like [schreinerEquation] this function is unaware of water vapor pressure, the caller must add it
+ * to the setpoint before passing it in. Also assumes the segment stays on one side of the setpoint
+ * (no crossing during ascent/descent), the caller is responsible for splitting if needed (see
+ * [TissueCompartment.addPressureChangeCcr]).
  *
- * Verified by tests against the Helling CCR Schreiner equation and a brute-force iterative Haldane
- * simulation (see [BuhlmannUtilitiesTest]).
+ * Verified against the Helling CCR Schreiner equation and a brute-force Haldane simulation (see
+ * [BuhlmannUtilitiesTest]).
  *
  * @param startPressure absolute ambient pressure at segment start
  * @param pressureRate change in ambient pressure per minute
- * @param inertFraction fraction of the inert gas (He or N₂) in the diluent
- * @param oxygenFractionDiluent fraction of O₂ in the diluent
- * @param setpoint water-vapor-corrected O₂ setpoint
+ * @param inertFraction fraction of the inert gas (He or N2) in the diluent
+ * @param oxygenFractionDiluent fraction of O2 in the diluent (must be < 1.0)
+ * @param setpoint water-vapor-corrected O2 setpoint
  *
- * @return Pair(inspiredGasPressure, inspiredGasRate) for [schreinerEquation], or (0.0, 0.0) when
- * startPressure < setpoint (ambient is below the setpoint, the loop cannot reach the setpoint and
- * maxes out at pure O₂, so no inert gas is inspired). When startPressure == setpoint,
- * inspiredGasPressure is naturally 0 (no diluent in loop yet at this depth) but inspiredGasRate is
- * non-zero because as the diver descends, ambient pressure will exceed the setpoint and inert gas
- * begins to appear in the loop.
+ * @return (inspiredGasPressure, inspiredGasRate) for [schreinerEquation], or (0.0, 0.0) when
+ * ambient is below the setpoint (loop maxes out on pure O2, no inert gas inspired).
  */
 internal fun ccrSchreinerInputs(
     startPressure: Double,
@@ -153,7 +136,7 @@ internal fun ccrSchreinerInputs(
     setpoint: Double,
 ): Pair<Double, Double> {
     require(oxygenFractionDiluent < 1.0) {
-        "Diluent should contain at least some inert gas, 100% O₂ is unrealistic for CCR diving"
+        "Diluent should contain at least some inert gas, 100% O2 is unrealistic for CCR diving"
     }
     require(inertFraction in 0.0..1.0) {
         "Inert fraction must be between 0.0 and 1.0, got: $inertFraction"

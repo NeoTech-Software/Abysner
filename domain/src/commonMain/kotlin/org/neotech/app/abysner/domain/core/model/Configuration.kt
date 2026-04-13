@@ -44,12 +44,12 @@ data class Configuration(
     val altitude: Double = 0.0,
     val algorithm: Algorithm = Algorithm.BUHLMANN_ZH16C,
     /**
-     * CCR low O₂ setpoint (bar) used during descent. Kept low to provide a safety buffer
+     * CCR low O2 setpoint (bar) used during descent. Kept low to provide a safety buffer
      * against hypoxia and reduce solenoid firing during depth changes.
      */
     val ccrLowSetpoint: Double = 0.7,
     /**
-     * CCR high O₂ setpoint (bar) used during bottom time and the entire ascent. A higher
+     * CCR high O2 setpoint (bar) used during bottom time and the entire ascent. A higher
      * setpoint reduces inert gas loading and improves decompression efficiency.
      */
     val ccrHighSetpoint: Double = 1.2,

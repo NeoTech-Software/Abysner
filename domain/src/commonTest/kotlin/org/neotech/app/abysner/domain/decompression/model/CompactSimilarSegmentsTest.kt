@@ -24,44 +24,6 @@ class CompactSimilarSegmentsTest {
     private val airCylinder = Cylinder.steel12Liter(Gas.Air)
     private val nitroxCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox50)
 
-    private fun flatSegment(
-        start: Int,
-        depth: Double,
-        duration: Int,
-        type: DiveSegment.Type = DiveSegment.Type.FLAT,
-        cylinder: Cylinder = airCylinder,
-        gfCeilingAtEnd: Double = 0.0,
-        breathingMode: BreathingMode = BreathingMode.OpenCircuit,
-    ) = DiveSegment(
-        start = start,
-        duration = duration,
-        startDepth = depth,
-        endDepth = depth,
-        cylinder = cylinder,
-        gfCeilingAtEnd = gfCeilingAtEnd,
-        type = type,
-        breathingMode = breathingMode,
-    )
-
-    private fun travelSegment(
-        start: Int,
-        startDepth: Double,
-        endDepth: Double,
-        duration: Int,
-        cylinder: Cylinder = airCylinder,
-        gfCeilingAtEnd: Double = 0.0,
-        breathingMode: BreathingMode = BreathingMode.OpenCircuit,
-    ) = DiveSegment(
-        start = start,
-        duration = duration,
-        startDepth = startDepth,
-        endDepth = endDepth,
-        cylinder = cylinder,
-        gfCeilingAtEnd = gfCeilingAtEnd,
-        type = if (startDepth < endDepth) DiveSegment.Type.DECENT else DiveSegment.Type.ASCENT,
-        breathingMode = breathingMode,
-    )
-
     @Test
     fun compactSimilarSegments_mergesFlatSegmentsOfSameTypeAndGas() {
         val segments = mutableListOf(
@@ -211,8 +173,8 @@ class CompactSimilarSegmentsTest {
     @Test
     fun compactSimilarSegments_doesNotMergeFlatSegmentsOfDifferentBreathingMode() {
         val segments = mutableListOf(
-            flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = BreathingMode.OpenCircuit),
-            flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = BreathingMode.ClosedCircuit(1.3)),
+            flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = BreathingMode.oc()),
+            flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = BreathingMode.ccr(1.3)),
         )
         val result = segments.compactSimilarSegments()
         assertEquals(2, result.size, "Expected segments with different breathing modes to remain separate")
@@ -220,7 +182,7 @@ class CompactSimilarSegmentsTest {
 
     @Test
     fun compactSimilarSegments_mergesFlatSegmentsOfSameBreathingMode() {
-        val ccr = BreathingMode.ClosedCircuit(1.3)
+        val ccr = BreathingMode.ccr(1.3)
         val segments = mutableListOf(
             flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = ccr),
             flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = ccr),
@@ -234,8 +196,8 @@ class CompactSimilarSegmentsTest {
     @Test
     fun compactSimilarSegments_doesNotMergeTravelSegmentsOfDifferentBreathingMode() {
         val segments = mutableListOf(
-            travelSegment(start = 0, startDepth = 9.0, endDepth = 6.0, duration = 1, breathingMode = BreathingMode.ClosedCircuit(1.3)),
-            travelSegment(start = 1, startDepth = 6.0, endDepth = 3.0, duration = 1, breathingMode = BreathingMode.OpenCircuit),
+            travelSegment(start = 0, startDepth = 9.0, endDepth = 6.0, duration = 1, breathingMode = BreathingMode.ccr(1.3)),
+            travelSegment(start = 1, startDepth = 6.0, endDepth = 3.0, duration = 1, breathingMode = BreathingMode.oc()),
         )
         val result = segments.compactSimilarSegments()
         assertEquals(2, result.size, "Expected travel segments with different breathing modes to remain separate")
@@ -244,11 +206,52 @@ class CompactSimilarSegmentsTest {
     @Test
     fun compactSimilarSegments_doesNotMergeFlatSegmentsWithDifferentSetpoints() {
         val segments = mutableListOf(
-            flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = BreathingMode.ClosedCircuit(0.7)),
-            flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = BreathingMode.ClosedCircuit(1.3)),
+            flatSegment(start = 0, depth = 9.0, duration = 3, breathingMode = BreathingMode.ccr(0.7)),
+            flatSegment(start = 3, depth = 9.0, duration = 2, breathingMode = BreathingMode.ccr(1.3)),
         )
         val result = segments.compactSimilarSegments()
         assertEquals(2, result.size, "Expected CCR segments with different setpoints to remain separate")
     }
+
+    private fun flatSegment(
+        start: Int,
+        depth: Double,
+        duration: Int,
+        type: DiveSegment.Type = DiveSegment.Type.FLAT,
+        cylinder: Cylinder = airCylinder,
+        gfCeilingAtEnd: Double = 0.0,
+        breathingMode: BreathingMode = BreathingMode.oc(),
+    ) = DiveSegment(
+        start = start,
+        duration = duration,
+        startDepth = depth,
+        endDepth = depth,
+        cylinder = cylinder,
+        gfCeilingAtEnd = gfCeilingAtEnd,
+        type = type,
+        breathingMode = breathingMode,
+    )
+
+    private fun travelSegment(
+        start: Int,
+        startDepth: Double,
+        endDepth: Double,
+        duration: Int,
+        cylinder: Cylinder = airCylinder,
+        breathingMode: BreathingMode = BreathingMode.oc(),
+    ) = DiveSegment(
+        start = start,
+        duration = duration,
+        startDepth = startDepth,
+        endDepth = endDepth,
+        cylinder = cylinder,
+        gfCeilingAtEnd = 0.0,
+        type = if (startDepth < endDepth) {
+            DiveSegment.Type.DECENT
+        } else {
+            DiveSegment.Type.ASCENT
+        },
+        breathingMode = breathingMode,
+    )
 }
 

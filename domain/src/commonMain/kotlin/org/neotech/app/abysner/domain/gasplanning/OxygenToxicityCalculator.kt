@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,9 +12,11 @@
 
 package org.neotech.app.abysner.domain.gasplanning
 
+import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
+import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.ccrSchreinerInputs
 import kotlin.math.exp
 import kotlin.math.pow
 
@@ -28,25 +30,23 @@ import kotlin.math.pow
  * - https://thetheoreticaldiver.org/wordpress/index.php/2018/12/05/a-few-thoughts-on-oxygen-toxicity/
  * - https://github.com/jirkapok/GasPlanner/blob/master/projects/scuba-physics/src/lib/cnsCalculator.ts
  */
-class OxygenToxicityCalculator {
+object OxygenToxicityCalculator {
 
     fun calculateCns(segments: List<DiveSegment>, environment: Environment): Double {
         var cns = 0.0
         segments.forEach {
-            cns += calculateCns(it.cylinder.gas.oxygenFraction, it.startDepth, it.endDepth, environment, it.duration)
+            val averagePressure = depthInMetersToBar((it.startDepth + it.endDepth) / 2.0, environment).value
+            val ppO2 = effectivePartialOxygenPressure(it.cylinder.gas.oxygenFraction, averagePressure, it.breathingMode)
+            cns += calculateCns(ppO2, it.duration)
         }
         return cns
     }
 
-    private fun calculateCns(fO2: Double, startDepth: Double, endDepth: Double, environment: Environment, duration: Int): Double {
-        val avgPressure = depthInMetersToBar((startDepth + endDepth) / 2.0, environment).value
-        val ppO2 = fO2 * avgPressure
-
-        if(ppO2 <= MINIMUM_CNS_PPO2) {
+    private fun calculateCns(ppO2: Double, duration: Int): Double {
+        if (ppO2 <= MINIMUM_CNS_PPO2) {
             return 0.0
         }
-
-        val exponent = this.getCnsPpo2Slope(ppO2)
+        val exponent = getCnsPpo2Slope(ppO2)
         return (duration * 60.0) * exp(exponent) * 100.0
     }
 
@@ -58,9 +58,9 @@ class OxygenToxicityCalculator {
      *
      * Note: In 2025 research suggested relaxing the ppO2 = 1.3 bar single-exposure limit from
      * 180 to 240 min. If the NOAA table is updated accordingly, the ppO2 ≤ 1.5 curve fit below
-     * should be re-fitted against the new values.
-     * "Revised guideline for CNS oxygen toxicity exposure limits when using an inspired PO2 of
-     * 1.3 atmospheres." https://doi.org/10.28920/dhm55.3.262-270
+     * should be re-fitted against the new values. See: "Revised guideline for CNS oxygen toxicity
+     * exposure limits when using an inspired PO2 of 1.3 atmospheres."
+     * https://doi.org/10.28920/dhm55.3.262-270
      */
     private fun getCnsPpo2Slope(ppO2: Double): Double {
         if(ppO2 <= 1.5) {
@@ -70,34 +70,35 @@ class OxygenToxicityCalculator {
     }
 
     fun calculateOtu(segments: List<DiveSegment>, environment: Environment): Double {
-        // For this calculation it should not matter if segments are multiple minutes long, but for CNS this
-        // seems to be more important (or even necessary).
+        // For this calculation it should not matter if segments are multiple minutes long, but for
+        // CNS this seems to be more important (or even necessary).
         var otu = 0.0
         segments.forEach {
-            val o2 = it.cylinder.gas.oxygenFraction
-            otu += this.calculateOtu(it.duration, o2, it.startDepth, it.endDepth, environment)
+            val startAmbientPressure = depthInMetersToBar(it.startDepth, environment).value
+            val endAmbientPressure = depthInMetersToBar(it.endDepth, environment).value
+            val ppo2Start = effectivePartialOxygenPressure(it.cylinder.gas.oxygenFraction, startAmbientPressure, it.breathingMode)
+            val ppo2End = effectivePartialOxygenPressure(it.cylinder.gas.oxygenFraction, endAmbientPressure, it.breathingMode)
+            otu += this.calculateOtu(it.duration, ppo2Start, ppo2End)
         }
         return otu
     }
 
-    private fun calculateOtu(duration: Int, pO2: Double, startDepth: Double, endDepth: Double, environment: Environment): Double {
+    private fun calculateOtu(duration: Int, ppo2AtStart: Double, ppo2AtEnd: Double): Double {
         var durationInMinutes = duration.toDouble()
-        val startAAP = depthInMetersToBar(startDepth, environment).value
-        val endAAP = depthInMetersToBar(endDepth, environment).value
-        var ppo2Start = startAAP * pO2
-        var ppo2End = endAAP * pO2
+        var ppo2Start = ppo2AtStart
+        var ppo2End = ppo2AtEnd
 
         if ((ppo2Start <= MINIMAL_OTU_PPO2) && (ppo2End <= MINIMAL_OTU_PPO2)) {
-            // If both start and end partial pressure is below a PPO2 of 0.5, then calculating OTU is
-            // pointless since the effect only really starts at 0.5.
+            // If both start and end partial pressure is below a PPO2 of 0.5, then calculating OTU
+            // is pointless since the effect only really starts at 0.5.
             return 0.0
         }
 
         // only part of the segment bellow limit
         if (ppo2Start <= MINIMAL_OTU_PPO2) {
-            // PPO2 at start is lower then the minimum, only take into account the part of the segment
-            // that is higher then the minimum value, then also change ppo2start ot the minimum,
-            // to make sure calculations start form there.
+            // PPO2 at start is lower than the minimum: only take into account the part of the
+            // segment that is higher than the minimum value, also change ppo2start to the
+            // minimum, to make sure calculations take into account only the valid section.
             durationInMinutes = durationInMinutes * (ppo2End - MINIMAL_OTU_PPO2) / (ppo2End - ppo2Start)
             ppo2Start = MINIMAL_OTU_PPO2
         } else if (ppo2End <= MINIMAL_OTU_PPO2) {
@@ -105,19 +106,21 @@ class OxygenToxicityCalculator {
             ppo2End = MINIMAL_OTU_PPO2
         }
 
-        // Robert in his blog post "A few thoughts on oxygen toxicity" suggests a new formula for OTU
-        // based on Erik Baker his paper "Oxygen Toxicity Calculations", this formula allows calculating
-        // both ascents an descents as well as equal depth sections all at once (without divide by zero issues):
+        // Robert in his blog post "A few thoughts on oxygen toxicity" suggests a new formula for
+        // OTU based on Erik Baker his paper "Oxygen Toxicity Calculations", this formula allows
+        // calculating ascents, descents and flat sections all at once (without divide by zero
+        // issues):
         // https://thetheoreticaldiver.org/wordpress/index.php/2018/12/05/a-few-thoughts-on-oxygen-toxicity/
+
         // The new formula uses a new variable called Pm which is calculated like this:
         // Pm = (Pa + Pb) / 2
         // This variable is then used in the main formula
         //
-        // ...(Pm - 0.5) / 0.5...
+        // (Pm - 0.5) / 0.5
         //
         // Or expanded:
         //
-        // ...((Pa + Pb) / 2 - 0.5 / 0.5)...
+        // ((Pa + Pb) / 2 - 0.5 / 0.5)
         //
         // Which is basically saying divide by 2, subtract 0.5 then multiply by 2 again, so one could
         // have subtracted 1.0 directly instead, for the same result:
@@ -125,7 +128,34 @@ class OxygenToxicityCalculator {
         val rate = pm.pow(5.0 / 6.0) * (1.0 - 5.0 * (ppo2End - ppo2Start).pow(2) / 216 / (pm * pm))
         return rate * durationInMinutes
     }
-}
 
-private const val MINIMAL_OTU_PPO2 = 0.5
-private const val MINIMUM_CNS_PPO2 = 0.5
+    /**
+     * Returns the effective ppO2 for a given ambient pressure and breathing mode.
+     *
+     * For open circuit this is simply fO2 * ambientPressure. For closed circuit, the ppO2 cannot
+     * exceed ambient pressure at shallow depths, and the assumption is made that if the ppO2 from
+     * just the diluent is higher than the setpoint, the setpoint will never be reached (same
+     * assumption as [ccrSchreinerInputs]). In reality the ppO2 will eventually drop due to
+     * metabolic consumption. This transient is not modeled, matching the approach used by other CCR
+     * planners.
+     */
+    internal fun effectivePartialOxygenPressure(
+        fO2Diluent: Double,
+        ambientPressure: Double,
+        breathingMode: BreathingMode,
+    ): Double = when (breathingMode) {
+        // Note: it seems kinda weird that we don't correct for water vapor pressure here, but I
+        // guess it makes sense since the tables the calculations here are based on empirical
+        // testing where they did not look specifically at the true inspired O2? But rather ambient
+        // PPO2? Anyhow, not correcting is the conservative choice anyway.
+        is BreathingMode.OpenCircuit ->
+            fO2Diluent * ambientPressure
+        is BreathingMode.ClosedCircuit -> {
+            val diluentPpO2 = fO2Diluent * ambientPressure
+            minOf(maxOf(breathingMode.setpoint, diluentPpO2), ambientPressure)
+        }
+    }
+
+    private const val MINIMAL_OTU_PPO2 = 0.5
+    private const val MINIMUM_CNS_PPO2 = 0.5
+}

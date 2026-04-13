@@ -24,5 +24,12 @@ sealed class BreathingMode {
 
     val ccrSetpointOrNull: Double?
         get() = (this as? ClosedCircuit)?.setpoint
+
+    companion object {
+
+        fun ccr(setpoint: Double) = ClosedCircuit(setpoint)
+
+        fun oc() = BreathingMode.OpenCircuit
+    }
 }
 

@@ -267,7 +267,7 @@ data class TissueCompartment(
     }
 
     /**
-     * CCR tissue loading for inert gases (N₂ and He). Internally uses [schreinerEquation] by
+     * CCR tissue loading for inert gases (N2 and He). Internally uses [schreinerEquation] by
      * computing an effective inspired gas pressure and rate via [ccrSchreinerInputs], which
      * linearizes the CCR inert gas input so the same Schreiner equation applies to both OC and CCR.
      *
