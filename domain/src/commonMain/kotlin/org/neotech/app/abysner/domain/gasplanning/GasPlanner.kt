@@ -35,23 +35,25 @@ class GasPlanner {
     fun findPotentialWorstCaseTtsPoints(divePlan: DivePlan): List<DiveSegment> {
 
         // Find all segments with a TTS value
-        val ttsValues = divePlan.segments.filter { it.ttsAfter != -1 }.toMutableList()
+        val ttsValues = divePlan.segments.filter { it.ttsAfter != null }.toMutableList()
 
         val candidates = mutableListOf<DiveSegment>()
         var segmentIndex = 0
         while (segmentIndex < ttsValues.size) {
             val segment = ttsValues[segmentIndex++]
+            val segmentTts = segment.ttsAfter!!
             var isCandidate = true
 
             val iterator = ttsValues.listIterator()
             while (iterator.hasNext()) {
                 val other = iterator.next()
                 if (other !== segment) {
-                    if (other.endDepth >= segment.endDepth && other.ttsAfter >= segment.ttsAfter) {
+                    val otherTts = other.ttsAfter!!
+                    if (other.endDepth >= segment.endDepth && otherTts >= segmentTts) {
                         // Found segment at same or deeper depth with an equal or longer TTS, thus this segment cannot be the worst case gas scenario.
                         isCandidate = false
                         break
-                    } else if (other.ttsAfter < segment.ttsAfter && other.endDepth < segment.endDepth) {
+                    } else if (otherTts < segmentTts && other.endDepth < segment.endDepth) {
                         // Found segment that is also not a worst case scenario, since it is shallower and has a shorter TTS.
                         // We can already remove this segment, as an optimization (no need to check this segment again).
                         // Correct main loop index if the removal happens before the current segment

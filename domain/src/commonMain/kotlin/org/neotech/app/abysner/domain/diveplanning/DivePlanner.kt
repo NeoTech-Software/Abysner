@@ -53,6 +53,9 @@ class DivePlanner(
         val descentBreathingMode = diveMode.breathingMode(configuration.ccrLowSetpoint)
         val isCcr = breathingMode is BreathingMode.ClosedCircuit
 
+        // TTS is collected during planning and merged into the segments at the end via copy().
+        val ttsBySegmentIndex = mutableMapOf<Int, TtsValues>()
+
         if(plan.isEmpty()) {
             return DivePlan(
                 persistentListOf(),
@@ -120,7 +123,7 @@ class DivePlanner(
                             breathingMode,
                         )
                     }
-                    decompressionPlanner.assignTts(breathingMode, isCcr)
+                    decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex)
 
                 } else {
                     // Descending
@@ -147,7 +150,7 @@ class DivePlanner(
                             breathingMode,
                         )
                     }
-                    decompressionPlanner.assignTts(breathingMode, isCcr)
+                    decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex)
                 }
                 currentDepth = it.depth.toDouble()
             } else {
@@ -157,7 +160,7 @@ class DivePlanner(
                     it.duration,
                     breathingMode,
                 )
-                decompressionPlanner.assignTts(breathingMode, isCcr)
+                decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex)
                 currentDepth = it.depth.toDouble()
             }
         }
@@ -171,7 +174,11 @@ class DivePlanner(
         }
         decompressionPlanner.calculateDecompression(toDepth = 0, breathingMode = ascentBreathingMode)
 
-        val segments = decompressionPlanner.getSegments()
+        val segments = decompressionPlanner.getSegments().mapIndexed { index, segment ->
+            ttsBySegmentIndex[index]?.let {
+                segment.copy(ttsAfter = it.tts, ttsBailoutAfter = it.bailoutTts)
+            } ?: segment
+        }.toPersistentList()
 
         decompressionModelSnapshot = decompressionPlanner.getDecompressionModelSnapshot()
         return DivePlan(
@@ -214,16 +221,25 @@ class DivePlanner(
         DiveMode.CLOSED_CIRCUIT -> BreathingMode.ClosedCircuit(setpoint)
     }
 
-    private fun DecompressionPlanner.assignTts(breathingMode: BreathingMode, isCcr: Boolean) {
-        val lastSegment = getSegments().last()
-        lastSegment.ttsAfter = calculateTimeToSurface(breathingMode)
-        if (isCcr) {
-            // OC bailout TTS: time to surface if the diver comes off the loop now. This second call
-            // overwrites the alternative ascent stored for this timestamp, which is intentional:
-            // the OC bailout ascent is the one that matters for emergency gas planning.
-            lastSegment.ttsBailoutAfter = calculateTimeToSurface(BreathingMode.OpenCircuit)
+    private fun DecompressionPlanner.collectTts(
+        breathingMode: BreathingMode,
+        isCcr: Boolean,
+        destination: MutableMap<Int, TtsValues>,
+    ) {
+        val segmentIndex = getSegments().lastIndex
+        val tts = calculateTimeToSurface(breathingMode)
+        // OC bailout TTS: time to surface if the diver comes off the loop now. This second call
+        // overwrites the alternative ascent stored for this timestamp, which is intentional:
+        // the OC bailout ascent is the one that matters for emergency gas planning.
+        val bailoutTts = if (isCcr) {
+            calculateTimeToSurface(BreathingMode.OpenCircuit)
+        } else {
+            null
         }
+        destination[segmentIndex] = TtsValues(tts, bailoutTts)
     }
+
+    private data class TtsValues(val tts: Int, val bailoutTts: Int?)
 
     open class PlanningException(message: String? = null) : Exception(message)
 
