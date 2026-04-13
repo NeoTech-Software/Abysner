@@ -131,7 +131,6 @@ class DecompressionPlanner(
                 type = type,
                 gfCeilingAtEnd = ceiling,
                 breathingMode = breathingMode,
-                ttsAfter = -1
             )
         )
         this.runtime += timeInMinutes

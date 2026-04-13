@@ -59,20 +59,17 @@ data class DiveSegment(
 
     /**
      * Time to surface (in minutes) at the end of this segment, using the dive's own breathing
-     * mode (OC for OC dives, CCR for CCR dives). A value of -1 means TTS was not calculated
-     * for this segment.
-     *
-     * TODO: This is better moved out of this model, since it is not always available and not immutable.
+     * mode (OC for OC dives, CCR for CCR dives). Null when TTS was not calculated for this
+     * segment (only computed at the end of each user-planned section).
      */
-    var ttsAfter: Int = -1,
+    val ttsAfter: Int? = null,
 
     /**
-     * Time to surface in open-circuit mode, only populated for CCR dives. Represents the time to
-     * surface if the diver bails out to open circuit at this point.
-     *
-     * TODO: This is better moved out of this model, since it is not always available and not immutable.
+     * Time to surface in open-circuit bailout mode, only populated for CCR dives where [ttsAfter]
+     * is also set. Represents the time to surface if the diver bails out to open circuit at this
+     * point.
      */
-    var ttsBailoutAfter: Int = -1,
+    val ttsBailoutAfter: Int? = null,
 ) {
 
     val end = start + duration

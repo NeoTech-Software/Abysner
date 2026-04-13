@@ -47,9 +47,9 @@ data class DivePlan(
     val maximumDepth: Double = segmentsCollapsed.maxOfOrNull { it.maxDepth } ?: 0.0
     val runtime: Int = segmentsCollapsed.sumOf { it.duration }
 
-    val maxTimeToSurface: DiveSegment? = segments.maxByOrNull { it.ttsAfter }
+    val maxTimeToSurface: DiveSegment? = segments.filter { it.ttsAfter != null }.maxByOrNull { it.ttsAfter!! }
 
-    val maxTimeToSurfaceBailout: DiveSegment? = segments.filter { it.ttsBailoutAfter != -1 }.maxByOrNull { it.ttsBailoutAfter }
+    val maxTimeToSurfaceBailout: DiveSegment? = segments.filter { it.ttsBailoutAfter != null }.maxByOrNull { it.ttsBailoutAfter!! }
 
     val totalDeco = segmentsCollapsed.totalDeco()
     val averageDepth = segmentsCollapsed.calculateAverageDepth()
