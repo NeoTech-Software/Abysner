@@ -7,7 +7,7 @@
 [![Get it on Google Play](resources/store-badge-google.svg)](https://play.google.com/store/apps/details?id=nl.neotech.app.abysner)
 [![Download on the App Store](resources/store-badge-apple.svg)](https://apps.apple.com/nl/app/abysner/id6636477320)
 
-**The decompression models we use and trust today to plan our dives are the result of centuries of collective research by thousands of people. There is a lot of software available to plan dives, built on top of this research. However on Android and iOS the options are limited: either expensive and proprietary, or lacking a good mobile-friendly interface.**
+**The decompression models we use and trust today to plan our dives are the result of decades of collective research by thousands of people. There is a lot of software available to plan dives, built on top of this research. However on Android and iOS the options are limited: either expensive and proprietary, or lacking a good mobile-friendly interface.**
 
 Abysner was built with the goal of giving something back to the diving community. It is open-source, built with Kotlin Multiplatform and Compose Multiplatform (the best cross-platform mobile solution to date), available on both Android and iOS, and free to inspect and verify.
 
@@ -18,19 +18,18 @@ Abysner was built with the goal of giving something back to the diving community
 
 
 # Philosophy
-Abysner is built around simplicity without sacrificing correctness. Other planners may offer more
-data, more options, and more detail. Abysner is designed to be quick to use and easy to understand
-on the device you already have in your pocket.
+Abysner is built with simplicity in mind. Other planners may offer more data or options, but Abysner
+is designed to be easy and quick to use, correct enough to trust, on the device you already have in
+your pocket.
 
-Every decision should be deliberate, prioritizing usability over complexity at every step. This
-makes it a practical tool in the field, but also a good fit for the classroom: instructors teaching
-decompression theory or technical dive planning can walk students through a real plan on the device
-they already carry.
+Prioritizing usability over complexity makes it a practical tool in the field, but as an instructor
+myself, also a good fit for the classroom: you can walk students through a real plan on a phone,
+no laptop required.
 
 
 # Features
-**Abysner is under active development (CCR planning and imperial units are not available
-yet), but it already supports:**
+**Abysner is under active development (CCR planning and imperial units are not available yet), but
+it already supports:**
 
 - **Full open-circuit (OC) dive planning**
 - **Buhlmann ZHL-16 A, B and C** with gradient factors
@@ -55,32 +54,33 @@ yet), but it already supports:**
 Dives are planned based on bottom sections with automatically calculated ascents and descents.
 
 - To reach the depth of a section the descent or ascent time that is required to reach this depth is
-  subtracted from that sections bottom-time.
+  subtracted from that section's bottom-time.
 - The final ascent to the surface is not part of any section and the time it takes is not
   subtracted from anything, instead added to the total dive so far.
 
 **Example (assume no deco):**  
-A planned section at 30 meters for 20 minutes at 5 m/min descent/ascent speed wil turn into a dive
-profile where the first 6 minutes is a descent, then 14 minutes bottom-time, then 6 minutes ascent time.
-The total dive time this makes is 26 minutes.
+A planned section at 30 meters for 20 minutes at 5 m/min descent/ascent speed will turn into a dive
+profile where the first 6 minutes is a descent, then 14 minutes bottom-time, then 6 minutes ascent
+time. The total dive time this makes is 26 minutes.
 
 
 # Gas planning
-When the app calculates a dive profile for decompression, it also calculate how much gas is required
-for the dive. This gas calculation is always based on the contingency plan (Deeper & Longer) plan,
-and contains 2 things:
+When the app calculates a dive profile for decompression, it also calculates how much gas is
+required for the dive. This gas calculation is always based on the contingency (Deeper & Longer)
+plan, it includes:
 
 - How much gas one diver needs to normally complete the contingency profile
-- How much extra gas is required to safely bring up an out-of-air diver from the worst-possible point during the dive.
+- How much extra gas is required to safely bring up an out-of-air diver from the worst-possible
+  point during the dive.
 
 The extra gas is calculated based on the worst TTS in terms of gas usage (See: [FAQ No. 5](#faq)),
-however during a out-of-gas scenario your buddy may have a completely different SAC rate then normal
-(a panic rate). To account for this reserve gas is calculated not using the normal SAC rate but
-using the emergency SAC rate, usually this is at least 2 times higher then your normal SAC rate.
+however during an out-of-gas scenario your buddy may have a completely different SAC rate than normal
+(a panic rate). To account for this, reserve gas is calculated not using the normal SAC rate but
+using the emergency SAC rate, usually this is at least 2 times higher than your normal SAC rate.
 
 
 # Compared to other planners
-How do Abysner dive plans compare to dive plan created by other dive planners? Below are some
+How do Abysner dive plans compare to dive plans created by other dive planners? Below are some
 reference plans. If you want to recreate a reference plan, these are the settings used by all of
 them, some settings (Gradient factors, Salinity, Altitude and Last-deco stop) are specific for each
 plan, see the plan specific tables for those.
@@ -168,8 +168,11 @@ plan, see the plan specific tables for those.
 <details>
 <summary>Subsurface</summary>
 
-> **Observations:**  
-> - Subsurface does not show descent to first stop, instead the descent duration is added to the decompression time.
+> **Observations:**
+> - Subsurface merges the ascent from 21m to 9m into the 9m stop, while Abysner shows the ascent as
+>   a separate segment followed by the stop.
+> - Subsurface rounds the final ascent (6m to 0m) down to 1 minute while the ascent actually takes
+>   longer (5m/min). Abysner uses 2 min, adjusting the ascent slope to fit exactly.
 
 |   | Depth | Duration | Runtime | Gas  |
 |---|-------|----------|---------|------|
@@ -239,8 +242,9 @@ plan, see the plan specific tables for those.
 <details>
 <summary>Subsurface</summary>
 
-> **Observations:**  
-> - Subsurface does not show descent to first stop, instead the descent duration is added to the decompression time.
+> **Observations:**
+> - Subsurface merges the ascent from 21m to 6m into the 6m stop, while Abysner shows the ascent as
+>   a separate segment followed by the stop.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -325,16 +329,11 @@ plan, see the plan specific tables for those.
 | ➙ | 60m   | 8min     | 20min   | 18/45 |
 | ➚ | 21m   | 8min     | 28min   | 18/45 |
 | - | 21m   | 1min     | 29min   | 50/0  |
-| ➚ | 15m   | 2min     | 31min   | 50/0  |
-| ⏹ | 15m   | 1min     | 32min   | 50/0  |
-| ➚ | 12m   | 1min     | 33min   | 50/0  |
-| ⏹ | 12m   | 2min     | 35min   | 50/0  |
-| ➚ | 9m    | 1min     | 36min   | 50/0  |
-| ⏹ | 9m    | 3min     | 39min   | 50/0  |
-| ➚ | 6m    | 1min     | 40min   | 50/0  |
-| ⏹ | 6m    | 7min     | 47min   | 50/0  |
-| ➚ | 3m    | 1min     | 48min   | 50/0  |
-| ⏹ | 3m    | 14min    | 62min   | 50/0  |
+| ⏹ | 15m   | 3min     | 32min   | 50/0  |
+| ⏹ | 12m   | 3min     | 35min   | 50/0  |
+| ⏹ | 9m    | 4min     | 39min   | 50/0  |
+| ⏹ | 6m    | 8min     | 47min   | 50/0  |
+| ⏹ | 3m    | 15min    | 62min   | 50/0  |
 | ➚ | 0m    | 1min     | 63min   | 50/0  |
 **CNS**: 17%  
 **OTU**: 46  
@@ -485,7 +484,7 @@ compartments a bit more.
 
 Instead, Abysner calculates from the very start in whole minutes so that the eventual dive plan does
 not need rounding. The downside of this technique is that we have to round some other things, like
-ascend and descent speeds. However since the eventual dive plan will be in minutes anyway, this
+ascent and descent speeds. However since the eventual dive plan will be in minutes anyway, this
 will be the more realistic case.
 
 *TLDR:* Divers usually require plans in whole minutes, thus calculate in minutes.
@@ -495,15 +494,16 @@ may very well be yes.
 </details>
 
 <details>
-<summary><strong>2. Why does Abysner give different plans compared to X?</strong></summary>
+<summary><strong>2. Why does Abysner give different plans compared to tool X?</strong></summary>
 
 There are countless reasons why this app may give you a different plan, first and foremost: there
 is not a single definition of what a dive planner is and how it should work, and this is even
 true for the Bühlmann model. There are just many small undefined details that are up to the
 implementation to decide.
 
-Robert Helling explains the differences between planners very well in his blog post "Why is Bühlmann not like
-Bühlmann": https://thetheoreticaldiver.org/wordpress/index.php/2017/11/02/why-is-buhlmann-not-like-buhlmann/
+Robert Helling explains the differences between planners very well in his blog post "Why is Bühlmann
+not like Bühlmann":
+https://thetheoreticaldiver.org/wordpress/index.php/2017/11/02/why-is-buhlmann-not-like-buhlmann/
 
 If you do feel like something is a bug, feel free to report an issue.
 </details>
@@ -513,13 +513,13 @@ If you do feel like something is a bug, feel free to report an issue.
 
 **No.**
 
-I'm a recreational instructor, technical diver, and consider myself to be a professional software
-engineer and awesome programmer. But I'm not a scientist, mathematician, doctor, or anything like
-that, so the answer is no.
+I'm a recreational and semi-closed rebreather instructor, technical diver, and consider myself to be
+a professional software engineer and awesome programmer. But I'm not a scientist, mathematician,
+doctor, or anything like that, so the answer is no.
 </details>
 
 <details>
-<summary><strong>4. Is abysner free?</strong></summary>
+<summary><strong>4. Is Abysner free?</strong></summary>
 
 Abysner is open-source, licensed under AGPLv3. You are free to use, build, modify, and redistribute
 it under the terms of that license (that is the "free" part).
@@ -532,29 +532,29 @@ yourself from source or obtain a build from someone else. The license explicitly
 
 
 <details>
-<summary><strong>5. Gas calculation for extra/reserve gas is based on the the worst-possible point during a dive, what is this point?</strong></summary>
+<summary><strong>5. How does Abysner determine the worst-case point for reserve gas?</strong></summary>
 
 **TLDR: The TTS that consumes the most gas.**
 
-Most people will tell you this a point during the deepest part of the dive, or more precise at the
-end of the planned bottom time (just before final ascent). However with multi-level dive profiles
-this can be a slightly more complex story. Because where does the final ascent begin? At the end of
-the last bottom section? What if the deeper portion of the dive is at the beginning, and
+Most people will tell you this is a point during the deepest part of the dive, or more precisely at
+the end of the planned bottom time (just before final ascent). However, with multi-level dive
+profiles this can be a slightly more complex story. Because where does the final ascent begin? At
+the end of the last bottom section? What if the deeper portion of the dive is at the beginning, and
 super short? While a slightly shallower but longer section causes actual decompression time?
 
 >**Example:**
-> Assume a ascent/descent rate of 10 meter per minute (40/80 gf). Take a profile where you start
-> your dive by descending to 40 meters, then have 1 minute of bottom time after which you ascent to
-> 30 meters and stay there for 20 minutes. Then the deepest part of you dive is not the
-> worst-possible point to ascent anymore, since your deco obligation at the 40 meter part is still
-> essentially non-existent. However at the end of the 30 meter section you have about 6
-> minutes of deco to complete (with a 50% mix). So those are 6 extra minutes of gas usage, compared
-> to ascending from 40 meters, yes the gas usage is shallower, but there is more time to breathe more
+> Assume an ascent/descent rate of 10 meter per minute (40/80 gf). Take a profile where you start
+> your dive by descending to 40 meters, then have 1 minute of bottom time after which you ascend to
+> 30 meters and stay there for 20 minutes. Then the deepest part of your dive is not the
+> worst-possible point to ascend anymore, since your deco obligation at the 40 meters part is still
+> essentially non-existent. However, at the end of the 30 meters section you have about 6 minutes of
+> deco to complete (with a 50% mix). So those are 6 extra minutes of gas usage, compared to
+> ascending from 40 meters, yes the gas usage is shallower, but there is more time to breathe more
 > gas as well. So is the deepest section still the worst?
 
 To correctly calculate the worst-possible ascent point during a dive Abysner uses TTS, also known as
 time-to-surface. Essentially it calculates how long it would take from any given point during the dive
-to ascent safely to the surface (including deco stops if required). The point during the dive where
+to ascend safely to the surface (including deco stops if required). The point during the dive where
 the TTS is the highest is most likely the worst-possible ascent point. However even this is not the
 complete story (see example), in some cases a shallower section at the end of the dive may cause a
 longer TTS, and thus potentially more gas usage. So the app calculates ascent gas usage for multiple
@@ -564,35 +564,26 @@ calculating the reserve gas requirements.
 
 
 # Contributing
-> _Detailed contribution guidelines are not yet available. This section covers the basics for now._
-
-Contributions are welcome! Before investing time in a larger feature or refactor, please open an
-issue or start a discussion first. This helps avoid overlap or misalignment with the project
-direction, and is the best way to make sure your effort is not wasted.
+If you'd like to contribute, please open an issue or start a discussion before putting significant
+effort into a feature or refactor. This project has a specific scope and direction, and not all
+pull requests will be accepted. A conversation upfront is the best way to make sure your time is
+well spent. Detailed contribution guidelines are not yet available, but the basics are covered here.
 
 All contributors are required to sign a [Contributor License Agreement (CLA)](cla.txt) before
 their pull request can be merged. The CLA process is automated via
 [CLA Assistant](https://github.com/contributor-assistant/github-action) and will prompt you
 automatically when you open a pull request.
 
-Please keep in mind that not all contributions will be automatically accepted. Discussing changes
-upfront, as mentioned above, is the best way to avoid a pull request being declined for reasons of
-vision, scope, or project direction.
-
-
-# On AI-assisted development
-AI assistance in software engineering is becoming a normal part of the craft. Like any tool, it can
-speed up writing boilerplate, surface bugs, and help explore ideas. What it does not provide on its
-own is correctness, safety, or sound design judgment: AI is probabilistic, and software for a
-safety-relevant application like a dive planner must be deterministic. Those things matter.
-
-Abysner is not a vibe-coded project. Every architectural decision is made deliberately, every
-algorithm and its results are validated against [known references](#compared-to-other-planners) and
-diving organization standards, peer-reviewed by subject-matter experts including active technical
-diving instructors, and every line of code is reviewed with intent. AI tools are part of modern 
-engineering workflows, but they are a means to better quality through efficiency, not a substitute
-for careful and deliberate development.
-
+> **A personal note on AI:** I use AI assistance where it makes sense, writing boilerplate,
+> surfacing bugs, and exploring ideas. But it can't replace correctness and safety, since AI is
+> probabilistic, and a safety-relevant application like a dive planner must be deterministic.
+> 
+> Abysner is not a vibe-coded project. Every architectural decision is made deliberately, every
+> algorithm and its results are validated against [known references](#compared-to-other-planners)
+> and diving organization standards, peer-reviewed by subject-matter experts including active
+> technical diving instructors, and every line of code is reviewed by a person. AI tools are, in my
+> opinion, a means to better quality through efficiency, not a substitute for careful and deliberate
+> development.
 
 # Credits
 This project builds on a lot of prior work: decompression research, open-source planning software,
@@ -611,6 +602,7 @@ and the broader diving community. Credit where credit is due.
     - Oxygen Toxicity Calculations
 - Open-source software used for validation, comparison, and inspiration (in no particular order):
   [GasPlanner](https://github.com/jirkapok/GasPlanner), [nyxtom/dive](https://github.com/nyxtom/dive), [Subsurface](https://github.com/subsurface/subsurface), [DecoTengu](https://wrobell.dcmod.org/decotengu/index.html)
-- [ScubaBoard](https://scubaboard.com): a genuinely valuable source of diving discussions and technical knowledge. For example [this thread on the Schreiner equations for CCR](https://scubaboard.com/community/threads/schreiner-equations-for-ccr.554316).
+- [ScubaBoard](https://scubaboard.com): a genuinely valuable source of diving discussions and technical knowledge. For
+  example [this thread on the Schreiner equations for CCR](https://scubaboard.com/community/threads/schreiner-equations-for-ccr.554316).
 
 </details>
