@@ -7,55 +7,49 @@
 [![Get it on Google Play](resources/store-badge-google.svg)](https://play.google.com/store/apps/details?id=nl.neotech.app.abysner)
 [![Download on the App Store](resources/store-badge-apple.svg)](https://apps.apple.com/nl/app/abysner/id6636477320)
 
-**The decompression models we use and trust today to plan our dives are the result of literally centuries worth of collective research by thousands of people. There is a lot of software available to the public to plan dives, built on top of this collective research. However on Android and iOS the options are pretty limited, either expensive, proprietary and closed-source, or lacking a good mobile-friendly interface.**
+**The decompression models we use and trust today to plan our dives are the result of centuries of collective research by thousands of people. There is a lot of software available to plan dives, built on top of this research. However on Android and iOS the options are limited: either expensive and proprietary, or lacking a good mobile-friendly interface.**
 
-Abysner was built with the goal of giving something back to the diving community. Abysner is open-source and available on both Android and iOS. It was built using the best available cross-platform solution to date: Kotlin Multi-platform and Compose. The main goal of the app is not to be the most feature rich, instead it aims to be user friendly and simple.
+Abysner was built with the goal of giving something back to the diving community. It is open-source, built with Kotlin Multiplatform and Compose Multiplatform (the best cross-platform mobile solution to date), available on both Android and iOS, and free to inspect and verify.
 
 > **Disclaimer:** 
 > Diving is a potentially dangerous activity. Do not use this application without proper training in diving and decompression techniques. This application is in an early development stage, and we cannot guarantee that it is free of bugs. Always cross-validate any information presented by the application with reliable sources.
 >
 > No one associated with this project (including authors, contributors, advisors, or any other affiliates) can be held responsible for the outcomes of your use of the information provided by this application. The use of this application is entirely at your own risk.
 
+
+# Philosophy
+Abysner is built around simplicity without sacrificing correctness. Other planners may offer more
+data, more options, and more detail. Abysner is designed to be quick to use and easy to understand
+on the device you already have in your pocket.
+
+Every decision should be deliberate, prioritizing usability over complexity at every step. This
+makes it a practical tool in the field, but also a good fit for the classroom: instructors teaching
+decompression theory or technical dive planning can walk students through a real plan on the device
+they already carry.
+
+
 # Features
+**Abysner is under active development (CCR planning and imperial units are not available
+yet), but it already supports:**
 
-**Abysner is still in early stages of development, right now it supports the following features²:**
-
-- Buhlmann ZHL-16 A, B and C decompression models with gradient factors
-- Multi-gas ready: 
-    - Air
-    - Nitrox 
-    - Oxygen
-    - Trimix
-    - Helitrox
-    - Heliox
-- Configurable:
+- **Full open-circuit (OC) dive planning**
+- **Buhlmann ZHL-16 A, B and C** with gradient factors
+- **Multi-gas:** Air, Nitrox, Oxygen, Trimix, Helitrox, Heliox
+- **Intuitive gas selector** showing MOD based on oxygen and gas density
+- **User configurable**:
     - SAC rates
-    - Environment (salinity, altitude etc.)
-    - Descend and ascend rates
+    - Environment (salinity, altitude)
+    - Descent/ascent rates
     - Gradient factors
-    - Decompression stop intervals
-    - Last deco stop
-    - MAX PPO2 during deco and normal diving
-    - Gas switch time
-- Modern gas mixer for choosing gas mixes
-    - MOD (oxygen and density based) are shown
-- Graph showing dive profile, average depth and ceiling information
-- Dive plan:
-    - In basic or advanced mode
-    - Runtime, depth, duration, gasses, gas switches, ascends, descends are all shown
-    - Gas switches always appear as individual rows
-    - Time to deco (NDL limit)
-- Automatic contingency plan (longer & deeper)
-    - Configurable extra time and depth
-- Gas plan:
-    - Automatic calculation of emergency reserves
-    - Chart with gas requirements per cylinder
-    - Warnings when gas supplies are not sufficient or limits are exceeded
-    - Density and PPO2 information at maximum depth for each mix
-- Multi-level dive planning
+    - Deco stop intervals and last deco stop
+    - Max PPO2 and gas switch time
+- **Dive profile graph** with average depth and ceiling
+- **Dive plan:** runtime, depth, duration, gas, gas switches, ascents, descents, and time to deco (NDL)
+- **Contingency plan:** Automatic longer and deeper contingency plan with configurable time and depth
+- **Gas plan:** emergency reserve calculation, per-cylinder requirements, warnings, density and PPO2 information
+- **Multi-level** dive planning
+- **Multi-dive** planning with surface intervals
 
-> _²This app is currently under development and in a beta phase, CCR planning (constant PPO2) and
-imperial units are not available yet._
 
 # Dive planning
 Dives are planned based on bottom sections with automatically calculated ascents and descents.
@@ -70,6 +64,7 @@ A planned section at 30 meters for 20 minutes at 5 m/min descent/ascent speed wi
 profile where the first 6 minutes is a descent, then 14 minutes bottom-time, then 6 minutes ascent time.
 The total dive time this makes is 26 minutes.
 
+
 # Gas planning
 When the app calculates a dive profile for decompression, it also calculate how much gas is required
 for the dive. This gas calculation is always based on the contingency plan (Deeper & Longer) plan,
@@ -83,19 +78,6 @@ however during a out-of-gas scenario your buddy may have a completely different 
 (a panic rate). To account for this reserve gas is calculated not using the normal SAC rate but
 using the emergency SAC rate, usually this is at least 2 times higher then your normal SAC rate.
 
-# Planned features
-_This list is by no means complete, prioritized or a commitment._
-
-**In progress:**
-- Multi-dive planning and surface intervals _(surface interval calculations implemented)_
-
-**Ideas/planned:**
-- **Warnings:** Isobaric counterdiffusion warnings, overview of all dive warnings
-- **Localization:** Multi-language support, imperial units
-- **UX:** Clickable graphs with more details, option to choose theme (dark/light/auto)
-- **Planning:** Configurable SAC rate during deco, CCR (constant PPO2) support, VPM-B support, auto-time mode
-- **Gas planning:** Automatic mix selection for planned sections
-- **Other:** Gas blending calculator, automatically calculate the longest no-decompression recreational dive for a given depth and gas mix
 
 # Compared to other planners
 How do Abysner dive plans compare to dive plan created by other dive planners? Below are some
@@ -489,7 +471,7 @@ Out:
 <summary><strong>1. Does abysner round to minutes?</strong></summary>
 
 Yes and no, Abysner currently calculates dive planes in whole minutes. The reasoning behind this is
-that most of the times we are interested as divers in minutes only, we generate plans to write
+that most of the time we are interested as divers in minutes only, we generate plans to write
 down on our wetnotes and for simplicity reasons we do that in minutes.
 
 The above has lead me to believe that doing the planning in seconds first, then rounding those to
@@ -501,9 +483,9 @@ following the plan on paper, you either decompress to little during the ascend h
 or you go a bit slower compared to what was calculated and potentially on-gas certain slower
 compartments a bit more.
 
-Instead Abysner calculates from the very start in whole minutes so that the eventual dive plan does
+Instead, Abysner calculates from the very start in whole minutes so that the eventual dive plan does
 not need rounding. The downside of this technique is that we have to round some other things, like
-ascend and descent speeds. However since the eventual dive plan will be in minutes anyways, this
+ascend and descent speeds. However since the eventual dive plan will be in minutes anyway, this
 will be the more realistic case.
 
 *TLDR:* Divers usually require plans in whole minutes, thus calculate in minutes.
@@ -515,7 +497,7 @@ may very well be yes.
 <details>
 <summary><strong>2. Why does Abysner give different plans compared to X?</strong></summary>
 
-There are countless of reasons why this app may give you a different plan, first and foremost: there
+There are countless reasons why this app may give you a different plan, first and foremost: there
 is not a single definition of what a dive planner is and how it should work, and this is even
 true for the Bühlmann model. There are just many small undefined details that are up to the
 implementation to decide.
@@ -582,29 +564,53 @@ calculating the reserve gas requirements.
 
 
 # Contributing
-Contributions are welcome! Please note that all contributors are required to sign a [Contributor License Agreement (CLA)](cla.txt) before their pull request can be merged. The CLA process is automated via [CLA Assistant](https://github.com/contributor-assistant/github-action) and will prompt you automatically when you open a pull request.
+> _Detailed contribution guidelines are not yet available. This section covers the basics for now._
 
-Please be aware that submitting a contribution does not guarantee it will be accepted. I reserve the right to decline any pull request for any reason, including but not limited to differences in vision, scope, or direction for the project.
+Contributions are welcome! Before investing time in a larger feature or refactor, please open an
+issue or start a discussion first. This helps avoid overlap or misalignment with the project
+direction, and is the best way to make sure your effort is not wasted.
+
+All contributors are required to sign a [Contributor License Agreement (CLA)](cla.txt) before
+their pull request can be merged. The CLA process is automated via
+[CLA Assistant](https://github.com/contributor-assistant/github-action) and will prompt you
+automatically when you open a pull request.
+
+Please keep in mind that not all contributions will be automatically accepted. Discussing changes
+upfront, as mentioned above, is the best way to avoid a pull request being declined for reasons of
+vision, scope, or project direction.
+
+
+# On AI-assisted development
+AI assistance in software engineering is becoming a normal part of the craft. Like any tool, it can
+speed up writing boilerplate, surface bugs, and help explore ideas. What it does not provide on its
+own is correctness, safety, or sound design judgment: AI is probabilistic, and software for a
+safety-relevant application like a dive planner must be deterministic. Those things matter.
+
+Abysner is not a vibe-coded project. Every architectural decision is made deliberately, every
+algorithm and its results are validated against [known references](#compared-to-other-planners) and
+diving organization standards, peer-reviewed by subject-matter experts including active technical
+diving instructors, and every line of code is reviewed with intent. AI tools are part of modern 
+engineering workflows, but they are a means to better quality through efficiency, not a substitute
+for careful and deliberate development.
+
 
 # Credits
-Credit where credit is due. I would not have been able to create this application without the wonderful resources already on the internet. I will try to keep this list up-to-date as much as possible.
+This project builds on a lot of prior work: decompression research, open-source planning software,
+and the broader diving community. Credit where credit is due.
+
+<details>
+<summary>Details</summary>
 
 - [The Theoretical Diver Blog](https://thetheoreticaldiver.org):
-    - A wonderful source of information that proofed to be critical to me figuring out gradient factors _(it's not as simple to implement as all the theory makes you believe)_.
-- Erik C. Baker his publications:
+    - Particularly helpful for understanding gradient factors, which are not as straightforward to
+      implement as the theory makes you believe.
+    - Also, a useful reference for the Schreiner equations used in CCR planning.
+- Erik C. Baker's publications:
     - Understanding M-Values
-    - Clearing Up The Confusion About “Deep Stops
+    - Clearing Up The Confusion About "Deep Stops"
     - Oxygen Toxicity Calculations
-- [DecoTengu documentation](https://wrobell.dcmod.org/decotengu/index.html): 
-    - The documentation of this Python library is very rich and explains many concepts and formulas in detail. 
-- Existing open-source planning software. In no particular order, some used for validation or comparison, others as source of inspiration:
-    - https://github.com/jirkapok/GasPlanner
-    - https://github.com/nyxtom/dive
-    - https://github.com/subsurface/subsurface
-- [Wikipedia](https://wikipedia.org)
-    - Yes the trusty old Wikipedia is a wonderful curated source of information, I took many constants from wikipedia like the salinity levels of different water bodies, or densities of gasses.
-- [ScubaBoard](https://scubaboard.com)
-    - Very opinionated, but contains a lot of very useful [discussions and posts](https://scubaboard.com/community/threads/schreiner-equations-for-ccr.554316).
-- Other information sources:
-    - https://blog.studioblueplanet.net/wp-content/files/diving/neo-haldane.pdf
+- Open-source software used for validation, comparison, and inspiration (in no particular order):
+  [GasPlanner](https://github.com/jirkapok/GasPlanner), [nyxtom/dive](https://github.com/nyxtom/dive), [Subsurface](https://github.com/subsurface/subsurface), [DecoTengu](https://wrobell.dcmod.org/decotengu/index.html)
+- [ScubaBoard](https://scubaboard.com): a genuinely valuable source of diving discussions and technical knowledge. For example [this thread on the Schreiner equations for CCR](https://scubaboard.com/community/threads/schreiner-equations-for-ccr.554316).
 
+</details>
