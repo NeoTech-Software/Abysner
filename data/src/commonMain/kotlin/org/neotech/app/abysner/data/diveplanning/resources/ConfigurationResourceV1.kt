@@ -25,4 +25,9 @@ data class ConfigurationResourceV1(
     val salinity: String,
     val altitude: Double,
     val algorithm: String,
+    // CCR fields: defaults allow deserializing saves that predate these fields.
+    val ccrLowSetpoint: Double = 0.7,
+    val ccrHighSetpoint: Double = 1.2,
+    val ccrLoopVolumeLiters: Double = 7.0,
+    val ccrMetabolicO2LitersPerMinute: Double = 0.8,
 ): SerializableResource

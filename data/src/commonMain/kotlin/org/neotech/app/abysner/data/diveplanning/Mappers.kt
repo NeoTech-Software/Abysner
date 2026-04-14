@@ -47,7 +47,11 @@ fun Configuration.toResource() = ConfigurationResourceV1(
     algorithm = algorithm.preferenceValue,
     contingencyDeeper = contingencyDeeper,
     contingencyLonger = contingencyLonger,
-    gasSwitchTime = gasSwitchTime
+    gasSwitchTime = gasSwitchTime,
+    ccrLowSetpoint = ccrLowSetpoint,
+    ccrHighSetpoint = ccrHighSetpoint,
+    ccrLoopVolumeLiters = ccrLoopVolumeLiters,
+    ccrMetabolicO2LitersPerMinute = ccrMetabolicO2LitersPerMinute,
 )
 
 fun ConfigurationResourceV1.toModel() = Configuration(
@@ -69,7 +73,11 @@ fun ConfigurationResourceV1.toModel() = Configuration(
     algorithm = fromString<Configuration.Algorithm>(algorithm),
     contingencyDeeper = contingencyDeeper,
     contingencyLonger = contingencyLonger,
-    gasSwitchTime = gasSwitchTime
+    gasSwitchTime = gasSwitchTime,
+    ccrLowSetpoint = ccrLowSetpoint,
+    ccrHighSetpoint = ccrHighSetpoint,
+    ccrLoopVolumeLiters = ccrLoopVolumeLiters,
+    ccrMetabolicO2LitersPerMinute = ccrMetabolicO2LitersPerMinute,
 )
 
 
