@@ -15,6 +15,7 @@ package org.neotech.app.abysner.presentation.preview
 import kotlinx.collections.immutable.persistentListOf
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
@@ -54,6 +55,8 @@ object PreviewData {
             base = divePlan,
             deeper = null,
             longer = null,
+            bailout = false,
+            diveMode = DiveMode.OPEN_CIRCUIT,
             gasPlan = gasPlan
         )
     }
@@ -90,6 +93,8 @@ object PreviewData {
             base = divePlan,
             deeper = null,
             longer = null,
+            bailout = false,
+            diveMode = DiveMode.OPEN_CIRCUIT,
             gasPlan = gasPlan
         )
     }

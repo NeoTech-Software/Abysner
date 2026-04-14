@@ -85,6 +85,7 @@ fun DivePlanInputModel.toResource() = DivePlanInputResourceV1(
     diveMode = diveMode.preferenceValue,
     deeper = deeper,
     longer = longer,
+    bailout = bailout,
     cylinders = cylinders.map { it.toResource() },
     profile = plannedProfile.map { it.toResource() },
     surfaceIntervalBeforeMinutes = surfaceIntervalBefore?.inWholeMinutes?.toInt(),
@@ -119,6 +120,7 @@ fun DivePlanInputResourceV1.toModel(): DivePlanInputModel {
         diveMode = fromString<DiveMode>(diveMode),
         deeper = deeper,
         longer = longer,
+        bailout = bailout,
         cylinders = cylinders,
         plannedProfile = profile.map {
             it.toModel(cylinders.find { cylinder -> cylinder.cylinder.uniqueIdentifier == it.cylinderIdentifier }!!.cylinder)

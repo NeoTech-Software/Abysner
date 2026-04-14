@@ -96,7 +96,7 @@ fun PlannerScreen(
         onAddSegment = { viewModel.addSegment(it) },
         onUpdateSegment = { index, segment -> viewModel.updateSegment(index, segment) },
         onRemoveSegment = { viewModel.removeSegment(it) },
-        onContingencyInputChanged = { deeper, longer -> viewModel.setContingency(deeper, longer) },
+        onContingencyInputChanged = { deeper, longer -> viewModel.setContingency(deeper, longer, bailout = false) },
         onSelectDive = { viewModel.selectDive(it) },
         onAddDive = { viewModel.addDive(it) },
         onRemoveDive = { viewModel.removeDive(it) },
