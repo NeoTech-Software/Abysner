@@ -53,6 +53,16 @@ data class Configuration(
      * setpoint reduces inert gas loading and improves decompression efficiency.
      */
     val ccrHighSetpoint: Double = 1.2,
+    /**
+     * CCR loop volume in liters (counter-lung + scrubber + hoses). Used to calculate diluent
+     * usage from loop expansion during descent.
+     */
+    val ccrLoopVolumeLiters: Double = 7.0,
+    /**
+     * Resting metabolic O2 consumption rate in liters per minute. Used to calculate oxygen cylinder
+     * usage for CCR dives.
+     */
+    val ccrMetabolicO2LitersPerMinute: Double = 0.8,
 ) {
 
     val environment = Environment(salinity, altitudeToPressure(altitude))

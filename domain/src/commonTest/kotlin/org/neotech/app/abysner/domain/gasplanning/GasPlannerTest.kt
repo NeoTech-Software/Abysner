@@ -14,15 +14,41 @@ package org.neotech.app.abysner.domain.gasplanning
 
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class GasPlannerTest {
+
+    private val diluentCylinder = Cylinder.aluminium80Cuft(Gas.Air)
+    private val oxygenCylinder = Cylinder(Gas.Oxygen, 207.0, 3.0)
+
+    private val ccrConfiguration = Configuration(
+        sacRate = 20.0,
+        sacRateOutOfAir = 40.0,
+        maxPPO2 = 1.4,
+        maxPPO2Deco = 1.6,
+        maxEND = 30.0,
+        maxAscentRate = 5.0,
+        maxDescentRate = 20.0,
+        gfLow = 0.3,
+        gfHigh = 0.7,
+        forceMinimalDecoStopTime = true,
+        decoStepSize = 3,
+        lastDecoStopDepth = 3,
+        salinity = Salinity.WATER_SALT,
+        algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
+        ccrLowSetpoint = 0.7,
+        ccrHighSetpoint = 1.2,
+        ccrLoopVolumeLiters = 7.0,
+        ccrMetabolicO2LitersPerMinute = 0.8,
+    )
 
     @Test
     fun findPotentialWorstCaseTtsPoints_returnsNonDominatedScenariosAtEachDepth() {
@@ -244,4 +270,66 @@ class GasPlannerTest {
 
         assertEquals(expectedRatio, actualRatio, 1e-2)
     }
+
+    @Test
+    fun calculateGasPlan_ccrO2RequirementEqualsMetabolicRate() {
+        val divePlan = ccrDivePlan()
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+
+        val oxygenRequirements = gasPlan.first { it.cylinder.gas == Gas.Oxygen }
+
+        val totalRuntime = divePlan.segments.sumOf { it.duration }
+        val expected = totalRuntime * ccrConfiguration.ccrMetabolicO2LitersPerMinute
+
+        assertEquals(expected, oxygenRequirements.normalRequirement, 1e-1)
+        assertEquals(0.0, oxygenRequirements.extraEmergencyRequirement)
+    }
+
+    /**
+     * From surface to 30 meters in salt water the pressure increase is about 3.03 bar, so diluent
+     * expansion requirements for this should be: 3.03 * 7 liter = 21.2 L.
+     */
+    @Test
+    fun calculateGasPlan_ccrDiluentRequirementIsLoopExpansionOnly() {
+        val gasPlan = GasPlanner().calculateGasPlan(ccrDivePlan())
+
+        val diluentEntry = gasPlan.first { it.cylinder.gas == Gas.Air }
+
+        assertEquals(21.2, diluentEntry.normalRequirement, 1e-1)
+    }
+
+    @Test
+    fun calculateGasPlan_ccrOnlyPlanExcludesBailoutCylinders() {
+        val bailoutCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox32)
+        val divePlan = ccrDivePlan(extraCylinders = listOf(bailoutCylinder), bailout = false)
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+
+        assertEquals(2, gasPlan.size)
+        assertTrue(gasPlan.any { it.cylinder.gas == Gas.Oxygen })
+        assertTrue(gasPlan.any { it.cylinder.gas == Gas.Air })
+        assertTrue(gasPlan.none { it.cylinder.gas == Gas.Nitrox32 })
+    }
+
+    @Test
+    fun calculateGasPlan_ccrBailoutPlanIncludesBailoutCylinder() {
+        val bailoutCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox32)
+        val divePlan = ccrDivePlan(extraCylinders = listOf(bailoutCylinder), bailout = true)
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+
+        assertNotNull(gasPlan.firstOrNull { it.cylinder.gas == Gas.Oxygen })
+        assertNotNull(gasPlan.firstOrNull { it.cylinder.gas == Gas.Air })
+
+        val bailoutEntry = gasPlan.first { it.cylinder.gas == Gas.Nitrox32 }
+        assertTrue(bailoutEntry.normalRequirement > 0.0)
+    }
+
+    private fun ccrDivePlan(
+        extraCylinders: List<Cylinder> = emptyList(),
+        bailout: Boolean = false,
+    ) = DivePlanner(ccrConfiguration).addDive(
+        plan = listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluentCylinder)),
+        cylinders = listOf(diluentCylinder, oxygenCylinder) + extraCylinders,
+        diveMode = DiveMode.CLOSED_CIRCUIT,
+        bailout = bailout,
+    )
 }
