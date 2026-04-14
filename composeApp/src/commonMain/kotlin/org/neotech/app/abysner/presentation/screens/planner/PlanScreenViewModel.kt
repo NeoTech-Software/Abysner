@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
@@ -102,7 +103,8 @@ class PlanScreenViewModel(
     fun updateCylinder(cylinder: Cylinder) = mutateDive { DiveEditorViewModelDelegate.updateCylinder(it, cylinder) }
     fun removeCylinder(cylinder: Cylinder) = mutateDive { DiveEditorViewModelDelegate.removeCylinder(it, cylinder) }
     fun toggleCylinder(cylinder: Cylinder, enabled: Boolean) = mutateDive { DiveEditorViewModelDelegate.toggleCylinder(it, cylinder, enabled) }
-    fun setContingency(deeper: Boolean, longer: Boolean) = mutateDive { DiveEditorViewModelDelegate.setContingency(it, deeper, longer) }
+    fun setContingency(deeper: Boolean, longer: Boolean, bailout: Boolean) = mutateDive { DiveEditorViewModelDelegate.setContingency(it, deeper, longer, bailout) }
+    fun setDiveMode(mode: DiveMode) = mutateDive { DiveEditorViewModelDelegate.setDiveMode(it, mode) }
 
     fun selectDive(index: Int) {
         planInput.update { it.copy(selectedDiveIndex = index) }
@@ -184,6 +186,7 @@ class PlanScreenViewModel(
             dives = input.model.dives,
             segments = selectedDive.plannedProfile,
             availableGas = selectedDive.cylinders,
+            diveMode = selectedDive.diveMode,
             isCalculatingDivePlan = isCalc,
             multiDivePlanSet = plan,
             selectedDivePlanSet = plan.map { it?.divePlanSets?.getOrNull(input.selectedDiveIndex) },
@@ -196,8 +199,6 @@ class PlanScreenViewModel(
         started = SharingStarted.WhileSubscribed(),
         initialValue = UiState()
     )
-
-    // ── Calculation ──────────────────────────────────────────────────────────
 
     private fun calculateMultiDivePlan(
         model: MultiDivePlanInputModel,
@@ -228,12 +229,19 @@ class PlanScreenViewModel(
             }
 
             val cylinders = diveInput.cylinders.filter { it.isChecked }.map { it.cylinder }
-            val divePlan = planner.addDive(plan = segments, cylinders = cylinders)
+            val divePlan = planner.addDive(
+                plan = segments,
+                cylinders = cylinders,
+                diveMode = diveInput.diveMode,
+                bailout = diveInput.bailout,
+            )
 
             DivePlanSet(
                 base = divePlan,
                 deeper = deeper,
                 longer = longer,
+                bailout = diveInput.bailout,
+                diveMode = diveInput.diveMode,
                 gasPlan = gasPlanner.calculateGasPlan(divePlan),
             )
         }
@@ -250,6 +258,7 @@ class PlanScreenViewModel(
         val dives: List<DivePlanInputModel> = listOf(defaultDivePlanInputModel),
         val segments: List<DiveProfileSection> = defaultProfile,
         val availableGas: List<PlannedCylinderModel> = defaultCylinders,
+        val diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
         val multiDivePlanSet: Result<MultiDivePlanSet?> = Result.success(null),
         val selectedDivePlanSet: Result<DivePlanSet?> = Result.success(null),
         val isCalculatingDivePlan: Boolean = false,
@@ -291,8 +300,10 @@ private val defaultProfile = listOf(
 )
 
 private val defaultDivePlanInputModel = DivePlanInputModel(
+    diveMode = DiveMode.OPEN_CIRCUIT,
     deeper = false,
     longer = false,
+    bailout = false,
     plannedProfile = defaultProfile,
     cylinders = defaultCylinders,
     surfaceIntervalBefore = null,

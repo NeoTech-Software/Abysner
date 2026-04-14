@@ -18,12 +18,15 @@ import org.neotech.app.abysner.data.SerializableResource
 @Serializable
 data class DivePlanInputResourceV1(
     val version: Int = 1,
+    // Added after 1.0.8-beta
     val diveMode: String = "open-circuit",
     val deeper: Boolean,
     val longer: Boolean,
+    // Added after 1.0.8-beta
+    val bailout: Boolean = false,
     val cylinders: List<CheckableCylinderResource>,
     val profile: List<ProfileSegmentResource>,
-    // Version 1.0.8-beta did not have this field yet, for migration this field defaults to null
+    // Added after 1.0.8-beta
     val surfaceIntervalBeforeMinutes: Int? = null,
 ): SerializableResource {
 

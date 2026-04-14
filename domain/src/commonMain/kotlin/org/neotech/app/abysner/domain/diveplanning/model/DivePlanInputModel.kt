@@ -15,11 +15,13 @@ package org.neotech.app.abysner.domain.diveplanning.model
 import kotlin.time.Duration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
+import org.neotech.app.abysner.domain.core.model.Gas
 
 data class DivePlanInputModel(
-    val diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
+    val diveMode: DiveMode,
     val deeper: Boolean,
     val longer: Boolean,
+    val bailout: Boolean,
     val plannedProfile: List<DiveProfileSection>,
     val cylinders: List<PlannedCylinderModel>,
     /**
@@ -38,3 +40,10 @@ data class PlannedCylinderModel(
      */
     val isLocked: Boolean,
 )
+
+fun List<PlannedCylinderModel>.hasGas(gas: Gas): Boolean = any { it.cylinder.gas == gas }
+
+fun List<PlannedCylinderModel>.countGas(gas: Gas): Int = count { it.cylinder.gas == gas }
+
+fun List<PlannedCylinderModel>.countCheckedGas(gas: Gas): Int = count { it.cylinder.gas == gas && it.isChecked }
+
