@@ -14,6 +14,7 @@ package org.neotech.app.abysner.domain.gasplanning
 
 import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.BreathingMode
+import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -22,50 +23,56 @@ import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
-import org.neotech.app.abysner.domain.utilities.mergeInto
 import org.neotech.app.abysner.domain.utilities.updateOrInsert
 import kotlin.math.max
 
 class GasPlanner {
 
     /**
-     * Given a [DivePlan] find the potential worst-case spots to ascend from, by comparing TTS values
-     * at various depths. This returns a List of [DiveSegments][DiveSegment] with the highest TTS
-     * values, as well as spots during the dive that have a lower TTS value but are deeper.
+     * Returns [DiveSegment] that are candidates for the worst-case ascent to the surface, based on
+     * TTS. Segments are eliminated as candidate if another segment exists that is both deeper and
+     * has a longer TTS, since this would for sure produce a higher gas requirement. However, a
+     * segment is not eliminated if the other segment is deeper but has a shorter TTS, since the
+     * shallower segment may require more gas (since its TTS is longer).
+     *
+     * Note: TTS is used as a filter to narrow down candidates, the true worst case still requires
+     * calculating the actual gas usage for each ascent.
      */
-    fun findPotentialWorstCaseTtsPoints(divePlan: DivePlan): List<DiveSegment> {
+    fun findWorstCaseAscentCandidates(divePlan: DivePlan, bailout: Boolean = false): List<DiveSegment> {
+        val tts: (DiveSegment) -> Int? = if (bailout) { it -> it.ttsBailoutAfter } else { it -> it.ttsAfter }
 
-        // Find all segments with a TTS value
-        val ttsValues = divePlan.segments.filter { it.ttsAfter != null }.toMutableList()
+        // Check only segments that have a TTS value to begin with
+        val remaining = divePlan.segments.mapNotNull { segment -> tts(segment)?.let { segment to it } }.toMutableList()
 
         val candidates = mutableListOf<DiveSegment>()
-        var segmentIndex = 0
-        while (segmentIndex < ttsValues.size) {
-            val segment = ttsValues[segmentIndex++]
-            val segmentTts = segment.ttsAfter!!
-            var isCandidate = true
+        var index = 0
+        while (index < remaining.size) {
+            val (segment, segmentTts) = remaining[index++]
+            var eliminated = false
 
-            val iterator = ttsValues.listIterator()
+            val iterator = remaining.listIterator()
             while (iterator.hasNext()) {
-                val other = iterator.next()
-                if (other !== segment) {
-                    val otherTts = other.ttsAfter!!
-                    if (other.endDepth >= segment.endDepth && otherTts >= segmentTts) {
-                        // Found segment at same or deeper depth with an equal or longer TTS, thus this segment cannot be the worst case gas scenario.
-                        isCandidate = false
+                val (other, otherTts) = iterator.next()
+                when {
+                    other === segment -> continue
+                    other.endDepth >= segment.endDepth && otherTts >= segmentTts -> {
+                        // Found a segment at the same or deeper depth with an equal or longer TTS,
+                        // so this segment cannot be the worst case.
+                        eliminated = true
                         break
-                    } else if (otherTts < segmentTts && other.endDepth < segment.endDepth) {
-                        // Found segment that is also not a worst case scenario, since it is shallower and has a shorter TTS.
-                        // We can already remove this segment, as an optimization (no need to check this segment again).
-                        // Correct main loop index if the removal happens before the current segment
-                        if(iterator.previousIndex() < segmentIndex) {
-                            segmentIndex--
+                    }
+                    other.endDepth < segment.endDepth && otherTts < segmentTts -> {
+                        // This other segment is shallower and has a shorter TTS, so it can never be
+                        // the worst case either. Remove it early so we don't check it again.
+                        // Adjust the main loop index if the removal shifts elements before it.
+                        if (iterator.previousIndex() < index) {
+                            index--
                         }
                         iterator.remove()
                     }
                 }
             }
-            if (isCandidate) {
+            if (!eliminated) {
                 candidates.add(segment)
             }
         }
@@ -79,61 +86,78 @@ class GasPlanner {
 
         val ccrSegments = segments.filter { it.breathingMode is BreathingMode.ClosedCircuit }
         val isCcr = ccrSegments.isNotEmpty()
-        val hasOcSegments = segments.any { it.breathingMode is BreathingMode.OpenCircuit }
 
-        val baseLineOpenCircuit = segments.calculateOpenCircuitGasRequirements(configuration.sacRate, environment)
+        return if (isCcr) {
+            calculateCcrGasPlan(divePlan, configuration, environment, ccrSegments)
+        } else {
+            calculateOcGasPlan(divePlan, configuration, environment, segments)
+        }
+    }
 
-        // Only calculated for open-circuit, you wouldn't share a closed-circuit loop with a buddy.
-        val emergencyOpenCircuit = mutableMapOf<Cylinder, Double>()
-        if (hasOcSegments) {
-            val outOfAirScenarios = findPotentialWorstCaseTtsPoints(divePlan).map { maxTtsSegment ->
-                val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
-                ascent?.calculateOpenCircuitGasRequirements(configuration.sacRateOutOfAir, environment) ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
+    private fun calculateOcGasPlan(
+        divePlan: DivePlan,
+        configuration: Configuration,
+        environment: Environment,
+        segments: List<DiveSegment>,
+    ): GasPlan {
+
+        val normalByGas = mutableMapOf<Gas, Double>()
+        segments.calculateOpenCircuitGasRequirements(configuration.sacRate, environment).forEach { (cylinder, requirement) ->
+            normalByGas.updateOrInsert(cylinder.gas, requirement, Double::plus)
+        }
+
+        // Calculate reserves for an out-of-air buddy using the panic SAC rate
+        val reserveByGas = mutableMapOf<Gas, Double>()
+        val outOfAirScenarios = findWorstCaseAscentCandidates(divePlan).map { maxTtsSegment ->
+            val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
+            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRateOutOfAir, environment)
+                ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
+        }
+
+        // Take the highest gas requirement per cylinder across all scenarios
+        outOfAirScenarios.forEach { scenario ->
+            scenario.forEach { (cylinder, requirement) ->
+                reserveByGas.updateOrInsert(cylinder.gas, requirement) { existing, new -> max(existing, new) }
             }
-            outOfAirScenarios.forEach { scenario ->
-                scenario.mergeInto(emergencyOpenCircuit, ::max)
+        }
+
+        return distributeByGas(divePlan, normalByGas, reserveByGas).toImmutableList()
+    }
+
+    private fun calculateCcrGasPlan(
+        divePlan: DivePlan,
+        configuration: Configuration,
+        environment: Environment,
+        ccrSegments: List<DiveSegment>,
+    ): GasPlan {
+
+        // In closed-circuit gas mode no reserves are calculated for an out-of-air buddy. Generally
+        // speaking if your closed-circuit rebreather fails, you bail out to your own gas supply.
+        // Perhaps if your diluent tank is also your bailout (recreational rebreather setup) then
+        // you might need your buddies bailout, but if you assume that buddy dives the same setup,
+        // you should be just fine with that bailout? It would also be quite complex to account for
+        // all possible team setups etc.
+
+        // TODO choice: calculate bailout with panic mode?
+        //      a bailout is usually not as stressed as a true out-of-air? Since the loop
+        //      usually remains somewhat breathable for a short while? Unless it's a dramatic
+        //      flood perhaps?
+        // Bailout reserve: worst-case open-circuit ascent at normal SAC rate.
+        val reserveByGas = mutableMapOf<Gas, Double>()
+        val bailoutScenarios = findWorstCaseAscentCandidates(divePlan, bailout = true).map { maxTtsSegment ->
+            val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
+            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRate, environment)
+                ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
+        }
+
+        // Take the highest gas requirement per cylinder across all scenarios
+        bailoutScenarios.forEach { scenario ->
+            scenario.forEach { (cylinder, requirement) ->
+                reserveByGas.updateOrInsert(cylinder.gas, requirement) { existing, new -> max(existing, new) }
             }
         }
 
-        // Pool total gas requirements by gas mix rather than by individual cylinder identity.
-        //
-        // The decompression planner currently always selects one representative cylinder per gas
-        // mix via List<Cylinder>.findBestDecoGas(). When the user has multiple cylinders with the
-        // same mix (e.g. doubles for back mount diving or sidemount diving), the other cylinder(s)
-        // never appear in any DiveSegment and are therefore invisible to the raw baseLine gas
-        // requirement map.
-        //
-        // By pooling requirements by Gas and then redistributing proportionally to each cylinder's
-        // capacity, we correctly spread the usage across all same-mix cylinders.
-        //
-        // Note: this does not address the scenario where, once a cylinder is empty, a
-        // less-than-ideal gas may still be breathed for the remainder of the dive. Fixing that
-        // requires a significant change in the planner.
-        val baseLineOpenCircuitByGas = mutableMapOf<Gas, Double>()
-        baseLineOpenCircuit.forEach { (cylinder, requirement) ->
-            baseLineOpenCircuitByGas.updateOrInsert(cylinder.gas, requirement, Double::plus)
-        }
-        val emergencyOpenCircuitByGas = mutableMapOf<Gas, Double>()
-        emergencyOpenCircuit.forEach { (cylinder, requirement) ->
-            emergencyOpenCircuitByGas.updateOrInsert(cylinder.gas, requirement, Double::plus)
-        }
-
-        val cylindersByGas = divePlan.cylinders.groupBy { it.gas }
-
-        // Distribute the open circuit requirements proportionally across same-gas cylinders.
-        val openCircuitResult = cylindersByGas
-            .filter { (gas, _) -> gas in baseLineOpenCircuitByGas || gas in emergencyOpenCircuitByGas }
-            .flatMap { (gas, cylinders) ->
-                distributeProportionally(
-                    cylinders = cylinders.map { it.cylinder },
-                    totalNormal = baseLineOpenCircuitByGas[gas] ?: 0.0,
-                    totalEmergency = emergencyOpenCircuitByGas[gas] ?: 0.0,
-                )
-            }
-
-        if (!isCcr) {
-            return openCircuitResult.toImmutableList()
-        }
+        val bailoutResult = distributeByGas(divePlan, emptyMap(), reserveByGas)
 
         val closedCircuitResult = ccrSegments.calculateClosedCircuitGasRequirements(
             cylinders = divePlan.cylinders.map { it.cylinder },
@@ -143,7 +167,37 @@ class GasPlanner {
             environment = environment,
         )
 
-        return closedCircuitResult.merge(openCircuitResult).toImmutableList()
+        return closedCircuitResult.merge(bailoutResult).toImmutableList()
+    }
+
+    /**
+     * Pools gas requirements by mix and distributes them proportionally across same-mix cylinders.
+     *
+     * The decompression planner always selects one representative cylinder per gas mix via
+     * List<Cylinder>.findBestDecoGas(). When the user has multiple cylinders with the same mix
+     * (e.g. doubles or sidemount), the other cylinder(s) never appear in any DiveSegment and are
+     * invisible to the raw requirement maps. Pooling by Gas and then redistributing proportionally
+     * to each cylinder's capacity correctly spreads the usage across all same-mix cylinders.
+     *
+     * Note: this does not address the scenario where, once a cylinder is empty, a less-than-ideal
+     * gas may still be breathed for the remainder of the dive. Fixing that requires a significant
+     * change in the planner, which is now based on 'best-gas' not on 'make it work'.
+     */
+    private fun distributeByGas(
+        divePlan: DivePlan,
+        normalByGas: Map<Gas, Double>,
+        reserveByGas: Map<Gas, Double>,
+    ): List<CylinderGasRequirements> {
+        val cylindersByGas = divePlan.cylinders.groupBy { it.gas }
+        return cylindersByGas
+            .filter { (gas, _) -> gas in normalByGas || gas in reserveByGas }
+            .flatMap { (gas, cylinders) ->
+                distributeProportionally(
+                    cylinders = cylinders.map { it.cylinder },
+                    totalNormal = normalByGas[gas] ?: 0.0,
+                    totalEmergency = reserveByGas[gas] ?: 0.0,
+                )
+            }
     }
 
     /**
@@ -221,6 +275,9 @@ class GasPlanner {
         return merged.values.toList()
     }
 
+    /**
+     * Distributes the given gas usage evenly across the cylinders, assumes cylinder are of the same mix.
+     */
     private fun distributeProportionally(
         cylinders: List<Cylinder>,
         totalNormal: Double,

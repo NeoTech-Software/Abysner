@@ -89,6 +89,23 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         return round(densityMod(maxAllowedDensity, environment)).toInt()
     }
 
+    /**
+     * Returns the CCR loop gas composition for the given setpoint and ambient pressure, when this
+     * gas is used as diluent. The O2 fraction is the setpoint divided by the ambient pressure, He
+     * and N2 scale proportionally in the remaining fraction. No water vapor correction is applied,
+     * since this models not the lungs but rather the loop composition.
+     */
+    fun inspiredGas(ambientPressure: Double, setpoint: Double): Gas {
+        val inspiredOxygenFraction = (setpoint / ambientPressure).coerceIn(oxygenFraction, 1.0)
+        val inertScale = if (oxygenFraction < 1.0) {
+            (1.0 - inspiredOxygenFraction) / (1.0 - oxygenFraction)
+        } else {
+            0.0
+        }
+        val inspiredHe = heliumFraction * inertScale
+        return Gas(oxygenFraction = inspiredOxygenFraction, heliumFraction = inspiredHe)
+    }
+
     fun diveIndustryName(): String {
 
         // Neox and Hydreliox, Hydrox are not supported, since this app does not support hydrogen, argon or neon as a gas.
