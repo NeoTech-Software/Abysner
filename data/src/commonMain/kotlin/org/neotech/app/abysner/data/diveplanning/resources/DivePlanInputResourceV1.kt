@@ -41,6 +41,7 @@ data class DivePlanInputResourceV1(
     data class CheckableCylinderResource(
         val cylinder: CylinderResource,
         val checked: Boolean,
+        val role: String? = null,
     )
 
     @Serializable

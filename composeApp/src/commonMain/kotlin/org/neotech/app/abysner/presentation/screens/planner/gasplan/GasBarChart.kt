@@ -41,7 +41,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.koalaplot.core.Symbol
-import io.github.koalaplot.core.legend.FlowLegend
 import io.github.koalaplot.core.legend.FlowLegend2
 import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
 import kotlinx.collections.immutable.persistentListOf
@@ -49,6 +48,7 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.assign
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
@@ -83,7 +83,7 @@ fun GasBarChartPreview() = PreviewWrapper {
 
     val divePlan = DivePlanner().addDive(
         plan,
-        listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50), Cylinder.aluminium63Cuft(Gas.Nitrox80))
+        listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50), Cylinder.aluminium63Cuft(Gas.Nitrox80)).assign()
     )
 
     val gasPlan = GasPlanner().calculateGasPlan(divePlan)

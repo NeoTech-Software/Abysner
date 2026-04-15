@@ -28,7 +28,7 @@ data class DivePlanSet(
 
     val isDeeper = deeper != null
     val isLonger = longer != null
-    val isCcr = diveMode == DiveMode.CLOSED_CIRCUIT
+    val isCcr = diveMode.isCcr
 
     val configuration: Configuration = base.configuration
     val isEmpty: Boolean = base.isEmpty

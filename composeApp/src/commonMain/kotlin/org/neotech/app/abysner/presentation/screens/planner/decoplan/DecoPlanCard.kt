@@ -66,6 +66,7 @@ import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.assign
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.format
@@ -443,7 +444,7 @@ fun DecoPlanCardComponentPreview() {
             plan = listOf(
                 DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
             ),
-            cylinders = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)),
+            cylinders = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)).assign(),
         )
 
         DecoPlanCardComponent(

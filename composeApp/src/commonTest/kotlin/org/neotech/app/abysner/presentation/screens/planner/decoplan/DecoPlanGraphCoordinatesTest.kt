@@ -20,6 +20,7 @@ import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.assign
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -46,7 +47,7 @@ class DecoPlanGraphCoordinatesTest {
         )
         return divePlanner.addDive(
             plan = listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
-            cylinders = listOf(decoGas),
+            cylinders = listOf(decoGas).assign(),
         )
     }
 

@@ -34,12 +34,16 @@ data class PlannedCylinderModel(
     val cylinder: Cylinder,
     val isChecked: Boolean,
     /**
-     * True only when this is the last checked cylinder of a gas mix that is referenced in a
-     * planned segment. When true the checkbox and delete controls are disabled/hidden, preventing
-     * the planner from being left without any cylinder of that gas.
+     * If true this cylinder will be locked from disabling or deleting it. Usually a result of
+     * being actively referenced in a dive segment while also being the last of its kind (mix).
      */
     val isLocked: Boolean,
-)
+    val role: CylinderRole? = null,
+) {
+    val isCcrOxygen: Boolean get() = role.isCcrOxygen
+    val isCcrDiluent: Boolean get() = role.isCcrDiluent
+    val isAvailableForBailout: Boolean get() = role.isAvailableForBailout
+}
 
 fun List<PlannedCylinderModel>.hasGas(gas: Gas): Boolean = any { it.cylinder.gas == gas }
 
@@ -47,3 +51,18 @@ fun List<PlannedCylinderModel>.countGas(gas: Gas): Int = count { it.cylinder.gas
 
 fun List<PlannedCylinderModel>.countCheckedGas(gas: Gas): Int = count { it.cylinder.gas == gas && it.isChecked }
 
+fun List<PlannedCylinderModel>.ccrOxygenCylinder(): PlannedCylinderModel? =
+    firstOrNull { it.isCcrOxygen }
+
+fun List<PlannedCylinderModel>.ccrDiluentCylinder(): PlannedCylinderModel? =
+    firstOrNull { it.isCcrDiluent }
+
+fun List<PlannedCylinderModel>.bailoutCylinders(): List<PlannedCylinderModel> =
+    filter { it.isAvailableForBailout && it.isChecked }
+
+fun PlannedCylinderModel.toAssignedCylinder() = AssignedCylinder(
+    cylinder = cylinder,
+    role = role,
+)
+
+fun List<PlannedCylinderModel>.toAssignedCylinders() = map { it.toAssignedCylinder() }

@@ -20,6 +20,7 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
+import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
@@ -99,7 +100,8 @@ private fun DiveProfileSection.toResource() = DivePlanInputResourceV1.ProfileSeg
 
 private fun PlannedCylinderModel.toResource() = DivePlanInputResourceV1.CheckableCylinderResource(
     cylinder = cylinder.toResource(),
-    checked = isChecked
+    checked = isChecked,
+    role = role?.preferenceValue,
 )
 
 private fun Cylinder.toResource() = DivePlanInputResourceV1.CylinderResource(
@@ -140,9 +142,9 @@ fun MultiDivePlanInputResourceV1.toModel() = MultiDivePlanInputModel(
 private fun DivePlanInputResourceV1.CheckableCylinderResource.toModel() = PlannedCylinderModel(
     cylinder = cylinder.toModel(),
     isChecked = checked,
-
     // Will be recalculated by the ViewModel
     isLocked = false,
+    role = role?.let { fromString<CylinderRole>(it) },
 )
 
 private fun DivePlanInputResourceV1.ProfileSegmentResource.toModel(cylinder: Cylinder) = DiveProfileSection(

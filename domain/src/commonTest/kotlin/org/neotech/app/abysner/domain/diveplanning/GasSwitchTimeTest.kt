@@ -20,6 +20,7 @@ import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.assign
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -50,7 +51,7 @@ class GasSwitchTimeTest {
         )
         return divePlanner.addDive(
             listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
-            listOf(decoGas)
+            listOf(decoGas).assign()
         )
     }
 

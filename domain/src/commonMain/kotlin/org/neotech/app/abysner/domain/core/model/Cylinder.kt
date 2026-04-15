@@ -150,6 +150,7 @@ data class Cylinder(
          */
         const val HP80_WATER_VOLUME = 10.2
 
+        fun steel3LiterOxygen(pressure: Double = 200.0) = Cylinder(Gas.Oxygen, pressure, 3.0)
         fun steel10Liter(gas: Gas, pressure: Double = 232.0) = Cylinder(gas, pressure, 10.0)
         fun steel12Liter(gas: Gas, pressure: Double = 232.0) = Cylinder(gas, pressure, 12.0)
         fun aluminium80Cuft(gas: Gas, pressure: Double = 207.0) = Cylinder(gas, pressure, AL80_WATER_VOLUME)

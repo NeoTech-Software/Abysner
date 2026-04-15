@@ -22,8 +22,10 @@ import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
+import org.neotech.app.abysner.domain.diveplanning.model.AssignedCylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.isCcrDiluent
 import org.neotech.app.abysner.domain.gasplanning.OxygenToxicityCalculator
 import kotlin.time.Duration
 
@@ -40,18 +42,24 @@ class DivePlanner(
 
     fun addDive(
         plan: List<DiveProfileSection>,
-        cylinders: List<Cylinder>,
+        cylinders: List<AssignedCylinder>,
         diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
         bailout: Boolean = false,
     ): DivePlan {
 
-        require(!bailout || diveMode == DiveMode.CLOSED_CIRCUIT) {
+        require(!bailout || diveMode.isCcr) {
             "Bailout is only applicable to closed-circuit dives"
         }
 
         val breathingMode = diveMode.breathingMode(configuration.ccrHighSetpoint)
         val descentBreathingMode = diveMode.breathingMode(configuration.ccrLowSetpoint)
         val isCcr = breathingMode is BreathingMode.ClosedCircuit
+
+        val decoCylinders = if(!diveMode.isCcr) {
+            cylinders.map { it.cylinder }
+        } else {
+            cylinders.filter { it.isAvailableForBailout }.map { it.cylinder }
+        }
 
         // TTS is collected during planning and merged into the segments at the end via copy().
         val ttsBySegmentIndex = mutableMapOf<Int, TtsValues>()
@@ -82,10 +90,19 @@ class DivePlanner(
             decompressionPlanner.setDecompressionModelSnapshot(it)
         }
 
-        decompressionPlanner.setDecoGasses(cylinders)
+        decompressionPlanner.setDecoGasses(decoCylinders)
+
+        // In CCR mode, all sections breathe the diluent on the loop regardless of what cylinder
+        // each section was created with.
+        val diluentCylinder = cylinders.firstOrNull { it.isCcrDiluent }?.cylinder
+        val effectivePlan = if (isCcr && diluentCylinder != null) {
+            plan.map { it.copy(cylinder = diluentCylinder) }
+        } else {
+            plan
+        }
 
         var currentDepth = 0.0
-        plan.forEach {
+        effectivePlan.forEach {
             if (it.depth.toDouble() != currentDepth) {
 
                 val difference = currentDepth - it.depth
