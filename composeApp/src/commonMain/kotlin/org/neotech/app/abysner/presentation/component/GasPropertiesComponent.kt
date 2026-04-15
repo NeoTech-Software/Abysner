@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -80,7 +80,7 @@ fun GasPropertiesComponent(
                 val name = gas?.diveIndustryName() ?: EMPTY_PLACEHOLDER
                 BigNumberDisplay(
                     modifier = Modifier.weight(0.4f),
-                    size = BigNumberSize.SMALL,
+                    size = BigNumberSize.LARGE,
                     value = name,
                     label = "Type"
                 )

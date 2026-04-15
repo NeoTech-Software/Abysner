@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
@@ -102,7 +103,17 @@ fun DecoPlanCardComponent(
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 16.dp),
                     style = MaterialTheme.typography.titleLarge,
-                    text = "Deco plan"
+                    text = buildAnnotatedString {
+                        append("Deco plan")
+                        withStyle(MaterialTheme.typography.titleSmall.toSpanStyle()) {
+                            if (divePlanSet?.isDeeper == true) {
+                                append(" +${divePlanSet.deeper}m")
+                            }
+                            if (divePlanSet?.isLonger == true) {
+                                append(" +${divePlanSet.longer}min")
+                            }
+                        }
+                    }
                 )
 
                 if ((divePlanSet == null || divePlanSet.isEmpty)) {
@@ -342,9 +353,9 @@ fun DecoPlanTable(
                 text = "Depth",
                 icon = ColorPainter(Color.Transparent),
             )
-            Text(modifier = Modifier.weight(0.2f), text = "Runtime")
-            Text(modifier = Modifier.weight(0.2f), text = "Duration")
-            Text(modifier = Modifier.weight(0.15f), text = "Gas")
+            Text(modifier = Modifier.weight(0.25f), text = "Runtime")
+            Text(modifier = Modifier.weight(0.25f), text = "Duration")
+            Text(modifier = Modifier.weight(0.25f), text = "Gas")
         }
     ) {
         val segments = divePlan.segmentsCollapsed
@@ -408,16 +419,16 @@ private fun RowScope.DecoPlanRow(
         icon = painterResource(resource = typeIcon)
     )
     Text(
-        modifier = Modifier.weight(0.2f),
+        modifier = Modifier.weight(0.25f),
         text = runtime.toString(),
     )
     Text(
-        modifier = Modifier.weight(0.2f),
+        modifier = Modifier.weight(0.25f),
         text = "+${diveSegment.duration}",
     )
     Text(
-        modifier = Modifier.weight(0.15f),
         text = gas.toString(),
+        modifier = Modifier.weight(0.25f),
     )
 }
 

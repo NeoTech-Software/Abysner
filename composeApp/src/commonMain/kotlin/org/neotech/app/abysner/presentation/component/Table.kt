@@ -141,8 +141,9 @@ private fun TableHeader(
     content: @Composable RowScope.() -> Unit
 ) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .background(MaterialTheme.colorScheme.secondaryContainer)
+            .then(modifier)
     ) {
         CompositionLocalProvider(LocalTextStyle provides textStyle) {
             content()
