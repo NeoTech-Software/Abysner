@@ -109,44 +109,46 @@ fun GasUsageDetailsDialog(
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Available gas", fontWeight = FontWeight.Bold
+                            text = "Capacity", fontWeight = FontWeight.Bold
                         )
                         Text(modifier = Modifier.weight(1f), text = "${capacity.format(0)} ℓ")
                     }
                 }
 
-                val totalNormal = sameMixCylinders.sumOf { it.normalRequirement }
-                val totalRequired = sameMixCylinders.sumOf { it.totalGasRequirement }
+                val totalUsage = sameMixCylinders.sumOf { it.normalRequirement }
+                val totalReserve = sameMixCylinders.sumOf { it.extraEmergencyRequirement }
+                val totalRequired = totalUsage + totalReserve
                 val totalCapacity = sameMixCylinders.sumOf { it.cylinder.capacity() }
 
                 val showTotals = sameMixCylinders.size > 1
 
                 Text(
                     modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
-                    text = "Required for dive",
+                    text = "Total for dive",
                     style = MaterialTheme.typography.titleLarge
                 )
                 Table(striped = false, defaultRowModifier = Modifier.padding(vertical = 1.dp)) {
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Normal", fontWeight = FontWeight.Bold
+                            text = "Used", fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${totalNormal.format(0)} ℓ")
+                        Text(modifier = Modifier.weight(1f), text = "${totalUsage.format(0)} ℓ")
                     }
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Emergency", fontWeight = FontWeight.Bold
+                            text = "Reserve", fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${totalRequired.format(0)} ℓ")
+                        Text(modifier = Modifier.weight(1f), text = "${totalReserve.format(0)} ℓ")
                     }
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Available", fontWeight = FontWeight.Bold
+                            text = "Unused", fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${totalCapacity.format(0)} ℓ")
+                        val totalUnused = totalCapacity - totalRequired
+                        Text(modifier = Modifier.weight(1f), text = "${totalUnused.format(0)} ℓ")
                     }
                 }
 
@@ -167,7 +169,7 @@ fun GasUsageDetailsDialog(
                 // Bar pressure for a single cylinder (what divers read on gauges), liters for
                 // multiple cylinders (no meaningful single pressure to show).
                 val unusedNormalFormatted = if (showTotals) {
-                    "${(totalCapacity - totalNormal).format(0)} ℓ"
+                    "${(totalCapacity - totalUsage).format(0)} ℓ"
                 } else {
                     "${cylinderGasRequirements.pressureLeft?.format(0)} bar"
                 }
@@ -178,7 +180,7 @@ fun GasUsageDetailsDialog(
                 }
 
                 val severity = when {
-                    totalNormal > totalCapacity -> AlertSeverity.ERROR
+                    totalUsage > totalCapacity -> AlertSeverity.ERROR
                     totalRequired > totalCapacity -> AlertSeverity.WARNING
                     else -> AlertSeverity.POSITIVE
                 }
@@ -189,28 +191,28 @@ fun GasUsageDetailsDialog(
                             if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have a critical gas shortage!")
                             else appendBoldLine("This cylinder has a critical gas shortage!")
                             append("You need at least ")
-                            appendBold("${totalNormal.format(0)} ℓ")
+                            appendBold("${totalUsage.format(0)} ℓ")
                             append(if (showTotals) " for the dive, but only have a combined " else " for the dive, but only have ")
                             appendBold(totalCapacityFormatted)
                             append(".")
                         }
                         AlertSeverity.WARNING -> {
-                            if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have a gas shortage!")
-                            else appendBoldLine("This cylinder has a gas shortage!")
+                            if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have insufficient reserve!")
+                            else appendBoldLine("This cylinder has insufficient reserve!")
                             append("You need ")
                             appendBold("${totalRequired.format(0)} ℓ")
-                            append(if (showTotals) " in case of an emergency, but only have a combined " else " in case of an emergency, but only have ")
+                            append(if (showTotals) " including reserve, but only have a combined " else " including reserve, but only have ")
                             appendBold(totalCapacityFormatted)
-                            append(". Without emergencies, there is enough gas.")
+                            append(". Without accounting for reserve, there is enough gas.")
                         }
                         AlertSeverity.POSITIVE, AlertSeverity.NONE -> {
-                            if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have enough gas for the dive, even in an emergency.")
-                            else appendBoldLine("This cylinder has enough gas for the dive, even in an emergency.")
+                            if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have enough gas, even if the reserve is needed.")
+                            else appendBoldLine("This cylinder has enough gas, even if the reserve is needed.")
                             append("After a normal dive about ")
                             appendBold(unusedNormalFormatted)
                             append(" remains, and about ")
                             appendBold(unusedEmergencyFormatted)
-                            append(" after an emergency.")
+                            append(" after using the reserve.")
                         }
                     }
                 }

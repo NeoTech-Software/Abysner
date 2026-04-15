@@ -107,8 +107,8 @@ fun GasPlanBarChart(
             label = {
                 val label = when (it) {
                     0 -> "Unused"
-                    1 -> "Emergency"
-                    2 -> "Normal"
+                    1 -> "Reserve"
+                    2 -> "Used"
                     else -> error("Unknown legend index")
                 }
                 Text(text = label, style = MaterialTheme.typography.bodySmall)
@@ -227,7 +227,7 @@ fun GasPlanBarChart(
                             if (it.pressureLeft == null) {
                                 val alertMessage = buildAnnotatedString {
                                     appendIcon(IconFont.WARNING)
-                                    append("critical gas shortage")
+                                    append(" Critical gas shortage")
                                 }
 
                                 TextAlert(
@@ -238,7 +238,7 @@ fun GasPlanBarChart(
                             } else if(it.pressureLeftWithEmergency == null) {
                                 val alertMessage = buildAnnotatedString {
                                     appendIcon(IconFont.WARNING)
-                                    append("gas shortage")
+                                    append(" Insufficient reserve")
                                 }
 
                                 TextAlert(
@@ -284,21 +284,21 @@ fun GasUsageBar(
 
     val values = persistentListOf(
 
-        // Gas left
+        // Unused gas
         BarSection(
             value = pressureLeftWithEmergency,
             color = Brush.horizontalGradient(colors = blueShades),
             textColor = SolidColor(blueForeground),
             textStyle = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Left)
         ),
-        // Gas used with emergency
+        // Reserve
         BarSection(
             value = pressureLeftWithoutEmergency - pressureLeftWithEmergency,
             color = Brush.horizontalGradient(colors = redShades),
             textColor = SolidColor(redForeground),
             textStyle = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Center)
         ),
-        // Gas normally used
+        // Usage
         BarSection(
             value = cylinderGasRequirements.cylinder.pressure.toFloat() - pressureLeftWithoutEmergency,
             color = SolidColor(MaterialTheme.colorScheme.outlineVariant),
