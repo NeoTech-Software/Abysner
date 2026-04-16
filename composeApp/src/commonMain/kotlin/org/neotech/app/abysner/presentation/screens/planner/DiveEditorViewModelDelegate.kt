@@ -15,11 +15,13 @@ package org.neotech.app.abysner.presentation.screens.planner
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
+import org.neotech.app.abysner.domain.diveplanning.model.toggleAvailableForBailout
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
+import org.neotech.app.abysner.domain.diveplanning.model.ccrDiluentCylinder
 import org.neotech.app.abysner.domain.diveplanning.model.countCheckedGas
-import org.neotech.app.abysner.domain.diveplanning.model.hasGas
 
 /**
  * ViewModel delegate that handles single-dive mutations. Every method accepts a
@@ -55,8 +57,13 @@ object DiveEditorViewModelDelegate {
             set(index, get(index).copy(cylinder = cylinder))
         }
         val newProfile = dive.plannedProfile.map {
-            // Cylinder objects are immutable, if updated, also update the profile sections that use it.
-            if (it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier) it.copy(cylinder = cylinder) else it
+            // Cylinder objects are immutable, if updated, also update the profile sections that use
+            // it, since the object references will be different.
+            if (it.cylinder.uniqueIdentifier == cylinder.uniqueIdentifier) {
+                it.copy(cylinder = cylinder)
+            } else {
+                it
+            }
         }
         return dive.update(profile = newProfile, cylinders = newCylinders)
     }
@@ -65,22 +72,71 @@ object DiveEditorViewModelDelegate {
         check(dive.cylinders.none { it.cylinder == cylinder && it.isLocked }) {
             "A locked cylinder cannot be removed, the caller must not allow this action."
         }
-        return dive.update(cylinders = dive.cylinders.filterNot { it.cylinder == cylinder })
+        val remainingCylinders = dive.cylinders.filterNot { it.cylinder == cylinder }
+
+        // Reassign any segments that referenced the removed cylinder. In CCR mode this can happen
+        // because bailout cylinders are not locked. A diluent always exists as fallback because
+        // it is locked and cannot be removed.
+        val fallback = remainingCylinders.ccrDiluentCylinder()?.cylinder
+            ?: remainingCylinders.first().cylinder
+        // TODO in theory this will probably impossible given that the interface forbids it, the
+        //      user might be able to orphan a section from a true cylinder, then this could cause
+        //      data restore failures in  DivePlanInputResourceV1.toModel()?
+        //      Perhaps sections should be allowed to have a nullable cylinder? This allows for auto
+        //      selection mode during planning?
+        val updatedProfile = dive.plannedProfile.map { section ->
+            if (section.cylinder == cylinder) {
+                section.copy(cylinder = fallback)
+            } else {
+                section
+            }
+        }
+
+        return dive.update(profile = updatedProfile, cylinders = remainingCylinders)
     }
 
     fun toggleCylinder(dive: DivePlanInputModel, cylinder: Cylinder, enabled: Boolean): DivePlanInputModel {
         check(dive.cylinders.none { it.cylinder == cylinder && it.isLocked } || enabled) {
             "A locked cylinder cannot be disabled, the caller must not allow this action."
         }
-        return dive.update(cylinders = dive.cylinders.map { if (it.cylinder == cylinder) it.copy(isChecked = enabled) else it })
+        return dive.update(
+            cylinders = dive.cylinders.map {
+                if (it.cylinder == cylinder) {
+                    it.copy(isChecked = enabled)
+                } else {
+                    it
+                }
+            }
+        )
+    }
+
+    fun toggleAvailableForBailout(dive: DivePlanInputModel, cylinder: Cylinder, availableForBailout: Boolean): DivePlanInputModel {
+        return dive.update(
+            cylinders = dive.cylinders.map {
+                if (it.cylinder == cylinder) {
+                    it.copy(role = it.role.toggleAvailableForBailout(availableForBailout))
+                } else {
+                    it
+                }
+            }
+        )
     }
 
     fun setContingency(dive: DivePlanInputModel, deeper: Boolean, longer: Boolean, bailout: Boolean): DivePlanInputModel =
         dive.copy(deeper = deeper, longer = longer, bailout = bailout)
 
     /**
-     * Switches the dive mode between OC and CCR, auto-creating the O2 injection cylinder when
-     * switching to CCR and removing it when switching back to OC.
+     * Switches the dive mode between OC and CCR.
+     *
+     * Switch to CCR:
+     * - Oxygen cylinder is automatically added if no [CylinderRole.CCR_OXYGEN] is found.
+     * - Diluent cylinder is taken from the deepest dive segment if no
+     *   [CylinderRole.CCR_DILUENT_AND_BAILOUT] or [CylinderRole.CCR_DILUENT] role is found.
+     *
+     * Switch to OC:
+     *  - Oxygen cylinder is unchecked, role is kept (for round-trip to CCR)
+     *  - Diluent cylinder is unchecked, role is kept (for round-trip to CCR)
+     *  - Note: Both cylinders may be checked and even locked again if they are in use in the profile
      */
     fun setDiveMode(dive: DivePlanInputModel, mode: DiveMode): DivePlanInputModel {
         if (dive.diveMode == mode) {
@@ -89,9 +145,10 @@ object DiveEditorViewModelDelegate {
 
         return when (mode) {
             DiveMode.OPEN_CIRCUIT -> {
-                // Uncheck the oxygen CCR cylinder so it is preserved, but do disable it if possible
+                // Uncheck CCR specific cylinders, but preserve roles for round-trip, they may be
+                // checked and locked again if required by the OC plan (recomputeCylinderState)
                 val updatedCylinders = dive.cylinders.map {
-                    if (it.cylinder.gas == Gas.Oxygen) {
+                    if (it.isCcrOxygen || it.isCcrDiluent) {
                         it.copy(isChecked = false, isLocked = false)
                     } else {
                         it
@@ -100,27 +157,74 @@ object DiveEditorViewModelDelegate {
                 dive.copy(
                     diveMode = DiveMode.OPEN_CIRCUIT,
                     bailout = false,
-                    cylinders = recomputeCylinderState(dive.plannedProfile, updatedCylinders, DiveMode.OPEN_CIRCUIT),
+                    cylinders = recomputeCylinderState(dive.plannedProfile, updatedCylinders, DiveMode.OPEN_CIRCUIT)
                 )
             }
             DiveMode.CLOSED_CIRCUIT -> {
-                // Add an oxygen cylinder if non exists
-                val updatedCylinders = if (dive.cylinders.hasGas(Gas.Oxygen)) {
-                    dive.cylinders
-                } else {
-                    val newOxygenCylinder = PlannedCylinderModel(
+                // Re-enable any existing CCR cylinders
+                var updatedCylinders = dive.cylinders.map {
+                    if (it.isCcrOxygen || it.isCcrDiluent) {
+                        it.copy(isChecked = true)
+                    } else {
+                        it
+                    }
+                }
+
+                // If no oxygen cylinder exists: add one
+                if (updatedCylinders.none { it.isCcrOxygen }) {
+                    updatedCylinders = updatedCylinders + PlannedCylinderModel(
                         cylinder = Cylinder(Gas.Oxygen, pressure = 200.0, waterVolume = 3.0),
                         isChecked = true,
-                        isLocked = true
+                        isLocked = true,
+                        role = CylinderRole.CCR_OXYGEN,
                     )
-                    dive.cylinders + newOxygenCylinder
                 }
-                val recomputed = recomputeCylinderState(dive.plannedProfile, updatedCylinders, DiveMode.CLOSED_CIRCUIT)
+
+                // If no diluent exists: select one from the dive profile or add a default.
+                if (updatedCylinders.none { it.isCcrDiluent }) {
+                    updatedCylinders = ensureDiluent(updatedCylinders, dive.plannedProfile)
+                }
+
                 dive.copy(
                     diveMode = DiveMode.CLOSED_CIRCUIT,
-                    cylinders = recomputed,
+                    cylinders = recomputeCylinderState(dive.plannedProfile, updatedCylinders, DiveMode.CLOSED_CIRCUIT)
                 )
             }
+        }
+    }
+
+    /**
+     * Finds the best diluent candidate from the planned profile and marks it as diluent, or creates
+     * a default Air diluent if no suitable candidate exists.
+     */
+    private fun ensureDiluent(
+        cylinders: List<PlannedCylinderModel>,
+        profile: List<DiveProfileSection>
+    ): List<PlannedCylinderModel> {
+        val diluentGas = profile.maxByOrNull { it.depth }?.cylinder?.gas
+
+        val mostLikelyDiluentCylinder = if (diluentGas != null) {
+            cylinders.filter { it.cylinder.gas == diluentGas && !it.isCcrOxygen }
+                .minByOrNull { it.cylinder.waterVolume }
+        } else {
+            null
+        }
+
+        return if (mostLikelyDiluentCylinder != null) {
+            cylinders.map {
+                if (it == mostLikelyDiluentCylinder) {
+                    it.copy(role = CylinderRole.CCR_DILUENT_AND_BAILOUT, isChecked = true)
+                } else {
+                    it
+                }
+            }
+        } else {
+            cylinders + PlannedCylinderModel(
+                cylinder = Cylinder(Gas.Air, pressure = 200.0, waterVolume = 12.0),
+                isChecked = true,
+                isLocked = true,
+                role = CylinderRole.CCR_DILUENT_AND_BAILOUT,
+            )
         }
     }
 
@@ -134,26 +238,37 @@ object DiveEditorViewModelDelegate {
     fun recomputeCylinderState(segments: List<DiveProfileSection>, cylinders: List<PlannedCylinderModel>, diveMode: DiveMode = DiveMode.OPEN_CIRCUIT): List<PlannedCylinderModel> {
         val gasesInUse = segments.mapTo(mutableSetOf()) { it.cylinder.gas }
 
-        // In closed-circuit mode, pure oxygen must be treated as in-use
-        if (diveMode == DiveMode.CLOSED_CIRCUIT && Gas.Oxygen !in gasesInUse && cylinders.hasGas(Gas.Oxygen)) {
-            gasesInUse += Gas.Oxygen
-        }
-
         val autoChecked = mutableSetOf<Gas>()
         val updated = cylinders.map { planned ->
-            val gas = planned.cylinder.gas
-            val shouldAutoCheck = gas in gasesInUse && cylinders.countCheckedGas(gas) == 0
-            if (shouldAutoCheck && gas !in autoChecked) {
-                autoChecked += gas
+            if (diveMode.isCcr && (planned.isCcrOxygen || planned.isCcrDiluent)) {
                 planned.copy(isChecked = true)
-            } else {
+            } else if (diveMode.isCcr) {
+                // In CCR mode, bailout cylinders are fully managed by the user, no auto-checking.
                 planned
+            } else {
+                // In OC mode, we check cylinders that are in use by a segment
+                val gas = planned.cylinder.gas
+                val shouldAutoCheck = gas in gasesInUse && cylinders.countCheckedGas(gas) == 0
+                if (shouldAutoCheck && gas !in autoChecked) {
+                    autoChecked += gas
+                    planned.copy(isChecked = true)
+                } else {
+                    planned
+                }
             }
         }
+
         return updated.map { planned ->
-            val isUniqueInUse = { updated.countCheckedGas(planned.cylinder.gas) == 1 }
-            val isInUse = { planned.cylinder.gas in gasesInUse }
-            planned.copy(isLocked = planned.isChecked && isInUse() && isUniqueInUse())
+            if (diveMode.isCcr && (planned.isCcrOxygen || planned.isCcrDiluent)) {
+                planned.copy(isLocked = true)
+            } else if (diveMode.isCcr) {
+                // In CCR mode, bailout cylinders are never locked, always removable.
+                planned.copy(isLocked = false)
+            } else {
+                val isUniqueInUse = { updated.countCheckedGas(planned.cylinder.gas) == 1 }
+                val isInUse = { planned.cylinder.gas in gasesInUse }
+                planned.copy(isLocked = planned.isChecked && isInUse() && isUniqueInUse())
+            }
         }
     }
 

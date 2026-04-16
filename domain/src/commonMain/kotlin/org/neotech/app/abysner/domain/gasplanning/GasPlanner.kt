@@ -125,7 +125,7 @@ class GasPlanner {
             .filter { (gas, _) -> gas in baseLineOpenCircuitByGas || gas in emergencyOpenCircuitByGas }
             .flatMap { (gas, cylinders) ->
                 distributeProportionally(
-                    cylinders = cylinders,
+                    cylinders = cylinders.map { it.cylinder },
                     totalNormal = baseLineOpenCircuitByGas[gas] ?: 0.0,
                     totalEmergency = emergencyOpenCircuitByGas[gas] ?: 0.0,
                 )
@@ -136,7 +136,8 @@ class GasPlanner {
         }
 
         val closedCircuitResult = ccrSegments.calculateClosedCircuitGasRequirements(
-            cylinders = divePlan.cylinders,
+            cylinders = divePlan.cylinders.map { it.cylinder },
+            oxygenCylinder = divePlan.ccrOxygenCylinder,
             ccrMetabolicOxygenRate = configuration.ccrMetabolicO2LitersPerMinute,
             ccrLoopVolume = configuration.ccrLoopVolumeLiters,
             environment = environment,
@@ -155,7 +156,7 @@ class GasPlanner {
      */
     private fun List<DiveSegment>.calculateClosedCircuitGasRequirements(
         cylinders: List<Cylinder>,
-        oxygenCylinder: Cylinder? = cylinders.firstOrNull { it.gas == Gas.Oxygen },
+        oxygenCylinder: Cylinder? = cylinders.filter { it.gas == Gas.Oxygen }.minByOrNull { it.waterVolume },
         ccrMetabolicOxygenRate: Double,
         ccrLoopVolume: Double,
         environment: Environment,

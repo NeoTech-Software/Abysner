@@ -22,6 +22,7 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.assign
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -79,7 +80,7 @@ class DivePlannerTest {
             DiveProfileSection(duration = 30, 30, bottomGas)
         )
 
-        val divePlan = divePlanner.addDive(plannedSections, listOf(bottomGas, decoGas))
+        val divePlan = divePlanner.addDive(plannedSections, listOf(bottomGas, decoGas).assign())
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
@@ -118,7 +119,7 @@ class DivePlannerTest {
 
         val plannedSections = listOf(DiveProfileSection(duration = 15, 45, bottomGas))
 
-        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas))
+        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas).assign())
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
@@ -157,7 +158,7 @@ class DivePlannerTest {
 
         val plannedSections = listOf(DiveProfileSection(duration = 20, 60, bottomGas))
 
-        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas))
+        val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas).assign())
         val plan = divePlan.segmentsCollapsed
 
         // println(divePlan.toString(compact = false))
@@ -251,7 +252,7 @@ class DivePlannerTest {
         // list. A switch to that first cylinder should not occur, since the gas mixes are the same.
         val divePlan = planner.addDive(
             plan = listOf(DiveProfileSection(duration = 20, depth = 20, cylinder = cylinder2)),
-            cylinders = listOf(cylinder1, cylinder2),
+            cylinders = listOf(cylinder1, cylinder2).assign(),
         )
 
         val gasSwitchSegments = divePlan.segmentsCollapsed.filter { it.type == DiveSegment.Type.GAS_SWITCH }
@@ -276,7 +277,7 @@ class DivePlannerTest {
 
         val plan = planner.addDive(
             listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
-            listOf(diluent),
+            listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
         val segments = plan.segmentsCollapsed
@@ -320,7 +321,7 @@ class DivePlannerTest {
 
         val plan = planner.addDive(
             listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
-            listOf(diluent),
+            listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT,
             bailout = true
         )
@@ -367,7 +368,7 @@ class DivePlannerTest {
 
         val plan = planner.addDive(
             listOf(DiveProfileSection(duration = 20, depth = 60, cylinder = diluent)),
-            listOf(diluent),
+            listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
         val segments = plan.segmentsCollapsed

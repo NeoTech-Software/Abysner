@@ -19,6 +19,8 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.assign
+import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -80,7 +82,7 @@ class GasPlannerTest {
                 DiveProfileSection(10, 20, bottomGas),
                 DiveProfileSection(30, 20, bottomGas)
             ),
-            cylinders = listOf(bottomGas, decoGas)
+            cylinders = listOf(bottomGas, decoGas).assign()
         )
 
         // at T=10 and D=50.0: TTS=11
@@ -127,7 +129,7 @@ class GasPlannerTest {
                 // +3 + 3 (contingency plan)
                 DiveProfileSection(18, 23, bottomGas),
             ),
-            cylinders = listOf(bottomGas)
+            cylinders = listOf(bottomGas).assign()
         )
 
         // at T=15 and D=10.0: TTS=2
@@ -170,7 +172,7 @@ class GasPlannerTest {
             plan = listOf(
                 DiveProfileSection(30, 50, bottomGas),
             ),
-            cylinders = listOf(bottomGas, decoGas)
+            cylinders = listOf(bottomGas, decoGas).assign()
         )
 
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
@@ -211,7 +213,7 @@ class GasPlannerTest {
         val gasPlan = GasPlanner().calculateGasPlan(
             DivePlanner(config).addDive(
                 plan = listOf(DiveProfileSection(30, 50, bottomGasOne)),
-                cylinders = listOf(bottomGasOne, bottomGasTwo, decoGas)
+                cylinders = listOf(bottomGasOne, bottomGasTwo, decoGas).assign()
             )
         )
 
@@ -254,7 +256,7 @@ class GasPlannerTest {
 
         val divePlan = DivePlanner(config).addDive(
             plan = listOf(DiveProfileSection(25, 20, backMount)),
-            cylinders = listOf(backMount, stage)
+            cylinders = listOf(backMount, stage).assign()
         )
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
@@ -328,7 +330,10 @@ class GasPlannerTest {
         bailout: Boolean = false,
     ) = DivePlanner(ccrConfiguration).addDive(
         plan = listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluentCylinder)),
-        cylinders = listOf(diluentCylinder, oxygenCylinder) + extraCylinders,
+        cylinders = listOf(
+            diluentCylinder.assign(),
+            oxygenCylinder.assign(role = CylinderRole.CCR_OXYGEN),
+        ) + extraCylinders.assign(),
         diveMode = DiveMode.CLOSED_CIRCUIT,
         bailout = bailout,
     )

@@ -21,6 +21,7 @@ import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
+import org.neotech.app.abysner.domain.diveplanning.model.toAssignedCylinders
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 
 object PreviewData {
@@ -48,7 +49,7 @@ object PreviewData {
             configuration = Configuration()
         }.addDive(
             plan = divePlan1Segments,
-            cylinders = divePlan1Cylinders.filter { it.isChecked }.map { it.cylinder },
+            cylinders = divePlan1Cylinders.filter { it.isChecked }.toAssignedCylinders(),
         )
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
         DivePlanSet(
@@ -86,7 +87,7 @@ object PreviewData {
         ))
             .addDive(
                 plan = divePlan2Segments,
-                cylinders = divePlan2Cylinders.filter { it.isChecked }.map { it.cylinder },
+                cylinders = divePlan2Cylinders.filter { it.isChecked }.toAssignedCylinders(),
         )
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
         DivePlanSet(

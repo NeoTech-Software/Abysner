@@ -20,5 +20,8 @@ enum class DiveMode(val humanReadableName: String) : EnumPreference {
     },
     CLOSED_CIRCUIT("CCR") {
         override val preferenceValue: String = "closed-circuit"
-    },
+    };
+
+    val isCcr: Boolean
+        get() = this == CLOSED_CIRCUIT
 }

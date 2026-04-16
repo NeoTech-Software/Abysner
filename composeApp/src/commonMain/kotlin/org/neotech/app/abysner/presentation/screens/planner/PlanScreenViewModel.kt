@@ -42,6 +42,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
+import org.neotech.app.abysner.domain.diveplanning.model.toAssignedCylinder
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -105,6 +106,7 @@ class PlanScreenViewModel(
     fun toggleCylinder(cylinder: Cylinder, enabled: Boolean) = mutateDive { DiveEditorViewModelDelegate.toggleCylinder(it, cylinder, enabled) }
     fun setContingency(deeper: Boolean, longer: Boolean, bailout: Boolean) = mutateDive { DiveEditorViewModelDelegate.setContingency(it, deeper, longer, bailout) }
     fun setDiveMode(mode: DiveMode) = mutateDive { DiveEditorViewModelDelegate.setDiveMode(it, mode) }
+    fun toggleAvailableForBailout(cylinder: Cylinder, availableForBailout: Boolean) = mutateDive { DiveEditorViewModelDelegate.toggleAvailableForBailout(it, cylinder, availableForBailout) }
 
     fun selectDive(index: Int) {
         planInput.update { it.copy(selectedDiveIndex = index) }
@@ -228,7 +230,7 @@ class PlanScreenViewModel(
                 }
             }
 
-            val cylinders = diveInput.cylinders.filter { it.isChecked }.map { it.cylinder }
+            val cylinders = diveInput.cylinders.filter { it.isChecked }.map { it.toAssignedCylinder() }
             val divePlan = planner.addDive(
                 plan = segments,
                 cylinders = cylinders,

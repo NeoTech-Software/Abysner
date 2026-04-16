@@ -27,11 +27,13 @@ import kotlin.math.ceil
 data class DivePlan(
     val segments: ImmutableList<DiveSegment>,
     val alternativeAccents: ImmutableMap<Int, ImmutableList<DiveSegment>>,
-    val cylinders: ImmutableList<Cylinder>,
+    val cylinders: ImmutableList<AssignedCylinder>,
     val configuration: Configuration,
     val totalCns: Double,
     val totalOtu: Double,
 ) {
+
+    val ccrOxygenCylinder: Cylinder? = cylinders.ccrOxygenCylinder()
 
     /**
      * Minute in which the first deco occurs
