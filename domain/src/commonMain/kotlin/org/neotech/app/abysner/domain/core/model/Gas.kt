@@ -143,7 +143,7 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         val Trimix1555 = Gas(oxygenFraction = 0.15, heliumFraction = 0.55)
         val Trimix1070 = Gas(oxygenFraction = 0.10, heliumFraction = 0.70)
 
-        val StandardGasses = listOf(
+        val StandardGases = listOf(
             Air,
             Nitrox28, Nitrox32, Nitrox36, Nitrox40,
             Nitrox50, Nitrox80,

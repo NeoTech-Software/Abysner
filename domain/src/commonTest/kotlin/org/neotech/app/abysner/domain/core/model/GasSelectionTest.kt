@@ -25,32 +25,44 @@ class GasSelectionTest {
     @Test
     fun findBestGas_returnsNullWhenAllGasesExceedMaxPPO2() {
         val cylinders = cylinders(Gas.Air, Gas.Nitrox32, Gas.Nitrox50, Gas.Oxygen)
-        assertNull(cylinders.findBestGas(depth = 70.0, environment = environment, maxPPO2 = 1.6, maxEND = END_UNSPECIFIED))
+        assertNull(cylinders.findBestGas(depth = 70.0, environment = environment, maxPpO2 = 1.6, maxEND = END_UNSPECIFIED))
     }
 
     @Test
     fun findBestGas_returnsHighestOxygenGasWithinModWhenAllSatisfyEnd() {
         val cylinders = cylinders(Gas.Air, Gas.Nitrox32, Gas.Nitrox50)
-        assertEquals(Gas.Nitrox50, cylinders.findBestGas(depth = 20.0, environment = environment, maxPPO2 = 1.6, maxEND = 40.0)?.gas)
+        assertEquals(Gas.Nitrox50, cylinders.findBestGas(depth = 20.0, environment = environment, maxPpO2 = 1.6, maxEND = 40.0)?.gas)
     }
 
     @Test
     fun findBestGas_excludesGasThatExceedsItsMod() {
         val cylinders = cylinders(Gas.Air, Gas.Nitrox32, Gas.Nitrox50)
-        assertEquals(Gas.Nitrox32, cylinders.findBestGas(depth = 25.0, environment = environment, maxPPO2 = 1.6, maxEND = 40.0)?.gas)
+        assertEquals(Gas.Nitrox32, cylinders.findBestGas(depth = 25.0, environment = environment, maxPpO2 = 1.6, maxEND = 40.0)?.gas)
     }
 
     @Test
     fun findBestGas_prefersIdealCandidateOverFallback() {
         // Air END is 40 meter and exceeds the maxEND, however Trimix2135 is belo the maxEND (about 22 meters)
         val cylinders = cylinders(Gas.Air, Gas.Trimix2135)
-        assertEquals(Gas.Trimix2135, cylinders.findBestGas(depth = 40.0, environment = environment, maxPPO2 = 1.6, maxEND = 30.0)?.gas)
+        assertEquals(Gas.Trimix2135, cylinders.findBestGas(depth = 40.0, environment = environment, maxPpO2 = 1.6, maxEND = 30.0)?.gas)
     }
 
     @Test
     fun findBestGas_returnsHighestOxygenWithinModWhenNoGasSatisfiesEnd() {
         val cylinders = cylinders(Gas.Air, Gas.Nitrox32, Gas.Nitrox50)
-        assertEquals(Gas.Nitrox32, cylinders.findBestGas(depth = 40.0, environment = environment, maxPPO2 = 1.6, maxEND = 20.0)?.gas)
+        assertEquals(Gas.Nitrox32, cylinders.findBestGas(depth = 40.0, environment = environment, maxPpO2 = 1.6, maxEND = 20.0)?.gas)
+    }
+
+    @Test
+    fun findBestGas_prefersHigherHeliumWhenOxygenFractionsAreEqualAndEndIsUnspecified() {
+        val cylinders = cylinders(Gas.Air, Gas.Trimix2135)
+        assertEquals(Gas.Trimix2135, cylinders.findBestGas(depth = 50.0, environment = environment, maxPpO2 = 1.6, maxEND = END_UNSPECIFIED)?.gas)
+    }
+
+    @Test
+    fun findBestGas_prefersHigherHeliumWhenOxygenFractionsAreEqualAndNoGasSatisfiesEnd() {
+        val cylinders = cylinders(Gas.Air, Gas.Trimix2135)
+        assertEquals(Gas.Trimix2135, cylinders.findBestGas(depth = 50.0, environment = environment, maxPpO2 = 1.6, maxEND = 20.0)?.gas)
     }
 
     @Test
