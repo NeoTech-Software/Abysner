@@ -16,39 +16,36 @@ import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import kotlin.math.round
 
 /**
- * Returns the best gas in the list for the current depth, based on O2 MOD [maxPPO2] and END
- * [maxEND] constraints. Picks the highest O2 fraction that satisfies both. If nothing satisfies
- * the END constraint, the END constraint is dropped and the highest-O2 gas within MOD is returned
- * instead. Returns null if no gas satisfies the O2 MOD at all.
+ * Returns the best gas in the list for the current depth. Filters on oxygen MOD (by [maxPpO2]),
+ * then prefers gases that satisfy [maxEND]. If multiple gases satisfy END, then the highest oxygen
+ * fraction is chosen, otherwise the highest helium fraction. If nothing satisfies the END
+ * constraint, the END constraint is dropped and the highest oxygen fraction gas within MOD is
+ * returned (helium as tiebreaker). Returns null if no gas satisfies the oxygen MOD at all.
  *
  * Density is intentionally not included as a constraint here: higher-O2 deco gases are denser, so
  * including density would bias the selection away from exactly the gases chosen for their
  * off-gassing properties. Density warnings are shown to the user separately.
  */
-fun List<Cylinder>.findBestGas(depth: Double, environment: Environment, maxPPO2: Double, maxEND: Double): Cylinder? {
-    var ideal: Cylinder? = null
-    var fallback: Cylinder? = null
-    forEach { candidate ->
-        // TODO be safe and use 'floor' instead of 'round'?
-        val modOk = depth <= round(candidate.gas.oxygenMod(maxPPO2, environment))
-        if (!modOk) {
-            // MOD is not ok, skip this candidate don't botter about checking END.
-            return@forEach
-        }
-
-        val endOk = round(candidate.gas.endInMeters(depth, environment)) <= maxEND
-
-        if (endOk) {
-            if (ideal == null || ideal.gas.oxygenFraction < candidate.gas.oxygenFraction) {
-                ideal = candidate
-            }
-        } else {
-            if (fallback == null || fallback.gas.oxygenFraction < candidate.gas.oxygenFraction) {
-                fallback = candidate
-            }
-        }
-    }
-    return ideal ?: fallback
+fun List<Cylinder>.findBestGas(depth: Double, environment: Environment, maxPpO2: Double, maxEND: Double): Cylinder? {
+    // Step 1: Filter: Don't even consider gas that is beyond the MOD
+    return filter {
+        // Note: we use round here, since that better matches some divers expectations of certain
+        // gases being usable at certain depths. Even if the ppO2 would be ever so slightly above
+        // the max. The safer option would be floor, but that is not matching expectations.
+        depth <= round(it.gas.oxygenMod(maxPpO2, environment))
+    }.maxWithOrNull(
+        compareBy(
+            // Step 2: Prefer gas that is within END
+            { round(it.gas.endInMeters(depth, environment)) <= maxEND },
+            // Step 3: Tie? Prefer the higher oxygen fraction (will be valid within MOD)
+            { it.gas.oxygenFraction },
+            // Step 4: Still a tie? Prefer the higher helium fraction (lower density)
+            // TODO prefer the bigger cylinder? Or prefer the helium contents that are still within
+            //      density recommendations, but just yet, since helium is expensive? Probably
+            //      overkill?
+            { it.gas.heliumFraction },
+        )
+    )
 }
 
 /**
@@ -56,11 +53,7 @@ fun List<Cylinder>.findBestGas(depth: Double, environment: Environment, maxPPO2:
  * Prefers the lowest-O2 non-hypoxic candidate to minimize toxicity risk. If everything is hypoxic,
  * picks the highest-O2 option as the least-bad choice. Returns null if the list is empty.
  */
-internal fun List<Cylinder>.findBreathableFallbackGas(
-    depth: Double,
-    environment: Environment,
-    minPPO2: Double = Gas.MIN_PPO2,
-): Cylinder? {
+internal fun List<Cylinder>.findBreathableFallbackGas(depth: Double, environment: Environment, minPPO2: Double = Gas.MIN_PPO2, ): Cylinder? {
     val pressure = depthInMetersToBar(depth, environment).value
     val nonHypoxic = filter { it.gas.oxygenFraction * pressure >= minPPO2 }
     return if (nonHypoxic.isNotEmpty()) {
@@ -74,7 +67,14 @@ internal fun List<Cylinder>.findBreathableFallbackGas(
  * Combines [findBestGas] with [findBreathableFallbackGas]. Only switches to the fallback if it is
  * actually a better choice than [currentCylinder] (lower O2 fraction when MOD is already exceeded).
  */
-fun List<Cylinder>.findBetterGasOrFallback(currentCylinder: Cylinder?, depth: Double, environment: Environment, maxPPO2: Double, maxEND: Double, minPPO2: Double = Gas.MIN_PPO2): Cylinder? {
+fun List<Cylinder>.findBetterGasOrFallback(
+    currentCylinder: Cylinder?,
+    depth: Double,
+    environment: Environment,
+    maxPPO2: Double,
+    maxEND: Double,
+    minPPO2: Double = Gas.MIN_PPO2
+): Cylinder? {
     val best = findBestGas(depth, environment, maxPPO2, maxEND)
     if (best != null) {
         return best

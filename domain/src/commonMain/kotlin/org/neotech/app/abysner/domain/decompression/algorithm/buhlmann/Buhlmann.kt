@@ -43,7 +43,7 @@ class Buhlmann(
     private var lowestCeiling: Double = 0.0
 
     /**
-     * The tissues of the diver, these will be loaded during the dive with inert gasses (see:
+     * The tissues of the diver, these will be loaded during the dive with inert gases (see:
      * [addFlat] and [addPressureChange]). Based on pressure levels in these tissues the ceiling will
      * be calculated.
      */

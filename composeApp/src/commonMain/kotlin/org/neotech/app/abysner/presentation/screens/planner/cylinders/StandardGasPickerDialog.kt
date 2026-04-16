@@ -34,7 +34,7 @@ fun StandardGasPickerDialog(
         onCancelButtonClicked = onDismissRequest,
         onDismissRequest = onDismissRequest,
         initialSelectedItemIndex = 0,
-        items = Gas.StandardGasses.toImmutableList(),
+        items = Gas.StandardGases.toImmutableList(),
         itemToStringMapper = {
             "${it.diveIndustryName()} ($it)"
         }

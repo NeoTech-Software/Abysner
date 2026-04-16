@@ -54,7 +54,7 @@ class DecompressionPlanner(
 
     var runtime = 0
         private set
-    private val decoGasses = mutableListOf<Cylinder>()
+    private val decoGases = mutableListOf<Cylinder>()
     private val segments = mutableListOf<DiveSegment>()
     private val alternativeAccents: MutableMap<Int, List<DiveSegment>> = mutableMapOf()
 
@@ -68,11 +68,11 @@ class DecompressionPlanner(
      */
     fun getAlternativeAccents(): ImmutableMap<Int, ImmutableList<DiveSegment>> = alternativeAccents.mapValues { it.value.toPersistentList() }.toPersistentMap()
 
-    fun getDecoGasses(): List<Cylinder> = decoGasses.toList()
+    fun getDecoGases(): List<Cylinder> = decoGases.toList()
 
-    fun setDecoGasses(gasses: List<Cylinder>) {
-        this.decoGasses.clear()
-        this.decoGasses.addAll(gasses)
+    fun setDecoGases(gases: List<Cylinder>) {
+        this.decoGases.clear()
+        this.decoGases.addAll(gases)
     }
 
 
@@ -174,7 +174,7 @@ class DecompressionPlanner(
         while (currentDepth > toDepth) {
             if (!isCcr) {
                 // Check if there is a better gas to breath at the current depth
-                val betterDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+                val betterDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
                 // Only start using the better gas when we reach a deco increment point
 
                 if (betterDecoGas != null && betterDecoGas.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
@@ -197,7 +197,7 @@ class DecompressionPlanner(
                 var nextDepth = currentDepth - 1
                 var nextDecoGas: Cylinder?
                 while(nextDepth >= targetDepth) {
-                    nextDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = nextDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+                    nextDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = nextDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
                     if (nextDecoGas != null && nextDecoGas.gas != gas.gas && nextDepth.toInt() % decoStepSize == 0) {
                         targetDepth = nextDepth //Only carry us up to the point where we can use this better gas.
                         break
@@ -224,7 +224,7 @@ class DecompressionPlanner(
         }
 
         if (!isCcr) {
-            val betterDecoGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+            val betterDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
             if (betterDecoGas != null && betterDecoGas.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
                 // Gas switch time on the old gas before switching
                 addGasSwitch(currentDepth, gas, gasSwitchTime, breathingMode)
@@ -260,7 +260,7 @@ class DecompressionPlanner(
         // TODO: Should this be configurable, or even tied to the existing Configuration.gasSwitchTime?
         val isBailout = !isCcr && segments.last().breathingMode is BreathingMode.ClosedCircuit
         if (isBailout) {
-            val bestBailoutGas = decoGasses.findBetterGasOrFallback(
+            val bestBailoutGas = decoGases.findBetterGasOrFallback(
                 currentCylinder = null,
                 depth = fromDepth,
                 environment = environment,
@@ -283,7 +283,7 @@ class DecompressionPlanner(
         // Check if there is a better gas to switch to at the current depth before
         // ascending. Gas switching is skipped in CCR mode (diver stays on the loop).
         if (!isCcr) {
-            val betterGas = decoGasses.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
+            val betterGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
             if (betterGas != null && betterGas.gas != gas.gas) {
                 // Gas switch time on the old gas before switching
                 addGasSwitch(fromDepth, gas, gasSwitchTime, breathingMode)

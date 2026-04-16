@@ -90,7 +90,7 @@ class DivePlanner(
             decompressionPlanner.setDecompressionModelSnapshot(it)
         }
 
-        decompressionPlanner.setDecoGasses(decoCylinders)
+        decompressionPlanner.setDecoGases(decoCylinders)
 
         // In CCR mode, all sections breathe the diluent on the loop regardless of what cylinder
         // each section was created with.
@@ -114,14 +114,14 @@ class DivePlanner(
 
                     // Ascending (calculate decompression)
                     if(!configuration.useDecoGasBetweenSections) {
-                        // Store current deco gasses
-                        val gasses = decompressionPlanner.getDecoGasses()
+                        // Store current deco gases
+                        val gases = decompressionPlanner.getDecoGases()
 
                         // Only allow the listed bottom gas to get to this segment
                         // This is similar to what MultiDeco does
-                        decompressionPlanner.setDecoGasses(listOf(it.cylinder))
+                        decompressionPlanner.setDecoGases(listOf(it.cylinder))
                         decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode)
-                        decompressionPlanner.setDecoGasses(gasses)
+                        decompressionPlanner.setDecoGases(gases)
                     } else {
                         decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode)
                     }
