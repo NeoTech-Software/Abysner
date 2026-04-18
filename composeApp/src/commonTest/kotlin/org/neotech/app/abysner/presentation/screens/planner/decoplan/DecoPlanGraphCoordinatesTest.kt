@@ -33,8 +33,7 @@ class DecoPlanGraphCoordinatesTest {
     private fun divePlan30m30minWithDecoGas(): DivePlan {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
-        val divePlanner = DivePlanner()
-        divePlanner.configuration = Configuration(
+        val divePlanner = DivePlanner(Configuration(
             maxAscentRate = 5.0,
             maxDescentRate = 5.0,
             gfLow = 0.3, gfHigh = 0.7,
@@ -44,7 +43,7 @@ class DecoPlanGraphCoordinatesTest {
             decoStepSize = 3,
             lastDecoStopDepth = 6,
             gasSwitchTime = 0,
-        )
+        ))
         return divePlanner.addDive(
             plan = listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
             cylinders = listOf(decoGas).assign(),
@@ -56,15 +55,15 @@ class DecoPlanGraphCoordinatesTest {
      */
     private fun divePlan20m20minNoDeco(): DivePlan {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
-        val divePlanner = DivePlanner()
-        divePlanner.configuration = Configuration(
+        val divePlanner = DivePlanner(Configuration(
             maxAscentRate = 5.0,
             maxDescentRate = 5.0,
-            gfLow = 0.3, gfHigh = 0.7,
+            gfLow = 0.3,
+            gfHigh = 0.7,
             salinity = Salinity.WATER_FRESH,
             algorithm = Algorithm.BUHLMANN_ZH16C,
             altitude = 0.0,
-        )
+        ))
         return divePlanner.addDive(
             plan = listOf(DiveProfileSection(duration = 20, 20, bottomGas)),
             cylinders = emptyList(),

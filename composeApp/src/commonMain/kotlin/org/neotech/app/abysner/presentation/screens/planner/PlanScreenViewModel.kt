@@ -206,7 +206,7 @@ class PlanScreenViewModel(
         model: MultiDivePlanInputModel,
         configuration: Configuration,
     ): Result<MultiDivePlanSet?> = try {
-        val planner = DivePlanner().apply { this.configuration = configuration }
+        val planner = DivePlanner(configuration)
         val gasPlanner = GasPlanner()
 
         val sets = model.dives.mapIndexed { index, diveInput ->

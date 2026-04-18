@@ -143,7 +143,7 @@ class Buhlmann(
         }
         this.lowestCeiling = snapshot.lowestCeiling
         this.tissues.clear()
-        this.tissues.addAll(snapshot.tissues)
+        this.tissues.addAll(snapshot.tissues.map { it.copy() })
     }
 
     override fun reset() {
@@ -204,9 +204,13 @@ data class TissueCompartment(
      * Initial nitrogen load assumes fully saturated (equilibrium), regardless of atmospheric pressure.
      */
     private var pNitrogen: Double = partialPressure(environment.atmosphericPressure - waterVapourPressure, 0.79),
+
     private var pHelium: Double = 0.0,
     private var pTotal: Double = pNitrogen + pHelium
 ) {
+
+    val partialHeliumPressure: Double get() = pHelium
+    val partialNitrogenPressure: Double get() = pNitrogen
 
     fun addPressureChange(startPressure: Double, endPressure: Double, fO2: Double, fHe: Double, timeInMinutes: Int, ccrSetpoint: Double? = null): Double {
         // A zero or negative duration makes no physical sense (no exposure has occurred), and

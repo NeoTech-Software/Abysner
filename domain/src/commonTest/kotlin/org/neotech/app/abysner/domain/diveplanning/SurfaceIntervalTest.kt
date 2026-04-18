@@ -16,8 +16,7 @@ class SurfaceIntervalTest {
     @Test
     fun addSurfaceInterval_increasesSubsequentDiveDecoTime() {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
-        val divePlanner = DivePlanner()
-        divePlanner.configuration = Configuration(
+        val divePlanner = DivePlanner(Configuration(
             maxAscentRate = 5.0,
             maxDescentRate = 5.0,
             gfLow = 0.85, gfHigh = 0.85,
@@ -26,7 +25,7 @@ class SurfaceIntervalTest {
             altitude = 0.0,
             decoStepSize = 3,
             lastDecoStopDepth = 3
-        )
+        ))
 
         val plannedDive = listOf(DiveProfileSection(duration = 30, 30, bottomGas))
 
