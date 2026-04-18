@@ -438,9 +438,7 @@ private fun RowScope.DecoPlanRow(
 fun DecoPlanCardComponentPreview() {
     AbysnerTheme {
 
-        val divePlan = DivePlanner().apply {
-            configuration = Configuration()
-        }.addDive(
+        val divePlan = DivePlanner().addDive(
             plan = listOf(
                 DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
             ),

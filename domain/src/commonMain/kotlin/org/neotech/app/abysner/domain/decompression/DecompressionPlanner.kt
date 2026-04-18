@@ -480,21 +480,6 @@ class DecompressionPlanner(
     fun getSegments(): ImmutableList<DiveSegment> {
         return segments.toPersistentList()
     }
-
-    fun setDecompressionModelSnapshot(snapshot: DecompressionModel.Snapshot) {
-        // TODO it could be nicer if the snapshot can modify the model used, basically the
-        //   model is not a static variable for the DecompressionPlanner. There won't be any side
-        //   effects as far as I can see, as tissue are model specific and part of the model.
-        if(!snapshot.model.isInstance(model)) {
-            throw PlanningException("Unable to restore DecompressionModelSnapshot, decompression model (${snapshot.model}) does not equal the current decompression model (${model::class}).")
-        }
-
-        model.reset(snapshot)
-    }
-
-    fun getDecompressionModelSnapshot(): DecompressionModel.Snapshot {
-        return model.snapshot()
-    }
 }
 
 private const val calculateTissueChangesPerMinute: Boolean = true

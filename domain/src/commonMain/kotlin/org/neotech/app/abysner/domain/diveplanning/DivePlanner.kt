@@ -17,7 +17,6 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentList
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
-import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
@@ -25,7 +24,6 @@ import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
 import org.neotech.app.abysner.domain.diveplanning.model.AssignedCylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.diveplanning.model.isCcrDiluent
 import org.neotech.app.abysner.domain.gasplanning.OxygenToxicityCalculator
 import kotlin.time.Duration
 
@@ -35,10 +33,30 @@ import kotlin.time.Duration
  * adds multi-level dive handling.
  */
 class DivePlanner(
-    var configuration: Configuration = Configuration()
+    configuration: Configuration = Configuration()
 ) {
 
-    private var decompressionModelSnapshot: DecompressionModel.Snapshot? = null
+    var configuration: Configuration = configuration
+        private set
+
+    private var model: DecompressionModel = createDecompressionModel()
+
+    /**
+     * Updates the configuration. Tissue state accumulated across previous dives is preserved, so
+     * repetitive dive planning continues correctly after the change.
+     */
+    fun updateConfiguration(newConfiguration: Configuration) {
+        val snapshot = model.snapshot()
+        configuration = newConfiguration
+        model = createDecompressionModel()
+        model.reset(snapshot)
+    }
+
+    fun snapshotTissues(): DecompressionModel.Snapshot = model.snapshot()
+
+    fun restoreTissues(snapshot: DecompressionModel.Snapshot) {
+        model.reset(snapshot)
+    }
 
     fun addDive(
         plan: List<DiveProfileSection>,
@@ -84,11 +102,8 @@ class DivePlanner(
             lastDecoStopDepth = configuration.lastDecoStopDepth,
             forceMinimalDecoStopTime = configuration.forceMinimalDecoStopTime,
             gasSwitchTime = configuration.gasSwitchTime,
-            model = createDecompressionModel()
+            model = model
         )
-        decompressionModelSnapshot?.let {
-            decompressionPlanner.setDecompressionModelSnapshot(it)
-        }
 
         decompressionPlanner.setDecoGases(decoCylinders)
 
@@ -197,7 +212,6 @@ class DivePlanner(
             } ?: segment
         }.toPersistentList()
 
-        decompressionModelSnapshot = decompressionPlanner.getDecompressionModelSnapshot()
         return DivePlan(
             segments = segments,
             alternativeAccents = decompressionPlanner.getAlternativeAccents(),
@@ -209,13 +223,7 @@ class DivePlanner(
     }
 
     fun addSurfaceInterval(duration: Duration) {
-        val model = createDecompressionModel()
-
-        model.reset(decompressionModelSnapshot ?: throw PlanningException("Unable to add surface interval, plan a dive first."))
-
         model.addSurfaceInterval(duration.inWholeMinutes.toInt())
-
-        decompressionModelSnapshot = model.snapshot()
     }
 
     private fun createDecompressionModel(): DecompressionModel {

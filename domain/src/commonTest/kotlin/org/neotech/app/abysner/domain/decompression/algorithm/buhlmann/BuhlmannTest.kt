@@ -71,6 +71,30 @@ class BuhlmannTest {
     }
 
     @Test
+    fun reset_snapshotIsNotMutatedByLaterTissueLoading() {
+        val environment = Environment.SeaLevelSalt
+        val model = Buhlmann(
+            version = Buhlmann.Version.ZH16C,
+            environment = environment,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+        )
+        val depth = depthInMetersToBar(30.0, environment)
+
+        model.addFlat(depth, Gas.Air, 20)
+        val snapshot = model.snapshot()
+
+        val pNitrogen = snapshot.tissues.first().partialNitrogenPressure
+        val pHelium = snapshot.tissues.first().partialHeliumPressure
+
+        model.reset(snapshot)
+        model.addFlat(depth, Gas.Air, 20)
+
+        assertEquals(pNitrogen, snapshot.tissues.first().partialNitrogenPressure)
+        assertEquals(pHelium, snapshot.tissues.first().partialHeliumPressure)
+    }
+
+    @Test
     fun addPressureChange_throwsForZeroDuration() {
         val environment = Environment.SeaLevelSalt
         val model = Buhlmann(

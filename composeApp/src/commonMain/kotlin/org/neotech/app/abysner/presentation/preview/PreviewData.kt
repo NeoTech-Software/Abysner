@@ -45,9 +45,7 @@ object PreviewData {
     }
 
     val divePlan1: DivePlanSet by lazy {
-        val divePlan = DivePlanner().apply {
-            configuration = Configuration()
-        }.addDive(
+        val divePlan = DivePlanner().addDive(
             plan = divePlan1Segments,
             cylinders = divePlan1Cylinders.filter { it.isChecked }.toAssignedCylinders(),
         )

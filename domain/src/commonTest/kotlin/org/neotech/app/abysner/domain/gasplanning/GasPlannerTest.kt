@@ -58,8 +58,7 @@ class GasPlannerTest {
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
 
-        val divePlanner = DivePlanner()
-        divePlanner.configuration = Configuration(
+        val divePlanner = DivePlanner(Configuration(
             sacRate = 15.0,
             maxPPO2 = 1.4,
             maxPPO2Deco = 1.6,
@@ -74,7 +73,7 @@ class GasPlannerTest {
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
             gasSwitchTime = 0
-        )
+        ))
         val divePlan = divePlanner.addDive(
             plan = listOf(
                 DiveProfileSection(10, 50, bottomGas),
@@ -106,8 +105,7 @@ class GasPlannerTest {
 
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
 
-        val divePlanner = DivePlanner()
-        divePlanner.configuration = Configuration(
+        val divePlanner = DivePlanner(Configuration(
             sacRate = 15.0,
             maxPPO2 = 1.4,
             maxPPO2Deco = 1.6,
@@ -121,7 +119,7 @@ class GasPlannerTest {
             lastDecoStopDepth = 3,
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C
-        )
+        ))
         val divePlan = divePlanner.addDive(
             plan = listOf(
                 DiveProfileSection(15, 10, bottomGas),
@@ -151,8 +149,7 @@ class GasPlannerTest {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val decoGas = Cylinder(Gas.Nitrox50, 207, 7)
 
-        val divePlanner = DivePlanner()
-        divePlanner.configuration = Configuration(
+        val divePlanner = DivePlanner(Configuration(
             sacRate = 14.0,
             maxPPO2 = 1.4,
             maxPPO2Deco = 1.6,
@@ -167,7 +164,7 @@ class GasPlannerTest {
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
             gasSwitchTime = 0
-        )
+        ))
         val divePlan = divePlanner.addDive(
             plan = listOf(
                 DiveProfileSection(30, 50, bottomGas),

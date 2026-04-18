@@ -36,8 +36,7 @@ class GasSwitchTimeTest {
      * Based on [DivePlannerTest.referencePlan2] but parameterized by [gasSwitchTime].
      */
     private fun divePlan(gasSwitchTime: Int): DivePlan {
-        val divePlanner = DivePlanner()
-        divePlanner.configuration = Configuration(
+        val divePlanner = DivePlanner(Configuration(
             maxAscentRate = 5.0,
             maxDescentRate = 5.0,
             gfLow = 0.3,
@@ -48,7 +47,7 @@ class GasSwitchTimeTest {
             decoStepSize = 3,
             lastDecoStopDepth = 6,
             gasSwitchTime = gasSwitchTime
-        )
+        ))
         return divePlanner.addDive(
             listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
             listOf(decoGas).assign()
