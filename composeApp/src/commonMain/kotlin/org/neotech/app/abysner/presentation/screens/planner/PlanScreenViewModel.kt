@@ -39,6 +39,7 @@ import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.truncateAtRuntime
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
@@ -231,12 +232,48 @@ class PlanScreenViewModel(
             }
 
             val cylinders = diveInput.cylinders.filter { it.isChecked }.map { it.toAssignedCylinder() }
-            val divePlan = planner.addDive(
-                plan = segments,
-                cylinders = cylinders,
-                diveMode = diveInput.diveMode,
-                bailout = diveInput.bailout,
-            )
+
+            // For a CCR dive with bailout enabled, we need two separate plans:
+            // - A normal CCR plan (no OC ascent) for accurate gas planning
+            // - A bailout plan (OC ascent) for the graph and tissue loading
+            // We snapshot the tissues before the normal plan, restore them, then run
+            // the bailout plan so the post-bailout tissues carry over to the next dive.
+            val (divePlan, gasPlan) = if (diveInput.diveMode.isCcr && diveInput.bailout) {
+                val preDiveSnapshot = planner.snapshotTissues()
+                val normalPlan = planner.addDive(
+                    plan = segments,
+                    cylinders = cylinders,
+                    diveMode = diveInput.diveMode,
+                    bailout = false,
+                )
+
+                // Find the worst-case bailout point from the normal CCR plan (longest bailout TTS)
+                // and truncate the input profile at that point so the bailout graph shows the
+                // ascent from the point with the longest TTS.
+                val worstBailoutCandidate = normalPlan.segments.maxByOrNull { it.ttsBailoutAfter ?: 0 }
+                val bailoutSegments = if (worstBailoutCandidate != null) {
+                    segments.truncateAtRuntime(worstBailoutCandidate.end)
+                } else {
+                    segments
+                }
+
+                planner.restoreTissues(preDiveSnapshot)
+                val bailoutPlan = planner.addDive(
+                    plan = bailoutSegments,
+                    cylinders = cylinders,
+                    diveMode = diveInput.diveMode,
+                    bailout = true,
+                )
+                bailoutPlan to gasPlanner.calculateGasPlan(normalPlan)
+            } else {
+                val plan = planner.addDive(
+                    plan = segments,
+                    cylinders = cylinders,
+                    diveMode = diveInput.diveMode,
+                    bailout = diveInput.bailout,
+                )
+                plan to gasPlanner.calculateGasPlan(plan)
+            }
 
             DivePlanSet(
                 base = divePlan,
@@ -244,7 +281,7 @@ class PlanScreenViewModel(
                 longer = longer,
                 bailout = diveInput.bailout,
                 diveMode = diveInput.diveMode,
-                gasPlan = gasPlanner.calculateGasPlan(divePlan),
+                gasPlan = gasPlan,
             )
         }
 

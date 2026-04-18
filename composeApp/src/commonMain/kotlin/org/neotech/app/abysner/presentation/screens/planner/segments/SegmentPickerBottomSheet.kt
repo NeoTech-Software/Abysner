@@ -51,9 +51,16 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
+import org.neotech.app.abysner.domain.diveplanning.model.bailoutCylinders
+import org.neotech.app.abysner.domain.diveplanning.model.ccrDiluentCylinder
+import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
@@ -72,7 +79,8 @@ internal fun SegmentPickerBottomSheetHost(
     show: ModalTarget<Int>?,
     configuration: Configuration,
     segments: List<DiveProfileSection>,
-    cylinders: ImmutableList<Cylinder>,
+    cylinders: ImmutableList<PlannedCylinderModel>,
+    diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     onDismiss: () -> Unit,
     onAddSegment: (DiveProfileSection) -> Unit,
     onUpdateSegment: (Int, DiveProfileSection) -> Unit,
@@ -89,6 +97,7 @@ internal fun SegmentPickerBottomSheetHost(
             maxDensity = Gas.MAX_GAS_DENSITY,
             environment = configuration.environment,
             cylinders = cylinders,
+            diveMode = diveMode,
             previousDepth = segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
             configuration = configuration,
             onAddOrUpdateDiveSegment = {
@@ -112,7 +121,8 @@ private fun SegmentPickerBottomSheet(
     maxPPO2: Double,
     maxDensity: Double,
     environment: Environment,
-    cylinders: ImmutableList<Cylinder>,
+    cylinders: ImmutableList<PlannedCylinderModel>,
+    diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     previousDepth: Double,
     configuration: Configuration,
     onAddOrUpdateDiveSegment: (gas: DiveProfileSection) -> Unit = {},
@@ -147,7 +157,12 @@ private fun SegmentPickerBottomSheet(
                 )
 
                 val availableCylinders = remember(cylinders) {
-                    cylinders.distinctBy { it.gas }.sortedBy { it.gas.oxygenFraction }.toImmutableList()
+                    cylinders
+                        .filter { !it.isCcrOxygen }
+                        .map { it.cylinder }
+                        .distinctBy { it.gas }
+                        .sortedBy { it.gas.oxygenFraction }
+                        .toImmutableList()
                 }
 
                 // Match by gas instead of identity: availableCylinders is deduplicated, so the
@@ -176,34 +191,47 @@ private fun SegmentPickerBottomSheet(
                 val isDepthValid = remember { mutableStateOf(true) }
                 val isTimeValid = remember { mutableStateOf(true) }
 
-                GasPropertiesComponent(
-                    modifier = Modifier.padding(vertical = 16.dp),
-                    gas = selectedCylinder.gas,
-                    maxDensity = maxDensity,
-                    maxPPO2 = maxPPO2,
-                    maxPPO2Secondary = null,
-                    environment = environment,
-                    showTopRow = false,
-                )
+                if (!diveMode.isCcr) {
+                    GasPropertiesComponent(
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        gas = selectedCylinder.gas,
+                        maxDensity = maxDensity,
+                        maxPPO2 = maxPPO2,
+                        maxPPO2Secondary = null,
+                        environment = environment,
+                        showTopRow = false,
+                    )
 
-                DropDown(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = "Gas",
-                    selectedValue = selectedCylinder,
-                    items = availableCylinders,
-                    selectedText = {
-                        it?.gas?.buildText() ?: AnnotatedString("")
-                    },
-                    dropdownRow = { _, cylinder ->
-                        Text(
-                            style = MaterialTheme.typography.bodyLarge,
-                            text = cylinder.gas.buildText()
+                    DropDown(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = "Gas",
+                        selectedValue = selectedCylinder,
+                        items = availableCylinders,
+                        selectedText = {
+                            it?.gas?.buildText() ?: AnnotatedString("")
+                        },
+                        dropdownRow = { _, cylinder ->
+                            Text(
+                                style = MaterialTheme.typography.bodyLarge,
+                                text = cylinder.gas.buildText()
+                            )
+                        },
+                        onSelectionChanged = { _, cylinder ->
+                            selectedCylinder = cylinder
+                        }
+                    )
+                } else {
+                    val diluentGas = cylinders.ccrDiluentCylinder()?.cylinder?.gas
+                    if (diluentGas != null) {
+                        CcrLoopPropertiesComponent(
+                            modifier = Modifier.padding(top = 16.dp),
+                            depth = depth,
+                            setpoint = configuration.ccrHighSetpoint,
+                            diluent = diluentGas,
+                            environment = environment,
                         )
-                    },
-                    onSelectionChanged = { _, cylinder ->
-                        selectedCylinder = cylinder
                     }
-                )
+                }
 
                 Row(
                     modifier = Modifier.padding(top = 16.dp),
@@ -246,12 +274,35 @@ private fun SegmentPickerBottomSheet(
 
                 val gas = selectedCylinder.gas
 
+                // Collect input error messages (invalid number, no number etc.)
                 var anyErrorMessage = errorMessageDepth.value ?: errorMessageTime.value
 
-                if (anyErrorMessage == null && depth > gas.oxygenModRounded(maxPPO2, environment)) {
-                    anyErrorMessage = "Warning: Depth exceeds oxygen MOD!"
-                } else if (anyErrorMessage == null && depth > gas.densityModRounded(environment = environment)) {
-                    anyErrorMessage = "Warning: Depth exceeds density MOD!"
+                // OC-specific warnings: MOD and density limits apply to the breathed gas directly.
+                // On a rebreather the setpoint controls O2, so these do not apply.
+                if (!diveMode.isCcr) {
+                    if (anyErrorMessage == null && depth > gas.oxygenModRounded(maxPPO2, environment)) {
+                        anyErrorMessage = "Warning: Depth exceeds oxygen MOD!"
+                    } else if (anyErrorMessage == null && depth > gas.densityModRounded(environment = environment)) {
+                        anyErrorMessage = "Warning: Depth exceeds density MOD!"
+                    }
+                } else if (anyErrorMessage == null) {
+                    val diluentGas = cylinders.ccrDiluentCylinder()?.cylinder?.gas
+                    if (diluentGas != null) {
+                        val ambientPressure = depthInMetersToBar(depth.toDouble(), environment).value
+                        val diluentPpO2 = partialPressure(ambientPressure, diluentGas.oxygenFraction)
+                        if (diluentPpO2 > configuration.ccrHighSetpoint) {
+                            anyErrorMessage = "Warning: Diluent PPO2 exceeds setpoint at this depth!"
+                        }
+                    }
+
+                    if (anyErrorMessage == null) {
+                        val hasBailoutAtDepth = cylinders.bailoutCylinders().any {
+                            depth <= it.cylinder.gas.oxygenModRounded(maxPPO2, environment)
+                        }
+                        if (!hasBailoutAtDepth) {
+                            anyErrorMessage = "Warning: No bailout gas within MOD at this depth!"
+                        }
+                    }
                 }
 
                 val distance = (previousDepth - depth)
@@ -266,7 +317,7 @@ private fun SegmentPickerBottomSheet(
 
                 Text(
                     textAlign = TextAlign.Center,
-                    minLines = 1,
+                    minLines = 2,
                     text = anyErrorMessage ?: travelTimeHint,
                     color = if(anyErrorMessage != null) {
                         MaterialTheme.colorScheme.error
@@ -333,16 +384,39 @@ private fun SegmentPickerBottomSheetPreview() {
         initialValue = DiveProfileSection(
             10,
             15,
-            Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)
+            Cylinder.steel12Liter(gas = Gas.Air)
         ),
         cylinders = persistentListOf(
-            Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0),
-            Cylinder(
-                gas = Gas.Nitrox50,
-                pressure = 207.0,
-                waterVolume = Cylinder.AL80_WATER_VOLUME
-            ),
-            Cylinder(gas = Gas.Nitrox80, pressure = 207.0, waterVolume = Cylinder.AL63_WATER_VOLUME)
+            PlannedCylinderModel(cylinder = Cylinder.steel12Liter(gas = Gas.Air), isChecked = true, isLocked = true),
+            PlannedCylinderModel(cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50), isChecked = true, isLocked = false),
+            PlannedCylinderModel(cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80), isChecked = false, isLocked = false),
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+private fun SegmentPickerBottomSheetCcrPreview() {
+    SegmentPickerBottomSheet(
+        sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        ),
+        maxDensity = Gas.MAX_GAS_DENSITY,
+        maxPPO2 = 1.4,
+        previousDepth = 0.0,
+        configuration = Configuration(),
+        environment = Environment.Default,
+        diveMode = DiveMode.CLOSED_CIRCUIT,
+        initialValue = DiveProfileSection(
+            30,
+            25,
+            Cylinder.steel12Liter(gas = Gas.Air)
+        ),
+        cylinders = persistentListOf(
+            PlannedCylinderModel(cylinder = Cylinder.steel3LiterOxygen(), isChecked = true, isLocked = true, role = CylinderRole.CCR_OXYGEN),
+            PlannedCylinderModel(cylinder = Cylinder.steel12Liter(gas = Gas.Air), isChecked = true, isLocked = true, role = CylinderRole.CCR_DILUENT_AND_BAILOUT),
+            PlannedCylinderModel(cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50), isChecked = true, isLocked = false),
         )
     )
 }

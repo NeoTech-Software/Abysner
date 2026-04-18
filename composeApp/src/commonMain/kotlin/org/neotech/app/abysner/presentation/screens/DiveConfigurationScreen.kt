@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2025 Neotech
+ * Copyright (C) 2025-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -59,6 +59,7 @@ import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.preferences.BasicPreference
+import org.neotech.app.abysner.presentation.component.preferences.DecimalNumberPreference
 import org.neotech.app.abysner.presentation.component.preferences.NumberPreference
 import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTitle
 import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreference
@@ -293,28 +294,16 @@ fun DiveConfigurationScreen(
                         updateConfiguration { it.copy(gasSwitchTime = gasSwitchTime) }
                     }
 
-                    val allowedPPO2values = persistentListOf(1.2, 1.3, 1.4, 1.5, 1.6)
+                    val allowedPpO2values = persistentListOf(1.2, 1.3, 1.4, 1.5, 1.6)
 
-                    fun Iterable<Double>.indexByNearest(target: Double): Int? {
-                        var bestMatch: Double? = null
-                        var indexOfBestMatch: Int? = null
-                        for ((index, element) in this.withIndex()) {
-                            val distance = abs(element - target)
-                            if(element == target) {
-                                return index
-                            } else if(bestMatch == null || distance < bestMatch) {
-                                bestMatch = distance
-                                indexOfBestMatch = index
-                            }
-                        }
-                        return indexOfBestMatch
-                    }
+                    fun Iterable<Double>.selectedIndex(value: Double): Int? =
+                        withIndex().minByOrNull { abs(it.value - value) }?.index
 
                     SingleChoicePreference(
                         label = "Max PPO2",
                         description = "Maximum allowed PPO2 during the dive (except for decompression).",
-                        items = allowedPPO2values,
-                        selectedItemIndex = allowedPPO2values.indexByNearest(configuration.maxPPO2) ?: 0,
+                        items = allowedPpO2values,
+                        selectedItemIndex = allowedPpO2values.selectedIndex(configuration.maxPPO2) ?: 2,
                         itemToStringMapper = {
                             "$it"
                         }
@@ -325,8 +314,8 @@ fun DiveConfigurationScreen(
                     SingleChoicePreference(
                         label = "Max deco PPO2",
                         description = "Maximum allowed PPO2 during decompression stops and ascents to decompression stops.",
-                        items = allowedPPO2values,
-                        selectedItemIndex = allowedPPO2values.indexByNearest(configuration.maxPPO2Deco) ?: 0,
+                        items = allowedPpO2values,
+                        selectedItemIndex = allowedPpO2values.selectedIndex(configuration.maxPPO2Deco) ?: 3,
                         itemToStringMapper = {
                             "$it"
                         }
@@ -370,11 +359,65 @@ fun DiveConfigurationScreen(
                         updateConfiguration { it.copy(contingencyLonger = longer) }
                     }
 
+                    SettingsSubTitle(subTitle = "CCR")
+
+                    DecimalNumberPreference(
+                        label = "Low setpoint",
+                        description = "The CCR oxygen partial pressure setpoint used during descent.",
+                        initialValue = configuration.ccrLowSetpoint,
+                        minValue = 0.16,
+                        maxValue = 1.6,
+                        fractionDigits = 2,
+                        valueFormatter = { "$it bar" },
+                        textFieldVisualTransformation = SuffixVisualTransformation(" bar"),
+                    ) { setpoint ->
+                        updateConfiguration { it.copy(ccrLowSetpoint = setpoint) }
+                    }
+
+                    DecimalNumberPreference(
+                        label = "High setpoint",
+                        description = "The CCR oxygen partial pressure setpoint used during bottom time and the (decompression) ascent.",
+                        initialValue = configuration.ccrHighSetpoint,
+                        minValue = 0.16,
+                        maxValue = 1.6,
+                        fractionDigits = 2,
+                        valueFormatter = { "$it bar" },
+                        textFieldVisualTransformation = SuffixVisualTransformation(" bar"),
+                    ) { setpoint ->
+                        updateConfiguration { it.copy(ccrHighSetpoint = setpoint) }
+                    }
+
+                    DecimalNumberPreference(
+                        label = "Loop volume",
+                        description = "Total internal loop volume in liters (counter-lung, scrubber, hoses). Used to calculate diluent usage from loop expansion during descent.",
+                        initialValue = configuration.ccrLoopVolumeLiters,
+                        minValue = 0.1,
+                        maxValue = 20.0,
+                        fractionDigits = 1,
+                        valueFormatter = { "$it L" },
+                        textFieldVisualTransformation = SuffixVisualTransformation(" L"),
+                    ) { volume ->
+                        updateConfiguration { it.copy(ccrLoopVolumeLiters = volume) }
+                    }
+
+                    DecimalNumberPreference(
+                        label = "Metabolic oxygen rate",
+                        description = "Oxygen consumption rate in liters per minute. Used to calculate oxygen usage for CCR dives.",
+                        initialValue = configuration.ccrMetabolicO2LitersPerMinute,
+                        minValue = 0.1,
+                        maxValue = 3.0,
+                        fractionDigits = 1,
+                        valueFormatter = { "$it L/min" },
+                        textFieldVisualTransformation = SuffixVisualTransformation(" L/min"),
+                    ) { rate ->
+                        updateConfiguration { it.copy(ccrMetabolicO2LitersPerMinute = rate) }
+                    }
                 }
             }
         }
     }
 }
+
 @Composable
 fun GradientFactorPreference(
     modifier: Modifier = Modifier,

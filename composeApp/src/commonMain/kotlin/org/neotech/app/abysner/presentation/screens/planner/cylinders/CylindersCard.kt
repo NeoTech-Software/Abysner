@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -52,10 +52,14 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.model.markdownPadding
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
+import org.neotech.app.abysner.presentation.component.InfoPill
+import org.neotech.app.abysner.presentation.component.InfoPillSize
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.invisible
@@ -65,15 +69,33 @@ import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 fun CylinderSelectionCardComponent(
     modifier: Modifier = Modifier,
     gases: List<PlannedCylinderModel>,
+    diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     onAddCylinder: () -> Unit,
     onRemoveCylinder: (cylinder: Cylinder) -> Unit,
     onCylinderChecked: (cylinder: Cylinder, checked: Boolean) -> Unit,
     onEditCylinder: (cylinder: Cylinder) -> Unit
 ) {
-    var showLockedExplanation by remember { mutableStateOf(false) }
+    var showLockedExplanation by remember { mutableStateOf<PlannedCylinderModel?>(null) }
 
-    if (showLockedExplanation) {
-        GasInUseDialog(onDismiss = { showLockedExplanation = false })
+    showLockedExplanation?.let { model ->
+        GasInUseDialog(
+            model = model,
+            onDismiss = { showLockedExplanation = null },
+        )
+    }
+
+    val sortedGases = if (diveMode.isCcr) {
+        gases.sortedWith(
+            compareBy<PlannedCylinderModel> {
+                when {
+                    it.isCcrOxygen -> 0
+                    it.isCcrDiluent -> 1
+                    else -> 2
+                }
+            }.thenBy { it.cylinder.gas.oxygenFraction }
+        )
+    } else {
+        gases.sortedBy { it.cylinder.gas.oxygenFraction }
     }
 
     Card(modifier = modifier) {
@@ -86,24 +108,51 @@ fun CylinderSelectionCardComponent(
                 text = "Gas & cylinders"
             )
 
-            gases.forEach { availableGas ->
-                CylinderListItemComponent(
-                    modifier = Modifier.clickable {
-                        onEditCylinder(availableGas.cylinder)
-                    },
-                    isChecked = availableGas.isChecked,
-                    isLocked = availableGas.isLocked,
-                    cylinder = availableGas.cylinder,
-                    onDelete = {
-                        onRemoveCylinder(availableGas.cylinder)
-                    },
-                    onChecked = { _, isCheckedChanged ->
-                        onCylinderChecked(availableGas.cylinder, isCheckedChanged)
-                    },
-                    onLockedClick = {
-                        showLockedExplanation = true
+            if (diveMode.isCcr) {
+                val loopCylinders = sortedGases.filter { it.isCcrOxygen || it.isCcrDiluent }
+                val bailoutCylinders = sortedGases.filter { !it.isCcrOxygen && !it.isCcrDiluent }
+
+                if (loopCylinders.isNotEmpty()) {
+                    CylinderSectionHeader("Oxygen & Diluent")
+                    loopCylinders.forEach { availableGas ->
+                        CylinderListItemComponent(
+                            modifier = Modifier.clickable { onEditCylinder(availableGas.cylinder) },
+                            isChecked = availableGas.isChecked,
+                            isLocked = availableGas.isLocked,
+                            cylinder = availableGas.cylinder,
+                            showBailoutPill = availableGas.isCcrDiluent && availableGas.isAvailableForBailout,
+                            onDelete = { onRemoveCylinder(availableGas.cylinder) },
+                            onChecked = { _, checked -> onCylinderChecked(availableGas.cylinder, checked) },
+                            onLockedClick = { showLockedExplanation = availableGas },
+                        )
                     }
-                )
+                }
+                if (bailoutCylinders.isNotEmpty() || loopCylinders.isNotEmpty()) {
+                    CylinderSectionHeader("Bail-out")
+                }
+                bailoutCylinders.forEach { availableGas ->
+                    CylinderListItemComponent(
+                        modifier = Modifier.clickable { onEditCylinder(availableGas.cylinder) },
+                        isChecked = availableGas.isChecked,
+                        isLocked = availableGas.isLocked,
+                        cylinder = availableGas.cylinder,
+                        onDelete = { onRemoveCylinder(availableGas.cylinder) },
+                        onChecked = { _, checked -> onCylinderChecked(availableGas.cylinder, checked) },
+                        onLockedClick = { showLockedExplanation = availableGas },
+                    )
+                }
+            } else {
+                sortedGases.forEach { availableGas ->
+                    CylinderListItemComponent(
+                        modifier = Modifier.clickable { onEditCylinder(availableGas.cylinder) },
+                        isChecked = availableGas.isChecked,
+                        isLocked = availableGas.isLocked,
+                        cylinder = availableGas.cylinder,
+                        onDelete = { onRemoveCylinder(availableGas.cylinder) },
+                        onChecked = { _, checked -> onCylinderChecked(availableGas.cylinder, checked) },
+                        onLockedClick = { showLockedExplanation = availableGas },
+                    )
+                }
             }
 
             Row(
@@ -112,6 +161,8 @@ fun CylinderSelectionCardComponent(
             ) {
                 val message = if (gases.isEmpty()) {
                     "Add at least one cylinder to start planning your dive."
+                } else if (diveMode.isCcr) {
+                    "Cylinders marked as bail-out are offered to the decompression algorithm for ascent planning."
                 } else {
                     "Checked cylinders are offered to the decompression algorithm for ascent planning."
                 }
@@ -131,21 +182,30 @@ fun CylinderSelectionCardComponent(
 }
 
 @Composable
-private fun GasInUseDialog(onDismiss: () -> Unit) {
+private fun GasInUseDialog(model: PlannedCylinderModel, onDismiss: () -> Unit) {
+    val title: String
+    val content: String
+    when {
+        model.isCcrOxygen -> {
+            title = "Loop cylinder"
+            content = "The **oxygen cylinder** is a required part of the rebreather loop and cannot be removed. You can only edit its size."
+        }
+        model.isCcrDiluent -> {
+            title = "Loop cylinder"
+            content = "The **diluent cylinder** is a required part of the rebreather loop and cannot be removed. You can only edit its mix and size."
+        }
+        else -> {
+            title = "Cylinder in use"
+            content = "This is the only cylinder with this gas mix and it is used in the dive profile, so it cannot be removed. You can edit its mix and size (this will update linked segments), or update the segments using it."
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Gas in use") },
+        title = { Text(title) },
         text = {
             Markdown(
                 modifier = Modifier.fillMaxWidth(),
-                content = """
-                    This cylinder's gas is **used in the dive profile** and cannot be unchecked or removed.
-                    
-                    **To free it up:**
-                    - Remove all segments using this gas.
-                    - Switch those segments to a different gas.
-                    - Add an additional cylinder with the same gas.
-                """.trimIndent(),
+                content = content,
                 colors = markdownColor(),
                 padding = markdownPadding(
                     list = 0.dp,
@@ -165,11 +225,22 @@ private fun GasInUseDialog(onDismiss: () -> Unit) {
 }
 
 @Composable
+private fun CylinderSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
 fun CylinderListItemComponent(
     modifier: Modifier = Modifier,
     cylinder: Cylinder,
     isChecked: Boolean,
     isLocked: Boolean,
+    showBailoutPill: Boolean = false,
     onDelete: (cylinder: Cylinder) -> Unit = {},
     onChecked: (cylinder: Cylinder, isChecked: Boolean) -> Unit = { _, _ -> },
     onLockedClick: () -> Unit = {},
@@ -210,6 +281,16 @@ fun CylinderListItemComponent(
             icon = painterResource(Res.drawable.ic_outline_propane_tank_24)
         )
 
+        if (showBailoutPill) {
+            InfoPill(
+                label = null,
+                value = "+ bail-out",
+                size = InfoPillSize.SMALL,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                valueColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+
         IconButton(
             enabled = !isLocked,
             modifier = Modifier.ifTrue(isLocked) { invisible() },
@@ -217,28 +298,6 @@ fun CylinderListItemComponent(
         ) {
             Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete cylinder")
         }
-    }
-}
-
-@Preview
-@Composable
-private fun GasInUseDialogPreview() {
-    AbysnerTheme {
-        GasInUseDialog(onDismiss = {})
-    }
-}
-
-@Preview
-@Composable
-fun CylinderListItemComponentPreview() {
-    AbysnerTheme {
-        CylinderListItemComponent(
-            isChecked = true,
-            isLocked = false,
-            cylinder = Cylinder.steel12Liter(Gas.Air),
-            onDelete = {},
-            onChecked = { _, _ -> },
-        )
     }
 }
 
@@ -268,6 +327,92 @@ fun CylinderSelectionCardComponentPreview() {
             onRemoveCylinder = {},
             onCylinderChecked = { _, _ -> },
             onEditCylinder = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun CylinderSelectionCardComponentCcrPreview() {
+    val airCylinder = Cylinder.steel12Liter(Gas.Air)
+    AbysnerTheme {
+        CylinderSelectionCardComponent(
+            diveMode = DiveMode.CLOSED_CIRCUIT,
+            gases = listOf(
+                PlannedCylinderModel(
+                    isChecked = true,
+                    isLocked = true,
+                    role = CylinderRole.CCR_OXYGEN,
+                    cylinder = Cylinder.steel3LiterOxygen()
+                ),
+                PlannedCylinderModel(
+                    isChecked = true,
+                    isLocked = true,
+                    role = CylinderRole.CCR_DILUENT_AND_BAILOUT,
+                    cylinder = airCylinder,
+                ),
+                PlannedCylinderModel(
+                    isChecked = true,
+                    isLocked = false,
+                    cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50)
+                ),
+                PlannedCylinderModel(
+                    isChecked = false,
+                    isLocked = false,
+                    cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80)
+                ),
+            ),
+            onAddCylinder = {},
+            onRemoveCylinder = {},
+            onCylinderChecked = { _, _ -> },
+            onEditCylinder = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun GasInUseDialogPreview() {
+    AbysnerTheme {
+        GasInUseDialog(
+            model = PlannedCylinderModel(
+                isChecked = true,
+                isLocked = true,
+                cylinder = Cylinder.steel12Liter(gas = Gas.Air)
+            ),
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun GasInUseDialogCcrOxygenPreview() {
+    AbysnerTheme {
+        GasInUseDialog(
+            model = PlannedCylinderModel(
+                isChecked = true,
+                isLocked = true,
+                role = CylinderRole.CCR_OXYGEN,
+                cylinder = Cylinder.steel3LiterOxygen()
+            ),
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun GasInUseDialogCcrDiluentPreview() {
+    AbysnerTheme {
+        GasInUseDialog(
+            model = PlannedCylinderModel(
+                isChecked = true,
+                isLocked = true,
+                role = CylinderRole.CCR_DILUENT_AND_BAILOUT,
+                cylinder = Cylinder.steel12Liter(Gas.Air)
+            ),
+            onDismiss = {},
         )
     }
 }

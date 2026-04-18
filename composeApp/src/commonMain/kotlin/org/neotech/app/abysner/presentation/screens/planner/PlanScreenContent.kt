@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanCardComponent
@@ -43,7 +44,7 @@ internal fun PlanScreenContent(
     onAddSegment: () -> Unit,
     onEditSegment: (Int) -> Unit,
     onRemoveSegment: (Int) -> Unit,
-    onContingencyInputChanged: (Boolean, Boolean) -> Unit,
+    onContingencyInputChanged: (Boolean, Boolean, Boolean) -> Unit,
 ) {
     AnimatedVisibility(!isLoading, enter = fadeIn(), exit = fadeOut()) {
         Column(
@@ -57,6 +58,7 @@ internal fun PlanScreenContent(
         ) {
             CylinderSelectionCardComponent(
                 gases = uiState.availableGas,
+                diveMode = uiState.diveMode,
                 onAddCylinder = onAddCylinder,
                 onRemoveCylinder = onRemoveCylinder,
                 onCylinderChecked = onToggleCylinder,

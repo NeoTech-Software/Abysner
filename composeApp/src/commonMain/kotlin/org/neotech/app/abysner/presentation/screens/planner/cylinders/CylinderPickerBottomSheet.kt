@@ -22,6 +22,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -34,15 +36,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.DiveMode
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
+import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
@@ -58,12 +66,27 @@ import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTran
 internal fun CylinderPickerBottomSheetHost(
     show: ModalTarget<Cylinder>?,
     configuration: Configuration,
+    diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
+    cylinders: List<PlannedCylinderModel> = emptyList(),
+    segments: List<DiveProfileSection> = emptyList(),
     onDismiss: () -> Unit,
     onAddCylinder: (Cylinder) -> Unit,
     onUpdateCylinder: (Cylinder) -> Unit,
+    onAvailableForBailoutChanged: (Cylinder, Boolean) -> Unit = { _, _ -> },
 ) {
     if (show != null) {
         val cylinderBeingEdited = (show as? ModalTarget.Edit)?.value
+        val plannedCylinder = cylinderBeingEdited?.let { edited ->
+            cylinders.firstOrNull { it.cylinder.uniqueIdentifier == edited.uniqueIdentifier }
+        }
+        val lockGas = plannedCylinder?.isCcrOxygen == true
+
+        val gasesInSegments = segments.mapTo(mutableSetOf()) { it.cylinder.gas }
+        val showBailoutToggle = diveMode.isCcr
+                && plannedCylinder != null
+                && !plannedCylinder.isCcrOxygen
+                && plannedCylinder.cylinder.gas in gasesInSegments
+
         CylinderPickerBottomSheet(
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             isAdd = cylinderBeingEdited == null,
@@ -71,6 +94,12 @@ internal fun CylinderPickerBottomSheetHost(
             environment = configuration.environment,
             maxPPO2 = configuration.maxPPO2,
             maxPPO2Secondary = configuration.maxPPO2Deco,
+            lockGas = lockGas,
+            showBailoutToggle = showBailoutToggle,
+            initialBailoutValue = plannedCylinder?.isAvailableForBailout ?: true,
+            onBailoutToggled = { value ->
+                cylinderBeingEdited?.let { onAvailableForBailoutChanged(it, value) }
+            },
             onAddOrUpdateCylinder = {
                 if (cylinderBeingEdited != null) {
                     onUpdateCylinder(it)
@@ -91,6 +120,10 @@ private fun CylinderPickerBottomSheet(
     environment: Environment,
     maxPPO2: Double,
     maxPPO2Secondary: Double,
+    lockGas: Boolean = false,
+    showBailoutToggle: Boolean = false,
+    initialBailoutValue: Boolean = true,
+    onBailoutToggled: (Boolean) -> Unit = {},
     sheetState: SheetState = rememberStandardBottomSheetState(),
     onAddOrUpdateCylinder: (cylinder: Cylinder) -> Unit = {},
     onDismiss: () -> Unit = {},
@@ -105,6 +138,10 @@ private fun CylinderPickerBottomSheet(
             environment = environment,
             maxPPO2 = maxPPO2,
             maxPPO2Secondary = maxPPO2Secondary,
+            lockGas = lockGas,
+            showBailoutToggle = showBailoutToggle,
+            initialBailoutValue = initialBailoutValue,
+            onBailoutToggled = onBailoutToggled,
             sheetState = sheetState,
             onAddOrUpdateCylinder = onAddOrUpdateCylinder,
             onDismissRequest = onDismiss
@@ -120,6 +157,10 @@ private fun CylinderPickerBottomSheetContent(
     environment: Environment,
     maxPPO2: Double,
     maxPPO2Secondary: Double?,
+    lockGas: Boolean = false,
+    showBailoutToggle: Boolean = false,
+    initialBailoutValue: Boolean = true,
+    onBailoutToggled: (Boolean) -> Unit = {},
     sheetState: SheetState = rememberStandardBottomSheetState(),
     onAddOrUpdateCylinder: (cylinder: Cylinder) -> Unit = {},
     onDismissRequest: () -> Unit = {},
@@ -162,7 +203,7 @@ private fun CylinderPickerBottomSheetContent(
                     .padding(bottom = 16.dp)
                     .fillMaxWidth(),
                 style = MaterialTheme.typography.headlineSmall,
-                text = "Gas & cylinder"
+                text = if (lockGas) { "Cylinder" } else { "Gas & cylinder" }
             )
 
             val errorMessageVolume = remember { mutableStateOf<String?>(null) }
@@ -223,6 +264,37 @@ private fun CylinderPickerBottomSheetContent(
                 heliumFraction = heliumPercentage / 100.0
             )
 
+            if (showBailoutToggle) {
+                var bailoutChecked by remember { mutableStateOf(initialBailoutValue) }
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = "Available for bail-out",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        )
+                        Switch(
+                            checked = bailoutChecked,
+                            onCheckedChange = {
+                                bailoutChecked = it
+                                onBailoutToggled(it)
+                            },
+                        )
+                    }
+                }
+            }
+
             GasPropertiesComponent(
                 modifier = Modifier.padding(vertical = 16.dp),
                 gas = gas,
@@ -230,19 +302,22 @@ private fun CylinderPickerBottomSheetContent(
                 maxPPO2Secondary = maxPPO2Secondary,
                 maxDensity = Gas.MAX_GAS_DENSITY,
                 environment = environment,
-                onClickMix = {
-                    showStandardGasPickerDialog.value = true
-                }
+                onClickMix = if (lockGas) { null } else {
+                    { showStandardGasPickerDialog.value = true }
+                },
             )
 
-            GasPickerComponent(
-                initialOxygenPercentage = oxygenPercentage,
-                initialHeliumPercentage = heliumPercentage,
-                onGasChanged = { oxygenFraction, heliumFraction ->
-                    oxygenPercentage = oxygenFraction
-                    heliumPercentage = heliumFraction
-                }
-            )
+            if (!lockGas) {
+                GasPickerComponent(
+                    initialOxygenPercentage = oxygenPercentage,
+                    initialHeliumPercentage = heliumPercentage,
+                    onGasChanged = { oxygenFraction, heliumFraction ->
+                        oxygenPercentage = oxygenFraction
+                        heliumPercentage = heliumFraction
+                    }
+                )
+            }
+
             BottomSheetButtonRow(
                 modifier = Modifier.padding(top = 16.dp),
                 secondaryLabel = "Cancel",
@@ -306,14 +381,56 @@ private fun ShowStandardGasPickerDialog(
 @Composable
 @Preview
 private fun GasPickerBottomSheetPreview() {
-    CylinderPickerBottomSheet(
-        sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = true
-        ),
-        environment = Environment.Default,
-        maxPPO2 = 1.4,
-        maxPPO2Secondary = 1.6,
-        isAdd = true,
-        initialValue = Cylinder.steel10Liter(Gas.Air)
-    )
+    AbysnerTheme {
+        CylinderPickerBottomSheet(
+            sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            ),
+            environment = Environment.Default,
+            maxPPO2 = 1.4,
+            maxPPO2Secondary = 1.6,
+            isAdd = true,
+            initialValue = Cylinder.steel10Liter(Gas.Air)
+        )
+    }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+private fun GasPickerBottomSheetBailoutPreview() {
+    AbysnerTheme {
+        CylinderPickerBottomSheet(
+            sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            ),
+            environment = Environment.Default,
+            maxPPO2 = 1.4,
+            maxPPO2Secondary = 1.6,
+            isAdd = false,
+            showBailoutToggle = true,
+            initialBailoutValue = true,
+            initialValue = Cylinder.aluminium80Cuft(Gas.Trimix1555)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+private fun GasPickerBottomSheetLockedGasPreview() {
+    AbysnerTheme {
+        CylinderPickerBottomSheet(
+            sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            ),
+            environment = Environment.Default,
+            maxPPO2 = 1.4,
+            maxPPO2Secondary = 1.6,
+            isAdd = false,
+            lockGas = true,
+            initialValue = Cylinder.steel3LiterOxygen()
+        )
+    }
+}
+

@@ -98,6 +98,8 @@ fun GasBarChartPreview() = PreviewWrapper {
 fun GasPlanBarChart(
     modifier: Modifier = Modifier,
     gasPlan: GasPlan,
+    emergencyLabel: String = "Reserve",
+    usageLabel: String = "Used",
     onGasBarClicked: (Int, CylinderGasRequirements) -> Unit = { _, _ -> },
 ) {
     Column(modifier = modifier) {
@@ -107,14 +109,13 @@ fun GasPlanBarChart(
             label = {
                 val label = when (it) {
                     0 -> "Unused"
-                    1 -> "Reserve"
-                    2 -> "Used"
+                    1 -> emergencyLabel
+                    2 -> usageLabel
                     else -> error("Unknown legend index")
                 }
                 Text(text = label, style = MaterialTheme.typography.bodySmall)
             },
             symbol = {
-
                 when (it) {
                     0 -> {
                         val blueShades = MaterialTheme.colorScheme.primary.getShades(
@@ -235,10 +236,10 @@ fun GasPlanBarChart(
                                     text = alertMessage,
                                     alertSeverity = AlertSeverity.ERROR
                                 )
-                            } else if(it.pressureLeftWithEmergency == null) {
+                            } else if (it.pressureLeftWithEmergency == null) {
                                 val alertMessage = buildAnnotatedString {
                                     appendIcon(IconFont.WARNING)
-                                    append(" Insufficient reserve")
+                                    append(" Insufficient ${emergencyLabel.lowercase()}")
                                 }
 
                                 TextAlert(
@@ -270,7 +271,6 @@ fun GasUsageBar(
     maxValue: Float,
     minValue: Float,
 ) {
-
     val pressureLeftWithEmergency = cylinderGasRequirements.pressureLeftWithEmergency?.toFloat() ?: 0f
     val pressureLeftWithoutEmergency = cylinderGasRequirements.pressureLeft?.toFloat() ?: 0f
 
