@@ -21,7 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import me.tatarka.inject.annotations.Inject
 import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.di.AppScope
-import org.neotech.app.abysner.presentation.screens.AboutScreen
+import org.neotech.app.abysner.presentation.screens.about.AboutScreen
 import org.neotech.app.abysner.presentation.screens.planner.PlannerScreen
 import org.neotech.app.abysner.presentation.screens.DiveConfigurationScreen
 import org.neotech.app.abysner.presentation.screens.SettingsScreen
