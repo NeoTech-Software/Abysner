@@ -28,6 +28,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,18 +38,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
+import org.neotech.app.abysner.domain.core.model.DiveMode
+import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
+import org.neotech.app.abysner.presentation.component.RadioCardGroup
+import org.neotech.app.abysner.presentation.component.RadioCardItem
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.textfield.DurationInputField
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
-import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+private val diveModeItems = persistentListOf(
+    RadioCardItem(
+        title = "Open Circuit",
+        description = "Recreational and multi-gas technical diving, with reserve gas planning.",
+    ),
+    RadioCardItem(
+        title = "Closed Circuit Rebreather",
+        description = "Rebreather diving with configurable high/low setpoints and bail-out planning.",
+    ),
+)
+
+private fun DiveMode.toSelectionIndex() = when (this) {
+    DiveMode.OPEN_CIRCUIT -> 0
+    DiveMode.CLOSED_CIRCUIT -> 1
+}
+
+private fun Int.toDiveMode() = when (this) {
+    1 -> DiveMode.CLOSED_CIRCUIT
+    else -> DiveMode.OPEN_CIRCUIT
+}
+
 /**
- * A bottom sheet for configuring a dive, currently allows editing the surface interval and
- * optionally deleting it.
+ * A bottom sheet for configuring a dive: the dive mode (OC/CCR) and optionally the surface
+ * interval for follow-up dives.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +84,7 @@ internal fun DiveConfigurationBottomSheetHost(
     onAddDive: (Duration) -> Unit,
     onUpdateSurfaceInterval: (Int, Duration) -> Unit,
     onRemoveDive: (Int) -> Unit,
+    onDiveModeChanged: (DiveMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
     if (show != null) {
@@ -65,36 +92,39 @@ internal fun DiveConfigurationBottomSheetHost(
         DiveConfigurationBottomSheet(
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             title = "Dive ${(editIndex ?: dives.size) + 1}",
-            initialValue = when (show) {
+            initialSurfaceInterval = when (show) {
                 is ModalTarget.Add -> 60.minutes
                 is ModalTarget.Edit -> dives.getOrNull(show.value)?.surfaceIntervalBefore
             },
-            onConfirm = { duration ->
+            initialDiveMode = when (show) {
+                is ModalTarget.Add -> DiveMode.OPEN_CIRCUIT
+                is ModalTarget.Edit -> dives.getOrNull(show.value)?.diveMode ?: DiveMode.OPEN_CIRCUIT
+            },
+            onConfirm = { duration, diveMode ->
                 if (editIndex != null) {
-                    onUpdateSurfaceInterval(editIndex, duration)
+                    // duration is null for the first dive (no surface interval field).
+                    if (duration != null) {
+                        onUpdateSurfaceInterval(editIndex, duration)
+                    }
                 } else {
-                    onAddDive(duration)
+                    onAddDive(duration ?: 60.minutes)
                 }
+                onDiveModeChanged(diveMode)
             },
             onDismiss = onDismiss,
-            onDelete = editIndex?.let { { onRemoveDive(it) } },
+            onDelete = editIndex?.takeIf { dives.size > 1 }?.let { { onRemoveDive(it) } },
         )
     }
 }
 
-
-/**
- * @param initialValue Pre-filled surface interval duration. `null` indicates the first dive, the
- *                     interval field is hidden and a clean-tissues explanation is shown.
- * @param onDelete     If not null a "Delete" button is shown.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DiveConfigurationBottomSheet(
     sheetState: SheetState = rememberStandardBottomSheetState(),
     title: String,
-    initialValue: Duration? = 60.minutes,
-    onConfirm: (Duration) -> Unit = {},
+    initialSurfaceInterval: Duration? = 60.minutes,
+    initialDiveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
+    onConfirm: (Duration?, DiveMode) -> Unit = { _, _ -> },
     onDismiss: () -> Unit = {},
     onDelete: (() -> Unit)? = null,
 ) {
@@ -105,7 +135,8 @@ private fun DiveConfigurationBottomSheet(
         DiveConfigurationBottomSheetContent(
             sheetState = sheetState,
             title = title,
-            initialValue = initialValue,
+            initialSurfaceInterval = initialSurfaceInterval,
+            initialDiveMode = initialDiveMode,
             onConfirm = onConfirm,
             onDismiss = onDismiss,
             onDelete = onDelete,
@@ -117,15 +148,17 @@ private fun DiveConfigurationBottomSheet(
 @Composable
 private fun DiveConfigurationBottomSheetContent(
     sheetState: SheetState,
-    title: String = "Surface interval",
-    initialValue: Duration? = 60.minutes,
-    onConfirm: (Duration) -> Unit = {},
+    title: String = "Dive 1",
+    initialSurfaceInterval: Duration? = 60.minutes,
+    initialDiveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
+    onConfirm: (Duration?, DiveMode) -> Unit = { _, _ -> },
     onDismiss: () -> Unit = {},
     onDelete: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
-    var confirmedDuration: Duration? by remember(initialValue) { mutableStateOf(initialValue) }
-    val isConfirmEnabled = remember(initialValue) { mutableStateOf(initialValue != null) }
+    var surfaceInterval: Duration? by remember(initialSurfaceInterval) { mutableStateOf(initialSurfaceInterval) }
+    val isConfirmEnabled = remember(initialSurfaceInterval) { mutableStateOf(initialSurfaceInterval == null) }
+    var selectedDiveModeIndex by remember(initialDiveMode) { mutableIntStateOf(initialDiveMode.toSelectionIndex()) }
 
     ModalBottomSheetScaffold {
         Column(
@@ -160,7 +193,14 @@ private fun DiveConfigurationBottomSheetContent(
                 }
             }
 
-            if (initialValue == null) {
+            RadioCardGroup(
+                modifier = Modifier.padding(bottom = 16.dp),
+                items = diveModeItems,
+                selectedIndex = selectedDiveModeIndex,
+                onSelectionChanged = { selectedDiveModeIndex = it },
+            )
+
+            if (initialSurfaceInterval == null) {
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -172,18 +212,18 @@ private fun DiveConfigurationBottomSheetContent(
             } else {
                 DurationInputField(
                     modifier = Modifier.fillMaxWidth(),
-                    initialValue = initialValue,
+                    initialValue = initialSurfaceInterval,
                     label = "Surface interval",
                     isValid = isConfirmEnabled,
-                    onChanged = { confirmedDuration = it },
+                    onChanged = { surfaceInterval = it },
                 )
             }
 
             BottomSheetButtonRow(
                 modifier = Modifier.padding(top = 16.dp),
-                secondaryLabel = if (initialValue != null) { "Cancel" } else { null },
-                primaryLabel = if (initialValue != null) { "Confirm" } else { "Close" },
-                primaryEnabled = if (initialValue != null) { isConfirmEnabled.value } else { true },
+                secondaryLabel = "Cancel",
+                primaryLabel = "Confirm",
+                primaryEnabled = isConfirmEnabled.value,
                 onSecondary = {
                     scope.launch {
                         sheetState.hide()
@@ -191,9 +231,12 @@ private fun DiveConfigurationBottomSheetContent(
                     }
                 },
                 onPrimary = {
-                    if (initialValue != null) {
-                        onConfirm(confirmedDuration ?: initialValue)
+                    val effectiveDuration = if (initialSurfaceInterval != null) {
+                        surfaceInterval ?: initialSurfaceInterval
+                    } else {
+                        null
                     }
+                    onConfirm(effectiveDuration, selectedDiveModeIndex.toDiveMode())
                     scope.launch {
                         sheetState.hide()
                         onDismiss()
@@ -211,7 +254,7 @@ private fun DiveConfigurationBottomSheetAddPreview() {
     DiveConfigurationBottomSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         title = "Dive 1",
-        initialValue = 60.minutes,
+        initialSurfaceInterval = 60.minutes,
     )
 }
 
@@ -222,7 +265,7 @@ private fun DiveConfigurationBottomSheetEditPreview() {
     DiveConfigurationBottomSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         title = "Dive 2",
-        initialValue = 90.minutes,
+        initialSurfaceInterval = 90.minutes,
         onDelete = {},
     )
 }
@@ -234,7 +277,19 @@ private fun DiveConfigurationBottomSheetFirstDivePreview() {
     DiveConfigurationBottomSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         title = "Dive 1",
-        initialValue = null,
+        initialSurfaceInterval = null,
         onDelete = {},
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun DiveConfigurationBottomSheetCcrPreview() {
+    DiveConfigurationBottomSheet(
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        title = "Dive 1",
+        initialSurfaceInterval = null,
+        initialDiveMode = DiveMode.CLOSED_CIRCUIT,
     )
 }

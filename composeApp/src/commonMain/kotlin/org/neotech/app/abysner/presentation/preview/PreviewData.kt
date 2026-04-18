@@ -18,6 +18,7 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
+import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
@@ -29,11 +30,15 @@ object PreviewData {
     private val airCylinder = Cylinder.steel12Liter(gas = Gas.Air)
     private val nitrox50Cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50)
     private val nitrox80Cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80)
+    private val oxygenCylinder = Cylinder.steel3LiterOxygen()
+    private val diluentCylinder = Cylinder.aluminium80Cuft(gas = Gas.Trimix1845)
 
-    val divePlan1Segments by lazy {
-        persistentListOf(
-            DiveProfileSection(25, 30, airCylinder),
-        )
+    val diveProfile30Meters by lazy {
+        persistentListOf(DiveProfileSection(25, 30, airCylinder))
+    }
+
+    val diveProfile60Meters by lazy {
+        persistentListOf(DiveProfileSection(15, 60, airCylinder))
     }
 
     val divePlan1Cylinders by lazy {
@@ -46,7 +51,7 @@ object PreviewData {
 
     val divePlan1: DivePlanSet by lazy {
         val divePlan = DivePlanner().addDive(
-            plan = divePlan1Segments,
+            plan = diveProfile30Meters,
             cylinders = divePlan1Cylinders.filter { it.isChecked }.toAssignedCylinders(),
         )
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
@@ -73,8 +78,8 @@ object PreviewData {
     }
 
     /**
-     * A deliberately extreme dive plan designed to trigger the maximum number of warnings in the
-     * UI for preview/testing purposes.
+     * A deliberately extreme open-circuit dive plan designed to trigger the maximum number of
+     * warnings in the UI for preview/testing purposes.
      */
     val divePlan2: DivePlanSet by lazy {
         val divePlan = DivePlanner(Configuration(
@@ -94,6 +99,49 @@ object PreviewData {
             longer = null,
             bailout = false,
             diveMode = DiveMode.OPEN_CIRCUIT,
+            gasPlan = gasPlan
+        )
+    }
+
+    val divePlanCcrCylinders by lazy {
+        listOf(
+            PlannedCylinderModel(cylinder = oxygenCylinder, isLocked = true, isChecked = true, role = CylinderRole.CCR_OXYGEN),
+            PlannedCylinderModel(cylinder = diluentCylinder, isLocked = true, isChecked = true, role = CylinderRole.CCR_DILUENT_AND_BAILOUT),
+            PlannedCylinderModel(cylinder = nitrox50Cylinder, isLocked = false, isChecked = true),
+        )
+    }
+
+    val divePlanCcr: DivePlanSet by lazy {
+        val divePlan = DivePlanner().addDive(
+            plan = diveProfile60Meters,
+            cylinders = divePlanCcrCylinders.filter { it.isChecked }.toAssignedCylinders(),
+            diveMode = DiveMode.CLOSED_CIRCUIT,
+        )
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+        DivePlanSet(
+            base = divePlan,
+            deeper = null,
+            longer = null,
+            bailout = false,
+            diveMode = DiveMode.CLOSED_CIRCUIT,
+            gasPlan = gasPlan
+        )
+    }
+
+    val divePlanCcrBailout: DivePlanSet by lazy {
+        val divePlan = DivePlanner().addDive(
+            plan = diveProfile30Meters,
+            cylinders = divePlanCcrCylinders.filter { it.isChecked }.toAssignedCylinders(),
+            diveMode = DiveMode.CLOSED_CIRCUIT,
+            bailout = true,
+        )
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+        DivePlanSet(
+            base = divePlan,
+            deeper = null,
+            longer = null,
+            bailout = true,
+            diveMode = DiveMode.CLOSED_CIRCUIT,
             gasPlan = gasPlan
         )
     }

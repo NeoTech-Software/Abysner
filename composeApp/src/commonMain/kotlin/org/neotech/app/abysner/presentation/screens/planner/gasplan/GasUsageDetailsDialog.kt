@@ -59,6 +59,8 @@ import kotlin.math.roundToInt
 fun GasUsageDetailsDialog(
     gasPlan: GasPlan,
     index: Int,
+    emergencyLabel: String = "Reserve",
+    usageLabel: String = "Used",
     onDismissRequest: () -> Unit
 ) {
     val cylinderGasRequirements = gasPlan[index]
@@ -131,14 +133,14 @@ fun GasUsageDetailsDialog(
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Used", fontWeight = FontWeight.Bold
+                            text = usageLabel, fontWeight = FontWeight.Bold
                         )
                         Text(modifier = Modifier.weight(1f), text = "${totalUsage.format(0)} ℓ")
                     }
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Reserve", fontWeight = FontWeight.Bold
+                            text = emergencyLabel, fontWeight = FontWeight.Bold
                         )
                         Text(modifier = Modifier.weight(1f), text = "${totalReserve.format(0)} ℓ")
                     }
@@ -188,8 +190,12 @@ fun GasUsageDetailsDialog(
                 val alertMessage = buildAnnotatedString {
                     when (severity) {
                         AlertSeverity.ERROR -> {
-                            if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have a critical gas shortage!")
-                            else appendBoldLine("This cylinder has a critical gas shortage!")
+                            if (showTotals) {
+                                appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have a critical gas shortage!")
+                            }
+                            else {
+                                appendBoldLine("This cylinder has a critical gas shortage!")
+                            }
                             append("You need at least ")
                             appendBold("${totalUsage.format(0)} ℓ")
                             append(if (showTotals) " for the dive, but only have a combined " else " for the dive, but only have ")
@@ -197,22 +203,28 @@ fun GasUsageDetailsDialog(
                             append(".")
                         }
                         AlertSeverity.WARNING -> {
-                            if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have insufficient reserve!")
-                            else appendBoldLine("This cylinder has insufficient reserve!")
+                            if (showTotals) {
+                                appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have insufficient ${emergencyLabel.lowercase()}!")
+                            } else {
+                                appendBoldLine("This cylinder has insufficient ${emergencyLabel.lowercase()}!")
+                            }
                             append("You need ")
                             appendBold("${totalRequired.format(0)} ℓ")
-                            append(if (showTotals) " including reserve, but only have a combined " else " including reserve, but only have ")
+                            append(if (showTotals) " including ${emergencyLabel.lowercase()}, but only have a combined " else " including ${emergencyLabel.lowercase()}, but only have ")
                             appendBold(totalCapacityFormatted)
-                            append(". Without accounting for reserve, there is enough gas.")
+                            append(". Without accounting for ${emergencyLabel.lowercase()}, there is enough gas.")
                         }
                         AlertSeverity.POSITIVE, AlertSeverity.NONE -> {
-                            if (showTotals) appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have enough gas, even if the reserve is needed.")
-                            else appendBoldLine("This cylinder has enough gas, even if the reserve is needed.")
+                            if (showTotals) {
+                                appendBoldLine("Together, these ${sameMixCylinders.size} cylinders have enough gas, even if the ${emergencyLabel.lowercase()} is needed.")
+                            } else {
+                                appendBoldLine("This cylinder has enough gas, even if the ${emergencyLabel.lowercase()} is needed.")
+                            }
                             append("After a normal dive about ")
                             appendBold(unusedNormalFormatted)
                             append(" remains, and about ")
                             appendBold(unusedEmergencyFormatted)
-                            append(" after using the reserve.")
+                            append(" after using the ${emergencyLabel.lowercase()}.")
                         }
                     }
                 }

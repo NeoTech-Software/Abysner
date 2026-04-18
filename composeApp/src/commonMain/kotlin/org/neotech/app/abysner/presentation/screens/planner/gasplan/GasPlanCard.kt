@@ -109,11 +109,18 @@ fun GasPlanCardComponent(
                     }
                 } else {
                     val gasRequirements = divePlanSet.gasPlan
+                    val emergencyLabel = if (divePlanSet.isCcr) { "Bailout" } else { "Reserve" }
+                    val usageLabel = if (divePlanSet.isCcr) { "Loop" } else { "Used" }
 
                     var showCylinderDetails: Int? by remember(gasRequirements) { mutableStateOf(null) }
 
                     showCylinderDetails?.let { index ->
-                        GasUsageDetailsDialog(gasPlan = gasRequirements, index = index) {
+                        GasUsageDetailsDialog(
+                            gasPlan = gasRequirements,
+                            index = index,
+                            emergencyLabel = emergencyLabel,
+                            usageLabel = usageLabel
+                        ) {
                             showCylinderDetails = null
                         }
                     }
@@ -121,6 +128,8 @@ fun GasPlanCardComponent(
                     GasPlanBarChart(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         gasPlan = gasRequirements,
+                        emergencyLabel = emergencyLabel,
+                        usageLabel = usageLabel,
                     ) { index, _ ->
                         showCylinderDetails = index
                     }
@@ -135,6 +144,8 @@ fun GasPlanCardComponent(
                     GasTotalsTable(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         gasPlan = gasRequirements,
+                        emergencyLabel = emergencyLabel,
+                        usageLabel = usageLabel,
                     )
 
                     Text(
@@ -147,6 +158,9 @@ fun GasPlanCardComponent(
                     CylindersTable(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         divePlanSet = divePlanSet,
+                        // On CCR: Not enough bailout is a true error not a warning.
+                        // On OC: Not enough gas for an out-of-air buddy is warning
+                        emergencyIsError = divePlanSet.isCcr,
                     )
 
                     Text(
@@ -162,23 +176,44 @@ fun GasPlanCardComponent(
                         divePlanSet
                     )
 
-                    val explanationText = buildAnnotatedString {
-                        appendBoldLine("Notes on the gas plan:")
-                        appendLine("The gas plan calculates cylinder pressures based on real-world gas behavior, rather than relying on simplified gas law assumptions. The gas plan divides gas into three categories:")
-                        appendBulletPoint {
-                            appendBold("Used: ")
-                            append("The gas required for a single diver to complete the planned dive under normal conditions.")
+                    val explanationText = if (divePlanSet.isCcr) {
+                        buildAnnotatedString {
+                            appendBoldLine("Notes on the gas plan:")
+                            appendLine("The gas plan calculates cylinder pressures based on real-world gas behavior, rather than relying on simplified gas law assumptions. The gas plan divides gas into three categories:")
+                            appendBulletPoint {
+                                appendBold("Loop: ")
+                                append("The gas consumed on the closed-circuit loop (O2 and diluent) under normal conditions.")
+                            }
+                            appendBulletPoint {
+                                appendBold("Bailout: ")
+                                append("The open-circuit gas required for a single diver to complete a full bail-out ascent from the worst point in the dive.")
+                            }
+                            appendBulletPoint {
+                                appendBold("Unused: ")
+                                append("Any remaining gas after accounting for both Loop and Bailout requirements.\n")
+                            }
+                            appendIcon(IconFont.WARNING)
+                            appendBold(" Always plan your cylinders carefully, considering the \u201Cminimum functional pressure\u201D of your regulators.")
                         }
-                        appendBulletPoint {
-                            appendBold("Reserve: ")
-                            append("Extra gas to ensure a safe ascent if a buddy loses one or more gas mixes at the worst point in the dive. It assumes buddy breathing is possible for all cylinders, including during decompression stops.")
+                    } else {
+                        buildAnnotatedString {
+                            appendBoldLine("Notes on the gas plan:")
+                            appendLine("The gas plan calculates cylinder pressures based on real-world gas behavior, rather than relying on simplified gas law assumptions. The gas plan divides gas into three categories:")
+                            appendBulletPoint {
+                                appendBold("Used: ")
+                                append("The gas required for a single diver to complete the planned dive under normal conditions.")
+                            }
+                            appendBulletPoint {
+                                appendBold("Reserve: ")
+                                append("Extra gas to ensure a safe ascent if a buddy loses one or more gas mixes at the worst point in the dive. It assumes buddy breathing is possible for all cylinders, including during decompression stops.")
+                            }
+                            appendBulletPoint {
+                                appendBold("Unused: ")
+                                append("Any remaining gas after accounting for both Used and Reserve requirements.\n")
+                            }
+                            appendIcon(IconFont.WARNING)
+                            appendBold(" Always plan your cylinders carefully, considering the \u201Cminimum functional pressure\u201D of your regulators.")
                         }
-                        appendBulletPoint {
-                            appendBold("Unused: ")
-                            append("Any remaining gas after accounting for both Used and Reserve requirements.\n")
-                        }
-                        appendIcon(IconFont.WARNING)
-                        appendBold(" Always plan your cylinders carefully, considering the “minimum functional pressure” of your regulators.")
                     }
 
                     ExpandableText(
@@ -197,6 +232,7 @@ fun GasPlanCardComponent(
 fun CylindersTable(
     modifier: Modifier = Modifier,
     divePlanSet: DivePlanSet,
+    emergencyIsError: Boolean = false,
 ) {
     Table(
         modifier = modifier,
@@ -216,22 +252,25 @@ fun CylindersTable(
                 text = DecimalFormat.format(1, usage.cylinder.waterVolume),
             )
 
-            // TODO extract these values to a CylinderUsageModel? That is calculated as part of the gas plan?
-            val endPressureBase = usage.cylinder.pressureAfter(volumeUsage = usage.normalRequirement)
             val endPressure = usage.cylinder.pressureAfter(volumeUsage = usage.totalGasRequirement)
             val startPressure = DecimalFormat.format(0, usage.cylinder.pressure)
 
-            var alertSeverity: AlertSeverity = AlertSeverity.NONE
-            val pressureText = buildAnnotatedString {
-                if (endPressureBase == null) {
-                    alertSeverity = AlertSeverity.ERROR
-                    append("$startPressure > empty")
+            val alertSeverity = if (endPressure == null) {
+                if (!emergencyIsError && usage.cylinder.pressureAfter(volumeUsage = usage.normalRequirement) != null) {
+                    // Baseline fits but reserve does not.
+                    AlertSeverity.WARNING
                 } else {
-                    if (endPressure == null) {
-                        alertSeverity = AlertSeverity.WARNING
-                    }
-                    append("$startPressure > ${endPressureBase.format(0)}")
+                    // Not enough gas for baseline (OC/CCR) or not enough for bailout (CCR bailout).
+                    AlertSeverity.ERROR
                 }
+            } else {
+                AlertSeverity.NONE
+            }
+
+            val pressureText = if (endPressure == null) {
+                "$startPressure > empty"
+            } else {
+                "$startPressure > ${endPressure.format(0)}"
             }
 
             TextAlert(
@@ -247,14 +286,16 @@ fun CylindersTable(
 fun GasTotalsTable(
     modifier: Modifier = Modifier,
     gasPlan: List<CylinderGasRequirements>,
+    emergencyLabel: String = "Reserve",
+    usageLabel: String = "Used",
 ) {
     Table(
         modifier = modifier,
         header = {
             Text(modifier = Modifier.weight(0.17f), text = "Mix")
-            Text(modifier = Modifier.weight(0.32f), text = "Available (ℓ)")
-            Text(modifier = Modifier.weight(0.26f), text = "Used (ℓ)")
-            Text(modifier = Modifier.weight(0.25f), text = "Reserve (ℓ)")
+            Text(modifier = Modifier.weight(0.32f), text = "Capacity (ℓ)")
+            Text(modifier = Modifier.weight(0.26f), text = "$usageLabel (ℓ)")
+            Text(modifier = Modifier.weight(0.25f), text = "$emergencyLabel (ℓ)")
         }
     ) {
         rows(gasPlan.groupBy { it.cylinder.gas }.toList(), key = { (gas, _) -> gas }) { (gas, entries) ->
@@ -371,3 +412,28 @@ private fun GasPlanCardComponentEmptyPreview() {
         )
     }
 }
+
+@Preview
+@Composable
+private fun GasPlanCardComponentCcrPreview() {
+    AbysnerTheme {
+        GasPlanCardComponent(
+            divePlanSet = PreviewData.divePlanCcr,
+            planningException = null,
+            isLoading = false
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun GasPlanCardComponentCcrBailoutPreview() {
+    AbysnerTheme {
+        GasPlanCardComponent(
+            divePlanSet = PreviewData.divePlanCcrBailout,
+            planningException = null,
+            isLoading = false
+        )
+    }
+}
+

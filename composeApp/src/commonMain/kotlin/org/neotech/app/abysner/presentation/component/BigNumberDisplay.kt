@@ -105,7 +105,7 @@ fun BigNumberDisplay(
         enabled = onClick != null,
         modifier = modifier,
         color = containerColor.ifUnspecified(MaterialTheme.colorScheme.primaryContainer),
-        shape = MaterialTheme.shapes.large,
+        shape = MaterialTheme.shapes.medium,
     ) {
 
         Box(modifier = Modifier.padding(horizontal = paddingHorizontal, vertical = paddingVertical)) {

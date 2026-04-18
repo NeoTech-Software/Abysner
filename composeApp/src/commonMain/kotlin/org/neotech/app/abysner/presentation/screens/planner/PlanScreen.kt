@@ -54,6 +54,7 @@ import kotlinx.collections.immutable.toImmutableList
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
@@ -96,11 +97,13 @@ fun PlannerScreen(
         onAddSegment = { viewModel.addSegment(it) },
         onUpdateSegment = { index, segment -> viewModel.updateSegment(index, segment) },
         onRemoveSegment = { viewModel.removeSegment(it) },
-        onContingencyInputChanged = { deeper, longer -> viewModel.setContingency(deeper, longer, bailout = false) },
+        onContingencyInputChanged = { deeper, longer, bailout -> viewModel.setContingency(deeper, longer, bailout) },
         onSelectDive = { viewModel.selectDive(it) },
         onAddDive = { viewModel.addDive(it) },
         onRemoveDive = { viewModel.removeDive(it) },
         onUpdateSurfaceInterval = { i, d -> viewModel.updateSurfaceInterval(i, d) },
+        onDiveModeChanged = { viewModel.setDiveMode(it) },
+        onAvailableForBailoutChanged = { cylinder, value -> viewModel.toggleAvailableForBailout(cylinder, value) },
     )
 }
 
@@ -116,11 +119,13 @@ fun PlannerScreen(
     onAddSegment: (DiveProfileSection) -> Unit = {},
     onUpdateSegment: (Int, DiveProfileSection) -> Unit = { _, _ -> },
     onRemoveSegment: (Int) -> Unit = {},
-    onContingencyInputChanged: (Boolean, Boolean) -> Unit = { _, _ -> },
+    onContingencyInputChanged: (Boolean, Boolean, Boolean) -> Unit = { _, _, _ -> },
     onSelectDive: (Int) -> Unit = {},
     onAddDive: (Duration) -> Unit = {},
     onRemoveDive: (Int) -> Unit = {},
     onUpdateSurfaceInterval: (Int, Duration) -> Unit = { _, _ -> },
+    onDiveModeChanged: (DiveMode) -> Unit = {},
+    onAvailableForBailoutChanged: (Cylinder, Boolean) -> Unit = { _, _ -> },
 ) {
     AbysnerTheme {
 
@@ -139,7 +144,7 @@ fun PlannerScreen(
         }
         val onDiveButtonClick: (Int, DefaultPathwayButtonItem) -> Unit = { index, _ ->
             if (index == uiState.selectedDiveIndex) {
-                if (index > 0 || uiState.dives.size > 1) diveSheet = ModalTarget.Edit(index)
+                diveSheet = ModalTarget.Edit(index)
             } else {
                 onSelectDive(index)
             }
@@ -248,16 +253,21 @@ fun PlannerScreen(
             CylinderPickerBottomSheetHost(
                 show = cylinderSheet,
                 configuration = uiState.configuration,
+                diveMode = uiState.diveMode,
+                cylinders = uiState.availableGas,
+                segments = uiState.segments,
                 onDismiss = { cylinderSheet = null },
                 onAddCylinder = onAddCylinder,
                 onUpdateCylinder = onUpdateCylinder,
+                onAvailableForBailoutChanged = onAvailableForBailoutChanged,
             )
 
             SegmentPickerBottomSheetHost(
                 show = segmentSheet,
                 configuration = uiState.configuration,
                 segments = uiState.segments,
-                cylinders = uiState.availableGas.map { it.cylinder }.toImmutableList(),
+                diveMode = uiState.diveMode,
+                cylinders = uiState.availableGas.toImmutableList(),
                 onDismiss = { segmentSheet = null },
                 onAddSegment = onAddSegment,
                 onUpdateSegment = onUpdateSegment,
@@ -269,6 +279,7 @@ fun PlannerScreen(
                 onAddDive = onAddDive,
                 onUpdateSurfaceInterval = onUpdateSurfaceInterval,
                 onRemoveDive = onRemoveDive,
+                onDiveModeChanged = onDiveModeChanged,
                 onDismiss = { diveSheet = null },
             )
         }
@@ -286,7 +297,7 @@ fun PlannerScreenPreview() {
             uiState = PlanScreenViewModel.UiState(
                 isLoading = false,
                 isCalculatingDivePlan = false,
-                segments = PreviewData.divePlan1Segments,
+                segments = PreviewData.diveProfile30Meters,
                 availableGas = PreviewData.divePlan1Cylinders,
                 configuration = PreviewData.divePlan1.configuration,
                 selectedDivePlanSet = Result.success(PreviewData.divePlan1),
@@ -331,7 +342,7 @@ fun PlannerScreenFoldablePreview() {
             uiState = PlanScreenViewModel.UiState(
                 isLoading = false,
                 isCalculatingDivePlan = false,
-                segments = PreviewData.divePlan1Segments,
+                segments = PreviewData.diveProfile30Meters,
                 availableGas = PreviewData.divePlan1Cylinders,
                 configuration = PreviewData.divePlan1.configuration,
                 selectedDivePlanSet = Result.success(PreviewData.divePlan1),

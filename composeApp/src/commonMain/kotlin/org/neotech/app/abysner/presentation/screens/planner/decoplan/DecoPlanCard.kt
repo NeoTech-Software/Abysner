@@ -18,10 +18,12 @@ import abysner.composeapp.generated.resources.ic_outline_stop_circle_24
 import abysner.composeapp.generated.resources.ic_outline_trending_down_24
 import abysner.composeapp.generated.resources.ic_outline_trending_flat_24
 import abysner.composeapp.generated.resources.ic_outline_trending_up_24
+import abysner.composeapp.generated.resources.ic_outline_warning_24
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
@@ -56,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.compose.resources.painterResource
+import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
@@ -63,6 +66,7 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
+import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
@@ -72,12 +76,14 @@ import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
+import org.neotech.app.abysner.presentation.component.InfoPill
 import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
 import org.neotech.app.abysner.presentation.getUserReadableMessage
+import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
@@ -90,7 +96,7 @@ fun DecoPlanCardComponent(
     settings: SettingsModel,
     planningException: Throwable?,
     isLoading: Boolean,
-    onContingencyInputChanged: (deeper: Boolean, longer: Boolean) -> Unit
+    onContingencyInputChanged: (deeper: Boolean, longer: Boolean, bailout: Boolean) -> Unit
 ) {
     val errorMessage: String? = planningException?.getUserReadableMessage()
 
@@ -140,13 +146,16 @@ fun DecoPlanCardComponent(
                     }
                 } else {
 
-                    val items = persistentListOf("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper}", "Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
+                    val items = buildList {
+                        add("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper}")
+                        add("Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
+                        if (divePlanSet.isCcr) { add("Bail-out") }
+                    }.toImmutableList()
 
-                    val preSelected = when {
-                        divePlanSet.isDeeper && divePlanSet.isLonger -> arrayOf(0, 1)
-                        divePlanSet.isDeeper -> arrayOf(0)
-                        divePlanSet.isLonger -> arrayOf(1)
-                        else -> emptyArray()
+                    val preSelected = buildList {
+                        if (divePlanSet.isDeeper) { add(0) }
+                        if (divePlanSet.isLonger) { add(1) }
+                        if (divePlanSet.isCcr && divePlanSet.bailout) { add(2) }
                     }.toImmutableList()
 
                     val multiChoiceRowState = rememberMultiChoiceSegmentedButtonRowState(preSelected)
@@ -162,7 +171,8 @@ fun DecoPlanCardComponent(
                         onChecked = { _, _, _ ->
                             onContingencyInputChanged(
                                 multiChoiceRowState.checkedItemIndexes.contains(0),
-                                multiChoiceRowState.checkedItemIndexes.contains(1)
+                                multiChoiceRowState.checkedItemIndexes.contains(1),
+                                divePlanSet.isCcr && multiChoiceRowState.checkedItemIndexes.contains(2),
                             )
                         }
                     ) { item, _ ->
@@ -182,7 +192,9 @@ fun DecoPlanCardComponent(
                     DecoPlanTable(
                         modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
                         divePlan = planToShow,
-                        settings = settings
+                        settings = settings,
+                        isCcr = divePlanSet.isCcr,
+                        isBailout = divePlanSet.bailout,
                     )
 
                     DecoPlanOxygenToxicityDisplay(
@@ -325,6 +337,15 @@ fun DecoPlanExtraInfo(
             },
             style = MaterialTheme.typography.bodyMedium
         )
+        if(divePlan.maxTimeToSurfaceBailout != null) {
+            Text(
+                text = buildAnnotatedString {
+                    appendBold("Max TTS: ")
+                    append("${divePlan.maxTimeToSurfaceBailout!!.ttsBailoutAfter} @ ${divePlan.maxTimeToSurfaceBailout!!.end} minutes (bailout)")
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
         if(divePlan.maxTimeToSurface != null) {
             Text(
                 text = buildAnnotatedString {
@@ -344,6 +365,8 @@ fun DecoPlanTable(
     modifier: Modifier = Modifier,
     divePlan: DivePlan,
     settings: SettingsModel,
+    isCcr: Boolean = false,
+    isBailout: Boolean = false,
 ) {
 
     Table(
@@ -372,10 +395,17 @@ fun DecoPlanTable(
             } else {
                 diveSegment.cylinder.gas
             }
+            // Show a warning when switching from closed-circuit to open-circuit
+            val isBailoutSwitch = isBailout && isCcr &&
+                diveSegment.isGasSwitch &&
+                diveSegment.breathingMode == BreathingMode.OpenCircuit &&
+                segments.getOrNull(index - 1)?.breathingMode is BreathingMode.ClosedCircuit
             DecoPlanRow(
                 diveSegment = diveSegment,
                 runtime = diveSegment.end,
                 gas = displayGas,
+                isCcr = isCcr,
+                isBailoutSwitch = isBailoutSwitch,
             )
         }
     }
@@ -405,10 +435,12 @@ private fun RowScope.DecoPlanRow(
     diveSegment: DiveSegment,
     runtime: Int,
     gas: Gas,
+    isCcr: Boolean = false,
+    isBailoutSwitch: Boolean = false,
 ) {
     val typeIcon = when (diveSegment.type) {
         DiveSegment.Type.DECO_STOP -> Res.drawable.ic_outline_stop_circle_24
-        DiveSegment.Type.GAS_SWITCH -> Res.drawable.ic_outline_change_circle_24
+        DiveSegment.Type.GAS_SWITCH -> if (isBailoutSwitch) { Res.drawable.ic_outline_warning_24 } else { Res.drawable.ic_outline_change_circle_24 }
         DiveSegment.Type.FLAT -> Res.drawable.ic_outline_trending_flat_24
         DiveSegment.Type.DECENT -> Res.drawable.ic_outline_trending_down_24
         DiveSegment.Type.ASCENT -> Res.drawable.ic_outline_trending_up_24
@@ -428,8 +460,16 @@ private fun RowScope.DecoPlanRow(
         text = "+${diveSegment.duration}",
     )
     Text(
-        text = gas.toString(),
         modifier = Modifier.weight(0.25f),
+        text = if (isCcr) {
+            val modeLabel = when (diveSegment.breathingMode) {
+                BreathingMode.OpenCircuit -> "OC"
+                is BreathingMode.ClosedCircuit -> "CCR"
+            }
+            "${gas} $modeLabel"
+        } else {
+            gas.toString()
+        },
     )
 }
 
@@ -450,7 +490,35 @@ fun DecoPlanCardComponentPreview() {
             settings = SettingsModel(),
             planningException = null,
             isLoading = false,
-            onContingencyInputChanged = { _, _ -> }
+            onContingencyInputChanged = { _, _, _ -> }
+        )
+    }
+}
+
+@Preview
+@Composable
+fun DecoPlanCardComponentCcrPreview() {
+    AbysnerTheme {
+        DecoPlanCardComponent(
+            divePlanSet = PreviewData.divePlanCcr,
+            settings = SettingsModel(),
+            planningException = null,
+            isLoading = false,
+            onContingencyInputChanged = { _, _, _ -> }
+        )
+    }
+}
+
+@Preview
+@Composable
+fun DecoPlanCardComponentCcrBailoutPreview() {
+    AbysnerTheme {
+        DecoPlanCardComponent(
+            divePlanSet = PreviewData.divePlanCcrBailout,
+            settings = SettingsModel(),
+            planningException = null,
+            isLoading = false,
+            onContingencyInputChanged = { _, _, _ -> }
         )
     }
 }

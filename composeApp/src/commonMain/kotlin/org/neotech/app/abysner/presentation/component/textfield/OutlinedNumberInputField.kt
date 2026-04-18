@@ -33,7 +33,7 @@ fun OutlinedDecimalInputField(
     initialValue: Double?,
     label: String? = null,
     fractionDigits: Int = 2,
-    minValue: Double = Double.MIN_VALUE,
+    minValue: Double = 0.0,
     maxValue: Double = Double.MAX_VALUE,
     isValid: MutableState<Boolean> = remember { mutableStateOf(false) },
     visualTransformation: VisualTransformation = VisualTransformation.None,
@@ -81,7 +81,6 @@ fun OutlinedDecimalInputField(
         ),
         errorMessage = errorMessage.value,
         onValueChanged = {
-
             val decimalNumber = behavior.toDecimal(it)
             updateErrorMessage(decimalNumber)
             onNumberChanged(decimalNumber)

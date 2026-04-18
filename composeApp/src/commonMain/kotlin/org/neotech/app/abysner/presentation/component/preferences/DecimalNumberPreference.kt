@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -22,41 +22,39 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
+import androidx.compose.ui.unit.dp
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 
 @Composable
-fun NumberPreference(
+fun DecimalNumberPreference(
     modifier: Modifier = Modifier,
     label: String,
     description: String,
-    initialValue: Int = 0,
-    minValue: Int = Int.MIN_VALUE,
-    maxValue: Int = Int.MAX_VALUE,
+    initialValue: Double = 0.0,
+    minValue: Double = 0.0,
+    maxValue: Double = Double.MAX_VALUE,
+    fractionDigits: Int = 1,
     textFieldVisualTransformation: VisualTransformation = VisualTransformation.None,
-    valueFormatter: (Int) -> String = { it.toString() },
-    onValueChanged: (Int) -> Unit,
+    valueFormatter: (Double) -> String = { it.toString() },
+    onValueChanged: (Double) -> Unit,
 ) {
-
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
+    var showDialog by remember { mutableStateOf(false) }
 
     if (showDialog) {
-        NumberPreferenceDialog(
+        DecimalNumberPreferenceDialog(
             title = label,
             initialValue = initialValue,
             minValue = minValue,
             maxValue = maxValue,
+            fractionDigits = fractionDigits,
             visualTransformation = textFieldVisualTransformation,
             onConfirmButtonClicked = { newValue ->
                 if (newValue != initialValue) {
@@ -70,9 +68,7 @@ fun NumberPreference(
     }
 
     BasicPreference(
-        modifier = modifier.clickable {
-            showDialog = true
-        },
+        modifier = modifier.clickable { showDialog = true },
         label = label,
         value = description,
         hideDivider = true,
@@ -86,19 +82,20 @@ fun NumberPreference(
 }
 
 @Composable
-fun NumberPreferenceDialog(
+fun DecimalNumberPreferenceDialog(
     title: String,
     confirmButtonText: String = "OK",
     cancelButtonText: String = "Cancel",
-    onConfirmButtonClicked: (value: Int) -> Unit = { },
+    onConfirmButtonClicked: (value: Double) -> Unit = {},
     onCancelButtonClicked: () -> Unit = {},
     onDismissRequest: () -> Unit = {},
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    maxValue: Int = Int.MAX_VALUE,
-    minValue: Int = Int.MIN_VALUE,
-    initialValue: Int = 0,
+    fractionDigits: Int = 1,
+    minValue: Double = 0.0,
+    maxValue: Double = Double.MAX_VALUE,
+    initialValue: Double = 0.0,
 ) {
-    val numberValue: MutableState<Int> = remember(initialValue) { mutableIntStateOf(initialValue) }
+    val numberValue: MutableState<Double> = remember(initialValue) { mutableStateOf(initialValue) }
     val isValid = remember { mutableStateOf(false) }
 
     AlertDialogCustomContent(
@@ -118,35 +115,34 @@ fun NumberPreferenceDialog(
         },
         title = { Text(title) },
         content = {
-            OutlinedNumberInputField(
+            OutlinedDecimalInputField(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 minValue = minValue,
                 maxValue = maxValue,
+                fractionDigits = fractionDigits,
                 initialValue = initialValue,
                 isValid = isValid,
-                visualTransformation = visualTransformation
+                visualTransformation = visualTransformation,
             ) {
-                if(it != null) {
+                if (it != null) {
                     numberValue.value = it
                 }
             }
         }
-
     )
 }
 
 @Preview
 @Composable
-private fun NumberPreferencePreview() {
+private fun DecimalNumberPreferencePreview() {
     Surface {
-        NumberPreference(
-            label = "Altitude",
-            description = "The altitude of the water surface at which the dive is taking place, in most cases this will be 0 meter (sea level).",
-            initialValue = 0,
-            minValue = -450,
-            maxValue = 3000,
-            valueFormatter = { "$it m"},
-            textFieldVisualTransformation = SuffixVisualTransformation(" m"),
+        DecimalNumberPreference(
+            label = "Metabolic oxygen rate",
+            description = "Oxygen consumption rate in liters per minute. Used to calculate oxygen usage for CCR dives.",
+            initialValue = 0.8,
+            minValue = 0.1,
+            maxValue = 5.0,
+            valueFormatter = { "$it L/min" },
             onValueChanged = {},
         )
     }
@@ -154,12 +150,12 @@ private fun NumberPreferencePreview() {
 
 @Preview
 @Composable
-fun NumberPreferenceDialogPreview() {
-    NumberPreferenceDialog(
-        title = "Altitude",
-        visualTransformation = SuffixVisualTransformation(" m"),
-        minValue = -450,
-        maxValue = 3000,
-        initialValue = 0
+fun DecimalNumberPreferenceDialogPreview() {
+    DecimalNumberPreferenceDialog(
+        title = "Metabolic oxygen rate",
+        visualTransformation = SuffixVisualTransformation(" L/min"),
+        minValue = 0.1,
+        maxValue = 5.0,
+        initialValue = 0.8
     )
 }
