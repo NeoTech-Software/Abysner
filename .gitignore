@@ -31,8 +31,8 @@ xcuserdata
 # Storage file created by the app when running on desktop
 composeApp/configuration.preferences_pb
 composeApp/release/
-.idea/gradle.xml
 
 # Signing info
 keystore.properties
 abysner-release.p12
+plan/
