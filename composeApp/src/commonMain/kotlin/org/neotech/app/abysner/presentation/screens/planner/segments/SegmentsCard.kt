@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
@@ -137,7 +138,7 @@ private fun SegmentListItemComponent(
         IconButton(
             onClick = { onDelete(diveProfileSection) }
         ) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete gas")
+            Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove segment", modifier = Modifier.size(20.dp))
         }
     }
 }
