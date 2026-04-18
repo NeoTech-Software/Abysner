@@ -15,6 +15,7 @@ package org.neotech.app.abysner.presentation.screens
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import org.neotech.app.abysner.presentation.PreviewForScreenshotTestsDefaultHeight
+import org.neotech.app.abysner.presentation.screens.about.AboutScreenPreview
 
 @PreviewTest
 @PreviewForScreenshotTestsDefaultHeight
