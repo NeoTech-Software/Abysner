@@ -88,7 +88,7 @@ internal fun pressureChangeInBarsPerMinute(beginPressure: Double, endPressure: D
  * @param inspiredGasRate the rate at which the inspired inert gas partial pressure changes per
  * minute (due to depth change).
  */
-internal fun schreinerEquation(initialTissuePressure: Double, inspiredGasPressure: Double, time: Double, halfTime: Double, inspiredGasRate: Double): Double {
+fun schreinerEquation(initialTissuePressure: Double, inspiredGasPressure: Double, time: Double, halfTime: Double, inspiredGasRate: Double): Double {
     val timeConstant = ln(2.0) / halfTime
     return (inspiredGasPressure + (inspiredGasRate * (time - (1.0 / timeConstant))) - ((inspiredGasPressure - initialTissuePressure - (inspiredGasRate / timeConstant)) * exp(-timeConstant * time)))
 }
@@ -128,7 +128,7 @@ internal fun schreinerEquation(initialTissuePressure: Double, inspiredGasPressur
  * @return (inspiredGasPressure, inspiredGasRate) for [schreinerEquation], or (0.0, 0.0) when
  * ambient is below the setpoint (loop maxes out on pure O2, no inert gas inspired).
  */
-internal fun ccrSchreinerInputs(
+fun ccrSchreinerInputs(
     startPressure: Double,
     pressureRate: Double,
     inertFraction: Double,

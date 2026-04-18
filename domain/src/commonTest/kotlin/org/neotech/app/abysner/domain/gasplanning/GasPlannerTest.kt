@@ -53,7 +53,7 @@ class GasPlannerTest {
     )
 
     @Test
-    fun findPotentialWorstCaseTtsPoints_returnsNonDominatedScenariosAtEachDepth() {
+    fun findWorstCaseAscentCandidates_returnsNonDominatedScenariosAtEachDepth() {
 
         val bottomGas = Cylinder.steel12Liter(Gas.Trimix2135)
         val decoGas = Cylinder.aluminium80Cuft(Gas.Nitrox50)
@@ -94,14 +94,14 @@ class GasPlannerTest {
         // to the depth in general (but figuring out this is done in 'calculateGasPlan' in the
         // GasPlanner)
 
-        val ttsWorstCaseScenarios = GasPlanner().findPotentialWorstCaseTtsPoints(divePlan)
+        val ttsWorstCaseScenarios = GasPlanner().findWorstCaseAscentCandidates(divePlan)
         assertEquals(2, ttsWorstCaseScenarios.size)
         assertTrue { ttsWorstCaseScenarios.any { it.end == 11 && it.endDepth == 50.0 && it.ttsAfter == 12 } }
         assertTrue { ttsWorstCaseScenarios.any { it.end == 51 && it.endDepth == 20.0 && it.ttsAfter == 13 } }
     }
 
     @Test
-    fun findPotentialWorstCaseTtsPoints_returnsOnlyDeepestWorstCaseScenario() {
+    fun findWorstCaseAscentCandidates_returnsOnlyDeepestWorstCaseScenario() {
 
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
 
@@ -134,7 +134,7 @@ class GasPlannerTest {
         // at T=30 and D=15.0: TTS=3
         // at T=48 and D=23.0: TTS=12
 
-        val ttsWorstCaseScenarios = GasPlanner().findPotentialWorstCaseTtsPoints(divePlan)
+        val ttsWorstCaseScenarios = GasPlanner().findWorstCaseAscentCandidates(divePlan)
         assertEquals(1, ttsWorstCaseScenarios.size)
         assertTrue { ttsWorstCaseScenarios.any { it.end == 48 && it.endDepth == 23.0 && it.ttsAfter == 12 } }
     }
@@ -298,15 +298,18 @@ class GasPlannerTest {
     }
 
     @Test
-    fun calculateGasPlan_ccrOnlyPlanExcludesBailoutCylinders() {
+    fun calculateGasPlan_ccrPrimaryPlanIncludesBailoutGasInEmergencySlot() {
         val bailoutCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox32)
         val divePlan = ccrDivePlan(extraCylinders = listOf(bailoutCylinder), bailout = false)
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
-        assertEquals(2, gasPlan.size)
+        assertEquals(3, gasPlan.size)
         assertTrue(gasPlan.any { it.cylinder.gas == Gas.Oxygen })
         assertTrue(gasPlan.any { it.cylinder.gas == Gas.Air })
-        assertTrue(gasPlan.none { it.cylinder.gas == Gas.Nitrox32 })
+
+        val bailoutEntry = gasPlan.first { it.cylinder.gas == Gas.Nitrox32 }
+        assertEquals(0.0, bailoutEntry.normalRequirement)
+        assertTrue(bailoutEntry.extraEmergencyRequirement > 0.0)
     }
 
     @Test
@@ -319,7 +322,8 @@ class GasPlannerTest {
         assertNotNull(gasPlan.firstOrNull { it.cylinder.gas == Gas.Air })
 
         val bailoutEntry = gasPlan.first { it.cylinder.gas == Gas.Nitrox32 }
-        assertTrue(bailoutEntry.normalRequirement > 0.0)
+        assertEquals(0.0, bailoutEntry.normalRequirement)
+        assertTrue(bailoutEntry.extraEmergencyRequirement > 0.0)
     }
 
     private fun ccrDivePlan(
