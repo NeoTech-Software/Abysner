@@ -16,10 +16,25 @@ sealed class BreathingMode {
 
     data object OpenCircuit : BreathingMode()
 
-    data class ClosedCircuit(val setpoint: Double) : BreathingMode() {
+    data class ClosedCircuit(
+        /**
+         * The setpoint in bars that the CCR is set to maintain, this is not the effective setpoint
+         * used for tissue loading or oxygen toxicity calculations, which may be influenced by the
+         * ambient pressure.
+         */
+        val setpoint: Double
+    ) : BreathingMode() {
         init {
             require(setpoint > 0.0) { "CCR setpoint must be positive, got $setpoint" }
         }
+
+        /**
+         * Returns the effective ppO2 for tissue loading: the setpoint capped at ambient pressure.
+         * This assumes pure oxygen as injection gas.
+         *
+         * @see org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.ccrSchreinerInputs
+         */
+        fun effectivePpO2(ambientPressure: Double): Double = minOf(setpoint, ambientPressure)
     }
 
     val ccrSetpointOrNull: Double?

@@ -13,28 +13,22 @@
 package org.neotech.app.abysner.presentation.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material3.AlertDialogCustomContent
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -58,13 +51,13 @@ import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.appendBold
-import org.neotech.app.abysner.presentation.component.preferences.BasicPreference
+import org.neotech.app.abysner.presentation.component.preferences.CcrSetpointPreference
 import org.neotech.app.abysner.presentation.component.preferences.DecimalNumberPreference
+import org.neotech.app.abysner.presentation.component.preferences.GradientFactorPreference
 import org.neotech.app.abysner.presentation.component.preferences.NumberPreference
 import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTitle
 import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreference
 import org.neotech.app.abysner.presentation.component.preferences.SwitchPreference
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import kotlin.math.abs
@@ -361,30 +354,22 @@ fun DiveConfigurationScreen(
 
                     SettingsSubTitle(subTitle = "CCR")
 
-                    DecimalNumberPreference(
+                    CcrSetpointPreference(
                         label = "Low setpoint",
-                        description = "The CCR oxygen partial pressure setpoint used during descent.",
-                        initialValue = configuration.ccrLowSetpoint,
-                        minValue = 0.16,
-                        maxValue = 1.6,
-                        fractionDigits = 2,
-                        valueFormatter = { "$it bar" },
-                        textFieldVisualTransformation = SuffixVisualTransformation(" bar"),
-                    ) { setpoint ->
-                        updateConfiguration { it.copy(ccrLowSetpoint = setpoint) }
+                        description = "The CCR setpoint used during descent, with optional auto-switch depth to the high setpoint.",
+                        setpoint = configuration.ccrLowSetpoint,
+                        switchDepth = configuration.ccrToHighSetpointSwitchDepth,
+                    ) { setpoint, switchDepth ->
+                        updateConfiguration { it.copy(ccrLowSetpoint = setpoint, ccrToHighSetpointSwitchDepth = switchDepth) }
                     }
 
-                    DecimalNumberPreference(
+                    CcrSetpointPreference(
                         label = "High setpoint",
-                        description = "The CCR oxygen partial pressure setpoint used during bottom time and the (decompression) ascent.",
-                        initialValue = configuration.ccrHighSetpoint,
-                        minValue = 0.16,
-                        maxValue = 1.6,
-                        fractionDigits = 2,
-                        valueFormatter = { "$it bar" },
-                        textFieldVisualTransformation = SuffixVisualTransformation(" bar"),
-                    ) { setpoint ->
-                        updateConfiguration { it.copy(ccrHighSetpoint = setpoint) }
+                        description = "The CCR setpoint used during bottom time and ascent, with optional auto-switch depth to the low setpoint.",
+                        setpoint = configuration.ccrHighSetpoint,
+                        switchDepth = configuration.ccrToLowSetpointSwitchDepth,
+                    ) { setpoint, switchDepth ->
+                        updateConfiguration { it.copy(ccrHighSetpoint = setpoint, ccrToLowSetpointSwitchDepth = switchDepth) }
                     }
 
                     DecimalNumberPreference(
@@ -418,113 +403,6 @@ fun DiveConfigurationScreen(
     }
 }
 
-@Composable
-fun GradientFactorPreference(
-    modifier: Modifier = Modifier,
-    label: String,
-    description: String,
-    gfLow: Int,
-    gfHigh: Int,
-    onValueChanged: (Int, Int) -> Unit,
-) {
-
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-
-    if (showDialog) {
-        GradientFactorPreferenceDialog(
-            title = label,
-            gfLow = gfLow,
-            gfHigh = gfHigh,
-            onConfirmButtonClicked = { gfLowNew, gfHighNew ->
-                if (gfLow != gfLowNew || gfHigh != gfHighNew) {
-                    onValueChanged(gfLowNew, gfHighNew)
-                }
-                showDialog = false
-            },
-            onCancelButtonClicked = { showDialog = false },
-            onDismissRequest = { showDialog = false },
-        )
-    }
-
-    BasicPreference(
-        modifier = modifier.clickable {
-            showDialog = true
-        },
-        label = label,
-        value = description,
-        hideDivider = true,
-        action = {
-            Text(
-                text = "$gfLow/$gfHigh",
-                style = typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-            )
-        }
-    )
-}
-
-@Composable
-fun GradientFactorPreferenceDialog(
-    title: String,
-    confirmButtonText: String = "OK",
-    cancelButtonText: String = "Cancel",
-    onConfirmButtonClicked: (gfLow: Int, gfHigh: Int) -> Unit = { _, _ -> },
-    onCancelButtonClicked: () -> Unit = {},
-    onDismissRequest: () -> Unit = {},
-    gfLow: Int,
-    gfHigh: Int,
-) {
-    val gfLowValue: MutableState<Int?> = remember(gfLow) { mutableStateOf(gfLow) }
-    val gfHighValue: MutableState<Int?> = remember(gfHigh) { mutableStateOf(gfHigh) }
-
-    val isGfLowValid = remember { mutableStateOf(false) }
-    val isGfHighValid = remember { mutableStateOf(false) }
-
-    AlertDialogCustomContent(
-        onDismissRequest = onDismissRequest,
-        confirmButton = {
-            TextButton(
-                enabled = isGfLowValid.value && isGfHighValid.value,
-                onClick = {
-                    onConfirmButtonClicked(gfLowValue.value!!, gfHighValue.value!!)
-                }) {
-                Text(text = confirmButtonText)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancelButtonClicked) {
-                Text(text = cancelButtonText)
-            }
-        },
-        title = { Text(title) },
-        content = {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedNumberInputField(
-                    modifier = Modifier.padding(start = 24.dp).weight(1f),
-                    minValue = 10,
-                    maxValue = 100,
-                    initialValue = gfLow,
-                    isValid = isGfLowValid,
-                    visualTransformation = SuffixVisualTransformation(" low")
-                ) {
-                    gfLowValue.value = it
-                }
-                OutlinedNumberInputField(
-                    modifier = Modifier.padding(end = 24.dp).weight(1f),
-                    minValue = 10,
-                    maxValue = 100,
-                    initialValue = gfHigh,
-                    isValid = isGfHighValid,
-                    visualTransformation = SuffixVisualTransformation(" high")
-                ) {
-                    gfHighValue.value = it
-                }
-            }
-        }
-
-    )
-}
 
 @Preview
 @Composable
@@ -535,12 +413,3 @@ fun DiveConfigurationScreenPreview() {
     )
 }
 
-@Preview
-@Composable
-fun GradientFactorPreferenceDialogPreview() {
-    GradientFactorPreferenceDialog(
-        title = "Gradient factor",
-        gfLow = 30,
-        gfHigh = 70
-    )
-}
