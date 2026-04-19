@@ -296,7 +296,7 @@ fun CylinderListItemComponent(
             modifier = Modifier.ifTrue(isLocked) { invisible() },
             onClick = { onDelete(cylinder) }
         ) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete cylinder")
+            Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove cylinder", modifier = Modifier.size(20.dp))
         }
     }
 }

@@ -18,10 +18,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LocalAbsoluteTonalElevation
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.key
@@ -60,7 +58,7 @@ fun Table(
                 // Fall back to index so keyless rows never share the same Compose slot.
                 key(row.key ?: index) {
                     val rowModifier = if (striped && index % 2 == 1) {
-                        Modifier.background(MaterialTheme.colorScheme.surfaceColorAtElevation(LocalAbsoluteTonalElevation.current + 2.dp))
+                        Modifier.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
                     } else {
                         Modifier
                     }
