@@ -69,10 +69,10 @@ internal fun waterVapourPressureInBars(degreesCelsius: Double): Double {
 /**
  * Calculates the change in pressure in bars per minute.
  *
- * @return the pressure changes in bars per minute, positive if descending, negative if ascending.
+ * @return pressure change per minute, positive if descending, negative if ascending.
  */
-internal fun pressureChangeInBarsPerMinute(beginPressure: Double, endPressure: Double, timeInMinutes: Int): Double {
-    require(timeInMinutes > 0) { "timeInMinutes must be a positive integer, instead got: $timeInMinutes." }
+internal fun pressureChangeInBarsPerMinute(beginPressure: Double, endPressure: Double, timeInMinutes: Double): Double {
+    require(timeInMinutes > 0.0) { "timeInMinutes must be positive, instead got: $timeInMinutes." }
     return (endPressure - beginPressure) / timeInMinutes
 }
 

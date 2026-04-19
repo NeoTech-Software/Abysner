@@ -69,6 +69,10 @@ class Buhlmann(
      * null open-circuit behavior is assumed)
      */
     override fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int, ccrSetpoint: Double?) {
+        addPressureChange(startPressure, endPressure, gas, timeInMinutes.toDouble(), ccrSetpoint)
+    }
+
+    override fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Double, ccrSetpoint: Double?) {
         val fO2 = gas.oxygenFraction
         val fHe = gas.heliumFraction
         tissues.forEach {
@@ -213,9 +217,13 @@ data class TissueCompartment(
     val partialNitrogenPressure: Double get() = pNitrogen
 
     fun addPressureChange(startPressure: Double, endPressure: Double, fO2: Double, fHe: Double, timeInMinutes: Int, ccrSetpoint: Double? = null): Double {
+        return addPressureChange(startPressure, endPressure, fO2, fHe, timeInMinutes.toDouble(), ccrSetpoint)
+    }
+
+    fun addPressureChange(startPressure: Double, endPressure: Double, fO2: Double, fHe: Double, timeInMinutes: Double, ccrSetpoint: Double? = null): Double {
         // A zero or negative duration makes no physical sense (no exposure has occurred), and
         // would also cause a division by zero in pressureChangeInBarsPerMinute.
-        require(timeInMinutes > 0) {
+        require(timeInMinutes > 0.0) {
             "Invalid duration `$timeInMinutes` for on/off-gassing tissues. The minimum duration must be higher than 0."
         }
 
@@ -246,7 +254,7 @@ data class TissueCompartment(
         startPressure: Double,
         fN2: Double,
         fHe: Double,
-        timeInMinutes: Int,
+        timeInMinutes: Double,
         depthChangeInBarsPerMinute: Double
     ) {
         // Inspired gas pressure: subtract alveolar water vapor pressure from ambient before
@@ -257,14 +265,14 @@ data class TissueCompartment(
         this.pNitrogen = schreinerEquation(
             initialTissuePressure = pNitrogen,
             inspiredGasPressure = partialPressure(inspiredPressure, fN2),
-            time = timeInMinutes.toDouble(),
+            time = timeInMinutes,
             halfTime = parameters.n2HalfTime,
             inspiredGasRate = partialPressure(depthChangeInBarsPerMinute, fN2),
         )
         this.pHelium = schreinerEquation(
             initialTissuePressure = pHelium,
             inspiredGasPressure = partialPressure(inspiredPressure, fHe),
-            time = timeInMinutes.toDouble(),
+            time = timeInMinutes,
             halfTime = parameters.heHalfTime,
             inspiredGasRate = partialPressure(depthChangeInBarsPerMinute, fHe),
         )
@@ -290,7 +298,7 @@ data class TissueCompartment(
         fO2: Double,
         fN2: Double,
         fHe: Double,
-        timeInMinutes: Int,
+        timeInMinutes: Double,
         depthChangeInBarsPerMinute: Double,
         ccrSetpoint: Double,
     ) {
@@ -411,7 +419,7 @@ data class TissueCompartment(
             this.pNitrogen = schreinerEquation(
                 initialTissuePressure = pNitrogen,
                 inspiredGasPressure = inspiredNitrogenPressure,
-                time = timeInMinutes.toDouble(),
+                time = timeInMinutes,
                 halfTime = parameters.n2HalfTime,
                 inspiredGasRate = inspiredNitrogenRate,
             )
@@ -425,7 +433,7 @@ data class TissueCompartment(
             this.pHelium = schreinerEquation(
                 initialTissuePressure = pHelium,
                 inspiredGasPressure = inspiredHeliumPressure,
-                time = timeInMinutes.toDouble(),
+                time = timeInMinutes,
                 halfTime = parameters.heHalfTime,
                 inspiredGasRate = inspiredHeliumRate,
             )
