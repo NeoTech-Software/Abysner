@@ -13,17 +13,15 @@
 package org.neotech.app.abysner.presentation.screens.planner.decoplan
 
 import abysner.composeapp.generated.resources.Res
-import abysner.composeapp.generated.resources.ic_outline_change_circle_24
-import abysner.composeapp.generated.resources.ic_outline_stop_circle_24
-import abysner.composeapp.generated.resources.ic_outline_trending_down_24
-import abysner.composeapp.generated.resources.ic_outline_trending_flat_24
-import abysner.composeapp.generated.resources.ic_outline_trending_up_24
-import abysner.composeapp.generated.resources.ic_outline_warning_24
-import androidx.compose.ui.tooling.preview.Preview
+import abysner.composeapp.generated.resources.ic_baseline_arrow_down_24
+import abysner.composeapp.generated.resources.ic_baseline_arrow_up_24
+import abysner.composeapp.generated.resources.ic_outline_lifebuoy_24
+import abysner.composeapp.generated.resources.ic_baseline_arrow_flat_24
+import abysner.composeapp.generated.resources.ic_baseline_stop_square_24
+import abysner.composeapp.generated.resources.ic_baseline_change_24
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
@@ -52,21 +50,22 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.BreathingMode
-import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
+import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
-import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
@@ -76,7 +75,6 @@ import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
-import org.neotech.app.abysner.presentation.component.InfoPill
 import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
@@ -373,18 +371,19 @@ fun DecoPlanTable(
         modifier = modifier,
         header = {
             TextWithStartIcon(
-                modifier = Modifier.weight(0.25f),
+                modifier = Modifier.weight(0.23f),
                 text = "Depth",
                 icon = ColorPainter(Color.Transparent),
             )
-            Text(modifier = Modifier.weight(0.25f), text = "Runtime")
-            Text(modifier = Modifier.weight(0.25f), text = "Duration")
+            Text(modifier = Modifier.weight(0.30f), text = "Runtime")
             Text(modifier = Modifier.weight(0.25f), text = "Gas")
+            Text(modifier = Modifier.weight(0.22f), text = "PPO2")
         }
     ) {
         val segments = divePlan.segmentsCollapsed
             .toMutableList()
             .compactSimilarSegments(compactAscentsAndStops = settings.showBasicDecoTable)
+        val environment = divePlan.configuration.environment
 
         rowsIndexed(segments, key = { _, segment -> segment.start }) { index, diveSegment ->
             // For gas switch segments show the gas the diver is switching to, rather than the gas
@@ -404,8 +403,8 @@ fun DecoPlanTable(
                 diveSegment = diveSegment,
                 runtime = diveSegment.end,
                 gas = displayGas,
-                isCcr = isCcr,
                 isBailoutSwitch = isBailoutSwitch,
+                environment = environment,
             )
         }
     }
@@ -435,41 +434,45 @@ private fun RowScope.DecoPlanRow(
     diveSegment: DiveSegment,
     runtime: Int,
     gas: Gas,
-    isCcr: Boolean = false,
     isBailoutSwitch: Boolean = false,
+    environment: Environment,
 ) {
     val typeIcon = when (diveSegment.type) {
-        DiveSegment.Type.DECO_STOP -> Res.drawable.ic_outline_stop_circle_24
-        DiveSegment.Type.GAS_SWITCH -> if (isBailoutSwitch) { Res.drawable.ic_outline_warning_24 } else { Res.drawable.ic_outline_change_circle_24 }
-        DiveSegment.Type.FLAT -> Res.drawable.ic_outline_trending_flat_24
-        DiveSegment.Type.DECENT -> Res.drawable.ic_outline_trending_down_24
-        DiveSegment.Type.ASCENT -> Res.drawable.ic_outline_trending_up_24
+        DiveSegment.Type.DECO_STOP -> Res.drawable.ic_baseline_stop_square_24
+        DiveSegment.Type.GAS_SWITCH -> if (isBailoutSwitch) { Res.drawable.ic_outline_lifebuoy_24 } else { Res.drawable.ic_baseline_change_24 }
+        DiveSegment.Type.FLAT -> Res.drawable.ic_baseline_arrow_flat_24
+        DiveSegment.Type.DECENT -> Res.drawable.ic_baseline_arrow_down_24
+        DiveSegment.Type.ASCENT -> Res.drawable.ic_baseline_arrow_up_24
     }
 
     TextWithStartIcon(
-        modifier = Modifier.weight(0.25f),
-        text = diveSegment.endDepth.toString(),
+        modifier = Modifier.weight(0.23f),
+        text = diveSegment.endDepth.toInt().toString(),
         icon = painterResource(resource = typeIcon)
     )
     Text(
-        modifier = Modifier.weight(0.25f),
+        modifier = Modifier.weight(0.11f),
         text = runtime.toString(),
     )
     Text(
-        modifier = Modifier.weight(0.25f),
+        modifier = Modifier.weight(0.19f),
         text = "+${diveSegment.duration}",
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
     )
     Text(
         modifier = Modifier.weight(0.25f),
-        text = if (isCcr) {
-            val modeLabel = when (diveSegment.breathingMode) {
-                BreathingMode.OpenCircuit -> "OC"
-                is BreathingMode.ClosedCircuit -> "CCR"
-            }
-            "${gas} $modeLabel"
-        } else {
-            gas.toString()
-        },
+        text = gas.toString(),
+    )
+
+    val ambientPressure = depthInMetersToBar(diveSegment.maxDepth, environment).value
+
+    val ppO2Text = when (val mode = diveSegment.breathingMode) {
+        is BreathingMode.ClosedCircuit -> DecimalFormat.format(1, mode.setpoint)
+        is BreathingMode.OpenCircuit -> DecimalFormat.format(1, gas.oxygenFraction * ambientPressure)
+    }
+    Text(
+        modifier = Modifier.weight(0.22f),
+        text = ppO2Text,
     )
 }
 

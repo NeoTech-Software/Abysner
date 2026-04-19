@@ -13,7 +13,7 @@
 package org.neotech.app.abysner.presentation.screens.planner.cylinders
 
 import abysner.composeapp.generated.resources.Res
-import abysner.composeapp.generated.resources.ic_outline_propane_tank_24
+import abysner.composeapp.generated.resources.ic_outline_scuba_tank_24
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -278,7 +278,7 @@ fun CylinderListItemComponent(
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 8.dp),
-            icon = painterResource(Res.drawable.ic_outline_propane_tank_24)
+            icon = painterResource(Res.drawable.ic_outline_scuba_tank_24)
         )
 
         if (showBailoutPill) {
