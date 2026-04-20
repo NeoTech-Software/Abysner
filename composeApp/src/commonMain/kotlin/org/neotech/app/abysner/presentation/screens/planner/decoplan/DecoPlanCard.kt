@@ -464,16 +464,39 @@ private fun RowScope.DecoPlanRow(
         text = gas.toString(),
     )
 
-    val ambientPressure = depthInMetersToBar(diveSegment.maxDepth, environment).value
+    val endAmbientPressure = depthInMetersToBar(diveSegment.endDepth, environment).value
 
     val ppO2Text = when (val mode = diveSegment.breathingMode) {
-        is BreathingMode.ClosedCircuit -> DecimalFormat.format(1, mode.setpoint)
-        is BreathingMode.OpenCircuit -> DecimalFormat.format(1, gas.oxygenFraction * ambientPressure)
+        is BreathingMode.ClosedCircuit -> {
+            val endMode = diveSegment.breathingModeAtEnd ?: mode
+            val startAmbientPressure = depthInMetersToBar(diveSegment.startDepth, environment).value
+            val ppO2Start = mode.effectivePpO2(startAmbientPressure)
+            val ppO2End = endMode.effectivePpO2(endAmbientPressure)
+
+            formatPpO2Range(ppO2Start, ppO2End)
+        }
+        is BreathingMode.OpenCircuit -> {
+            DecimalFormat.format(1, gas.oxygenFraction * endAmbientPressure)
+        }
     }
     Text(
         modifier = Modifier.weight(0.22f),
         text = ppO2Text,
     )
+}
+
+private fun formatPpO2Range(ppO2Start: Double, ppO2End: Double): String {
+    if (ppO2Start == ppO2End) {
+        return DecimalFormat.format(1, ppO2Start)
+    }
+    val formattedStart = DecimalFormat.format(1, ppO2Start)
+    val formattedEnd = DecimalFormat.format(1, ppO2End)
+    // Format first before comparing as rounding might make the range unnecessary after all
+    return if (formattedStart == formattedEnd) {
+        formattedStart
+    } else {
+        "$formattedStart\u2026$formattedEnd"
+    }
 }
 
 @Preview

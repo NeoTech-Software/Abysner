@@ -197,6 +197,7 @@ fun <T> GenericTextField(
 @Composable
 fun <T> OutlinedGenericInputField(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     initialValue: T,
     behavior: GenericTextFieldBehavior<T>,
     label: @Composable (() -> Unit)? = null,
@@ -212,6 +213,7 @@ fun <T> OutlinedGenericInputField(
     if (behavior is RawTextFieldInputBehavior) {
         OutlinedTextField(
             modifier = modifier,
+            enabled = enabled,
             singleLine = true,
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             supportingText = { supportingText?.invoke(errorMessage) },
@@ -232,6 +234,7 @@ fun <T> OutlinedGenericInputField(
     } else {
         OutlinedTextField(
             modifier = modifier,
+            enabled = enabled,
             singleLine = true,
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             supportingText = { supportingText?.invoke(errorMessage) },

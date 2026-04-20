@@ -15,7 +15,7 @@ annotation class PreviewForScreenshotTestsFoldableDefaultHeight
  * Same as [DEVICE_SCREENSHOT_TESTS_DEFAULT_HEIGHT] but with the height of the device set to a
  * rather big number so more fits in the screenshot test, dpi remains the same lower number.
  */
-const val DEVICE_SCREENSHOT_TESTS_MAX = "spec:width=411dp,height=2250dp,dpi=240"
+const val DEVICE_SCREENSHOT_TESTS_MAX = "spec:width=411dp,height=2350dp,dpi=240"
 
 /**
  * Same as [androidx.compose.ui.tooling.preview.Devices.PHONE] but with dpi set lower to prevent

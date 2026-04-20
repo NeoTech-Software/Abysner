@@ -92,6 +92,7 @@ fun OutlinedDecimalInputField(
 @Composable
 fun OutlinedNumberInputField(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     initialValue: Int?,
     label: String? = null,
     minValue: Int = Int.MIN_VALUE,
@@ -130,6 +131,7 @@ fun OutlinedNumberInputField(
 
     OutlinedGenericInputField(
         modifier = modifier,
+        enabled = enabled,
         behavior = behavior,
         initialValue = numberValue.value?.toLong(),
         supportingText = { supportingText?.invoke(errorMessage.value) },
