@@ -13,7 +13,7 @@
 package org.neotech.app.abysner.presentation.screens.planner.segments
 
 import abysner.composeapp.generated.resources.Res
-import abysner.composeapp.generated.resources.ic_outline_propane_tank_24
+import abysner.composeapp.generated.resources.ic_outline_scuba_tank_24
 import abysner.composeapp.generated.resources.ic_outline_timer_24
 import abysner.composeapp.generated.resources.ic_outline_vertical_align_bottom_24
 import androidx.compose.ui.tooling.preview.Preview
@@ -133,7 +133,7 @@ private fun SegmentListItemComponent(
                 .padding(start = 8.dp)
                 .weight(1f),
             text = "${diveProfileSection.cylinder.gas}",
-            icon = painterResource(resource = Res.drawable.ic_outline_propane_tank_24)
+            icon = painterResource(resource = Res.drawable.ic_outline_scuba_tank_24)
         )
         IconButton(
             onClick = { onDelete(diveProfileSection) }
