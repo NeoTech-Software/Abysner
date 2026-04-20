@@ -28,10 +28,11 @@ no laptop required.
 
 
 # Features
-**Abysner is under active development (CCR planning and imperial units are not available yet), but
-it already supports:**
+**Abysner is under active development (imperial units are not available yet), but it already
+supports:**
 
 - **Full open-circuit (OC) dive planning**
+- **Full closed-circuit rebreather (CCR) dive planning** with configurable setpoints and bailout
 - **Buhlmann ZHL-16 A, B and C** with gradient factors
 - **Multi-gas:** Air, Nitrox, Oxygen, Trimix, Helitrox, Heliox
 - **Intuitive gas selector** showing MOD based on oxygen and gas density
@@ -42,10 +43,11 @@ it already supports:**
     - Gradient factors
     - Deco stop intervals and last deco stop
     - Max PPO2 and gas switch time
+    - CCR setpoints (low and high) with automatic switch depth
 - **Dive profile graph** with average depth and ceiling
 - **Dive plan:** runtime, depth, duration, gas, gas switches, ascents, descents, and time to deco (NDL)
 - **Contingency plan:** Automatic longer and deeper contingency plan with configurable time and depth
-- **Gas plan:** emergency reserve calculation, per-cylinder requirements, warnings, density and PPO2 information
+- **Gas plan:** used and reserve/bailout gas calculation, per-cylinder requirements, warnings, density and PPO2 information
 - **Multi-level** dive planning
 - **Multi-dive** planning with surface intervals
 
@@ -66,17 +68,25 @@ time. The total dive time this makes is 26 minutes.
 
 # Gas planning
 When the app calculates a dive profile for decompression, it also calculates how much gas is
-required for the dive. This gas calculation is always based on the contingency (Deeper & Longer)
-plan, it includes:
+required for the dive. The gas plan shows two numbers per cylinder: **used gas** and **reserve gas**
+for open-circuit dives, or **loop gas** and **bailout gas** for closed-circuit dives.
 
-- How much gas one diver needs to normally complete the contingency profile
-- How much extra gas is required to safely bring up an out-of-air diver from the worst-possible
-  point during the dive.
+Both numbers are always based on the contingency (Deeper & Longer) profile, not the base plan.
+This means the contingency time and depth settings directly affect gas requirements.
 
-The extra gas is calculated based on the worst TTS in terms of gas usage (See: [FAQ No. 5](#faq)),
-however during an out-of-gas scenario your buddy may have a completely different SAC rate than normal
-(a panic rate). To account for this, reserve gas is calculated not using the normal SAC rate but
-using the emergency SAC rate, usually this is at least 2 times higher than your normal SAC rate.
+- **Used gas:** How much gas one diver needs to normally complete the profile.
+
+- **Reserve gas:** How much extra gas is required to safely bring up an out-of-air diver from the
+worst-possible point during the dive. It is calculated based on the worst TTS in terms of gas usage
+(See: [FAQ No. 5](#faq)), however during an out-of-gas scenario your buddy may have a completely
+different SAC rate than normal (a panic rate). To account for this, reserve gas is calculated using
+the emergency SAC rate, usually at least 2 times higher than your normal SAC rate.
+
+For CCR dives, gas planning works differently. There is no reserve gas for an out-of-air buddy.
+Instead, the gas plan shows **loop gas** (diluent and oxygen consumed in the closed-loop) and
+**bailout gas**. Bailout tells you how much open-circuit gas you need if the loop fails at the
+worst-possible point. It is calculated at the normal SAC rate. CCR divers can adjust their SAC rate
+setting to account for the stress of a bailout scenario as they see fit.
 
 
 # Compared to other planners
@@ -169,10 +179,10 @@ plan, see the plan specific tables for those.
 <summary>Subsurface</summary>
 
 > **Observations:**
-> - Subsurface merges the ascent from 21m to 9m into the 9m stop, while Abysner shows the ascent as
->   a separate segment followed by the stop.
-> - Subsurface rounds the final ascent (6m to 0m) down to 1 minute while the ascent actually takes
->   longer (5m/min). Abysner uses 2 min, adjusting the ascent slope to fit exactly.
+> - Subsurface merges the ascent from 21 meter to 9 meter into the 9 meter stop, while Abysner shows
+>   the ascent as a separate segment followed by the stop.
+> - Subsurface rounds the final ascent (6 to 0 meter) down to 1 minute while the ascent actually
+>   takes longer at 5 meter per min. Abysner uses 2 min, adjusting the ascent slope to fit exactly.
 
 |   | Depth | Duration | Runtime | Gas  |
 |---|-------|----------|---------|------|
@@ -192,9 +202,10 @@ plan, see the plan specific tables for those.
 <summary>DIVESOFT.APP</summary>
 
 > **Observations:**
-> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
-> that stop). The duration values in the table below have been derived by subtracting the previous
-> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
+> DIVESOFT.APP does not display ascents between deco stops, and does not include the ascent time
+> to the next stop in the total stop duration. This means the displayed stop time does not always
+> match up to the runtime. Duration values below were derived by subtracting runtimes and the
+> final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
 >
 > DIVESOFT.APP does not appear to include a gas switch time. With gas switch time set to zero
 > Abysner produces the same total runtime (50min), though the individual stop distributions differ
@@ -243,8 +254,8 @@ plan, see the plan specific tables for those.
 <summary>Subsurface</summary>
 
 > **Observations:**
-> - Subsurface merges the ascent from 21m to 6m into the 6m stop, while Abysner shows the ascent as
->   a separate segment followed by the stop.
+> Subsurface merges the ascent from 21 meter to 9 meter into the 9 meter stop, while Abysner shows
+> the ascent as a separate segment followed by the stop.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -264,13 +275,14 @@ plan, see the plan specific tables for those.
 <summary>DIVESOFT.APP</summary>
 
 > **Observations:**
-> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
-> that stop). The duration values in the table below have been derived by subtracting the previous
-> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
+> DIVESOFT.APP does not display ascents between deco stops, and does not include the ascent time
+> to the next stop in the total stop duration. This means the displayed stop time does not always
+> match up to the runtime. Duration values below were derived by subtracting runtimes and the
+> final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
 >
-> DIVESOFT.APP does not appear to include a gas switch time. With gas switch time set to one minute
-> Abysner produces total runtime of 32min, compared to 33min for DIVESOFT.APP. The individual stop
-> distributions differ ever so slightly.
+> - DIVESOFT.APP does not appear to include a gas switch duration. With the gas switch duration set
+>   to one minute Abysner produces total runtime of 32min, compared to 33min for DIVESOFT.APP. The
+>   individual stop distributions differ ever so slightly.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -321,7 +333,7 @@ plan, see the plan specific tables for those.
 > **Observations:**
 > - Atmospheric pressure was set to 900 mbar directly in Subsurface to match Abysner's barometric
 >   formula result for 1000 meter altitude, eliminating it as a variable in the comparison.
-> - The remaining stop-time differences (12m, 6m, 3m) seem to be algorithmic.
+> - The remaining stop-time differences (12, 6 and 3 meter) seem to be algorithmic.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -347,9 +359,10 @@ plan, see the plan specific tables for those.
 > DIVESOFT.APP does not support setting an altitude. This plan has been based on 0 meters instead
 > of 1000 meters used in the other planners.
 >
-> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
-> that stop). The duration values in the table below have been derived by subtracting the previous
-> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
+> DIVESOFT.APP does not display ascents between deco stops, and does not include the ascent time
+> to the next stop in the total stop duration. This means the displayed stop time does not always
+> match up to the runtime. Duration values below were derived by subtracting runtimes and the
+> final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -441,9 +454,10 @@ Out:
 <summary>DIVESOFT.APP</summary>
 
 > **Observations:**
-> DIVESOFT.APP displays 'stop time' rather than 'duration' ('stop time' excludes ascent time to
-> that stop). The duration values in the table below have been derived by subtracting the previous
-> row's runtime from the current row, to make it consistent with Subsurface and Abysner.
+> DIVESOFT.APP does not display ascents between deco stops, and does not include the ascent time
+> to the next stop in the total stop duration. This means the displayed stop time does not always
+> match up to the runtime. Duration values below were derived by subtracting runtimes and the
+> final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -464,21 +478,261 @@ Out:
 </details>
 
 
+## Reference plan 6 (CCR)
+**30 meter, 30 minutes, CCR with air diluent, setpoints 0.7 low / 1.2 high**
+
+| GF    | Salinity | Altitude | Last-deco stop | Low SP | High SP |
+|-------|----------|----------|----------------|--------|---------|
+| 30/70 | Salt     | 0 meters | 3 meter        | 0.7    | 1.2     |
+
+<details>
+<summary>Abysner</summary>
+
+|   | Depth | Duration | Runtime | Gas  | Mode          |
+|---|-------|----------|---------|------|---------------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 | CCR (SP 0.7)  |
+| ➙ | 30m   | 24min    | 30min   | 21/0 | CCR (SP 1.2)  |
+| ➚ | 6m    | 5min     | 35min   | 21/0 | CCR (SP 1.2)  |
+| ⏹ | 6m    | 1min     | 36min   | 21/0 | CCR (SP 1.2)  |
+| ⏹ | 3m    | 2min     | 38min   | 21/0 | CCR (SP 1.2)  |
+| ➚ | 0m    | 1min     | 39min   | 21/0 | CCR (SP 1.2)  |
+**CNS**: 17%  
+**OTU**: 47
+</details>
+
+<details>
+<summary>Subsurface</summary>
+
+> **Observations:**
+> Subsurface does not require a 6 meter stop, while Abysner barely does (1 minute). This is likely
+> due to minor algorithmic differences in tissue loading precision.
+
+|   | Depth | Duration | Runtime | Gas  | Mode          |
+|---|-------|----------|---------|------|---------------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 | CCR (SP 0.7)  |
+| ➙ | 30m   | 24min    | 30min   | 21/0 | CCR (SP 1.2)  |
+| ➚ | 3m    | 6min     | 36min   | 21/0 | CCR (SP 1.2)  |
+| - | 3m    | 2min     | 38min   | 21/0 | CCR (SP 1.2)  |
+| ➚ | 0m    | 1min     | 39min   | 21/0 | CCR (SP 1.2)  |
+**CNS**: 16%  
+**OTU**: 46  
+*Subsurface (6.0.5576-CICD-release)*
+</details>
+
+<details>
+<summary>DIVESOFT.APP</summary>
+
+> **Observations:**
+> DIVESOFT.APP does not display ascents between deco stops, and does not include the ascent time
+> to the next stop in the total stop duration. This means the displayed stop time does not always
+> match up to the runtime. Duration values below were derived by subtracting runtimes and the
+> final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
+>
+> - DIVESOFT.APP displays 1.2 for the setpoint on the initial descent, while 0.7 was configured for
+>   descents. It is unclear whether this is just a display choice (labeling the descent with the
+>   bottom setpoint) or whether the low setpoint is not applied during descent.
+
+|   | Depth | Duration | Runtime | Gas  | Mode          |
+|---|-------|----------|---------|------|---------------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 | CCR (SP 1.2)  |
+| ➙ | 30m   | 24min    | 30min   | 21/0 | CCR (SP 1.2)  |
+| ➚ | 6m    | 5min     | 35min   | 21/0 | CCR (SP 1.2)  |
+| ⏹ | 6m    | 1min     | 36min   | 21/0 | CCR (SP 1.2)  |
+| ⏹ | 3m    | 3min     | 39min   | 21/0 | CCR (SP 1.2)  |
+| ➚ | 0m    | 1min     | 40min   | 21/0 | CCR (SP 1.2)  |
+**CNS**: 17%  
+**OTU**: 47  
+*DIVESOFT.APP (Android 2.5.1)*
+</details>
+
+
+## Reference plan 7 (CCR bailout)
+**30 meter, 30 minutes, CCR with air diluent (setpoints 0.7 low / 1.2 high), bailout to open
+circuit**
+
+Same configuration as reference plan 6, but the diver bails out to open circuit at the end of
+the bottom section.
+
+| GF    | Salinity | Altitude | Last-deco stop | Low SP | High SP |
+|-------|----------|----------|----------------|--------|---------|
+| 30/70 | Salt     | 0 meters | 3 meter        | 0.7    | 1.2     |
+
+<details>
+<summary>Abysner</summary>
+
+|   | Depth | Duration | Runtime | Gas  | Mode          |
+|---|-------|----------|---------|------|---------------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 | CCR (SP 0.7)  |
+| ➙ | 30m   | 24min    | 30min   | 21/0 | CCR (SP 1.2)  |
+| - | 30m   | 1min     | 31min   | 21/0 | Bailout to OC |
+| ➚ | 9m    | 5min     | 36min   | 21/0 | OC            |
+| ⏹ | 9m    | 1min     | 37min   | 21/0 | OC            |
+| ⏹ | 6m    | 4min     | 41min   | 21/0 | OC            |
+| ⏹ | 3m    | 8min     | 49min   | 21/0 | OC            |
+| ➚ | 0m    | 1min     | 50min   | 21/0 | OC            |
+**CNS**: 14%  
+**OTU**: 38
+</details>
+
+<details>
+<summary>Subsurface</summary>
+
+> **Observations:**
+> Subsurface produces a 1 minute longer runtime (51 vs 50 minutes), which is typical algorithmic
+> variance also seen in the other reference plans. This may be triggered by the slower initial
+> ascent in Abysner (5 vs 4 minutes) allows for more off-gassing during the ascent itself, resulting
+> in slightly shorter subsequent stops.
+
+|   | Depth | Duration | Runtime | Gas  | Mode          |
+|---|-------|----------|---------|------|---------------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 | CCR (SP 0.7)  |
+| ➙ | 30m   | 24min    | 30min   | 21/0 | CCR (SP 1.2)  |
+| - | 30m   | 1min     | 31min   | 21/0 | Bailout to OC |
+| ➚ | 9m    | 4min     | 35min   | 21/0 | OC            |
+| ⏹ | 9m    | 2min     | 37min   | 21/0 | OC            |
+| ⏹ | 6m    | 5min     | 42min   | 21/0 | OC            |
+| ⏹ | 3m    | 8min     | 50min   | 21/0 | OC            |
+| ➚ | 0m    | 1min     | 51min   | 21/0 | OC            |
+**CNS**: 13%  
+**OTU**: 37  
+*Subsurface (6.0.5576-CICD-release)*
+</details>
+
+<details>
+<summary>DIVESOFT.APP</summary>
+
+> **Observations:**
+> DIVESOFT.APP does not display ascents between deco stops, and does not include the ascent time
+> to the next stop in the total stop duration. This means the displayed stop time does not always
+> match up to the runtime. Duration values below were derived by subtracting runtimes and the
+> final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
+>
+> - DIVESOFT.APP produces a significantly longer runtime (60 min vs 50/51 min for Abysner and
+>   Subsurface). This is a much larger difference than seen in the OC reference plans. It is unclear
+>   why this is, but the DIVESOFT.APP versions between OC and CCR plans differ, could that be a
+>   cause? Or is it a difference in how the bailout is handled?
+> - DIVESOFT.APP displays 1.2 for the setpoint on the initial descent, while 0.7 was configured for
+>   descents. It is unclear whether this is just a display choice (labeling the descent with the
+>   bottom setpoint) or whether the low setpoint is not applied during descent.
+
+|   | Depth | Duration | Runtime | Gas  | Mode          |
+|---|-------|----------|---------|------|---------------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 | CCR (SP 1.2)  |
+| ➙ | 30m   | 24min    | 30min   | 21/0 | CCR (SP 1.2)  |
+| - | 30m   | 3min     | 33min   | 21/0 | Bailout to OC |
+| ➚ | 9m    | 4min     | 37min   | 21/0 | OC            |
+| ⏹ | 9m    | 3min     | 40min   | 21/0 | OC            |
+| ⏹ | 6m    | 5min     | 45min   | 21/0 | OC            |
+| ⏹ | 3m    | 14min    | 59min   | 21/0 | OC            |
+| ➚ | 0m    | 1min     | 60min   | 21/0 | OC            |
+**CNS**: 12%  
+**OTU**: 35  
+*DIVESOFT.APP (Android 2.5.1)*
+</details>
+
+
+## Reference plan 8 (CCR)
+**60 meter, 20 minutes\*, CCR with 10/70 trimix diluent, setpoints 0.7 low / 1.2 high**
+
+| GF    | Salinity | Altitude | Last-deco stop | Low SP | High SP |
+|-------|----------|----------|----------------|--------|---------|
+| 30/70 | Salt     | 0 meters | 3 meter        | 0.7    | 1.2     |
+
+<details>
+<summary>Abysner</summary>
+
+|   | Depth | Duration | Runtime | Gas   | Mode         |
+|---|-------|----------|---------|-------|--------------|
+| ➘ | 60m   | 12min    | 12min   | 10/70 | CCR (SP 0.7) |
+| ➙ | 60m   | 8min     | 20min   | 10/70 | CCR (SP 1.2) |
+| ➚ | 24m   | 8min     | 28min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 24m   | 1min     | 29min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 21m   | 2min     | 31min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 18m   | 2min     | 33min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 15m   | 3min     | 36min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 12m   | 5min     | 41min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 9m    | 6min     | 47min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 6m    | 8min     | 55min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 3m    | 13min    | 68min   | 10/70 | CCR (SP 1.2) |
+| ➚ | 0m    | 1min     | 69min   | 10/70 | CCR (SP 1.2) |
+**CNS**: 29%  
+**OTU**: 81
+</details>
+
+<details>
+<summary>Subsurface</summary>
+
+> **Observations:**
+> Subsurface does not require a 24 meter stop, while Abysner barely does (1 minute). This is likely
+> due to minor algorithmic differences in tissue loading precision.
+
+|   | Depth | Duration | Runtime | Gas   | Mode         |
+|---|-------|----------|---------|-------|--------------|
+| ➘ | 60m   | 12min    | 12min   | 10/70 | CCR (SP 0.7) |
+| ➙ | 60m   | 8min     | 20min   | 10/70 | CCR (SP 1.2) |
+| ➚ | 24m   | 8min     | 28min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 21m   | 2min     | 30min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 18m   | 3min     | 33min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 15m   | 3min     | 36min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 12m   | 4min     | 40min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 9m    | 6min     | 46min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 6m    | 9min     | 55min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 3m    | 13min    | 68min   | 10/70 | CCR (SP 1.2) |
+| ➚ | 0m    | 1min     | 69min   | 10/70 | CCR (SP 1.2) |
+**CNS**: 29%  
+**OTU**: 80  
+*Subsurface (6.0.5576-CICD-release)*
+</details>
+
+<details>
+<summary>DIVESOFT.APP</summary>
+
+> **Observations:**
+> DIVESOFT.APP does not display ascents between deco stops, and does not include the ascent time
+> to the next stop in the total stop duration. This means the displayed stop time does not always
+> match up to the runtime. Duration values below were derived by subtracting runtimes and the
+> final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
+>
+> - DIVESOFT.APP produces a longer runtime (73 min vs 69 min for Abysner and Subsurface).
+> - DIVESOFT.APP displays 1.2 for the setpoint on the initial descent, while 0.7 was configured for
+>   descents. It is unclear whether this is just a display choice (labeling the descent with the
+>   bottom setpoint) or whether the low setpoint is not applied during descent.
+
+|   | Depth | Duration | Runtime | Gas   | Mode         |
+|---|-------|----------|---------|-------|--------------|
+| ➘ | 60m   | 12min    | 12min   | 10/70 | CCR (SP 1.2) |
+| ➙ | 60m   | 8min     | 20min   | 10/70 | CCR (SP 1.2) |
+| ➚ | 24m   | 7min     | 27min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 24m   | 1min     | 28min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 21m   | 2min     | 30min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 18m   | 3min     | 33min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 15m   | 3min     | 36min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 12m   | 4min     | 40min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 9m    | 7min     | 47min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 6m    | 9min     | 56min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 3m    | 17min    | 73min   | 10/70 | CCR (SP 1.2) |
+| ➚ | 0m    | 1min     | 74min   | 10/70 | CCR (SP 1.2) |
+**CNS**: 31%  
+**OTU**: 85  
+*DIVESOFT.APP (Android 2.5.1)*
+</details>
+
+
 # FAQ
 
 <details>
-<summary><strong>1. Does abysner round to minutes?</strong></summary>
+<summary><strong>1. Does Abysner round to minutes?</strong></summary>
 
-Yes and no, Abysner currently calculates dive planes in whole minutes. The reasoning behind this is
+Yes and no, Abysner currently calculates dive plans in whole minutes. The reasoning behind this is
 that most of the time we are interested as divers in minutes only, we generate plans to write
 down on our wetnotes and for simplicity reasons we do that in minutes.
 
-The above has lead me to believe that doing the planning in seconds first, then rounding those to
+The above has led me to believe that doing the planning in seconds first, then rounding those to
 minutes is kinda pointless and leads to less accurate plans.
 
-> *Example:* if a ascend to a certain level takes 4:20 minutes. This will be rounded to either 4
+> *Example:* if an ascent to a certain level takes 4:20 minutes. This will be rounded to either 4
 or 5 minutes but the tissue loading internally was based on those 4 minutes and 20 seconds. So when
-following the plan on paper, you either decompress to little during the ascend hitting the ceiling,
+following the plan on paper, you either decompress too little during the ascent hitting the ceiling,
 or you go a bit slower compared to what was calculated and potentially on-gas certain slower
 compartments a bit more.
 
