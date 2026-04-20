@@ -17,8 +17,8 @@ import org.neotech.app.abysner.domain.core.physics.Pressure
 import kotlin.reflect.KClass
 
 /**
- * A decompression model is allows adding dive sections to load tissues, and a method that returns
- * the current ceiling.
+ * A decompression model tracks tissue loading across dive sections and provides the current
+ * decompression ceiling.
  */
 interface DecompressionModel {
 
@@ -51,6 +51,11 @@ interface DecompressionModel {
      * null open-circuit behavior is assumed)
      */
     fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Int, ccrSetpoint: Double? = null)
+
+    /**
+     * Same as [addPressureChange] but accepts fractional minutes for sub-minute precision.
+     */
+    fun addPressureChange(startPressure: Pressure, endPressure: Pressure, gas: Gas, timeInMinutes: Double, ccrSetpoint: Double? = null)
 
     /**
      * Calculates and returns the current tissue ceiling in bars (including atmospheric pressure)

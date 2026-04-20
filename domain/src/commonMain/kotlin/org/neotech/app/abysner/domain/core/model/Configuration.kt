@@ -63,11 +63,45 @@ data class Configuration(
      * usage for CCR dives.
      */
     val ccrMetabolicO2LitersPerMinute: Double = 0.8,
+    /**
+     * Depth (meters) at which the planner switches from the low setpoint to the high setpoint
+     * during descent. Null disables the auto-switch and causes the switch to occur when a bottom
+     * section is reached.
+     */
+    val ccrToHighSetpointSwitchDepth: Int? = null,
+    /**
+     * Depth (meters) at which the planner switches from the high setpoint to the low setpoint
+     * during ascent. Null disables the auto-switch, meaning the high setpoint remains active until
+     * the surface is reached or a new descent starts.
+     */
+    val ccrToLowSetpointSwitchDepth: Int? = null,
 ) {
 
     val environment = Environment(salinity, altitudeToPressure(altitude))
 
     val gf = "${(gfLow * 100).toInt()}/${(gfHigh * 100).toInt()}"
+
+    /**
+     * Returns a [SetpointSwitch] for the descent phase (low to high setpoint), or null if
+     * the switch is disabled or the dive is not CCR.
+     */
+    fun descentSetpointSwitch(breathingMode: BreathingMode): SetpointSwitch? =
+        ccrToHighSetpointSwitchDepth?.let { depth ->
+            (breathingMode as? BreathingMode.ClosedCircuit)?.let {
+                SetpointSwitch(depth = depth, toBreathingMode = BreathingMode.ClosedCircuit(ccrHighSetpoint))
+            }
+        }
+
+    /**
+     * Returns a [SetpointSwitch] for the ascent phase (high to low setpoint), or null if
+     * the switch is disabled or the dive is not CCR.
+     */
+    fun ascentSetpointSwitch(breathingMode: BreathingMode): SetpointSwitch? =
+        ccrToLowSetpointSwitchDepth?.let { depth ->
+            (breathingMode as? BreathingMode.ClosedCircuit)?.let {
+                SetpointSwitch(depth = depth, toBreathingMode = BreathingMode.ClosedCircuit(ccrLowSetpoint))
+            }
+        }
 
     enum class Algorithm(val shortName: String): EnumPreference {
         BUHLMANN_ZH16C("ZHL-16C-GF") {

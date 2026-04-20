@@ -30,4 +30,6 @@ data class ConfigurationResourceV1(
     val ccrHighSetpoint: Double = 1.2,
     val ccrLoopVolumeLiters: Double = 7.0,
     val ccrMetabolicO2LitersPerMinute: Double = 0.8,
+    val ccrToHighSetpointSwitchDepth: Int? = null,
+    val ccrToLowSetpointSwitchDepth: Int? = null,
 ): SerializableResource

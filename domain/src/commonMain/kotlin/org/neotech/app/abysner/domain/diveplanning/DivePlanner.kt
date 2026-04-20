@@ -18,6 +18,7 @@ import kotlinx.collections.immutable.toPersistentList
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.DiveMode
+import org.neotech.app.abysner.domain.core.model.SetpointSwitch
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
@@ -127,6 +128,8 @@ class DivePlanner(
 
                     val runtime = decompressionPlanner.runtime
 
+                    val ascentSwitch = configuration.ascentSetpointSwitch(breathingMode)
+
                     // Ascending (calculate decompression)
                     if(!configuration.useDecoGasBetweenSections) {
                         // Store current deco gases
@@ -135,10 +138,10 @@ class DivePlanner(
                         // Only allow the listed bottom gas to get to this segment
                         // This is similar to what MultiDeco does
                         decompressionPlanner.setDecoGases(listOf(it.cylinder))
-                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode)
+                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode, setpointSwitch = ascentSwitch)
                         decompressionPlanner.setDecoGases(gases)
                     } else {
-                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode)
+                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode, setpointSwitch = ascentSwitch)
                     }
 
                     val timeSpend = decompressionPlanner.runtime - runtime
@@ -155,7 +158,7 @@ class DivePlanner(
                             breathingMode,
                         )
                     }
-                    decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex)
+                    decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex, ascentSwitch)
 
                 } else {
                     // Descending
@@ -163,12 +166,17 @@ class DivePlanner(
 
                     val timeLeftAtPlannedDepth = it.duration - timeToChange
 
+                    val descentSwitch = configuration.descentSetpointSwitch(breathingMode)
+
+                    val ascentSwitchForTts = configuration.ascentSetpointSwitch(breathingMode)
+
                     decompressionPlanner.addDepthChange(
                         currentDepth,
                         it.depth.toDouble(),
                         it.cylinder,
                         timeToChange,
                         descentBreathingMode,
+                        setpointSwitch = descentSwitch,
                     )
 
                     // TODO allow 0? And just not add the flat?
@@ -182,7 +190,7 @@ class DivePlanner(
                             breathingMode,
                         )
                     }
-                    decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex)
+                    decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex, ascentSwitchForTts)
                 }
                 currentDepth = it.depth.toDouble()
             } else {
@@ -192,7 +200,8 @@ class DivePlanner(
                     it.duration,
                     breathingMode,
                 )
-                decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex)
+                val ascentSwitchForTts = configuration.ascentSetpointSwitch(breathingMode)
+                decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex, ascentSwitchForTts)
                 currentDepth = it.depth.toDouble()
             }
         }
@@ -204,7 +213,12 @@ class DivePlanner(
         } else {
             breathingMode
         }
-        decompressionPlanner.calculateDecompression(toDepth = 0, breathingMode = ascentBreathingMode)
+        val finalAscentSwitch = if (!bailout) {
+            configuration.ascentSetpointSwitch(breathingMode)
+        } else {
+            null
+        }
+        decompressionPlanner.calculateDecompression(toDepth = 0, breathingMode = ascentBreathingMode, setpointSwitch = finalAscentSwitch)
 
         val segments = decompressionPlanner.getSegments().mapIndexed { index, segment ->
             ttsBySegmentIndex[index]?.let {
@@ -250,9 +264,10 @@ class DivePlanner(
         breathingMode: BreathingMode,
         isCcr: Boolean,
         destination: MutableMap<Int, TtsValues>,
+        ascentSwitch: SetpointSwitch? = null,
     ) {
         val segmentIndex = getSegments().lastIndex
-        val tts = calculateTimeToSurface(breathingMode)
+        val tts = calculateTimeToSurface(breathingMode, ascentSwitch)
         // OC bailout TTS: time to surface if the diver comes off the loop now. This second call
         // overwrites the alternative ascent stored for this timestamp, which is intentional:
         // the OC bailout ascent is the one that matters for emergency gas planning.

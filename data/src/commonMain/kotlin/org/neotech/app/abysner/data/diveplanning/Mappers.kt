@@ -53,6 +53,8 @@ fun Configuration.toResource() = ConfigurationResourceV1(
     ccrHighSetpoint = ccrHighSetpoint,
     ccrLoopVolumeLiters = ccrLoopVolumeLiters,
     ccrMetabolicO2LitersPerMinute = ccrMetabolicO2LitersPerMinute,
+    ccrToHighSetpointSwitchDepth = ccrToHighSetpointSwitchDepth,
+    ccrToLowSetpointSwitchDepth = ccrToLowSetpointSwitchDepth,
 )
 
 fun ConfigurationResourceV1.toModel() = Configuration(
@@ -79,6 +81,8 @@ fun ConfigurationResourceV1.toModel() = Configuration(
     ccrHighSetpoint = ccrHighSetpoint,
     ccrLoopVolumeLiters = ccrLoopVolumeLiters,
     ccrMetabolicO2LitersPerMinute = ccrMetabolicO2LitersPerMinute,
+    ccrToHighSetpointSwitchDepth = ccrToHighSetpointSwitchDepth,
+    ccrToLowSetpointSwitchDepth = ccrToLowSetpointSwitchDepth,
 )
 
 

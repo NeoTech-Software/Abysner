@@ -55,6 +55,19 @@ data class DiveSegment(
      */
     val breathingMode: BreathingMode = BreathingMode.OpenCircuit,
 
+    /**
+     * Non-null when a CCR setpoint switch occurred mid-segment. In that case [breathingMode] is
+     * the mode at the start of the segment and this field is the mode at the end.
+     *
+     * TODO
+     *   This is a bit hacky from an architecture point of view, this can happen because we
+     *   currently adhere to exact depths for these switches, which can cause them to occur
+     *   mid-minute which is currently our smallest (and purposefully chosen) time-unit. If we need
+     *   more detailed segments, should we add second precision to the segments that require second
+     *   precision, instead of custom fields to jump the gap?
+     */
+    val breathingModeAtEnd: BreathingMode.ClosedCircuit? = null,
+
     val travelSpeed: Double = (startDepth - endDepth) / duration.toDouble(),
 
     /**
@@ -161,9 +174,12 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             currentSegment.cylinder == nextSegment.cylinder &&
             currentSegment.breathingMode == nextSegment.breathingMode
         ) {
+            val mergedModeAtEnd = (nextSegment.breathingModeAtEnd ?: currentSegment.breathingModeAtEnd)
+                ?.takeIf { it != currentSegment.breathingMode }
             val combinedSegment = currentSegment.copy(
                 duration = currentSegment.duration + nextSegment.duration,
                 gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
+                breathingModeAtEnd = mergedModeAtEnd,
             )
             this[i] = combinedSegment
             this.removeAt(i + 1)
@@ -171,12 +187,16 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             currentSegment.travelSpeed.equalsDelta(nextSegment.travelSpeed, maxTravelSpeedDelta) &&
             currentSegment.endDepth == nextSegment.startDepth &&
             currentSegment.cylinder == nextSegment.cylinder &&
-            currentSegment.breathingMode == nextSegment.breathingMode
+            (currentSegment.breathingMode == nextSegment.breathingMode ||
+                currentSegment.breathingModeAtEnd == nextSegment.breathingMode)
         ) {
+            val mergedModeAtEnd = (nextSegment.breathingModeAtEnd ?: currentSegment.breathingModeAtEnd)
+                ?.takeIf { it != currentSegment.breathingMode }
             val combinedSegment = currentSegment.copy(
                 endDepth = nextSegment.endDepth,
                 duration = currentSegment.duration + nextSegment.duration,
                 gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
+                breathingModeAtEnd = mergedModeAtEnd,
             )
             this[i] = combinedSegment
             this.removeAt(i + 1)
