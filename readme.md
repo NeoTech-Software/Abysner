@@ -7,14 +7,24 @@
 [![Get it on Google Play](resources/store-badge-google.svg)](https://play.google.com/store/apps/details?id=nl.neotech.app.abysner)
 [![Download on the App Store](resources/store-badge-apple.svg)](https://apps.apple.com/nl/app/abysner/id6636477320)
 
-**The decompression models we use and trust today to plan our dives are the result of decades of collective research by thousands of people. There is a lot of software available to plan dives, built on top of this research. However on Android and iOS the options are limited: either expensive and proprietary, or lacking a good mobile-friendly interface.**
+**The decompression models we use and trust today to plan our dives are the result of decades of
+collective research by thousands of people. There is a lot of software available to plan dives,
+built on top of this research. However, on Android and iOS the options are limited: either expensive
+and proprietary, or lacking a good mobile-friendly interface.**
 
-Abysner was built with the goal of giving something back to the diving community. It is open-source, built with Kotlin Multiplatform and Compose Multiplatform (the best cross-platform mobile solution to date), available on both Android and iOS, and free to inspect and verify.
+Abysner /əˈbɪznər/ was built with the goal of giving something back to the diving community. It is
+open-source, built with Kotlin Multiplatform and Compose Multiplatform (the best cross-platform
+mobile solution to date), available on both Android and iOS, and free to inspect and verify.
 
 > **Disclaimer:** 
-> Diving is a potentially dangerous activity. Do not use this application without proper training in diving and decompression techniques. This application is in an early development stage, and we cannot guarantee that it is free of bugs. Always cross-validate any information presented by the application with reliable sources.
+> Diving is a potentially dangerous activity. Do not use this application without proper training in
+> diving and decompression techniques. This application is in an early development stage, and we
+> cannot guarantee that it is free of bugs. Always cross-validate any information presented by the
+> application with reliable sources.
 >
-> No one associated with this project (including authors, contributors, advisors, or any other affiliates) can be held responsible for the outcomes of your use of the information provided by this application. The use of this application is entirely at your own risk.
+> No one associated with this project (including authors, contributors, advisors, or any other
+> affiliates) can be held responsible for the outcomes of your use of the information provided by
+> this application. The use of this application is entirely at your own risk.
 
 
 # Philosophy
@@ -45,9 +55,12 @@ supports:**
     - Max PPO2 and gas switch time
     - CCR setpoints (low and high) with automatic switch depth
 - **Dive profile graph** with average depth and ceiling
-- **Dive plan:** runtime, depth, duration, gas, gas switches, ascents, descents, and time to deco (NDL)
-- **Contingency plan:** Automatic longer and deeper contingency plan with configurable time and depth
-- **Gas plan:** used and reserve/bailout gas calculation, per-cylinder requirements, warnings, density and PPO2 information
+- **Dive plan:** runtime, depth, duration, gas, gas switches, ascents, descents, and more...
+- **Oxygen toxicity tracking:** CNS and OTU
+- **Contingency plan:** Automatic longer and deeper contingency plan with configurable time and
+depth
+- **Gas plan:** used and reserve/bailout gas calculation, per-cylinder requirements, warnings,
+density and PPO2 information
 - **Multi-level** dive planning
 - **Multi-dive** planning with surface intervals
 
