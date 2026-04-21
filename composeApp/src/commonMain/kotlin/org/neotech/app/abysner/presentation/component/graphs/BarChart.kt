@@ -40,6 +40,11 @@ internal fun GasBarChartLayout(
     horizontalAxis: @Composable (modifier: Modifier) -> Unit,
     verticalAxis: @Composable (modifier: Modifier) -> Unit,
     graph: @Composable (modifier: Modifier) -> Unit,
+    /**
+     * If the true vertical axis width is reserved on both sides of the graph, centering the graph
+     * in the available space.
+     */
+    balanceHorizontalLayout: Boolean = false,
 ) {
     // ConstraintLayout uses this internally, but is not yet available on Compose MultiPlatform
     // In this specific case, using the MultiMeasureLayout is actually beneficial to achieve the
@@ -59,7 +64,12 @@ internal fun GasBarChartLayout(
         var verticalAxisPlaceable = verticalAxisMeasurable.measure(constraints)
 
         // The available width for the graph after reserving space for vertical axis
-        val graphWidth = constraints.maxWidth - verticalAxisPlaceable.width
+        val graphWidth = if(balanceHorizontalLayout) {
+            // Reserve space for the vertical axis on both sides of the graph
+            constraints.maxWidth - (verticalAxisPlaceable.width * 2)
+        } else {
+            constraints.maxWidth - (verticalAxisPlaceable.width)
+        }
 
         // Measure the horizontal axis (maxWidth constraint by `graphWidth`)
         val horizontalAxisMeasurable = measurables[2]

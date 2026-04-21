@@ -100,11 +100,17 @@ fun GasPlanBarChart(
     gasPlan: GasPlan,
     emergencyLabel: String = "Reserve",
     usageLabel: String = "Used",
+    compact: Boolean = false,
+    balanceHorizontalLayout: Boolean = false,
     onGasBarClicked: (Int, CylinderGasRequirements) -> Unit = { _, _ -> },
 ) {
+    val legendSymbolSize = if (compact) { 16.dp } else { 20.dp }
+    val legendBottomPadding = if (compact) { 12.dp } else { 16.dp }
+    val barHeight = if (compact) { 30.dp } else { 36.dp }
+
     Column(modifier = modifier) {
         FlowLegend2(
-            modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally),
+            modifier = Modifier.padding(bottom = legendBottomPadding).align(Alignment.CenterHorizontally),
             itemCount = 3,
             label = {
                 val label = when (it) {
@@ -125,7 +131,7 @@ fun GasPlanBarChart(
                         )
                         Symbol(
                             shape = CircleShape,
-                            size = 20.dp,
+                            size = legendSymbolSize,
                             fillBrush = Brush.horizontalGradient(colors = blueShades),
                         )
                     }
@@ -138,14 +144,14 @@ fun GasPlanBarChart(
                         )
                         Symbol(
                             shape = CircleShape,
-                            size = 20.dp,
+                            size = legendSymbolSize,
                             fillBrush = Brush.horizontalGradient(redShades),
                         )
                     }
 
                     2 -> Symbol(
                         shape = CircleShape,
-                        size = 20.dp,
+                        size = legendSymbolSize,
                         fillBrush = SolidColor(MaterialTheme.colorScheme.outlineVariant),
                     )
                 }
@@ -159,6 +165,7 @@ fun GasPlanBarChart(
         val strokeWidth = 2.dp
 
         GasBarChartLayout(
+            balanceHorizontalLayout = balanceHorizontalLayout,
             horizontalAxis = {
                 Column {
                     HorizontalGraphAxis(
@@ -218,7 +225,7 @@ fun GasPlanBarChart(
                     gasPlan.forEachIndexed { index, it ->
                         Box(contentAlignment = Alignment.Center) {
                             GasUsageBar(
-                                modifier = Modifier.height(36.dp).clickable {
+                                modifier = Modifier.height(barHeight).clickable {
                                     onGasBarClicked(index, it)
                                 },
                                 cylinderGasRequirements = it,

@@ -22,3 +22,17 @@ import com.android.tools.screenshot.PreviewTest
 fun ShareImageScreenshotTest() {
     ShareImagePreview()
 }
+
+@PreviewTest
+@Preview
+@Composable
+fun ShareImageExtremeScreenshotTest() {
+    ShareImagePreviewExtreme()
+}
+
+@PreviewTest
+@Preview
+@Composable
+fun ShareImageCcrBailoutScreenshotTest() {
+    ShareImagePreviewCcrBailout()
+}
