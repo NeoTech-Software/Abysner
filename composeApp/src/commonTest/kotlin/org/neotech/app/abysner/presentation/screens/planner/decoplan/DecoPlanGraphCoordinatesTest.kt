@@ -86,17 +86,23 @@ class DecoPlanGraphCoordinatesTest {
     }
 
     @Test
-    fun gfCeiling_lastPointXMatchesRuntime() {
+    fun gfCeiling_lastPointXDoesNotExceedRuntime() {
         val divePlan = divePlan30m30minWithDecoGas()
         val plotPoints = buildGfCeilingPlotPoints(divePlan.segments)
-        assertEquals(divePlan.runtime.toFloat(), plotPoints.last().x, "Last coordinate x should equal divePlan.runtime")
+        assertTrue(plotPoints.last().x <= divePlan.runtime.toFloat(), "Last coordinate x should not exceed divePlan.runtime")
     }
 
     @Test
     fun gfCeiling_isEmptyForNoDecoDive() {
         val plotPoints = buildGfCeilingPlotPoints(divePlan20m20minNoDeco().segments)
-        val nonZeroCeilingPoints = plotPoints.filter { it.y != 0f }
-        assertTrue(nonZeroCeilingPoints.isEmpty(), "No-deco dive should produce no non-zero ceiling coordinates")
+        assertTrue(plotPoints.isEmpty(), "No-deco dive should produce an empty ceiling plot")
+    }
+
+    @Test
+    fun gfCeiling_hasAtMostOneTrailingZeroPoint() {
+        val plotPoints = buildGfCeilingPlotPoints(divePlan30m30minWithDecoGas().segments)
+        val trailingZeroCeilingPoints = plotPoints.takeLastWhile { it.y == 0f }
+        assertTrue(trailingZeroCeilingPoints.size <= 1, "Expected at most 1 trailing zero-ceiling point but found ${trailingZeroCeilingPoints.size}")
     }
 
     @Test

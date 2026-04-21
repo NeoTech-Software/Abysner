@@ -40,10 +40,19 @@ fun List<DefaultPoint<Float, Float>>.coerceIn(
 fun buildGfCeilingPlotPoints(segments: List<DiveSegment>): List<DefaultPoint<Float, Float>> {
     // Skip zero-duration segments (GAS_SWITCH etc.) to avoid unnecessary duplicate x-coordinates.
     val nonZeroSegments = segments.filter { it.duration > 0 }
-    
-    // Drop all leading zero-ceiling segments except the one directly before the first
-    // non-zero ceiling (keeps a single clean zero-height starting point for the filled area).
-    val subListStart = (nonZeroSegments.indexOfFirst { it.gfCeilingAtEnd > 0.0 } - 1).coerceAtLeast(0)
+
+    val firstCeilingIndex = nonZeroSegments.indexOfFirst { it.gfCeilingAtEnd > 0.0 }
+    if (firstCeilingIndex == -1) {
+        return emptyList()
+    }
+
+    // Drop all leading zero-ceiling segments except the one directly before the first non-zero
+    // ceiling (keeps a single clean zero-height starting point for the filled area).
+    // Similarly, drop all trailing zero-ceiling segments except the one directly after the last
+    // non-zero ceiling (keeps a clean zero-height end point to close the filled area).
+    val subListStart = (firstCeilingIndex - 1).coerceAtLeast(0)
+    val lastCeilingIndex = nonZeroSegments.indexOfLast { it.gfCeilingAtEnd > 0.0 }
+    val subListEnd = (lastCeilingIndex + 2).coerceAtMost(nonZeroSegments.size)
 
     return buildList {
         // Rare edge case: if ceiling is already > 0 from the very first segment (diver starts with
@@ -52,9 +61,9 @@ fun buildGfCeilingPlotPoints(segments: List<DiveSegment>): List<DefaultPoint<Flo
         if ((nonZeroSegments.firstOrNull()?.gfCeilingAtEnd ?: 0.0) > 0.0) {
             add(DefaultPoint(0f, 0f))
         }
-        
+
         // Use segment.end as x (gfCeilingAtEnd belongs at the end of the segment).
-        nonZeroSegments.subList(subListStart, nonZeroSegments.size).mapTo(this) { segment ->
+        nonZeroSegments.subList(subListStart, subListEnd).mapTo(this) { segment ->
             DefaultPoint(segment.end.toFloat(), -segment.gfCeilingAtEnd.toFloat())
         }
     }
