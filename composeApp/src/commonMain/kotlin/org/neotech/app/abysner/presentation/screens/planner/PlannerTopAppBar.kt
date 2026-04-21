@@ -103,6 +103,8 @@ private fun RowScope.AppBarActions(
                 ) {
                     ShareImage(
                         divePlan = plan,
+                        diveNumber = uiState.selectedDiveIndex + 1,
+                        surfaceInterval = uiState.dives.getOrNull(uiState.selectedDiveIndex)?.surfaceIntervalBefore,
                         settingsModel = settings,
                     )
                 }

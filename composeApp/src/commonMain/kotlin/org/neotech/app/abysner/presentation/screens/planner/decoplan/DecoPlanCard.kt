@@ -363,10 +363,9 @@ fun DecoPlanTable(
     modifier: Modifier = Modifier,
     divePlan: DivePlan,
     settings: SettingsModel,
-    isCcr: Boolean = false,
-    isBailout: Boolean = false,
+    isCcr: Boolean,
+    isBailout: Boolean,
 ) {
-
     Table(
         modifier = modifier,
         header = {
