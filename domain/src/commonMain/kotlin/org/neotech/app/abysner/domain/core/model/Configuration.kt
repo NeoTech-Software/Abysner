@@ -14,7 +14,7 @@ package org.neotech.app.abysner.domain.core.model
 
 import org.neotech.app.abysner.domain.core.physics.altitudeToPressure
 import org.neotech.app.abysner.domain.persistence.EnumPreference
-import kotlin.math.floor
+import kotlin.math.ceil
 import kotlin.math.max
 
 /**
@@ -127,7 +127,7 @@ data class Configuration(
         return if(distance == 0.0) {
             0
         } else {
-            max(floor(distance / rate).toInt(), 1)
+            max(ceil(distance / rate).toInt(), 1)
         }
     }
 }
