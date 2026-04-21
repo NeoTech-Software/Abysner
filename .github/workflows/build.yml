@@ -41,27 +41,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run JVM Tests & Generate Coverage Reports
-        run: ./gradlew domain:koverXmlReport composeApp:koverXmlReport
-
-      - name: Upload domain coverage to Codecov
-        uses: codecov/codecov-action@v6
-        continue-on-error: true
-        with:
-          files: domain/build/reports/kover/report.xml
-          flags: domain
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload presentation coverage to Codecov
-        uses: codecov/codecov-action@v6
-        continue-on-error: true
-        with:
-          files: composeApp/build/reports/kover/report.xml
-          flags: presentation
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Validate Screenshot Tests
-        run: ./gradlew androidApp:validateDebugScreenshotTest
+      - name: Validate Screenshot Tests & Generate Coverage Reports
+        run: ./gradlew :koverXmlReportDomain :koverXmlReportPresentation
 
       - name: Upload screenshot diffs on failure
         if: failure()
@@ -69,6 +50,23 @@ jobs:
         with:
           name: screenshot-diffs
           path: androidApp/build/reports/screenshotTest/
+
+      - name: Upload domain coverage to Codecov
+        uses: codecov/codecov-action@v6
+        continue-on-error: true
+        with:
+          files: build/reports/kover/reportDomain.xml
+          flags: domain
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload presentation coverage to Codecov
+        uses: codecov/codecov-action@v6
+        continue-on-error: true
+        with:
+          files: build/reports/kover/reportPresentation.xml
+          flags: presentation
+          token: ${{ secrets.CODECOV_TOKEN }}
+
 
   android:
     name: Build Android

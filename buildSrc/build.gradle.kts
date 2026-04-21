@@ -20,9 +20,15 @@ gradlePlugin {
             id = "screenshot-reference-cleanup"
             implementationClass = "org.neotech.plugin.ScreenshotReferenceCleanupPlugin"
         }
+        register("screenshotTestCoverage") {
+            id = "screenshot-test-coverage"
+            implementationClass = "org.neotech.plugin.ScreenshotTestCoveragePlugin"
+        }
     }
 }
 
 dependencies {
-
+    // Required to compile the shadowed Renderer class.
+    compileOnly(libs.screenshot.validation.junit.engine)
+    compileOnly(libs.compose.preview.renderer)
 }

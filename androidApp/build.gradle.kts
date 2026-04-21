@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -19,7 +19,19 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.screenshot)
+    alias(libs.plugins.kover)
     id("screenshot-reference-cleanup")
+    id("screenshot-test-coverage")
+}
+
+kover {
+    currentProject {
+        // androidApp module has no domain code, so we don't include any variants for this coverage report
+        createVariant("domain") {}
+        createVariant("presentation") {
+            add("debug")
+        }
+    }
 }
 
 android {
@@ -65,6 +77,7 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -76,6 +89,7 @@ android {
             initWith(getByName("debug"))
             matchingFallbacks += listOf("release")
             isMinifyEnabled = true
+            isShrinkResources = true
             isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

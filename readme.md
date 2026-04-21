@@ -84,8 +84,8 @@ When the app calculates a dive profile for decompression, it also calculates how
 required for the dive. The gas plan shows two numbers per cylinder: **used gas** and **reserve gas**
 for open-circuit dives, or **loop gas** and **bailout gas** for closed-circuit dives.
 
-Both numbers are always based on the contingency (Deeper & Longer) profile, not the base plan.
-This means the contingency time and depth settings directly affect gas requirements.
+Both numbers can be based on the contingency (Deeper & Longer) profile if one (or both) of those
+options is enabled. This means the contingency settings directly affect gas requirements.
 
 - **Used gas:** How much gas one diver needs to normally complete the profile.
 

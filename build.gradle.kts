@@ -17,16 +17,27 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.screenshot) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
-    // Applied to the root to produce an aggregated coverage report across all modules.
     alias(libs.plugins.kover)
 }
 
 dependencies {
     kover(project(":domain"))
+    kover(project(":data"))
     kover(project(":composeApp"))
+    kover(project(":androidApp"))
 }
 
 kover {
+    currentProject {
+        createVariant("domain") {
+            add("jvm", optional = true)
+        }
+        createVariant("presentation") {
+            add("jvm", optional = true)
+            add("debug", optional = true)
+        }
+    }
+
     reports {
         filters {
             excludes {
@@ -43,10 +54,6 @@ kover {
                 // Only the data module uses @Serializable (resources packages)
                 classes("org.neotech.app.abysner.data.**\$serializer")
             }
-        }
-        total {
-            xml { onCheck = false }
-            html { onCheck = false }
         }
     }
 }
