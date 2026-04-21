@@ -22,6 +22,8 @@ import abysner.composeapp.generated.resources.ic_baseline_change_24
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
@@ -75,10 +77,11 @@ import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
+import org.neotech.app.abysner.presentation.component.InfoPill
+import org.neotech.app.abysner.presentation.component.InfoPillSize
 import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
-import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.preview.PreviewData
@@ -101,25 +104,49 @@ fun DecoPlanCardComponent(
     Card(modifier) {
         LoadingBoxWithBlur(isLoading) { loadingModifier ->
             Column(modifier = loadingModifier
-                .padding(vertical = 16.dp)
+                .padding(bottom = 16.dp, top = 8.dp)
                 .fillMaxWidth()) {
-                Text(
+                var showConfigurationInfo by remember { mutableStateOf(false) }
+
+                Row(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    text = buildAnnotatedString {
-                        append("Deco plan")
-                        withStyle(MaterialTheme.typography.titleSmall.toSpanStyle()) {
-                            if (divePlanSet?.isDeeper == true) {
-                                append(" +${divePlanSet.deeper}m")
-                            }
-                            if (divePlanSet?.isLonger == true) {
-                                append(" +${divePlanSet.longer}min")
+                        .padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleLarge,
+                        text = buildAnnotatedString {
+                            append("Deco plan")
+                            withStyle(MaterialTheme.typography.titleSmall.toSpanStyle()) {
+                                if (divePlanSet?.isDeeper == true) {
+                                    append(" +${divePlanSet.deeper}m")
+                                }
+                                if (divePlanSet?.isLonger == true) {
+                                    append(" +${divePlanSet.longer}min")
+                                }
                             }
                         }
+                    )
+
+                    if (divePlanSet != null && !divePlanSet.isEmpty) {
+                        IconButton(
+                            onClick = { showConfigurationInfo = true },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = "Deco-plan information"
+                            )
+                        }
                     }
-                )
+                }
+
+                if (showConfigurationInfo && divePlanSet != null) {
+                    DecoPlanConfigurationSummeryDialog(configuration = divePlanSet.configuration) {
+                        showConfigurationInfo = false
+                    }
+                }
 
                 if ((divePlanSet == null || divePlanSet.isEmpty)) {
                     if (errorMessage != null) {
@@ -201,33 +228,10 @@ fun DecoPlanCardComponent(
                         otu = planToShow.totalOtu
                     )
 
-                    Row(
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-
-                        DecoPlanExtraInfo(
-                            modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-                            divePlan = planToShow
-                        )
-
-                        var showConfigurationInfo by remember { mutableStateOf(false) }
-
-                        IconButton(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            onClick = { showConfigurationInfo = true },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Info,
-                                contentDescription = "Deco-plan information"
-                            )
-                        }
-
-                        if (showConfigurationInfo) {
-                            DecoPlanConfigurationSummeryDialog(configuration = divePlanSet.configuration) {
-                                showConfigurationInfo = false
-                            }
-                        }
-                    }
+                    DecoPlanExtraInfo(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        divePlan = planToShow
+                    )
                 }
             }
         }
@@ -293,70 +297,59 @@ fun DecoPlanOxygenToxicityDisplay(
     }
 }
 
-
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DecoPlanExtraInfo(
     modifier: Modifier = Modifier,
     divePlan: DivePlan
 ) {
-    Column(modifier = modifier) {
-
-        Text(
-            text = buildAnnotatedString {
-                appendBold("Average depth: ")
-                append(
-                    "${DecimalFormat.format(2, divePlan.averageDepth)} meters"
-                )
-            },
-            style = MaterialTheme.typography.bodyMedium
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        InfoPill(
+            label = "Depth",
+            value = "~${DecimalFormat.format(1, divePlan.averageDepth)} m",
+            size = InfoPillSize.SMALL,
         )
-        Text(
-            text = buildAnnotatedString {
-                appendBold("Total deco time: ")
-                append("${divePlan.totalDeco} minutes")
-            },
-            style = MaterialTheme.typography.bodyMedium
-        )
-        if(divePlan.firstDeco != -1) {
-            Text(
-                text = buildAnnotatedString {
-                    appendBold("First deco after: ")
-                    append("${divePlan.firstDeco} minutes")
-                },
-                style = MaterialTheme.typography.bodyMedium
+        if (divePlan.firstDeco != -1) {
+            InfoPill(
+                label = "NDL",
+                value = "${divePlan.firstDeco} min",
+                size = InfoPillSize.SMALL,
             )
         }
-        Text(
-            text = buildAnnotatedString {
-                appendBold("Deepest ceiling: ")
-                append(
-                    "${DecimalFormat.format(2, divePlan.deepestCeiling)} meter"
-                )
-            },
-            style = MaterialTheme.typography.bodyMedium
-        )
-        if(divePlan.maxTimeToSurfaceBailout != null) {
-            Text(
-                text = buildAnnotatedString {
-                    appendBold("Max TTS: ")
-                    append("${divePlan.maxTimeToSurfaceBailout!!.ttsBailoutAfter} @ ${divePlan.maxTimeToSurfaceBailout!!.end} minutes (bailout)")
-                },
-                style = MaterialTheme.typography.bodyMedium
+        if (divePlan.totalDeco > 0) {
+            InfoPill(
+                label = "Stop",
+                value = "${divePlan.totalDeco} min",
+                size = InfoPillSize.SMALL,
             )
         }
-        if(divePlan.maxTimeToSurface != null) {
-            Text(
-                text = buildAnnotatedString {
-                    appendBold("Max TTS: ")
-                    append("${divePlan.maxTimeToSurface!!.ttsAfter} @ ${divePlan.maxTimeToSurface!!.end} minutes")
-                },
-                style = MaterialTheme.typography.bodyMedium
+        if (divePlan.deepestCeiling > 0.0) {
+            InfoPill(
+                label = "Ceiling",
+                value = "${DecimalFormat.format(1, divePlan.deepestCeiling)} m",
+                size = InfoPillSize.SMALL,
+            )
+        }
+        if (divePlan.maxTimeToSurface != null) {
+            InfoPill(
+                label = "Max TTS",
+                value = "${divePlan.maxTimeToSurface!!.ttsAfter} @ ${divePlan.maxTimeToSurface!!.end} min",
+                size = InfoPillSize.SMALL,
+            )
+        }
+        if (divePlan.maxTimeToSurfaceBailout != null) {
+            InfoPill(
+                label = "Bailout TTS",
+                value = "${divePlan.maxTimeToSurfaceBailout!!.ttsBailoutAfter} @ ${divePlan.maxTimeToSurfaceBailout!!.end} min",
+                size = InfoPillSize.SMALL,
             )
         }
     }
 }
-
-
 
 @Composable
 fun DecoPlanTable(
