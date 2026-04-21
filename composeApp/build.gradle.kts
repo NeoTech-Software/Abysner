@@ -33,6 +33,16 @@ plugins {
     alias(libs.plugins.kover)
 }
 
+kover {
+    currentProject {
+        // composeApp module has no domain code, so we don't include any variants for this coverage report
+        createVariant("domain") {}
+        createVariant("presentation") {
+            add("jvm")
+        }
+    }
+}
+
 composeCompiler {
     stabilityConfigurationFiles.add(project.layout.projectDirectory.file("compose-stability.conf"))
 }

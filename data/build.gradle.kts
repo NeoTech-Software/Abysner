@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -18,6 +18,16 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.kover)
+}
+
+kover {
+    currentProject {
+        createVariant("domain") {
+            add("jvm")
+        }
+        // Data module has no presentation code, so we don't include any variants for this coverage report
+        createVariant("presentation") {}
+    }
 }
 
 kotlin {
