@@ -239,7 +239,7 @@ val versionInfoProvider = tasks.register<GenerateVersionInfoTask>("generateVersi
 // Sync version info to iOS xcconfig at configuration time, so it's available before Xcode resolves build settings.
 rootProject.file("iosApp/Configuration/Version.xcconfig").writeText(
     """
-    MARKETING_VERSION=$abysnerVersion
+    MARKETING_VERSION=$abysnerVersionBase
     CURRENT_PROJECT_VERSION=$abysnerBuildNumber
     """.trimIndent() + "\n"
 )
