@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -14,6 +14,7 @@ package org.neotech.app.abysner.presentation.component.bottomsheet
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -22,13 +23,14 @@ import androidx.compose.ui.Modifier
 @Composable
 fun ModalBottomSheetScaffold(
     modifier: Modifier = Modifier,
+    header: @Composable () -> Unit = {},
     content: @Composable BoxScope.() -> Unit
 ) {
     val scrollState = rememberScrollState()
-    Box(
-        Modifier
-            .verticalScroll(scrollState).then(modifier)
-    ) {
-        content()
+    Column(modifier) {
+        header()
+        Box(Modifier.verticalScroll(scrollState)) {
+            content()
+        }
     }
 }

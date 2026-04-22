@@ -63,7 +63,7 @@ import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
 import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
-import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
+import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
@@ -135,62 +135,71 @@ private fun SegmentPickerBottomSheet(
     val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
+        dragHandle = {},
         sheetState = sheetState,
         onDismissRequest = onDismiss,
     ) {
 
         val textFieldPositions = mutableStateMapOf<String, LayoutCoordinates>()
 
+        val availableCylinders = remember(cylinders) {
+            cylinders
+                .filter { !it.isCcrOxygen }
+                .map { it.cylinder }
+                .distinctBy { it.gas }
+                .sortedBy { it.gas.oxygenFraction }
+                .toImmutableList()
+        }
+
+        // Match by gas instead of identity: availableCylinders is deduplicated, so the
+        // exact cylinder object from initialValue may differ.
+        val initialCylinder = initialValue?.cylinder?.gas?.let { gas ->
+            availableCylinders.firstOrNull { it.gas == gas }
+                ?: error("Gas $gas from initialValue not found in availableCylinders.")
+        }
+
+        var selectedCylinder: Cylinder by remember { mutableStateOf(initialCylinder ?: availableCylinders.first()) }
+        var depth by remember { mutableIntStateOf(initialValue?.depth ?: 10) }
+        var time by remember { mutableIntStateOf(initialValue?.duration ?: 15) }
+
+        val errorMessageDepth = remember { mutableStateOf<String?>(null) }
+        val errorMessageTime = remember { mutableStateOf<String?>(null) }
+        val isDepthValid = remember { mutableStateOf(true) }
+        val isTimeValid = remember { mutableStateOf(true) }
+
+        val dismiss: () -> Unit = {
+            scope.launch {
+                sheetState.hide()
+                onDismiss()
+            }
+        }
+
         ModalBottomSheetScaffold(
-            modifier = Modifier
-                .clearFocusOutside(textFieldPositions)
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+            modifier = Modifier.clearFocusOutside(textFieldPositions),
+            header = {
+                BottomSheetHeader(
+                    title = "Dive segment",
+                    primaryLabel = if (isAdd) { "Add" } else { "Update" },
+                    primaryEnabled = isTimeValid.value && isDepthValid.value,
+                    onClose = dismiss,
+                    onPrimary = {
+                        onAddOrUpdateDiveSegment(
+                            DiveProfileSection(
+                                duration = time,
+                                depth = depth,
+                                cylinder = selectedCylinder
+                            )
+                        )
+                        dismiss()
+                    },
+                )
+            },
         ) {
             Column(
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    text = "Dive segment"
-                )
-
-                val availableCylinders = remember(cylinders) {
-                    cylinders
-                        .filter { !it.isCcrOxygen }
-                        .map { it.cylinder }
-                        .distinctBy { it.gas }
-                        .sortedBy { it.gas.oxygenFraction }
-                        .toImmutableList()
-                }
-
-                // Match by gas instead of identity: availableCylinders is deduplicated, so the
-                // exact cylinder object from initialValue may differ.
-                val initialCylinder = initialValue?.cylinder?.gas?.let { gas ->
-                    availableCylinders.firstOrNull { it.gas == gas }
-                        ?: error("Gas $gas from initialValue not found in availableCylinders.")
-                }
-
-                var selectedCylinder: Cylinder by remember { mutableStateOf(initialCylinder ?: availableCylinders.first()) }
-
-                var depth by remember {
-                    mutableIntStateOf(initialValue?.depth ?: 10)
-                }
-                var time by remember {
-                    mutableIntStateOf(initialValue?.duration ?: 15)
-                }
-
-                val errorMessageDepth = remember {
-                    mutableStateOf<String?>(null)
-                }
-                val errorMessageTime = remember {
-                    mutableStateOf<String?>(null)
-                }
-
-                val isDepthValid = remember { mutableStateOf(true) }
-                val isTimeValid = remember { mutableStateOf(true) }
-
                 if (!diveMode.isCcr) {
                     GasPropertiesComponent(
                         modifier = Modifier.padding(vertical = 16.dp),
@@ -235,7 +244,8 @@ private fun SegmentPickerBottomSheet(
 
                 Row(
                     modifier = Modifier.padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     OutlinedNumberInputField(
                         modifier = Modifier.weight(1f)
                             .recordLayoutCoordinates("depth", textFieldPositions),
@@ -247,7 +257,7 @@ private fun SegmentPickerBottomSheet(
                         errorMessage = errorMessageDepth,
                         isValid = isDepthValid,
                         onNumberChanged = {
-                            if(it != null) {
+                            if (it != null) {
                                 depth = it
                             }
                         },
@@ -264,7 +274,7 @@ private fun SegmentPickerBottomSheet(
                         errorMessage = errorMessageTime,
                         isValid = isTimeValid,
                         onNumberChanged = {
-                            if(it != null) {
+                            if (it != null) {
                                 time = it
                             }
                         },
@@ -319,37 +329,11 @@ private fun SegmentPickerBottomSheet(
                     textAlign = TextAlign.Center,
                     minLines = 2,
                     text = anyErrorMessage ?: travelTimeHint,
-                    color = if(anyErrorMessage != null) {
+                    color = if (anyErrorMessage != null) {
                         MaterialTheme.colorScheme.error
                     } else {
                         Color.Unspecified
                     }
-                )
-
-                BottomSheetButtonRow(
-                    modifier = Modifier.padding(top = 16.dp),
-                    secondaryLabel = "Cancel",
-                    primaryLabel = if (isAdd) { "Add" } else { "Update" },
-                    primaryEnabled = isTimeValid.value && isDepthValid.value,
-                    onSecondary = {
-                        scope.launch {
-                            sheetState.hide()
-                            onDismiss()
-                        }
-                    },
-                    onPrimary = {
-                        onAddOrUpdateDiveSegment(
-                            DiveProfileSection(
-                                duration = time,
-                                depth = depth,
-                                cylinder = selectedCylinder
-                            )
-                        )
-                        scope.launch {
-                            sheetState.hide()
-                            onDismiss()
-                        }
-                    },
                 )
             }
         }
