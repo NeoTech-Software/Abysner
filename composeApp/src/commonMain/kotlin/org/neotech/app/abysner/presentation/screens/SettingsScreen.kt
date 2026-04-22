@@ -77,7 +77,7 @@ fun SettingsScreen(
             topBar = {
                 Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.background) {
                     TopAppBar(
-                        title = { Text("Settings") },
+                        title = { Text("Preferences") },
                         navigationIcon = {
 
                             val currentBackStackEntry by navController.currentBackStackEntryAsState()
