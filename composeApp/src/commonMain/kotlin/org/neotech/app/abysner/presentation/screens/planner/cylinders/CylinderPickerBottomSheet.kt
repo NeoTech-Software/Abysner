@@ -54,7 +54,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
-import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
+import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
@@ -129,6 +129,7 @@ private fun CylinderPickerBottomSheet(
     onDismiss: () -> Unit = {},
 ) {
     ModalBottomSheet(
+        dragHandle = {},
         sheetState = sheetState,
         onDismissRequest = onDismiss,
     ) {
@@ -179,34 +180,52 @@ private fun CylinderPickerBottomSheetContent(
     var volume: Double? by remember(initialValue) {
         mutableStateOf(initialValue.waterVolume)
     }
-    val isVolumeValid = remember { mutableStateOf(false) }
+    val isVolumeValid = remember { mutableStateOf(true) }
 
     var startPressure: Double? by remember(initialValue) {
         mutableStateOf(initialValue.pressure)
     }
-    val isStartPressureValid = remember { mutableStateOf(false) }
+    val isStartPressureValid = remember { mutableStateOf(true) }
 
     val textFieldPositions = mutableStateMapOf<String, LayoutCoordinates>()
 
     val showStandardGasPickerDialog = remember { mutableStateOf(false) }
 
+    val dismiss: () -> Unit = {
+        scope.launch {
+            sheetState.hide()
+            onDismissRequest()
+        }
+    }
+
     ModalBottomSheetScaffold(
-        modifier = Modifier
-            .clearFocusOutside(textFieldPositions)
+        modifier = Modifier.clearFocusOutside(textFieldPositions),
+        header = {
+            BottomSheetHeader(
+                title = if (lockGas) { "Cylinder" } else { "Gas & cylinder" },
+                primaryLabel = if (isAdd) { "Add" } else { "Update" },
+                primaryEnabled = isVolumeValid.value && isStartPressureValid.value,
+                onClose = dismiss,
+                onPrimary = {
+                    onAddOrUpdateCylinder(
+                        // Copy since we want to maintain the uniqueIdentifier
+                        initialValue.copy(
+                            gas = Gas(
+                                oxygenFraction = oxygenPercentage / 100.0,
+                                heliumFraction = heliumPercentage / 100.0
+                            ),
+                            pressure = startPressure!!,
+                            waterVolume = volume!!,
+                        )
+                    )
+                    dismiss()
+                },
+            )
+        },
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-        ) {
-
-            Text(
-                modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .fillMaxWidth(),
-                style = MaterialTheme.typography.headlineSmall,
-                text = if (lockGas) { "Cylinder" } else { "Gas & cylinder" }
-            )
-
-            val errorMessageVolume = remember { mutableStateOf<String?>(null) }
+        ) {            val errorMessageVolume = remember { mutableStateOf<String?>(null) }
             val errorMessagePressure = remember { mutableStateOf<String?>(null) }
 
             Row(
@@ -317,36 +336,6 @@ private fun CylinderPickerBottomSheetContent(
                     }
                 )
             }
-
-            BottomSheetButtonRow(
-                modifier = Modifier.padding(top = 16.dp),
-                secondaryLabel = "Cancel",
-                primaryLabel = if (isAdd) { "Add" } else { "Update" },
-                primaryEnabled = isVolumeValid.value,
-                onSecondary = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismissRequest()
-                    }
-                },
-                onPrimary = {
-                    onAddOrUpdateCylinder(
-                        // Copy since we want to maintain the uniqueIdentifier
-                        initialValue.copy(
-                            gas = Gas(
-                                oxygenFraction = oxygenPercentage / 100.0,
-                                heliumFraction = heliumPercentage / 100.0
-                            ),
-                            pressure = startPressure!!,
-                            waterVolume = volume!!,
-                        )
-                    )
-                    scope.launch {
-                        sheetState.hide()
-                        onDismissRequest()
-                    }
-                },
-            )
         }
     }
 

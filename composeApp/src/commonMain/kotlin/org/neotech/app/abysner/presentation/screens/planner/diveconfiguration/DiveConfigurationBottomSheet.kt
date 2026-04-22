@@ -12,9 +12,7 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.diveconfiguration
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonDefaults
@@ -33,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,7 +41,7 @@ import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.presentation.component.RadioCardGroup
 import org.neotech.app.abysner.presentation.component.RadioCardItem
-import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetButtonRow
+import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.textfield.DurationInputField
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
@@ -129,6 +126,7 @@ private fun DiveConfigurationBottomSheet(
     onDelete: (() -> Unit)? = null,
 ) {
     ModalBottomSheet(
+        dragHandle = {},
         sheetState = sheetState,
         onDismissRequest = onDismiss,
     ) {
@@ -157,42 +155,40 @@ private fun DiveConfigurationBottomSheetContent(
 ) {
     val scope = rememberCoroutineScope()
     var surfaceInterval: Duration? by remember(initialSurfaceInterval) { mutableStateOf(initialSurfaceInterval) }
-    val isConfirmEnabled = remember(initialSurfaceInterval) { mutableStateOf(initialSurfaceInterval == null) }
+    val isConfirmEnabled = remember(initialSurfaceInterval) { mutableStateOf(true) }
     var selectedDiveModeIndex by remember(initialDiveMode) { mutableIntStateOf(initialDiveMode.toSelectionIndex()) }
 
-    ModalBottomSheetScaffold {
+    val dismiss: () -> Unit = {
+        scope.launch {
+            sheetState.hide()
+            onDismiss()
+        }
+    }
+
+    ModalBottomSheetScaffold(
+        header = {
+            BottomSheetHeader(
+                title = title,
+                primaryLabel = "Confirm",
+                primaryEnabled = isConfirmEnabled.value,
+                onClose = dismiss,
+                onPrimary = {
+                    val effectiveDuration = if (initialSurfaceInterval != null) {
+                        surfaceInterval ?: initialSurfaceInterval
+                    } else {
+                        null
+                    }
+                    onConfirm(effectiveDuration, selectedDiveModeIndex.toDiveMode())
+                    dismiss()
+                },
+            )
+        },
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    style = MaterialTheme.typography.headlineSmall,
-                    text = title,
-                )
-                if (onDelete != null) {
-                    TextButton(
-                        onClick = {
-                            onDelete()
-                            scope.launch {
-                                sheetState.hide()
-                                onDismiss()
-                            }
-                        },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    ) {
-                        Text("Delete")
-                    }
-                }
-            }
-
             RadioCardGroup(
                 modifier = Modifier.padding(bottom = 16.dp),
                 items = diveModeItems,
@@ -219,30 +215,20 @@ private fun DiveConfigurationBottomSheetContent(
                 )
             }
 
-            BottomSheetButtonRow(
-                modifier = Modifier.padding(top = 16.dp),
-                secondaryLabel = "Cancel",
-                primaryLabel = "Confirm",
-                primaryEnabled = isConfirmEnabled.value,
-                onSecondary = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                },
-                onPrimary = {
-                    val effectiveDuration = if (initialSurfaceInterval != null) {
-                        surfaceInterval ?: initialSurfaceInterval
-                    } else {
-                        null
-                    }
-                    onConfirm(effectiveDuration, selectedDiveModeIndex.toDiveMode())
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                    }
-                },
-            )
+            if (onDelete != null) {
+                TextButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    onClick = {
+                        onDelete()
+                        dismiss()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Text("Delete dive")
+                }
+            }
         }
     }
 }
