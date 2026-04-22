@@ -60,20 +60,14 @@ fun GradientFactorPreference(
         )
     }
 
-    BasicPreference(
-        modifier = modifier.clickable {
-            showDialog = true
-        },
+    BaseTextPreference(
+        modifier = modifier,
         label = label,
-        value = description,
-        hideDivider = true,
-        action = {
-            Text(
-                text = "$gfLow/$gfHigh",
-                style = typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-            )
-        }
-    )
+        description = description,
+        value = "$gfLow/$gfHigh"
+    ){
+        showDialog = true
+    }
 }
 
 @Composable

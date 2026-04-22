@@ -67,18 +67,14 @@ fun DecimalNumberPreference(
         )
     }
 
-    BasicPreference(
-        modifier = modifier.clickable { showDialog = true },
+    BaseTextPreference(
+        modifier = modifier,
         label = label,
-        value = description,
-        hideDivider = true,
-        action = {
-            Text(
-                text = valueFormatter(initialValue),
-                style = typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-            )
-        }
-    )
+        description = description,
+        value = valueFormatter(initialValue)
+    ) {
+        showDialog = true
+    }
 }
 
 @Composable
