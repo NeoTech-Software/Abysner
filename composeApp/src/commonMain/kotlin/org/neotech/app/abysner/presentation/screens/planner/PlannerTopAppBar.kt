@@ -117,6 +117,13 @@ private fun RowScope.AppBarActions(
         }
     }
 
+    IconButton(onClick = { navController.navigate(Destinations.DIVE_CONFIGURATION.destinationName) }) {
+        Icon(
+            painter = painterResource(resource = Res.drawable.ic_outline_tune_24),
+            contentDescription = "Dive configuration"
+        )
+    }
+
     var showMenu by remember { mutableStateOf(false) }
 
     DropdownMenu(
@@ -124,20 +131,7 @@ private fun RowScope.AppBarActions(
         onDismissRequest = { showMenu = false }
     ) {
         DropdownMenuItem(
-            text = { Text("Dive configuration") },
-            onClick = {
-                showMenu = false
-                navController.navigate(Destinations.DIVE_CONFIGURATION.destinationName)
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(resource = Res.drawable.ic_outline_tune_24),
-                    contentDescription = "Dive configuration"
-                )
-            }
-        )
-        DropdownMenuItem(
-            text = { Text("Settings") },
+            text = { Text("Preferences") },
             onClick = {
                 showMenu = false
                 navController.navigate(Destinations.APP_CONFIGURATION.destinationName)
@@ -145,7 +139,7 @@ private fun RowScope.AppBarActions(
             leadingIcon = {
                 Icon(
                     painter = painterResource(resource = Res.drawable.ic_outline_settings_24),
-                    contentDescription = "Settings"
+                    contentDescription = "Preferences"
                 )
             }
         )
