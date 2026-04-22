@@ -79,7 +79,8 @@ fun GasUsageDetailsDialog(
                 Text(
                     modifier = Modifier.padding(bottom = 4.dp),
                     text = "Cylinder details",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 val capacity = cylinderGasRequirements.cylinder.capacity()
@@ -90,7 +91,7 @@ fun GasUsageDetailsDialog(
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Contents", fontWeight = FontWeight.Bold
+                            text = "Gas", fontWeight = FontWeight.Bold
                         )
                         Text(modifier = Modifier.weight(1f), text = "${cylinderGasRequirements.cylinder.gas} (${cylinderGasRequirements.cylinder.gas.diveIndustryName()})")
                     }
@@ -127,7 +128,8 @@ fun GasUsageDetailsDialog(
                 Text(
                     modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
                     text = "Total for dive",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Table(striped = false, defaultRowModifier = Modifier.padding(vertical = 1.dp)) {
                     row {

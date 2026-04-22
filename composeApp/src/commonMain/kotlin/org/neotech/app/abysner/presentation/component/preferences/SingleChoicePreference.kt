@@ -99,24 +99,14 @@ fun <T> SingleChoicePreference(
         null
     }
 
-    BasicPreference(
-        modifier = modifier.clickable {
-            showDialog = true
-        },
+    BaseTextPreference(
+        modifier = modifier,
         label = label,
-        value = description,
-        hideDivider = true,
-        action = if (value != null) {
-            {
-                Text(
-                    text = value.toAnnotatedString(),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-                )
-            }
-        } else {
-            null
-        }
-    )
+        description = description,
+        value = value?.toString(),
+    ) {
+        showDialog = true
+    }
 }
 
 @Composable

@@ -196,8 +196,15 @@ private fun <T : PathwayButtonItem> SelectableButton(
             Text(label.buttonLabel)
         }
     } else {
-        OutlinedButton(modifier = modifier, onClick = { onClick(index, label) }) {
-            Text(label.buttonLabel)
+        OutlinedButton(
+            modifier = modifier,
+            onClick = { onClick(index, label) }
+        ) {
+            Text(
+                text = label.buttonLabel,
+                // Force text color to onSurface to keep the same text style as the selected button.
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }

@@ -22,7 +22,11 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 
@@ -84,15 +89,20 @@ internal fun BaseTextPreference(
         label = label,
         value = description,
         hideDivider = true,
-        action = if (value != null) {
-            {
+        action = {
+            if (value != null) {
                 Text(
                     text = value,
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
-        } else {
-            null
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                modifier = Modifier.padding(start = 4.dp, end = 12.dp).size(24.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     )
 }
@@ -110,7 +120,7 @@ internal fun BasicPreference(
             .defaultMinSize(minHeight = 64.dp)
             .height(IntrinsicSize.Min)
             .then(modifier)
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+            .padding(start = 16.dp, end = if (action != null) { 0.dp } else { 16.dp }, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -118,7 +128,7 @@ internal fun BasicPreference(
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         if (action != null) {
