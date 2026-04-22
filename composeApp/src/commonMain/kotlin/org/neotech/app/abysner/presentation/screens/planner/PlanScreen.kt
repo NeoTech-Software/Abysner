@@ -157,7 +157,7 @@ fun PlannerScreen(
                 Scaffold(
                     // In the wide two-panels mode the panels manage their insets per-panel
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                    topBar = { PlannerTopAppBar(uiState, navController) }
+                    topBar = { PlannerTopAppBar(uiState, navController) },
                 ) { paddingValues ->
                     Row(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                         Surface(
@@ -176,6 +176,9 @@ fun PlannerScreen(
                                 buttonLabels = diveButtonLabels,
                                 onClick = onDiveButtonClick,
                                 onAddClicked = { diveSheet = ModalTarget.Add },
+                                addButtonLabel = "Add dive",
+                                limit = MAX_DIVES,
+                                limitTooltipText = MAX_DIVES_TOOLTIP,
                             )
                         }
                         Box(modifier = Modifier.weight(1f)) {
@@ -226,6 +229,9 @@ fun PlannerScreen(
                                     buttonLabels = diveButtonLabels,
                                     onClick = onDiveButtonClick,
                                     onAddClicked = { diveSheet = ModalTarget.Add },
+                                    addButtonLabel = "Add dive",
+                                    limit = MAX_DIVES,
+                                    limitTooltipText = MAX_DIVES_TOOLTIP,
                                 )
                             }
                         }
@@ -286,6 +292,8 @@ fun PlannerScreen(
     }
 }
 
+private const val MAX_DIVES = 10
+private const val MAX_DIVES_TOOLTIP = "Easy there, Cousteau!\nPlans are limited to $MAX_DIVES dives."
 
 @Preview(device = DEVICE_PHONE_MAX_HEIGHT)
 @Composable
