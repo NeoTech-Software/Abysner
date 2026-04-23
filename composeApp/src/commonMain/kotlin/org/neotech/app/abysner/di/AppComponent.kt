@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,9 +12,9 @@
 
 package org.neotech.app.abysner.di
 
-import me.tatarka.inject.annotations.Component
-import me.tatarka.inject.annotations.Provides
-import me.tatarka.inject.annotations.Scope
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import org.neotech.app.abysner.data.PersistenceRepositoryImpl
 import org.neotech.app.abysner.data.diveplanning.PlanningRepositoryImpl
 import org.neotech.app.abysner.data.PlatformFileDataSource
@@ -24,30 +24,28 @@ import org.neotech.app.abysner.domain.persistence.PersistenceRepository
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.presentation.MainNavController
 
-@Scope
-annotation class AppScope
+abstract class AppScope
 
-@AppScope
-@Component
-abstract class AppComponent(@Component val platformComponent: PlatformComponent) {
+@SingleIn(AppScope::class)
+@DependencyGraph
+abstract class AppComponent {
 
     abstract val mainNavController: MainNavController
 
-    @AppScope
+    @SingleIn(AppScope::class)
     @Provides
     fun providesPlanningRepository(planningRepository: PlanningRepositoryImpl): PlanningRepository = planningRepository
 
-    @AppScope
+    @SingleIn(AppScope::class)
     @Provides
     fun providesSettingsRepository(settingsRepository: SettingsRepositoryImpl): SettingsRepository = settingsRepository
 
-    @AppScope
+    @SingleIn(AppScope::class)
     @Provides
     fun providesPersistenceRepository(persistenceRepository: PersistenceRepositoryImpl): PersistenceRepository = persistenceRepository
 
-}
-
-abstract class PlatformComponent {
-
-    abstract val providesPlatformFileDataSource: PlatformFileDataSource
+    @DependencyGraph.Factory
+    fun interface Factory {
+        fun create(@Provides platformFileDataSource: PlatformFileDataSource): AppComponent
+    }
 }

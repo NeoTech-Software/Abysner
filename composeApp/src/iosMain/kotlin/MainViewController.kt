@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,28 +12,19 @@
 
 import androidx.compose.ui.uikit.OnFocusBehavior
 import androidx.compose.ui.window.ComposeUIViewController
+import dev.zacsweers.metro.createGraphFactory
 import org.neotech.app.abysner.App
+import org.neotech.app.abysner.data.PlatformFileDataSourceImpl
 import org.neotech.app.abysner.di.AppComponent
 
-// Unfortunately it seems non-trivial (impossible) to use KSP on the iosMain sourceSet, since
-// iosMain is not a target but rather common code (the actual targets are X64, Arm64 and SimulatorArm64.
-// See: https://github.com/google/ksp/issues/567.
-//
-// Therefore create() functions are not generated within this common sourceSet, but rather in the
-// target source sets, so these create functions are not accessible here (undefined).
-//
-// A workaround would be to create an expected function here and implement them in the
-// targets, to makes this less cumbersome using @KmpComponentCreate would seem like a good
-// solution as it automatically generates the actual implementations. However that also does
-// not seem to work (error: '@KmpComponentCreate() actual fun foo(): Bar' has no corresponding
-// expected declaration) because the generated actual functions do not seem to correspond to
-// a expect function?
-//
-// TLDR: We have to manually implement a actual and expected method in each iOS target to provide
-// us the create methods.
-expect fun createAppComponent(): AppComponent
-
-private val appComponent = createAppComponent()
+// Metro graphs cannot have constructor parameters, and platform source sets cannot extend the
+// shared graph with additional bindings (only the reverse direction is supported via
+// @GraphExtension it seems). So platform dependencies must be constructed manually and passed
+// through a @DependencyGraph.Factory. Currently, there is only one (PlatformFileDataSource), but
+// if more platform-specific bindings are added this might get messy? Each one needs a factory
+// parameter, a @Provides function in AppComponent, and manual construction at every call site
+// (Android, iOS, JVM). kotlin-inject avoided this through component inheritance.
+private val appComponent = createGraphFactory<AppComponent.Factory>().create(PlatformFileDataSourceImpl())
 
 @Suppress("unused", "FunctionName")
 fun MainViewController() = ComposeUIViewController(
