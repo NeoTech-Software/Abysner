@@ -18,6 +18,7 @@ val abysnerBuildNumber: String by project.properties
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.metro)
     alias(libs.plugins.screenshot)
     alias(libs.plugins.kover)
     id("screenshot-reference-cleanup")
@@ -116,6 +117,7 @@ screenshotTests {
 
 dependencies {
     implementation(project(":composeApp"))
+    implementation(project(":data"))
     implementation(libs.androidx.activity.compose)
 
     screenshotTestImplementation(libs.screenshot.validation.api)

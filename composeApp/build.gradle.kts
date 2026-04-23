@@ -10,12 +10,8 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-import com.google.devtools.ksp.gradle.KspAATask
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.neotech.gradle.capitalizeFirstCharacter
 import java.io.ByteArrayOutputStream
 
 // DMG distribution does not support "-beta", MSI requires at least MAJOR.MINOR.BUILD
@@ -29,7 +25,7 @@ plugins {
     alias(libs.plugins.androidKmpLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.metro)
     alias(libs.plugins.kover)
 }
 
@@ -112,7 +108,6 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":domain"))
             implementation(project(":data"))
-            implementation(libs.kotlinInject.runtimeKmp)
             implementation(libs.navigation.compose)
             implementation(libs.jetbrains.lifecycle.viewmodel)
             implementation(libs.jetbrains.lifecycle.runtime)
@@ -159,17 +154,6 @@ compose.desktop {
 }
 
 dependencies {
-
-    // This is the same as repeating:
-    //     add(target, libs.kotlinInject.compilerKsp)
-    // where `target` is "kspDesktop", "kspAndroid", "kspIosX64" "kspIosArm64" or "kspIosSimulatorArm64"
-    val kotlinTargets: Sequence<KotlinTarget> = kotlin.targets.asSequence()
-    kotlinTargets.filter {
-        // Don't add KSP for common target, only final platforms
-        it.platformType != KotlinPlatformType.common
-    }.forEach {
-        add("ksp${it.targetName.capitalizeFirstCharacter()}", libs.kotlinInject.compilerKsp)
-    }
 
     androidRuntimeClasspath(libs.jetbrains.compose.ui.tooling)
 }
@@ -244,6 +228,6 @@ rootProject.file("iosApp/Configuration/Version.xcconfig").writeText(
     """.trimIndent() + "\n"
 )
 
-tasks.withType(KspAATask::class.java).configureEach {
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
     dependsOn(versionInfoProvider)
 }
