@@ -69,8 +69,6 @@ fun GasPropertiesComponent(
                 BigNumberDisplay(
                     modifier = Modifier.weight(0.6f),
                     size = BigNumberSize.LARGE,
-                    // 4 is widest number found in this character set
-                    widestEstimatedValue = "44/44",
                     value = mix,
                     label = "Mix (O2/He)",
                     onClick = onClickMix,

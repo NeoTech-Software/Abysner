@@ -47,6 +47,7 @@ fun TextWithStartIcon(
         Text(
             style = textStyle,
             text = text,
+            maxLines = 1,
             modifier = Modifier
                 .padding(start = 4.dp),
 

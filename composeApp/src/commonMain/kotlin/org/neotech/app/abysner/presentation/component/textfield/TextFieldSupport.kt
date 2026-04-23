@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.invisible
 
@@ -39,6 +40,8 @@ fun defaultInputFieldLabel(text: String?): (@Composable () -> Unit)? = text?.let
     {
         Text(
             text = it,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodyLarge.copy(
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
