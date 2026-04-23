@@ -74,22 +74,22 @@ object DiveEditorViewModelDelegate {
         }
         val remainingCylinders = dive.cylinders.filterNot { it.cylinder == cylinder }
 
-        // Reassign any segments that referenced the removed cylinder. In CCR mode this can happen
-        // because bailout cylinders are not locked. A diluent always exists as fallback because
-        // it is locked and cannot be removed.
-        val fallback = remainingCylinders.ccrDiluentCylinder()?.cylinder
-            ?: remainingCylinders.first().cylinder
-        // TODO in theory this will probably impossible given that the interface forbids it, the
-        //      user might be able to orphan a section from a true cylinder, then this could cause
-        //      data restore failures in  DivePlanInputResourceV1.toModel()?
-        //      Perhaps sections should be allowed to have a nullable cylinder? This allows for auto
-        //      selection mode during planning?
-        val updatedProfile = dive.plannedProfile.map { section ->
-            if (section.cylinder == cylinder) {
-                section.copy(cylinder = fallback)
-            } else {
-                section
+        val updatedProfile = if (dive.diveMode.isCcr) {
+            // In CCR mode, bailout cylinders are not locked and may be referenced by segments. But
+            // segments should not reference removed cylinders so we need to update those. The
+            // diluent is always locked and available as a fallback for reassignment.
+            val fallback = remainingCylinders.ccrDiluentCylinder()!!.cylinder
+            dive.plannedProfile.map { section ->
+                if (section.cylinder == cylinder) {
+                    section.copy(cylinder = fallback)
+                } else {
+                    section
+                }
             }
+        } else {
+            // In OC mode, a cylinder referenced by a segment is locked and should not be removable,
+            // the profile does not change when removing an unused cylinder.
+            dive.plannedProfile
         }
 
         return dive.update(profile = updatedProfile, cylinders = remainingCylinders)

@@ -99,6 +99,20 @@ class DiveEditorViewModelDelegateTest {
     }
 
     @Test
+    fun removeCylinder_lastUnusedCylinderIsRemoved() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = false),
+            ),
+            segments = emptyList(),
+        )
+
+        val result = DiveEditorViewModelDelegate.removeCylinder(dive, airCylinder)
+
+        assertTrue(result.cylinders.isEmpty())
+    }
+
+    @Test
     fun toggleCylinder_uncheckedCylinderIsEnabled() {
         val dive = createDive(
             cylinders = listOf(
