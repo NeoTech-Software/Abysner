@@ -51,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.toImmutableList
+import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
@@ -75,27 +76,14 @@ import org.neotech.app.abysner.presentation.preview.DEVICE_PHONE_MAX_HEIGHT
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import kotlin.time.Duration
 
-// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
-// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
-// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
-@Inject
-class PlannerScreen(
-    private val viewModelCreator: () -> PlanScreenViewModel,
-) {
-    @Composable
-    operator fun invoke(navController: NavHostController) {
-        PlannerScreen(
-            viewModel = viewModel { viewModelCreator() },
-            navController = navController,
-        )
-    }
-}
 
+@Inject
 @Composable
-private fun PlannerScreen(
-    viewModel: PlanScreenViewModel,
-    navController: NavHostController
+fun PlannerScreen(
+    viewModelCreator: () -> PlanScreenViewModel,
+    @Assisted navController: NavHostController,
 ) {
+    val viewModel = viewModel { viewModelCreator() }
     val uiState: PlanScreenViewModel.UiState by viewModel.uiState.collectAsState()
 
     PlannerScreen(

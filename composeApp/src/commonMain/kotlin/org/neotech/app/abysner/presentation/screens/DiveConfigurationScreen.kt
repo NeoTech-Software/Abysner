@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -57,26 +58,11 @@ import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTran
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import kotlin.math.abs
 
-// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
-// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
-// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
 @Inject
-class DiveConfigurationScreen(
-    private val planningRepository: PlanningRepository,
-) {
-    @Composable
-    operator fun invoke(navController: NavHostController) {
-        DiveConfigurationScreen(
-            navController = navController,
-            planningRepository = planningRepository,
-        )
-    }
-}
-
 @Composable
 fun DiveConfigurationScreen(
-    navController: NavHostController,
     planningRepository: PlanningRepository,
+    @Assisted navController: NavHostController,
 ) {
     // TODO should be adding a ViewModel to this screen
     val configuration by planningRepository.configuration.collectAsState()
