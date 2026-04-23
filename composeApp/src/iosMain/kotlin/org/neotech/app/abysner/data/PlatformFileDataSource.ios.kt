@@ -13,17 +13,13 @@
 package org.neotech.app.abysner.data
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import me.tatarka.inject.annotations.Inject
 import okio.Path
 import okio.Path.Companion.toPath
-import org.neotech.app.abysner.di.AppScope
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
-@AppScope
-@Inject
 class PlatformFileDataSourceImpl: PlatformFileDataSource {
 
     @OptIn(ExperimentalForeignApi::class)

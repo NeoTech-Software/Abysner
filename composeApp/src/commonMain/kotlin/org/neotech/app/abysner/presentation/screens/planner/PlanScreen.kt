@@ -51,8 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.toImmutableList
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
@@ -76,15 +75,27 @@ import org.neotech.app.abysner.presentation.preview.DEVICE_PHONE_MAX_HEIGHT
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import kotlin.time.Duration
 
-typealias PlannerScreen = @Composable (navController: NavHostController) -> Unit
-
+// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
+// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
+// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
 @Inject
-@Composable
-fun PlannerScreen(
-    viewModelCreator: () -> PlanScreenViewModel,
-    @Assisted navController: NavHostController = rememberNavController()
+class PlannerScreen(
+    private val viewModelCreator: () -> PlanScreenViewModel,
 ) {
-    val viewModel = viewModel { viewModelCreator() }
+    @Composable
+    operator fun invoke(navController: NavHostController) {
+        PlannerScreen(
+            viewModel = viewModel { viewModelCreator() },
+            navController = navController,
+        )
+    }
+}
+
+@Composable
+private fun PlannerScreen(
+    viewModel: PlanScreenViewModel,
+    navController: NavHostController
+) {
     val uiState: PlanScreenViewModel.UiState by viewModel.uiState.collectAsState()
 
     PlannerScreen(
@@ -97,13 +108,24 @@ fun PlannerScreen(
         onAddSegment = { viewModel.addSegment(it) },
         onUpdateSegment = { index, segment -> viewModel.updateSegment(index, segment) },
         onRemoveSegment = { viewModel.removeSegment(it) },
-        onContingencyInputChanged = { deeper, longer, bailout -> viewModel.setContingency(deeper, longer, bailout) },
+        onContingencyInputChanged = { deeper, longer, bailout ->
+            viewModel.setContingency(
+                deeper,
+                longer,
+                bailout
+            )
+        },
         onSelectDive = { viewModel.selectDive(it) },
         onAddDive = { viewModel.addDive(it) },
         onRemoveDive = { viewModel.removeDive(it) },
         onUpdateSurfaceInterval = { i, d -> viewModel.updateSurfaceInterval(i, d) },
         onDiveModeChanged = { viewModel.setDiveMode(it) },
-        onAvailableForBailoutChanged = { cylinder, value -> viewModel.toggleAvailableForBailout(cylinder, value) },
+        onAvailableForBailoutChanged = { cylinder, value ->
+            viewModel.toggleAvailableForBailout(
+                cylinder,
+                value
+            )
+        },
     )
 }
 

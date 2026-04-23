@@ -12,19 +12,19 @@
 
 package org.neotech.app.abysner.presentation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import me.tatarka.inject.annotations.Inject
-import androidx.compose.ui.tooling.preview.Preview
-import org.neotech.app.abysner.di.AppScope
-import org.neotech.app.abysner.presentation.screens.about.AboutScreen
-import org.neotech.app.abysner.presentation.screens.planner.PlannerScreen
+import dev.zacsweers.metro.Inject
+import org.neotech.app.abysner.presentation.component.BitmapRenderRoot
 import org.neotech.app.abysner.presentation.screens.DiveConfigurationScreen
 import org.neotech.app.abysner.presentation.screens.SettingsScreen
+import org.neotech.app.abysner.presentation.screens.about.AboutScreen
+import org.neotech.app.abysner.presentation.screens.planner.PlannerScreen
 import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsScreen
 import org.neotech.app.abysner.presentation.theme.LocalThemeMode
 import org.neotech.app.abysner.presentation.utilities.DestinationDefinition
@@ -32,8 +32,6 @@ import org.neotech.app.abysner.presentation.utilities.NavHost
 import org.neotech.app.abysner.presentation.utilities.fadeComposable
 import org.neotech.app.abysner.presentation.utilities.rootComposable
 import org.neotech.app.abysner.presentation.utilities.slideComposable
-import androidx.compose.foundation.layout.Box
-import org.neotech.app.abysner.presentation.component.BitmapRenderRoot
 
 enum class Destinations(override val destinationName: String) : DestinationDefinition {
     PLANNER("planner"),
@@ -44,24 +42,40 @@ enum class Destinations(override val destinationName: String) : DestinationDefin
     TERMS_AND_CONDITIONS_INITIAL("terms-and-conditions-initial")
 }
 
-typealias MainNavController = @Composable () -> Unit
+// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
+// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
+// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
+@Inject
+class MainNavController(
+    private val viewModelCreator: () -> MainNavControllerViewModel,
+    private val plannerScreen: PlannerScreen,
+    private val diveConfigurationScreen: DiveConfigurationScreen,
+    private val settingsScreen: SettingsScreen,
+    private val termsAndConditionsScreen: TermsAndConditionsScreen,
+    private val aboutScreen: AboutScreen,
+) {
+    @Composable
+    operator fun invoke() {
+        MainNavController(
+            viewModel = viewModel { viewModelCreator() },
+            plannerScreen = plannerScreen,
+            diveConfigurationScreen = diveConfigurationScreen,
+            settingsScreen = settingsScreen,
+            termsAndConditionsScreen = termsAndConditionsScreen,
+            aboutScreen = aboutScreen,
+        )
+    }
+}
 
 @Composable
-@Preview
-@AppScope
-@Inject
 fun MainNavController(
-    viewModelCreator: () -> MainNavControllerViewModel,
+    viewModel: MainNavControllerViewModel,
     plannerScreen: PlannerScreen,
     diveConfigurationScreen: DiveConfigurationScreen,
     settingsScreen: SettingsScreen,
     termsAndConditionsScreen: TermsAndConditionsScreen,
-    aboutScreen: AboutScreen
+    aboutScreen: AboutScreen,
 ) {
-
-    val viewModel = viewModel {
-        viewModelCreator()
-    }
 
     val startDestination = when (viewModel.settings.value.termsAndConditionsAccepted) {
         false -> Destinations.TERMS_AND_CONDITIONS_INITIAL

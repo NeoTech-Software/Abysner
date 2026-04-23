@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.data.diveplanning.resources.ConfigurationResourceV1
 import org.neotech.app.abysner.data.diveplanning.resources.DivePlanInputResourceV1
 import org.neotech.app.abysner.data.diveplanning.resources.MultiDivePlanInputResourceV1

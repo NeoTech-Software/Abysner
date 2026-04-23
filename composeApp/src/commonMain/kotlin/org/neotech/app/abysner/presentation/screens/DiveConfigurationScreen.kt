@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -31,21 +30,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
-import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
@@ -62,16 +57,28 @@ import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTran
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import kotlin.math.abs
 
-
-typealias DiveConfigurationScreen = @Composable (navController: NavHostController) -> Unit
-
-@OptIn(ExperimentalMaterial3Api::class)
+// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
+// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
+// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
 @Inject
+class DiveConfigurationScreen(
+    private val planningRepository: PlanningRepository,
+) {
+    @Composable
+    operator fun invoke(navController: NavHostController) {
+        DiveConfigurationScreen(
+            navController = navController,
+            planningRepository = planningRepository,
+        )
+    }
+}
+
 @Composable
 fun DiveConfigurationScreen(
+    navController: NavHostController,
     planningRepository: PlanningRepository,
-    @Assisted navController: NavHostController = rememberNavController()
 ) {
+    // TODO should be adding a ViewModel to this screen
     val configuration by planningRepository.configuration.collectAsState()
     DiveConfigurationScreen(
         navController = navController,

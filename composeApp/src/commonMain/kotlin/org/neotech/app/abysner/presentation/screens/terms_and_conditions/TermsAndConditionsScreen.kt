@@ -36,11 +36,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -49,32 +49,41 @@ import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownPadding
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.runBlocking
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.onlyBottom
 import org.neotech.app.abysner.presentation.component.core.withoutBottom
 import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.UiState
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import org.neotech.app.abysner.presentation.utilities.EventEffect
 import org.neotech.app.abysner.presentation.utilities.ConfigurePreviewContext
+import org.neotech.app.abysner.presentation.utilities.EventEffect
 import org.neotech.app.abysner.presentation.utilities.closeApp
 import org.neotech.app.abysner.presentation.utilities.consumed
 
-typealias TermsAndConditionsScreen = @Composable (navController: NavHostController) -> Unit
-
-@OptIn(ExperimentalMaterial3Api::class)
+// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
+// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
+// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
 @Inject
-@Composable
-fun TermsAndConditionsScreen(
-    @Assisted navController: NavHostController = rememberNavController(),
-    viewModelCreator: () -> TermsAndConditionsViewModel,
+class TermsAndConditionsScreen(
+    private val viewModelCreator: () -> TermsAndConditionsViewModel,
 ) {
-    val viewModel = viewModel { viewModelCreator() }
+    @Composable
+    operator fun invoke(navController: NavHostController = rememberNavController()) {
+        TermsAndConditionsScreen(
+            navController = navController,
+            viewModel = viewModel { viewModelCreator() }
+        )
+    }
+}
+
+@Composable
+private fun TermsAndConditionsScreen(
+    navController: NavHostController,
+    viewModel: TermsAndConditionsViewModel
+) {
     val uiState: UiState = viewModel.uiState.collectAsState().value
     TermsAndConditionsScreen(
         navController = navController,
@@ -85,7 +94,6 @@ fun TermsAndConditionsScreen(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Inject
 @Composable
 fun TermsAndConditionsScreen(
     navController: NavHostController = rememberNavController(),

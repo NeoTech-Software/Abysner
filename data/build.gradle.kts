@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKmpLibrary)
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.metro)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.kover)
 }
@@ -69,7 +69,6 @@ kotlin {
 
         commonMain.dependencies {
             implementation(project(":domain"))
-            implementation(libs.kotlinInject.runtimeKmp)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.kotlinx.serialization)
