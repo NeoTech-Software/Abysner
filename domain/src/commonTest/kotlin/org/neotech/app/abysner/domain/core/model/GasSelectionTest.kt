@@ -19,12 +19,6 @@ import kotlin.test.assertNull
 
 class GasSelectionTest {
 
-    private val environment = Environment.Default
-
-    private fun cylinders(vararg gas: Gas) = gas.map { Cylinder.steel12Liter(it) }
-
-    private fun ambient(meters: Double): Double = metersToAmbientPressure(meters, environment).value
-
     @Test
     fun findBestGas_returnsNullWhenAllGasesExceedMaxPPO2() {
         val cylinders = cylinders(Gas.Air, Gas.Nitrox32, Gas.Nitrox50, Gas.Oxygen)
@@ -169,6 +163,36 @@ class GasSelectionTest {
         )
         assertEquals(Gas.Air, result?.gas)
     }
+
+    @Test
+    fun findBestGas_usesExactModWhenToleranceIsZero() {
+        // O2 in fresh water has a MOD of about 5.98 meter at ppO2 1.6.
+        val cylinders = cylinders(Gas.Air, Gas.Oxygen)
+        val result = cylinders.findBestGas(
+            ambientPressure = ambient(meters = 6.0),
+            maxPpO2 = 1.6,
+            maxEquivalentNarcoticAmbientPressure = END_UNSPECIFIED,
+            modTolerance = 0.0
+        )
+        assertEquals(Gas.Air, result?.gas)
+    }
+
+    @Test
+    fun findBestGas_usesTolerantModByDefault() {
+        // O2 in fresh water has a MOD of about 5.98 meter at ppO2 1.6.
+        val cylinders = cylinders(Gas.Air, Gas.Oxygen)
+        val result = cylinders.findBestGas(
+            ambientPressure = ambient(meters = 6.0),
+            maxPpO2 = 1.6,
+            maxEquivalentNarcoticAmbientPressure = END_UNSPECIFIED
+        )
+        assertEquals(Gas.Oxygen, result?.gas)
+    }
+
+    private fun cylinders(vararg gas: Gas) = gas.map { Cylinder.steel12Liter(it) }
+
+    private fun ambient(meters: Double, environment: Environment = Environment.Default): Double =
+        metersToAmbientPressure(meters, environment).value
 }
 
 private const val END_UNSPECIFIED = Double.MAX_VALUE

@@ -90,7 +90,7 @@ fun GasPropertiesComponent(
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
             val mod = gas?.let {
-                "${round(it.oxygenMod(maxPPO2, environment)).toInt()}m"
+                "${it.oxygenModRounded(maxPPO2, environment)}m"
             } ?: EMPTY_PLACEHOLDER
 
             FlipCardComponent(
@@ -118,7 +118,7 @@ fun GasPropertiesComponent(
             if(showSecondaryPPO2) {
 
                 val modSecondary = gas?.let {
-                    "${round(it.oxygenMod(maxPPO2Secondary!!, environment)).toInt()}m"
+                    "${it.oxygenModRounded(maxPPO2Secondary!!, environment)}m"
                 } ?: EMPTY_PLACEHOLDER
 
                 FlipCardComponent(

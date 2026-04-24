@@ -14,6 +14,7 @@ package org.neotech.app.abysner.domain.decompression.model
 
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.diveplanning.assertSegment
 import kotlin.test.Test
@@ -21,6 +22,7 @@ import kotlin.test.assertEquals
 
 class CompactSimilarSegmentsTest {
 
+    private val environment = Environment.Default
     private val airCylinder = Cylinder.steel12Liter(Gas.Air)
     private val nitroxCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox50)
 
@@ -221,7 +223,7 @@ class CompactSimilarSegmentsTest {
         cylinder: Cylinder = airCylinder,
         gfCeilingAtEnd: Double = 0.0,
         breathingMode: BreathingMode = BreathingMode.oc(),
-    ) = DiveSegment(
+    ) = DiveSegment.fromMeters(
         start = start,
         duration = duration,
         startDepth = depth,
@@ -230,6 +232,7 @@ class CompactSimilarSegmentsTest {
         gfCeilingAtEnd = gfCeilingAtEnd,
         type = type,
         breathingMode = breathingMode,
+        environment = environment,
     )
 
     private fun travelSegment(
@@ -239,7 +242,7 @@ class CompactSimilarSegmentsTest {
         duration: Int,
         cylinder: Cylinder = airCylinder,
         breathingMode: BreathingMode = BreathingMode.oc(),
-    ) = DiveSegment(
+    ) = DiveSegment.fromMeters(
         start = start,
         duration = duration,
         startDepth = startDepth,
@@ -252,6 +255,7 @@ class CompactSimilarSegmentsTest {
             DiveSegment.Type.ASCENT
         },
         breathingMode = breathingMode,
+        environment = environment,
     )
 }
 

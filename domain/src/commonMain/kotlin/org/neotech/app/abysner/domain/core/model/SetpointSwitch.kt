@@ -13,12 +13,12 @@
 package org.neotech.app.abysner.domain.core.model
 
 /**
- * Describes a CCR setpoint switch that should occur when the diver crosses a specific depth. This
- * can be fed into the [org.neotech.app.abysner.domain.decompression.DecompressionPlanner] to have
- * it automatically switch when certain depths are crossed during the dive.
+ * Describes a CCR setpoint switch that should occur when the diver crosses a specific ambient
+ * pressure. This can be fed into the
+ * [org.neotech.app.abysner.domain.decompression.DecompressionPlanner] to have it automatically
+ * switch when certain pressures are crossed during the dive.
  */
 data class SetpointSwitch(
-    val depth: Int,
+    val ambientPressure: Double,
     val toBreathingMode: BreathingMode.ClosedCircuit,
 )
-

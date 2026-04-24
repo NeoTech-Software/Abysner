@@ -19,6 +19,9 @@ import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.SetpointSwitch
+import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
+import org.neotech.app.abysner.domain.core.physics.metersToHydrostaticPressure
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
@@ -26,6 +29,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.AssignedCylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.gasplanning.OxygenToxicityCalculator
+import org.neotech.app.abysner.domain.utilities.removeFloatingPointNoise
 import kotlin.time.Duration
 
 /**
@@ -94,17 +98,7 @@ class DivePlanner(
             )
         }
 
-        val decompressionPlanner = DecompressionPlanner(
-            environment = configuration.environment,
-            maxPpO2 = configuration.maxPPO2Deco,
-            maxEquivalentNarcoticDepth = configuration.maxEND,
-            ascentRate = configuration.maxAscentRate,
-            decoStepSize = configuration.decoStepSize,
-            lastDecoStopDepth = configuration.lastDecoStopDepth,
-            forceMinimalDecoStopTime = configuration.forceMinimalDecoStopTime,
-            gasSwitchTime = configuration.gasSwitchTime,
-            model = model
-        )
+        val decompressionPlanner = createDecompressionPlanner(model, configuration)
 
         decompressionPlanner.setDecoGases(decoCylinders)
 
@@ -117,13 +111,14 @@ class DivePlanner(
             plan
         }
 
-        var currentDepth = 0.0
+        var currentPressure = configuration.environment.atmosphericPressure
         effectivePlan.forEach {
-            if (it.depth.toDouble() != currentDepth) {
+            val sectionPressure = metersToAmbientPressure(it.depth.toDouble(), configuration.environment).value
+            if (sectionPressure != currentPressure) {
 
-                val difference = currentDepth - it.depth
+                val pressureDifference = currentPressure - sectionPressure
 
-                if(difference > 0) {
+                if(pressureDifference > 0) {
                     // Ascending
 
                     val runtime = decompressionPlanner.runtime
@@ -138,10 +133,10 @@ class DivePlanner(
                         // Only allow the listed bottom gas to get to this segment
                         // This is similar to what MultiDeco does
                         decompressionPlanner.setDecoGases(listOf(it.cylinder))
-                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode, setpointSwitch = ascentSwitch)
+                        decompressionPlanner.calculateDecompression(toAmbientPressure = sectionPressure, breathingMode = breathingMode, setpointSwitch = ascentSwitch)
                         decompressionPlanner.setDecoGases(gases)
                     } else {
-                        decompressionPlanner.calculateDecompression(toDepth = it.depth, breathingMode = breathingMode, setpointSwitch = ascentSwitch)
+                        decompressionPlanner.calculateDecompression(toAmbientPressure = sectionPressure, breathingMode = breathingMode, setpointSwitch = ascentSwitch)
                     }
 
                     val timeSpend = decompressionPlanner.runtime - runtime
@@ -152,7 +147,7 @@ class DivePlanner(
                         throw NotEnoughTimeToDecompress()
                     } else if(timeLeftAtPlannedDepth > 0) {
                         decompressionPlanner.addFlat(
-                            it.depth.toDouble(),
+                            sectionPressure,
                             it.cylinder,
                             timeLeftAtPlannedDepth,
                             breathingMode,
@@ -162,7 +157,7 @@ class DivePlanner(
 
                 } else {
                     // Descending
-                    val timeToChange = configuration.travelTime(difference)
+                    val timeToChange = configuration.travelTime(pressureDifference, configuration.environment)
 
                     val timeLeftAtPlannedDepth = it.duration - timeToChange
 
@@ -171,8 +166,8 @@ class DivePlanner(
                     val ascentSwitchForTts = configuration.ascentSetpointSwitch(breathingMode)
 
                     decompressionPlanner.addDepthChange(
-                        currentDepth,
-                        it.depth.toDouble(),
+                        currentPressure,
+                        sectionPressure,
                         it.cylinder,
                         timeToChange,
                         descentBreathingMode,
@@ -184,7 +179,7 @@ class DivePlanner(
                         throw NotEnoughTimeToReachDepth()
                     } else if(timeLeftAtPlannedDepth > 0) {
                         decompressionPlanner.addFlat(
-                            it.depth.toDouble(),
+                            sectionPressure,
                             it.cylinder,
                             timeLeftAtPlannedDepth,
                             breathingMode,
@@ -192,17 +187,17 @@ class DivePlanner(
                     }
                     decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex, ascentSwitchForTts)
                 }
-                currentDepth = it.depth.toDouble()
+                currentPressure = sectionPressure
             } else {
                 decompressionPlanner.addFlat(
-                    it.depth.toDouble(),
+                    sectionPressure,
                     it.cylinder,
                     it.duration,
                     breathingMode,
                 )
                 val ascentSwitchForTts = configuration.ascentSetpointSwitch(breathingMode)
                 decompressionPlanner.collectTts(breathingMode, isCcr, ttsBySegmentIndex, ascentSwitchForTts)
-                currentDepth = it.depth.toDouble()
+                currentPressure = sectionPressure
             }
         }
 
@@ -218,7 +213,7 @@ class DivePlanner(
         } else {
             null
         }
-        decompressionPlanner.calculateDecompression(toDepth = 0, breathingMode = ascentBreathingMode, setpointSwitch = finalAscentSwitch)
+        decompressionPlanner.calculateDecompression(toAmbientPressure = configuration.environment.atmosphericPressure, breathingMode = ascentBreathingMode, setpointSwitch = finalAscentSwitch)
 
         val segments = decompressionPlanner.getSegments().mapIndexed { index, segment ->
             ttsBySegmentIndex[index]?.let {
@@ -231,6 +226,7 @@ class DivePlanner(
             alternativeAccents = decompressionPlanner.getAlternativeAccents(),
             cylinders = cylinders.toPersistentList(),
             configuration = configuration,
+            // TODO should this be part of DivePlan? Or part of DivePlanSet as a OxygenPlan? Like GasPlan?
             totalCns = OxygenToxicityCalculator.calculateCns(segments, configuration.environment),
             totalOtu = OxygenToxicityCalculator.calculateOtu(segments, configuration.environment)
         )
@@ -252,6 +248,33 @@ class DivePlanner(
             environment = configuration.environment,
             gfLow = configuration.gfLow,
             gfHigh = configuration.gfHigh,
+        )
+    }
+
+    private fun createDecompressionPlanner(
+        model: DecompressionModel,
+        configuration: Configuration,
+    ): DecompressionPlanner {
+        val environment = configuration.environment
+        return DecompressionPlanner(
+            surfacePressure = environment.atmosphericPressure,
+            maxPpO2 = configuration.maxPPO2Deco,
+            maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(configuration.maxEND, environment).value,
+            ascentRatePressureDelta = metersToHydrostaticPressure(configuration.maxAscentRate, environment).value,
+            decoStepSizePressureDelta = metersToHydrostaticPressure(configuration.decoStepSize.toDouble(), environment).value,
+            lastDecoStopAmbientPressure = metersToAmbientPressure(configuration.lastDecoStopDepth.toDouble(), environment).value,
+            displayUnitPressureDelta = metersToHydrostaticPressure(1.0, environment).value,
+            forceMinimalDecoStopTime = configuration.forceMinimalDecoStopTime,
+            gasSwitchTime = configuration.gasSwitchTime,
+            model = model,
+            pressureToDepth = { pressure ->
+                // This is not strictly required to make the UI work, since the UI already formats
+                // to zero decimals or 1 maybe 2 decimals at most. However, it makes the current
+                // test assertions easier to read, since these are usually in whole meters, without
+                // this noise normalization tolerance handling at assertion call sites would be
+                // required, or more precise less readable floating point numbers.
+                removeFloatingPointNoise(ambientPressureToMeters(pressure, environment))
+            },
         )
     }
 
@@ -287,3 +310,5 @@ class DivePlanner(
 
     class NotEnoughTimeToDecompress : PlanningException()
 }
+
+

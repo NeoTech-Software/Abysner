@@ -455,6 +455,63 @@ class DivePlannerTest {
         segments.assertSegment(17, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 13, gas = diluent, breathingMode = high)
         segments.assertSegment(18, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = high)
     }
+
+    /**
+     * Abysner uses very exact calculations, we take into account atmospheric pressures, exact
+     * density values for different types of water. This leads to very exact MOD calculations, which
+     * can be slightly different from commonly accepted gas switch depths. Also gas switches are
+     * usually done at 3 meter of 10 feet steps from the surface. The DecompressionPlanner takes
+     * care of aligning gas switches to those steps. We also use a tiny bit of tolerace on MOD
+     * calculations to make sure that especially in the metric system 100% oxygen at sea-level using
+     * 1.6 as max PPO2 still
+     * allows switching at a depth of 6 meters (while in reality it is probably closer to 5.9
+     * meters), without these tolerances it would clamp to 3 meters which divers don't really expect
+     * nor plan for.
+     *
+     * This test verifies that for very common gas types, the switches are at the expected depths
+     * when diving at sea-level.
+     *
+     * Also see: [Gas.MOD_TOLERANCE].
+     */
+    @Test
+    fun referencePlanGasSwitchDepths_switchesAtCommonlyAcceptedDepths() {
+        val bottomGas = Cylinder.steel12Liter(Gas.Air)
+        val decoGas50 = Cylinder.aluminium80Cuft(Gas.Nitrox50)
+        val decoGas80 = Cylinder.aluminium80Cuft(Gas.Nitrox80)
+        val decoGasO2 = Cylinder.aluminium80Cuft(Gas.Oxygen)
+        val divePlanner = DivePlanner(
+            Configuration(
+                maxAscentRate = 5.0,
+                maxDescentRate = 5.0,
+                gfLow = 0.35,
+                gfHigh = 0.75,
+                salinity = Salinity.WATER_SALT,
+                algorithm = Algorithm.BUHLMANN_ZH16C,
+                altitude = 0.0,
+                decoStepSize = 3,
+                lastDecoStopDepth = 3,
+                gasSwitchTime = 1
+            )
+        )
+
+        val plannedSections = listOf(DiveProfileSection(duration = 20, 40, bottomGas))
+
+        val divePlan = divePlanner.addDive(
+            plan = plannedSections,
+            cylinders = listOf(decoGas50, decoGas80, decoGasO2).assign()
+        )
+        val plan = divePlan.segmentsCollapsed
+
+        // EAN50 switch at 21m (tolerant MOD ~22.2m, next 3m grid point at 21m)
+        plan.assertSegment(3, DiveSegment.Type.GAS_SWITCH, startDepth = 21.0, endDepth = 21.0, duration = 1, gas = bottomGas)
+        plan.assertSegment(4, DiveSegment.Type.ASCENT,     startDepth = 21.0, endDepth = 9.0,  duration = 3, gas = decoGas50)
+        // EAN80 switch at 9m (tolerant MOD ~10.3m, next 3m grid point at 9m)
+        plan.assertSegment(5, DiveSegment.Type.GAS_SWITCH, startDepth = 9.0,  endDepth = 9.0,  duration = 1, gas = decoGas50)
+        plan.assertSegment(6, DiveSegment.Type.ASCENT,     startDepth = 9.0,  endDepth = 6.0,  duration = 1, gas = decoGas80)
+        // O2 switch at 6m (tolerant MOD ~6.3m, on the 3m grid)
+        plan.assertSegment(7, DiveSegment.Type.GAS_SWITCH, startDepth = 6.0,  endDepth = 6.0,  duration = 1, gas = decoGas80)
+        plan.assertSegment(8, DiveSegment.Type.ASCENT,     startDepth = 6.0,  endDepth = 3.0,  duration = 1, gas = decoGasO2)
+    }
 }
 
 fun List<DiveSegment>.assertSegment(
