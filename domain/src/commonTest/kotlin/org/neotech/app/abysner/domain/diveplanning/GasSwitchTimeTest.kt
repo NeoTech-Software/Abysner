@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -87,5 +87,40 @@ class GasSwitchTimeTest {
         val gasSwitchSegment = assertNotNull(plan.find { it.isGasSwitch })
         assertEquals(0, gasSwitchSegment.duration)
         assertEquals(21.0, gasSwitchSegment.startDepth)
+    }
+
+    /**
+     * Without EAN80 this plan has a 1-minute deco stop at 9 meter. Adding EAN80 (available for
+     * switching to at 9 meter) eliminates that stop directly, as the lookahead ascent notices that
+     * during the ascent using EAN80 to 6 meter the ceiling moves to 6 meter (or less) as well. If
+     * this skip happens, the 0-duration gas switch marker at 9 meter must still appear.
+     */
+    @Test
+    fun gasSwitchDuringAscent_preservedWhenLookaheadSkipsStop() {
+        val nitrox80Cylinder = Cylinder.aluminium80Cuft(Gas.Nitrox80)
+        val divePlanner = DivePlanner(Configuration(
+            maxAscentRate = 5.0,
+            maxDescentRate = 5.0,
+            gfLow = 0.3,
+            gfHigh = 0.7,
+            salinity = Salinity.WATER_SALT,
+            algorithm = Algorithm.BUHLMANN_ZH16C,
+            altitude = 0.0,
+            decoStepSize = 3,
+            lastDecoStopDepth = 3,
+            gasSwitchTime = 0
+        ))
+        val plan = divePlanner.addDive(
+            listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
+            listOf(decoGas, nitrox80Cylinder).assign()
+        )
+
+        val segments = plan.segmentsCollapsed
+
+        // println(plan.toString(compact = false))
+
+        val nitrox80Switch = segments.find { it.isGasSwitch && it.startDepth == 9.0 }
+        assertNotNull(nitrox80Switch)
+        assertEquals(0, nitrox80Switch.duration)
     }
 }

@@ -120,7 +120,7 @@ plan, see the plan specific tables for those.
 | O2 Narcotic        | true             |
 
 ## Reference plan 1
-**20 meter, 20 minutes\*, single-gas (21/0)**
+**20 meter, 20 minutes, single-gas (21/0)**
 
 | GF    | Salinity | Altitude | Last-deco stop |
 |-------|----------|----------|----------------|
@@ -165,7 +165,7 @@ plan, see the plan specific tables for those.
 </details>
 
 ## Reference plan 2
-**30 meter, 30 minutes\*, multi-gas**
+**30 meter, 30 minutes, multi-gas**
 
 | GF    | Salinity | Altitude | Last-deco stop |
 |-------|----------|----------|----------------|
@@ -185,7 +185,7 @@ plan, see the plan specific tables for those.
 | ⏹ | 6m    | 11min    | 48min   | 50/0 |
 | ➚ | 0m    | 2min     | 50min   | 50/0 |
 **CNS**: 12%  
-**OTU**: 35
+**OTU**: 34
 </details>
 
 <details>
@@ -240,7 +240,7 @@ plan, see the plan specific tables for those.
 
 
 ## Reference plan 3
-**45 meter, 15 minutes\*, multi-gas, trimix**
+**45 meter, 15 minutes, multi-gas, trimix**
 
 | GF    | Salinity | Altitude | Last-deco stop |
 |-------|----------|----------|----------------|
@@ -257,17 +257,17 @@ plan, see the plan specific tables for those.
 | - | 21m   | 1min     | 21min   | 50/0  |
 | ➚ | 6m    | 3min     | 24min   | 50/0  |
 | ⏹ | 6m    | 2min     | 26min   | 50/0  |
-| ⏹ | 3m    | 5min     | 31min   | 50/0  |
-| ➚ | 0m    | 1min     | 32min   | 50/0  |
+| ⏹ | 3m    | 6min     | 32min   | 50/0  |
+| ➚ | 0m    | 1min     | 33min   | 50/0  |
 **CNS**: 9%  
-**OTU**: 25
+**OTU**: 24
 </details>
 
 <details>
 <summary>Subsurface</summary>
 
 > **Observations:**
-> Subsurface merges the ascent from 21 meter to 9 meter into the 9 meter stop, while Abysner shows
+> Subsurface merges the ascent from 21 meter to 6 meter into the 6 meter stop, while Abysner shows
 > the ascent as a separate segment followed by the stop.
 
 |   | Depth | Duration | Runtime | Gas   |
@@ -294,8 +294,8 @@ plan, see the plan specific tables for those.
 > final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
 >
 > - DIVESOFT.APP does not appear to include a gas switch duration. With the gas switch duration set
->   to one minute Abysner produces total runtime of 32min, compared to 33min for DIVESOFT.APP. The
->   individual stop distributions differ ever so slightly.
+>   to one minute Abysner produces the same total runtime of 33 minutes. The individual stop
+>   distributions differ ever so slightly.
 
 |   | Depth | Duration | Runtime | Gas   |
 |---|-------|----------|---------|-------|
@@ -314,7 +314,7 @@ plan, see the plan specific tables for those.
 
 
 ## Reference plan 4
-**60 meter, 20 minutes\*, multi-gas, trimix, altitude**
+**60 meter, 20 minutes, multi-gas, trimix, altitude**
 
 | GF    | Salinity | Altitude    | Last-deco stop |
 |-------|----------|-------------|----------------|
@@ -333,11 +333,11 @@ plan, see the plan specific tables for those.
 | ⏹ | 15m   | 1min     | 32min   | 50/0  |
 | ⏹ | 12m   | 2min     | 34min   | 50/0  |
 | ⏹ | 9m    | 4min     | 38min   | 50/0  |
-| ⏹ | 6m    | 6min     | 44min   | 50/0  |
-| ⏹ | 3m    | 12min    | 56min   | 50/0  |
-| ➚ | 0m    | 1min     | 57min   | 50/0  |
+| ⏹ | 6m    | 7min     | 45min   | 50/0  |
+| ⏹ | 3m    | 13min    | 58min   | 50/0  |
+| ➚ | 0m    | 1min     | 59min   | 50/0  |
 **CNS**: 15%  
-**OTU**: 40
+**OTU**: 41
 </details>
 
 <details>
@@ -435,10 +435,10 @@ Out:
 | ➙ | 40m   | 2min     | 32min   | 21/20 |
 | ➚ | 9m    | 7min     | 39min   | 21/20 |
 | ⏹ | 9m    | 3min     | 42min   | 21/20 |
-| ⏹ | 6m    | 6min     | 48min   | 21/20 |
-| ⏹ | 3m    | 15min    | 63min   | 21/20 |
-| ➚ | 0m    | 1min     | 64min   | 21/20 |
-**CNS**: 9%  
+| ⏹ | 6m    | 7min     | 49min   | 21/20 |
+| ⏹ | 3m    | 17min    | 66min   | 21/20 |
+| ➚ | 0m    | 1min     | 67min   | 21/20 |
+**CNS**: 8%  
 **OTU**: 26
 </details>
 
@@ -505,8 +505,7 @@ Out:
 |---|-------|----------|---------|------|---------------|
 | ➘ | 30m   | 6min     | 6min    | 21/0 | CCR (SP 0.7)  |
 | ➙ | 30m   | 24min    | 30min   | 21/0 | CCR (SP 1.2)  |
-| ➚ | 6m    | 5min     | 35min   | 21/0 | CCR (SP 1.2)  |
-| ⏹ | 6m    | 1min     | 36min   | 21/0 | CCR (SP 1.2)  |
+| ➚ | 3m    | 6min     | 36min   | 21/0 | CCR (SP 1.2)  |
 | ⏹ | 3m    | 2min     | 38min   | 21/0 | CCR (SP 1.2)  |
 | ➚ | 0m    | 1min     | 39min   | 21/0 | CCR (SP 1.2)  |
 **CNS**: 17%  
@@ -515,10 +514,6 @@ Out:
 
 <details>
 <summary>Subsurface</summary>
-
-> **Observations:**
-> Subsurface does not require a 6 meter stop, while Abysner barely does (1 minute). This is likely
-> due to minor algorithmic differences in tissue loading precision.
 
 |   | Depth | Duration | Runtime | Gas  | Mode          |
 |---|-------|----------|---------|------|---------------|
@@ -580,21 +575,19 @@ the bottom section.
 | - | 30m   | 1min     | 31min   | 21/0 | Bailout to OC |
 | ➚ | 9m    | 5min     | 36min   | 21/0 | OC            |
 | ⏹ | 9m    | 1min     | 37min   | 21/0 | OC            |
-| ⏹ | 6m    | 4min     | 41min   | 21/0 | OC            |
-| ⏹ | 3m    | 8min     | 49min   | 21/0 | OC            |
-| ➚ | 0m    | 1min     | 50min   | 21/0 | OC            |
-**CNS**: 14%  
-**OTU**: 38
+| ⏹ | 6m    | 5min     | 42min   | 21/0 | OC            |
+| ⏹ | 3m    | 9min     | 51min   | 21/0 | OC            |
+| ➚ | 0m    | 1min     | 52min   | 21/0 | OC            |
+**CNS**: 13%  
+**OTU**: 37
 </details>
 
 <details>
 <summary>Subsurface</summary>
 
 > **Observations:**
-> Subsurface produces a 1 minute longer runtime (51 vs 50 minutes), which is typical algorithmic
-> variance also seen in the other reference plans. This may be triggered by the slower initial
-> ascent in Abysner (5 vs 4 minutes) allows for more off-gassing during the ascent itself, resulting
-> in slightly shorter subsequent stops.
+> Subsurface produces a 1 minute shorter runtime (51 vs 52 minutes) with slightly different stop
+> distributions.
 
 |   | Depth | Duration | Runtime | Gas  | Mode          |
 |---|-------|----------|---------|------|---------------|
@@ -620,7 +613,7 @@ the bottom section.
 > match up to the runtime. Duration values below were derived by subtracting runtimes and the
 > final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
 >
-> - DIVESOFT.APP produces a significantly longer runtime (60 min vs 50/51 min for Abysner and
+> - DIVESOFT.APP produces a significantly longer runtime (60 min vs 52/51 min for Abysner and
 >   Subsurface). This is a much larger difference than seen in the OC reference plans. It is unclear
 >   why this is, but the DIVESOFT.APP versions between OC and CCR plans differ, could that be a
 >   cause? Or is it a difference in how the bailout is handled?
@@ -645,7 +638,7 @@ the bottom section.
 
 
 ## Reference plan 8 (CCR)
-**60 meter, 20 minutes\*, CCR with 10/70 trimix diluent, setpoints 0.7 low / 1.2 high**
+**60 meter, 20 minutes, CCR with 10/70 trimix diluent, setpoints 0.7 low / 1.2 high**
 
 | GF    | Salinity | Altitude | Last-deco stop | Low SP | High SP |
 |-------|----------|----------|----------------|--------|---------|
@@ -663,13 +656,13 @@ the bottom section.
 | ⏹ | 21m   | 2min     | 31min   | 10/70 | CCR (SP 1.2) |
 | ⏹ | 18m   | 2min     | 33min   | 10/70 | CCR (SP 1.2) |
 | ⏹ | 15m   | 3min     | 36min   | 10/70 | CCR (SP 1.2) |
-| ⏹ | 12m   | 5min     | 41min   | 10/70 | CCR (SP 1.2) |
-| ⏹ | 9m    | 6min     | 47min   | 10/70 | CCR (SP 1.2) |
-| ⏹ | 6m    | 8min     | 55min   | 10/70 | CCR (SP 1.2) |
-| ⏹ | 3m    | 13min    | 68min   | 10/70 | CCR (SP 1.2) |
-| ➚ | 0m    | 1min     | 69min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 12m   | 4min     | 40min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 9m    | 6min     | 46min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 6m    | 9min     | 55min   | 10/70 | CCR (SP 1.2) |
+| ⏹ | 3m    | 14min    | 69min   | 10/70 | CCR (SP 1.2) |
+| ➚ | 0m    | 1min     | 70min   | 10/70 | CCR (SP 1.2) |
 **CNS**: 29%  
-**OTU**: 81
+**OTU**: 82
 </details>
 
 <details>
@@ -706,7 +699,7 @@ the bottom section.
 > match up to the runtime. Duration values below were derived by subtracting runtimes and the
 > final ascent using the leftover runtime (which is displayed by DIVESOFT.APP).
 >
-> - DIVESOFT.APP produces a longer runtime (73 min vs 69 min for Abysner and Subsurface).
+> - DIVESOFT.APP produces a longer runtime (74 min vs 70 min for Abysner and 69 min for Subsurface).
 > - DIVESOFT.APP displays 1.2 for the setpoint on the initial descent, while 0.7 was configured for
 >   descents. It is unclear whether this is just a display choice (labeling the descent with the
 >   bottom setpoint) or whether the low setpoint is not applied during descent.
@@ -728,6 +721,88 @@ the bottom section.
 **CNS**: 31%  
 **OTU**: 85  
 *DIVESOFT.APP (Android 2.5.1)*
+</details>
+
+
+## Reference plan 9 (surface interval)
+**30 meter, 30 minutes, repeated after 30-minute surface interval**
+
+Both dives are identical: 30 meters for 30 minutes on air, with a 30-minute surface interval between
+them. The second dive should produce noticeably longer decompression due to residual tissue loading
+from the first dive.
+
+| GF    | Salinity | Altitude | Last-deco stop | Surface interval |
+|-------|----------|----------|----------------|------------------|
+| 85/85 | Fresh    | 0 meters | 3 meter        | 30 minutes       |
+
+### Dive 1
+
+<details>
+<summary>Abysner</summary>
+
+|   | Depth | Duration | Runtime | Gas  |
+|---|-------|----------|---------|------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 |
+| ➙ | 30m   | 24min    | 30min   | 21/0 |
+| ➚ | 3m    | 6min     | 36min   | 21/0 |
+| ⏹ | 3m    | 8min     | 44min   | 21/0 |
+| ➚ | 0m    | 1min     | 45min   | 21/0 |
+**CNS**: 7%  
+**OTU**: 20
+</details>
+
+<details>
+<summary>Subsurface</summary>
+
+|   | Depth | Duration | Runtime | Gas  |
+|---|-------|----------|---------|------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 |
+| ➙ | 30m   | 24min    | 30min   | 21/0 |
+| ➚ | 3m    | 6min     | 36min   | 21/0 |
+| ⏹ | 3m    | 8min     | 44min   | 21/0 |
+| ➚ | 0m    | 1min     | 45min   | 21/0 |
+**CNS**: 7%  
+**OTU**: 19  
+*Subsurface (6.0.5576-CICD-release)*
+</details>
+
+### Dive 2 (after 30-minute surface interval)
+
+<details>
+<summary>Abysner</summary>
+
+|   | Depth | Duration | Runtime | Gas  |
+|---|-------|----------|---------|------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 |
+| ➙ | 30m   | 24min    | 30min   | 21/0 |
+| ➚ | 6m    | 5min     | 35min   | 21/0 |
+| ⏹ | 6m    | 1min     | 36min   | 21/0 |
+| ➚ | 3m    | 1min     | 37min   | 21/0 |
+| ⏹ | 3m    | 27min    | 64min   | 21/0 |
+| ➚ | 0m    | 1min     | 65min   | 21/0 |
+**CNS**: 7%  
+**OTU**: 20
+</details>
+
+<details>
+<summary>Subsurface</summary>
+
+> **Observations:**
+> Subsurface produces a 1 minute longer runtime (66 vs 65 minutes) with slightly different stop
+> distributions. The stop structure is the same: both planners require a 6 meter stop on the
+> repetitive dive that was not needed on the first dive.
+
+|   | Depth | Duration | Runtime | Gas  |
+|---|-------|----------|---------|------|
+| ➘ | 30m   | 6min     | 6min    | 21/0 |
+| ➙ | 30m   | 24min    | 30min   | 21/0 |
+| ➚ | 6m    | 5min     | 35min   | 21/0 |
+| ⏹ | 6m    | 2min     | 37min   | 21/0 |
+| ⏹ | 3m    | 28min    | 65min   | 21/0 |
+| ➚ | 0m    | 1min     | 66min   | 21/0 |
+**CNS**: 12%  
+**OTU**: 19  
+*Subsurface (6.0.5576-CICD-release)*
 </details>
 
 
