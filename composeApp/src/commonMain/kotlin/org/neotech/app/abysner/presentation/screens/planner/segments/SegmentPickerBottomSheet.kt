@@ -59,7 +59,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.diveplanning.model.bailoutCylinders
 import org.neotech.app.abysner.domain.diveplanning.model.ccrDiluentCylinder
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
@@ -298,7 +298,7 @@ private fun SegmentPickerBottomSheet(
                 } else if (anyErrorMessage == null) {
                     val diluentGas = cylinders.ccrDiluentCylinder()?.cylinder?.gas
                     if (diluentGas != null) {
-                        val ambientPressure = depthInMetersToBar(depth.toDouble(), environment).value
+                        val ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value
                         val diluentPpO2 = partialPressure(ambientPressure, diluentGas.oxygenFraction)
                         if (diluentPpO2 > configuration.ccrHighSetpoint) {
                             anyErrorMessage = "Warning: Diluent PPO2 exceeds setpoint at this depth!"

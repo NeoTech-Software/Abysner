@@ -14,7 +14,7 @@ package org.neotech.app.abysner.domain.gasplanning
 
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.ccrSchreinerInputs
 import kotlin.math.exp
@@ -35,7 +35,7 @@ object OxygenToxicityCalculator {
     fun calculateCns(segments: List<DiveSegment>, environment: Environment): Double {
         var cns = 0.0
         segments.forEach {
-            val averagePressure = depthInMetersToBar((it.startDepth + it.endDepth) / 2.0, environment).value
+            val averagePressure = metersToAmbientPressure((it.startDepth + it.endDepth) / 2.0, environment).value
             val ppO2 = effectivePartialOxygenPressure(it.cylinder.gas.oxygenFraction, averagePressure, it.breathingMode)
             cns += calculateCns(ppO2, it.duration)
         }
@@ -74,8 +74,8 @@ object OxygenToxicityCalculator {
         // CNS this seems to be more important (or even necessary).
         var otu = 0.0
         segments.forEach {
-            val startAmbientPressure = depthInMetersToBar(it.startDepth, environment).value
-            val endAmbientPressure = depthInMetersToBar(it.endDepth, environment).value
+            val startAmbientPressure = metersToAmbientPressure(it.startDepth, environment).value
+            val endAmbientPressure = metersToAmbientPressure(it.endDepth, environment).value
             val ppo2Start = effectivePartialOxygenPressure(it.cylinder.gas.oxygenFraction, startAmbientPressure, it.breathingMode)
             val ppo2End = effectivePartialOxygenPressure(it.cylinder.gas.oxygenFraction, endAmbientPressure, it.breathingMode)
             otu += this.calculateOtu(it.duration, ppo2Start, ppo2End)

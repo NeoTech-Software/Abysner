@@ -12,8 +12,8 @@
 
 package org.neotech.app.abysner.domain.core.model
 
-import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import kotlin.math.round
 
@@ -37,7 +37,7 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
      * Returns the oxygen MOD in meters.
      */
     fun oxygenMod(ppO2: Double, environment: Environment): Double {
-        return barToDepthInMeters(ppO2 / this.oxygenFraction, environment)
+        return ambientPressureToMeters(ppO2 / this.oxygenFraction, environment)
     }
 
     /**
@@ -57,9 +57,9 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         // Helium has a narc factor of 0 while N2 and O2 have a narc factor of 1
         val narcIndex = (this.oxygenFraction) + (this.nitrogenFraction)
 
-        val bars = depthInMetersToBar(depth, environment)
+        val bars = metersToAmbientPressure(depth, environment)
         val equivalentBars = bars.value * narcIndex
-        return barToDepthInMeters(equivalentBars, environment)
+        return ambientPressureToMeters(equivalentBars, environment)
     }
 
     val density: Double by lazy {
@@ -70,7 +70,7 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
     }
 
     fun densityAtDepth(depth: Double, environment: Environment): Double {
-        val bar = depthInMetersToBar(depth, environment)
+        val bar = metersToAmbientPressure(depth, environment)
         return density * bar.value
     }
 
@@ -79,7 +79,7 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
      */
     fun densityMod(maxAllowedDensity: Double = MAX_GAS_DENSITY, environment: Environment): Double {
         val bar = maxAllowedDensity / density
-        return barToDepthInMeters(bar, environment)
+        return ambientPressureToMeters(bar, environment)
     }
 
     /**
