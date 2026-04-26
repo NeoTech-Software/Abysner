@@ -212,7 +212,7 @@ class DecompressionPlanner(
         while (currentDepth > toDepth) {
             if (!isCcr) {
                 // Check if there is a better gas to breath at the current depth
-                val betterDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+                val betterDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, ambientPressure = metersToAmbientPressure(currentDepth, environment).value, maxPPO2 = maxppO2, maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(maxEND, environment).value)
                 // Only start using the better gas when we reach a deco increment point
 
                 if (betterDecoGas != null && betterDecoGas.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
@@ -235,7 +235,7 @@ class DecompressionPlanner(
                 var nextDepth = currentDepth - 1
                 var nextDecoGas: Cylinder?
                 while(nextDepth >= targetDepth) {
-                    nextDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = nextDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+                    nextDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, ambientPressure = metersToAmbientPressure(nextDepth, environment).value, maxPPO2 = maxppO2, maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(maxEND, environment).value)
                     if (nextDecoGas != null && nextDecoGas.gas != gas.gas && nextDepth.toInt() % decoStepSize == 0) {
                         targetDepth = nextDepth
                         break
@@ -266,7 +266,7 @@ class DecompressionPlanner(
         }
 
         if (!isCcr) {
-            val betterDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = currentDepth, environment = environment, maxPPO2 = maxppO2, maxEND = maxEND)
+            val betterDecoGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, ambientPressure = metersToAmbientPressure(currentDepth, environment).value, maxPPO2 = maxppO2, maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(maxEND, environment).value)
             if (betterDecoGas != null && betterDecoGas.gas != gas.gas && currentDepth.toInt() % decoStepSize == 0) {
                 // Gas switch time on the old gas before switching
                 addGasSwitch(currentDepth, gas, gasSwitchTime, effectiveBreathingMode)
@@ -312,10 +312,9 @@ class DecompressionPlanner(
         if (isBailout) {
             val bestBailoutGas = decoGases.findBetterGasOrFallback(
                 currentCylinder = null,
-                depth = fromDepth,
-                environment = environment,
+                ambientPressure = metersToAmbientPressure(fromDepth, environment).value,
                 maxPPO2 = maxPpO2,
-                maxEND = maxEquivalentNarcoticDepth
+                maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(maxEquivalentNarcoticDepth, environment).value
             )
             if (bestBailoutGas != null) {
                 addGasSwitch(fromDepth, gas, 1, breathingMode)
@@ -333,7 +332,7 @@ class DecompressionPlanner(
         // Check if there is a better gas to switch to at the current depth before
         // ascending. Gas switching is skipped in CCR mode (diver stays on the loop).
         if (!isCcr) {
-            val betterGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, depth = fromDepth, environment = environment, maxPPO2 = maxPpO2, maxEND = maxEquivalentNarcoticDepth)
+            val betterGas = decoGases.findBetterGasOrFallback(currentCylinder = gas, ambientPressure = metersToAmbientPressure(fromDepth, environment).value, maxPPO2 = maxPpO2, maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(maxEquivalentNarcoticDepth, environment).value)
             if (betterGas != null && betterGas.gas != gas.gas) {
                 // Gas switch time on the old gas before switching
                 addGasSwitch(fromDepth, gas, gasSwitchTime, breathingMode)

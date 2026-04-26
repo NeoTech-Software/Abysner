@@ -35,4 +35,4 @@ class PolynomialRealGasModelTest {
     }
 }
 
-private val DOUBLE_TOLERANCE = 1e-6
+private const val DOUBLE_TOLERANCE = 1e-6
