@@ -27,7 +27,7 @@ import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.core.physics.ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
@@ -44,7 +44,7 @@ fun CcrLoopPropertiesComponent(
     diluent: Gas,
     environment: Environment,
 ) {
-    val ambientPressure = depthInMetersToBar(depth.toDouble(), environment).value
+    val ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value
     val inspiredGas = diluent.inspiredGas(ambientPressure, setpoint)
     val inspiredDensity = inspiredGas.densityAtDepth(depth.toDouble(), environment)
 

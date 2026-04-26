@@ -36,7 +36,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.format
-import org.neotech.app.abysner.domain.utilities.higherThenDelta
+import org.neotech.app.abysner.domain.utilities.greaterThanTolerant
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextAlert
@@ -353,8 +353,8 @@ fun GasLimitsTable(
             Text(modifier = Modifier.weight(0.3f), text = "${gasAtDepth.depth.toInt()}m")
 
             val alertSeverityDensity = when {
-                gasAtDepth.density.higherThenDelta(Gas.MAX_GAS_DENSITY, 0.001) -> AlertSeverity.ERROR
-                gasAtDepth.density.higherThenDelta(Gas.MAX_RECOMMENDED_GAS_DENSITY, 0.001) -> AlertSeverity.WARNING
+                gasAtDepth.density.greaterThanTolerant(Gas.MAX_GAS_DENSITY, DISPLAY_TOLERANCE) -> AlertSeverity.ERROR
+                gasAtDepth.density.greaterThanTolerant(Gas.MAX_RECOMMENDED_GAS_DENSITY, DISPLAY_TOLERANCE) -> AlertSeverity.WARNING
                 else -> AlertSeverity.NONE
             }
             TextAlert(
@@ -363,7 +363,7 @@ fun GasLimitsTable(
                 text = DecimalFormat.format(2, gasAtDepth.density),
             )
 
-            val alertSeverityPPO2 = if (gasAtDepth.ppo2.higherThenDelta(Gas.MAX_PPO2, 0.001)) {
+            val alertSeverityPPO2 = if (gasAtDepth.ppo2.greaterThanTolerant(Gas.MAX_PPO2, DISPLAY_TOLERANCE)) {
                 AlertSeverity.ERROR
             } else {
                 AlertSeverity.NONE
@@ -436,4 +436,11 @@ private fun GasPlanCardComponentCcrBailoutPreview() {
         )
     }
 }
+
+/**
+ * Half-unit at 2 decimal places: prevents alerts when the displayed value rounds to exactly the
+ * threshold.
+ */
+private const val DISPLAY_TOLERANCE = 0.005
+
 

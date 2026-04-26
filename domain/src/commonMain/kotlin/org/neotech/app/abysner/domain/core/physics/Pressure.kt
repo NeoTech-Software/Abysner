@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -15,20 +15,25 @@ package org.neotech.app.abysner.domain.core.physics
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
+import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import kotlin.jvm.JvmInline
 import kotlin.math.exp
 import kotlin.math.ln
 
 /**
- * Represents pressure in metric bars, 1 bar is equal to 100.000 Pascal.
- * The idea of using an inline value class for Pressure is not to use it
- * everywhere, but instead to allow for compile-time checks (without run-time
- * performance hits) when crossing abstraction boundaries, such as crossing
- * between the [DecompressionPlanner] (works with meters currently) and
+ * Represents pressure in metric bars, 1 bar is equal to 100.000 Pascal. The idea of using an inline
+ * value class for Pressure is not to use it everywhere, but instead to allow for compile-time
+ * checks (without run-time performance hits) when crossing abstraction boundaries, such as crossing
+ * between the [DivePlanner] (works in display-units) and [DecompressionPlanner] /
  * [DecompressionModel] (works in pressure).
  */
 @JvmInline
-value class Pressure(val value: Double)
+value class Pressure(val value: Double) {
+    operator fun plus(other: Pressure): Pressure = Pressure(this.value + other.value)
+    operator fun minus(other: Pressure): Pressure = Pressure(this.value - other.value)
+    operator fun times(factor: Double): Pressure = Pressure(this.value * factor)
+    operator fun div(divisor: Double): Pressure = Pressure(this.value / divisor)
+}
 
 /**
  * Calculates the partial pressure of an individual gas component from the total pressure of the gas
@@ -60,38 +65,78 @@ fun Double.asPsiToBar(): Double = this / 14.503774
 
 fun Double.asBarToPsi(): Double = this * 14.503774
 
-
 /**
  * Converts depth in meters given a certain density (salinity) and atmospheric pressure to pressure
  * in bars including atmospheric pressure.
  *
  * @param depth water depth in meters
- * @param environment the density (salinity) of the water and atmospheric pressure.
+ * @param environment the environment to use for salinity and atmospheric pressure.
  * @return pressure at the given depth.
  */
-fun depthInMetersToBar(depth: Double, environment: Environment): Pressure {
+fun metersToAmbientPressure(depth: Double, environment: Environment): Pressure {
     val weightDensity = environment.salinity.density * GRAVITY_ON_EARTH
     return Pressure(pascalToBar(depth * weightDensity) + environment.atmosphericPressure)
 }
+
+/**
+ * Converts depth in meters given a certain salinity (density) to hydrostatic pressure in bars,
+ * which is the pressure excluding atmospheric pressure.
+ *
+ * @param depth water depth in meters.
+ * @param environment the environment to use for salinity.
+ * @return pressure at the given depth excluding atmospheric pressure.
+ */
+fun metersToHydrostaticPressure(depth: Double, environment: Environment): Pressure {
+    val weightDensity = environment.salinity.density * GRAVITY_ON_EARTH
+    return Pressure(pascalToBar(depth * weightDensity))
+}
+
+/**
+ * Converts depth in feet given a certain salinity (density) and atmospheric pressure to ambient
+ * pressure in bars, which includes atmospheric pressure.
+ *
+ * @param depth water depth in feet.
+ * @param environment the environment to use for salinity and atmospheric pressure.
+ * @return ambient pressure at the given depth, this includes atmospheric pressure.
+ */
+fun feetToAmbientPressure(depth: Double, environment: Environment): Pressure =
+    metersToAmbientPressure(depth * METERS_PER_FOOT, environment)
+
+/**
+ * Converts depth in feet given a certain salinity (density) to hydrostatic pressure in bars,
+ * which is the pressure excluding atmospheric pressure.
+ *
+ * @param depth water depth in feet.
+ * @param environment the environment to use for salinity.
+ * @return pressure at the given depth excluding atmospheric pressure.
+ */
+fun feetToHydrostaticPressure(depth: Double, environment: Environment): Pressure =
+    metersToHydrostaticPressure(depth * METERS_PER_FOOT, environment)
 
 /**
  * Converts pressure in bars including atmospheric pressure to depth in meters given a certain
  * density (salinity) and atmospheric pressure.
  *
  * @param pressure pressure including atmospheric pressure.
- * @param environment the density (salinity) of the water and atmospheric pressure.
+ * @param environment the environment to use for salinity and atmospheric pressure.
  * @return depth in meters for the given pressure.
  */
-fun barToDepthInMeters(pressure: Double, environment: Environment): Double {
+fun ambientPressureToMeters(pressure: Double, environment: Environment): Double {
     val waterPressure = pressure - environment.atmosphericPressure
     val weightDensity = environment.salinity.density * GRAVITY_ON_EARTH
     return barToPascal(waterPressure) / weightDensity
 }
 
-@Suppress("NOTHING_TO_INLINE")
-inline fun barToDepthInMeters(pressure: Pressure, environment: Environment): Double {
-    return barToDepthInMeters(pressure.value, environment)
-}
+/**
+ * Converts ambient pressure in bars to water depth in feet given a certain salinity (density) and
+ * atmospheric pressure.
+ *
+ * @param pressure ambient pressure (hydrostatic + atmospheric pressure).
+ * @param environment the environment to use for salinity and atmospheric pressure.
+ * @return depth in feet for the given pressure.
+ */
+fun ambientPressureToFeet(pressure: Double, environment: Environment): Double =
+    ambientPressureToMeters(pressure, environment) / METERS_PER_FOOT
 
 /**
  * Transforms altitude in meters to pressure in bars.
@@ -123,11 +168,16 @@ const val ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL = 1.01325
 
 /**
  *  Constant temperature in degrees Kelvin which is used during pressure to altitude calculations.
- *  This is essentially 15 degrees celsius.
+ *  This is essentially 15 degrees Celsius.
  */
 private const val ATMOSPHERIC_TEMPERATURE = 273.15 + 15.0
 
 /**
- * Gravity on earth in meters per seconds squared (m/s²)
+ * Gravity on earth in meters per second squared (m/s²).
  */
 internal const val GRAVITY_ON_EARTH = 9.80665
+
+/**
+ * Constant for foot to meter conversion, according to international standard.
+ */
+private const val METERS_PER_FOOT = 0.3048

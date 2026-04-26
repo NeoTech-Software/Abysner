@@ -13,7 +13,7 @@
 package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
 import org.neotech.app.abysner.domain.core.model.Environment
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
@@ -122,7 +122,7 @@ class BuhlmannUtilitiesTest {
         val nitrogenFractionDiluent = 0.20
         val setpoint = 1.0
         val surfacePressure = Environment.SeaLevelFresh.atmosphericPressure
-        val endPressure = depthInMetersToBar(90.0, Environment.SeaLevelFresh).value
+        val endPressure = metersToAmbientPressure(90.0, Environment.SeaLevelFresh).value
         val time = 5.0
         val pressureRate = (endPressure - surfacePressure) / time
         val initialNitrogenPressure = 0.79 * surfacePressure
@@ -174,7 +174,7 @@ class BuhlmannUtilitiesTest {
         val nitrogenFractionDiluent = 0.20
         val setpoint = 1.0
         val surfacePressure = Environment.SeaLevelFresh.atmosphericPressure
-        val endPressure = depthInMetersToBar(90.0, Environment.SeaLevelFresh).value
+        val endPressure = metersToAmbientPressure(90.0, Environment.SeaLevelFresh).value
         val time = 5.0
         val pressureRate = (endPressure - surfacePressure) / time
         val initialNitrogenPressure = 0.79 * surfacePressure

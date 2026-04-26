@@ -12,7 +12,7 @@
 
 package org.neotech.app.abysner.domain.core.model
 
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import kotlin.math.round
 
 /**
@@ -54,7 +54,7 @@ fun List<Cylinder>.findBestGas(depth: Double, environment: Environment, maxPpO2:
  * picks the highest-O2 option as the least-bad choice. Returns null if the list is empty.
  */
 internal fun List<Cylinder>.findBreathableFallbackGas(depth: Double, environment: Environment, minPPO2: Double = Gas.MIN_PPO2, ): Cylinder? {
-    val pressure = depthInMetersToBar(depth, environment).value
+    val pressure = metersToAmbientPressure(depth, environment).value
     val nonHypoxic = filter { it.gas.oxygenFraction * pressure >= minPPO2 }
     return if (nonHypoxic.isNotEmpty()) {
         nonHypoxic.minByOrNull { it.gas.oxygenFraction }

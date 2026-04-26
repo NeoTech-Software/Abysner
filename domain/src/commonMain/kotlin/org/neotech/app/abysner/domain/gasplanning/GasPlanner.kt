@@ -18,7 +18,7 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
@@ -223,8 +223,8 @@ class GasPlanner {
         // Diluent usage due to loop expansion
         val diluentLitersByCylinder = mutableMapOf<Cylinder, Double>()
         forEach { segment ->
-            val startPressure = depthInMetersToBar(segment.startDepth, environment).value
-            val endPressure = depthInMetersToBar(segment.endDepth, environment).value
+            val startPressure = metersToAmbientPressure(segment.startDepth, environment).value
+            val endPressure = metersToAmbientPressure(segment.endDepth, environment).value
             val pressureIncrease = endPressure - startPressure
             if (pressureIncrease > 0.0) {
                 val expansion = pressureIncrease * ccrLoopVolume
@@ -250,7 +250,7 @@ class GasPlanner {
         val requiredLitersByCylinder = mutableMapOf<Cylinder, Double>()
         forEach { segment ->
             if (segment.breathingMode is BreathingMode.OpenCircuit) {
-                val pressure = depthInMetersToBar(segment.averageDepth, environment)
+                val pressure = metersToAmbientPressure(segment.averageDepth, environment)
                 val sacAtDepth = sac * pressure.value
                 val liters = segment.duration * sacAtDepth
                 requiredLitersByCylinder.updateOrInsert(segment.cylinder, liters, Double::plus)

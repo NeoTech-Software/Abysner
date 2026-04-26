@@ -2,7 +2,7 @@ package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.diveplanning.DivePlannerTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -38,7 +38,7 @@ class BuhlmannTest {
 
         depths.forEachIndexed { index, depth ->
             val ndlTime = model.getNoDecompressionLimit(
-                depthInMetersToBar(depth.toDouble(), environment),
+                metersToAmbientPressure(depth.toDouble(), environment),
                 Gas.Air
             )
             assertEquals(expectedNdlTimes[index], ndlTime)
@@ -60,7 +60,7 @@ class BuhlmannTest {
             gfLow = 0.3,
             gfHigh = 0.7,
         )
-        model.addFlat(depthInMetersToBar(30.0, environment), Gas.Air, 30)
+        model.addFlat(metersToAmbientPressure(30.0, environment), Gas.Air, 30)
 
         val first  = model.getCeiling()
         val second = model.getCeiling()
@@ -79,7 +79,7 @@ class BuhlmannTest {
             gfLow = 0.3,
             gfHigh = 0.7,
         )
-        val depth = depthInMetersToBar(30.0, environment)
+        val depth = metersToAmbientPressure(30.0, environment)
 
         model.addFlat(depth, Gas.Air, 20)
         val snapshot = model.snapshot()
@@ -103,7 +103,7 @@ class BuhlmannTest {
             gfLow = 0.3,
             gfHigh = 0.7,
         )
-        val depth = depthInMetersToBar(21.0, environment)
+        val depth = metersToAmbientPressure(21.0, environment)
         assertFailsWith<IllegalArgumentException>(
             message = "Expected IllegalArgumentException for timeInMinutes=0"
         ) {

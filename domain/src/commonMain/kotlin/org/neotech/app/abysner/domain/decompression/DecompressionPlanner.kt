@@ -22,8 +22,8 @@ import org.neotech.app.abysner.domain.core.model.SetpointSwitch
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.findBetterGasOrFallback
-import org.neotech.app.abysner.domain.core.physics.barToDepthInMeters
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.decompression.model.subList
@@ -123,8 +123,8 @@ class DecompressionPlanner(
      */
     private fun applyDepthChange(startDepth: Double, endDepth: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type, breathingMode: BreathingMode, setpointSwitch: SetpointSwitch? = null): BreathingMode {
 
-        val startPressure = depthInMetersToBar(startDepth, environment)
-        val endPressure = depthInMetersToBar(endDepth, environment)
+        val startPressure = metersToAmbientPressure(startDepth, environment)
+        val endPressure = metersToAmbientPressure(endDepth, environment)
 
         // Check if the setpoint switch depth is crossed during this segment
         val switchDepth = setpointSwitch?.depth?.toDouble()
@@ -137,7 +137,7 @@ class DecompressionPlanner(
             // TODO: See [DiveSegment.breathingModeAtEnd]
             val timeFractionBeforeSwitch = abs(setpointSwitch.depth - startDepth) / abs(endDepth - startDepth)
 
-            val pressureSwitch = depthInMetersToBar(setpointSwitch.depth.toDouble(), environment)
+            val pressureSwitch = metersToAmbientPressure(setpointSwitch.depth.toDouble(), environment)
 
             if (timeFractionBeforeSwitch > 0.0) {
                 model.addPressureChange(startPressure, pressureSwitch, gas.gas, timeFractionBeforeSwitch * timeInMinutes, breathingMode.ccrSetpointOrNull)
@@ -153,7 +153,7 @@ class DecompressionPlanner(
             breathingModeAtEnd = null
         }
 
-        val ceiling = barToDepthInMeters(model.getCeiling(), environment)
+        val ceiling = ambientPressureToMeters(model.getCeiling().value, environment)
 
         segments.add(
             DiveSegment(
@@ -545,7 +545,7 @@ class DecompressionPlanner(
         // Ceil to the next whole meter (or foot) so the ceiling is never shallower than what the
         // model reports. Using round() here would allow the diver up to 0.5m shallower than the
         // true ceiling (e.g. a raw ceiling of 3.2m would round to 3m, violating the ceiling).
-        var ceiling = ceil(barToDepthInMeters(model.getCeiling(), environment)).toInt()
+        var ceiling = ceil(ambientPressureToMeters(model.getCeiling().value, environment)).toInt()
         // Snap up to the nearest deco grid point (e.g. 3m or 10ft increments). The ceiling must
         // never be shallower than the model ceiling, so we only move deeper.
         while (ceiling % decoStepSize != 0) {

@@ -14,7 +14,7 @@ package org.neotech.app.abysner.domain.decompression.algorithm.buhlmann
 
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -35,7 +35,7 @@ class BuhlmannCcrTest {
         val ocModel = createModel()
         val ccrModel = createModel()
 
-        val depth = depthInMetersToBar(30.0, environment)
+        val depth = metersToAmbientPressure(30.0, environment)
 
         ocModel.addPressureChange(depth, depth, Gas.Air, timeInMinutes = 30)
         ccrModel.addPressureChange(depth, depth, Gas.Air, timeInMinutes = 30, ccrSetpoint = 1.3)
@@ -56,7 +56,7 @@ class BuhlmannCcrTest {
         val singleCallModel = createModel()
         val multiCallModel = createModel()
 
-        val depth = depthInMetersToBar(30.0, environment)
+        val depth = metersToAmbientPressure(30.0, environment)
         val gas = Gas.Air
         val setpoint = 1.3
 
@@ -95,8 +95,8 @@ class BuhlmannCcrTest {
     fun ccrPressureChange_descentFlatAndAscentDoNotCrash() {
         val model = createModel()
 
-        val surface = depthInMetersToBar(0.0, environment)
-        val bottom = depthInMetersToBar(20.0, environment)
+        val surface = metersToAmbientPressure(0.0, environment)
+        val bottom = metersToAmbientPressure(20.0, environment)
         val gas = Gas.Air
         val setpoint = 1.3
 
@@ -114,8 +114,8 @@ class BuhlmannCcrTest {
     fun referencePlan6_producesExpectedNoDecompressionLimit() {
         // TODO once planner is CCR aware, this plan/test should move to DivePlannerTest
         val model = createModel(gfLow = 0.3, gfHigh = 0.7)
-        val surface = depthInMetersToBar(0.0, environment)
-        val bottom = depthInMetersToBar(30.0, environment)
+        val surface = metersToAmbientPressure(0.0, environment)
+        val bottom = metersToAmbientPressure(30.0, environment)
         val gas = Gas.Air
         val setpoint = 1.3
 
@@ -140,7 +140,7 @@ class BuhlmannCcrTest {
         val ocModel = createModel()
         val ccrModel = createModel()
 
-        val depth = depthInMetersToBar(30.0, environment)
+        val depth = metersToAmbientPressure(30.0, environment)
 
         val ocNdl = ocModel.getNoDecompressionLimit(depth, Gas.Air)
         val ccrNdl = ccrModel.getNoDecompressionLimit(depth, Gas.Air, ccrSetpoint = 1.3)
@@ -157,7 +157,7 @@ class BuhlmannCcrTest {
     @Test
     fun getNoDecompressionLimit_ccrDoesNotAlterTissueState() {
         val model = createModel()
-        val depth = depthInMetersToBar(30.0, environment)
+        val depth = metersToAmbientPressure(30.0, environment)
 
         val ceilingBefore = model.getCeiling()
         model.getNoDecompressionLimit(depth, Gas.Air, ccrSetpoint = 1.3)

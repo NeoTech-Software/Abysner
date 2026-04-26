@@ -20,7 +20,7 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import kotlin.math.ceil
 
@@ -69,7 +69,7 @@ data class DivePlan(
         val depth: Double,
         val environment: Environment,
     ) {
-        val ppo2 = gas.oxygenFraction * depthInMetersToBar(depth, environment).value
+        val ppo2 = gas.oxygenFraction * metersToAmbientPressure(depth, environment).value
         val density: Double = gas.densityAtDepth(depth, environment)
     }
 

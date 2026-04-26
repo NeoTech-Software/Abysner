@@ -64,7 +64,7 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
@@ -456,12 +456,12 @@ private fun RowScope.DecoPlanRow(
         text = gas.toString(),
     )
 
-    val endAmbientPressure = depthInMetersToBar(diveSegment.endDepth, environment).value
+    val endAmbientPressure = metersToAmbientPressure(diveSegment.endDepth, environment).value
 
     val ppO2Text = when (val mode = diveSegment.breathingMode) {
         is BreathingMode.ClosedCircuit -> {
             val endMode = diveSegment.breathingModeAtEnd ?: mode
-            val startAmbientPressure = depthInMetersToBar(diveSegment.startDepth, environment).value
+            val startAmbientPressure = metersToAmbientPressure(diveSegment.startDepth, environment).value
             val ppO2Start = mode.effectivePpO2(startAmbientPressure)
             val ppO2End = endMode.effectivePpO2(endAmbientPressure)
 

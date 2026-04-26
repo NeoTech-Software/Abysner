@@ -13,31 +13,59 @@
 package org.neotech.app.abysner.domain.core.physics
 
 import org.neotech.app.abysner.domain.core.model.Environment
+import org.neotech.app.abysner.domain.core.model.Salinity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PressureTest {
 
-    @Test
-    fun depthInMetersToBar_convertsCorrectly() {
-        // 10 meters (pure water)
-        assertEquals(1.9939, depthInMetersToBar(10.0, Environment.Default).value, DOUBLE_TOLERANCE)
+    private val environment = Environment(Salinity.WATER_EN13319, ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL)
 
-        // 24 meters (pure water)
-        assertEquals(3.3668, depthInMetersToBar(24.0, Environment.Default).value, DOUBLE_TOLERANCE)
+    @Test
+    fun metersToAmbientPressure_convertsCorrectly() {
+        assertEquals(2.0135283, metersToAmbientPressure(10.0, environment).value, DOUBLE_TOLERANCE)
+        assertEquals(25.0199292, metersToAmbientPressure(240.0, environment).value, DOUBLE_TOLERANCE)
     }
 
     @Test
-    fun altitudeToPressure_convertsCorrectly() {
-        assertEquals(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL, altitudeToPressure(0.0), 1e-4)
-        assertEquals(0.7099843196815809, altitudeToPressure(3000.0), DOUBLE_TOLERANCE)
+    fun metersToAmbientPressure_zeroDepthReturnsSurfacePressure() {
+        assertEquals(environment.atmosphericPressure, metersToAmbientPressure(0.0, environment).value)
     }
 
     @Test
-    fun pressureToAltitude_convertsCorrectly() {
-        assertEquals(0.0, pressureToAltitude(ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL), DOUBLE_TOLERANCE)
-        assertEquals(3000.0, pressureToAltitude(0.7099843196815809), DOUBLE_TOLERANCE)
+    fun metersToHydrostaticPressure_excludesAtmosphericPressure() {
+        val ambient = metersToAmbientPressure(10.0, environment).value
+        val hydrostatic = metersToHydrostaticPressure(10.0, environment).value
+        assertEquals(ambient - environment.atmosphericPressure, hydrostatic, DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun ambientPressureToMeters_surfacePressureReturnsZero() {
+        assertEquals(0.0, ambientPressureToMeters(environment.atmosphericPressure, environment), DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun feetToAmbientPressure_convertsCorrectly() {
+        assertEquals(2.0193699253, feetToAmbientPressure(33.0, environment).value, DOUBLE_TOLERANCE)
+        assertEquals(25.0076857936, feetToAmbientPressure(787.0, environment).value, DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun feetToAmbientPressure_zeroDepthReturnsSurfacePressure() {
+        assertEquals(environment.atmosphericPressure, feetToAmbientPressure(0.0, environment).value)
+    }
+
+    @Test
+    fun feetToHydrostaticPressure_excludesAtmosphericPressure() {
+        val ambient = feetToAmbientPressure(33.0, environment).value
+        val hydrostatic = feetToHydrostaticPressure(33.0, environment).value
+        assertEquals(ambient - environment.atmosphericPressure, hydrostatic, DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun ambientPressureToFeet_surfacePressureReturnsZero() {
+        assertEquals(0.0, ambientPressureToFeet(environment.atmosphericPressure, environment), DOUBLE_TOLERANCE)
     }
 }
 
-private val DOUBLE_TOLERANCE = 1e-4
+private const val DOUBLE_TOLERANCE = 1e-8

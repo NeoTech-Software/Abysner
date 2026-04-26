@@ -14,7 +14,7 @@ package org.neotech.app.abysner.domain.decompression.model
 
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.utilities.equalsDelta
+import org.neotech.app.abysner.domain.utilities.equalsTolerant
 import kotlin.math.max
 
 data class DiveSegment(
@@ -160,9 +160,6 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
     compactAscentsAndStops: Boolean = false
 ): MutableList<DiveSegment> {
 
-    // Maximum delta between travel speeds for them to be considered equal.
-    val maxTravelSpeedDelta = 0.0001
-
     var i = 0
     while (i < size - 1) {
         val currentSegment = this[i]
@@ -170,7 +167,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
         if (
             currentSegment.type.isFlat &&
             currentSegment.type == nextSegment.type &&
-            currentSegment.endDepth == nextSegment.startDepth &&
+            currentSegment.endDepth.equalsTolerant(nextSegment.startDepth) &&
             currentSegment.cylinder == nextSegment.cylinder &&
             currentSegment.breathingMode == nextSegment.breathingMode
         ) {
@@ -184,8 +181,9 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             this[i] = combinedSegment
             this.removeAt(i + 1)
         } else if (
-            currentSegment.travelSpeed.equalsDelta(nextSegment.travelSpeed, maxTravelSpeedDelta) &&
-            currentSegment.endDepth == nextSegment.startDepth &&
+            !currentSegment.type.isFlat &&
+            currentSegment.travelSpeed.equalsTolerant(nextSegment.travelSpeed) &&
+            currentSegment.endDepth.equalsTolerant(nextSegment.startDepth) &&
             currentSegment.cylinder == nextSegment.cylinder &&
             (currentSegment.breathingMode == nextSegment.breathingMode ||
                 currentSegment.breathingModeAtEnd == nextSegment.breathingMode)
@@ -204,7 +202,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             compactAscentsAndStops &&
             currentSegment.isGasSwitch &&
             nextSegment.isDecompressionStop &&
-            currentSegment.endDepth == nextSegment.startDepth
+            currentSegment.endDepth.equalsTolerant(nextSegment.startDepth)
         ) {
             // A gas switch followed by a deco stop at the same depth: absorb the stop into the
             // switch so both appear as a single row. The cylinder is kept from the switch segment

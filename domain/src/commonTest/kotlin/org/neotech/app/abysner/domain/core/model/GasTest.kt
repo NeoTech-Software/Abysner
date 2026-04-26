@@ -14,7 +14,7 @@ package org.neotech.app.abysner.domain.core.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 
 class GasTest {
 
@@ -108,7 +108,7 @@ class GasTest {
 
     @Test
     fun inspiredGas_normalDepthProducesExpectedMix() {
-        val inspired = Gas.Air.inspiredGas(depthInMetersToBar(30.0, Environment.SeaLevelFresh).value, 1.3)
+        val inspired = Gas.Air.inspiredGas(metersToAmbientPressure(30.0, Environment.SeaLevelFresh).value, 1.3)
         assertEquals(0.328, inspired.oxygenFraction, DOUBLE_PRECISION_DELTA)
         assertEquals(0.0, inspired.heliumFraction, DOUBLE_PRECISION_DELTA)
     }
@@ -119,7 +119,7 @@ class GasTest {
      */
     @Test
     fun inspiredGas_shallowDepthClampsToMaximumOxygenFraction() {
-        val inspired = Gas.Air.inspiredGas(depthInMetersToBar(2.0, Environment.SeaLevelFresh).value, 1.3)
+        val inspired = Gas.Air.inspiredGas(metersToAmbientPressure(2.0, Environment.SeaLevelFresh).value, 1.3)
         assertEquals(1.0, inspired.oxygenFraction, DOUBLE_PRECISION_DELTA)
         assertEquals(0.0, inspired.heliumFraction, DOUBLE_PRECISION_DELTA)
     }
@@ -133,14 +133,14 @@ class GasTest {
     @Test
     fun inspiredGas_deepDepthClampsToMinimumDiluentOxygenFraction() {
         // At very deep depth, setpoint / ambient < diluent O2, should clamp to diluent O2
-        val inspired = Gas.Air.inspiredGas(depthInMetersToBar(200.0, Environment.SeaLevelFresh).value, 0.5)
+        val inspired = Gas.Air.inspiredGas(metersToAmbientPressure(200.0, Environment.SeaLevelFresh).value, 0.5)
         assertEquals(Gas.Air.oxygenFraction, inspired.oxygenFraction, DOUBLE_PRECISION_DELTA)
         assertEquals(Gas.Air.heliumFraction, inspired.heliumFraction, DOUBLE_PRECISION_DELTA)
     }
 
     @Test
     fun inspiredGas_trimixDiluentScalesHeliumCorrectly() {
-        val inspired = Gas.Trimix2135.inspiredGas(depthInMetersToBar(30.0, Environment.SeaLevelFresh).value, 1.3)
+        val inspired = Gas.Trimix2135.inspiredGas(metersToAmbientPressure(30.0, Environment.SeaLevelFresh).value, 1.3)
         assertEquals(0.328, inspired.oxygenFraction, DOUBLE_PRECISION_DELTA)
         assertEquals(0.298, inspired.heliumFraction, DOUBLE_PRECISION_DELTA)
     }

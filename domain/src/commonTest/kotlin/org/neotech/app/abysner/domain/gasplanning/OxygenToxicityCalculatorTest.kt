@@ -16,7 +16,7 @@ import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.depthInMetersToBar
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,7 +35,7 @@ class OxygenToxicityCalculatorTest {
         val setpoint = 1.3
         val depth = 30.0
         val duration = 30
-        val ambientPressure = depthInMetersToBar(depth, environment).value
+        val ambientPressure = metersToAmbientPressure(depth, environment).value
 
         val ccrSegments = flatSegment(depth, duration, Gas.Trimix2135, BreathingMode.ccr(setpoint))
 
@@ -90,7 +90,7 @@ class OxygenToxicityCalculatorTest {
         val setpoint = 1.3
         val depth = 30.0
         val duration = 30
-        val ambientPressure = depthInMetersToBar(depth, environment).value
+        val ambientPressure = metersToAmbientPressure(depth, environment).value
 
         val ccrSegments = flatSegment(depth, duration, Gas.Trimix2135, BreathingMode.ccr(setpoint))
 
