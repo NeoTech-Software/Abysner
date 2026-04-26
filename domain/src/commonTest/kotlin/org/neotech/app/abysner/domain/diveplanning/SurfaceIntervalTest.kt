@@ -14,7 +14,7 @@ import kotlin.time.toDuration
 class SurfaceIntervalTest {
 
     @Test
-    fun addSurfaceInterval_increasesSubsequentDiveDecoTime() {
+    fun referencePlan9_producesExpectedSegmentsWithSurfaceInterval() {
         val bottomGas = Cylinder.steel12Liter(Gas.Air)
         val divePlanner = DivePlanner(Configuration(
             maxAscentRate = 5.0,
@@ -34,10 +34,10 @@ class SurfaceIntervalTest {
         val divePlan2 = divePlanner.addDive(plannedDive, emptyList())
 
 
-        assertEquals(43, divePlan1.runtime)
+        assertEquals(45, divePlan1.runtime)
 
         // Dive plan 2 is the same as dive plan 1, except that it has to take into account tissues
         // from the previous dive (dive plan 1), as the surface interval is short.
-        assertEquals(59, divePlan2.runtime)
+        assertEquals(65, divePlan2.runtime)
     }
 }

@@ -30,7 +30,6 @@ import org.neotech.app.abysner.domain.decompression.model.subList
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
-import kotlin.math.round
 
 /**
  * The decompression planner makes use of a decompression model and adds algorithms to figure out
@@ -431,6 +430,14 @@ class DecompressionPlanner(
                         // ceiling is skipping a deco step, force the ceiling to be deeper to avoid skipping
                         ceiling = nextDecoDepth
                     }
+
+                    if (ceiling > nextDecoDepth && ceiling > toDepth) {
+                        if (isCeilingClearedDuringAscent(currentDepth, nextDecoDepth, gas, effectiveBreathingMode, effectiveSetpointSwitch)) {
+                            ceiling = nextDecoDepth
+                            break
+                        }
+                    }
+
                     if(stopTime > 1000) {
                         // We are probably in a loop where we cannot off-gas enough within the set gradient factors
                         // to reach the next deco stop. Likely the last deco stop is too shallow, the deco step size is too
@@ -492,17 +499,55 @@ class DecompressionPlanner(
             }
         } while(ceiling > nextCeiling)
 
+        val nextDecoDepth = findNextDecoDepth(nextCeiling, decoStepSize, lastDecoStopDepth)
+        if (nextCeiling > 0 && nextDecoDepth >= 0) {
+            if (isCeilingClearedDuringAscent(fromDepth, nextDecoDepth, gas, breathingMode)) {
+                return nextDecoDepth
+            }
+        }
+
         return nextCeiling
     }
 
+    /**
+     * Abysner works in whole minutes (as divers plan in minutes), which means a true ceiling of
+     * 3.1 meter would keep the diver at 6 meter for a full extra minute, even though only a few
+     * seconds of off-gassing might be needed to clear that ceiling (to 3 meters). This method
+     * avoids that minute penalty by simulating the ascent from [fromDepth] to [targetDecoDepth], if
+     * the ceiling clears during travel, the stop can be skipped. The model state is rolled back
+     * after the simulation.
+     */
+    private fun isCeilingClearedDuringAscent(
+        fromDepth: Double,
+        targetDecoDepth: Int,
+        gas: Cylinder,
+        breathingMode: BreathingMode,
+        setpointSwitch: SetpointSwitch? = null,
+    ): Boolean {
+        if (targetDecoDepth < 0) return false
+        val ceilingAfterAscent = resetAfter {
+            addDecoDepthChange(
+                fromDepth,
+                targetDecoDepth.toDouble().coerceAtLeast(0.0),
+                maxPpO2,
+                maxEquivalentNarcoticDepth,
+                gas,
+                ascentRate,
+                breathingMode,
+                setpointSwitch
+            )
+            getDecoCeiling(decoStepSize, lastDecoStopDepth)
+        }
+        return ceilingAfterAscent <= targetDecoDepth
+    }
+
     private fun getDecoCeiling(decoStepSize: Int, lastDecoStopDepth: Int): Int {
-        var ceiling = round(barToDepthInMeters(model.getCeiling(), environment)).toInt()
-        // Divers like to do deco stops in increments of 10 feet or 3 meters.
-        // This finds the closest to the ceiling increment of 3 (lower or at the ceiling,
-        // never higher).
-        // This increment thing may not be required, especially if a conservative gradient factor is
-        // chosen, since you will never be close to an M value. But since this is almost an industry
-        // standard now...
+        // Ceil to the next whole meter (or foot) so the ceiling is never shallower than what the
+        // model reports. Using round() here would allow the diver up to 0.5m shallower than the
+        // true ceiling (e.g. a raw ceiling of 3.2m would round to 3m, violating the ceiling).
+        var ceiling = ceil(barToDepthInMeters(model.getCeiling(), environment)).toInt()
+        // Snap up to the nearest deco grid point (e.g. 3m or 10ft increments). The ceiling must
+        // never be shallower than the model ceiling, so we only move deeper.
         while (ceiling % decoStepSize != 0) {
             ceiling += 1
         }

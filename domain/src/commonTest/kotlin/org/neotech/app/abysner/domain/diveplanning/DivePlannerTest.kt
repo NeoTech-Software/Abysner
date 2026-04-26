@@ -172,8 +172,8 @@ class DivePlannerTest {
 
         // println(divePlan.toString(compact = false))
 
-        assertEquals(8.614, divePlan.totalCns, 1e-3)
-        assertEquals(24.112, divePlan.totalOtu, 1e-3)
+        assertEquals(8.778, divePlan.totalCns, 1e-3)
+        assertEquals(24.495, divePlan.totalOtu, 1e-3)
 
         plan.assertSegment(0, DiveSegment.Type.DECENT,     startDepth = 0.0,  endDepth = 45.0, duration = 9, gas = bottomGas)
         plan.assertSegment(1, DiveSegment.Type.FLAT,       startDepth = 45.0, endDepth = 45.0, duration = 6, gas = bottomGas)
@@ -182,7 +182,7 @@ class DivePlannerTest {
         plan.assertSegment(4, DiveSegment.Type.ASCENT,     startDepth = 21.0, endDepth = 6.0,  duration = 3, gas = decoGas)
         plan.assertSegment(5, DiveSegment.Type.DECO_STOP,  startDepth = 6.0,  endDepth = 6.0,  duration = 2, gas = decoGas)
         plan.assertSegment(6, DiveSegment.Type.ASCENT,     startDepth = 6.0,  endDepth = 3.0,  duration = 1, gas = decoGas)
-        plan.assertSegment(7, DiveSegment.Type.DECO_STOP,  startDepth = 3.0,  endDepth = 3.0,  duration = 4, gas = decoGas)
+        plan.assertSegment(7, DiveSegment.Type.DECO_STOP,  startDepth = 3.0,  endDepth = 3.0,  duration = 5, gas = decoGas)
         plan.assertSegment(8, DiveSegment.Type.ASCENT,     startDepth = 3.0,  endDepth = 0.0,  duration = 1, gas = decoGas)
     }
 
@@ -212,8 +212,8 @@ class DivePlannerTest {
 
         // println(divePlan.toString(compact = false))
 
-        assertEquals(14.867, divePlan.totalCns, 1e-3)
-        assertEquals(39.917, divePlan.totalOtu, 1e-3)
+        assertEquals(15.205, divePlan.totalCns, 1e-3)
+        assertEquals(40.722, divePlan.totalOtu, 1e-3)
 
         plan.assertSegment(0,  DiveSegment.Type.DECENT,     startDepth = 0.0,  endDepth = 60.0, duration = 12, gas = bottomGas)
         plan.assertSegment(1,  DiveSegment.Type.FLAT,       startDepth = 60.0, endDepth = 60.0, duration = 8,  gas = bottomGas)
@@ -226,9 +226,9 @@ class DivePlannerTest {
         plan.assertSegment(8,  DiveSegment.Type.ASCENT,     startDepth = 12.0, endDepth = 9.0,  duration = 1,  gas = decoGas)
         plan.assertSegment(9,  DiveSegment.Type.DECO_STOP,  startDepth = 9.0,  endDepth = 9.0,  duration = 3,  gas = decoGas)
         plan.assertSegment(10, DiveSegment.Type.ASCENT,     startDepth = 9.0,  endDepth = 6.0,  duration = 1,  gas = decoGas)
-        plan.assertSegment(11, DiveSegment.Type.DECO_STOP,  startDepth = 6.0,  endDepth = 6.0,  duration = 5,  gas = decoGas)
+        plan.assertSegment(11, DiveSegment.Type.DECO_STOP,  startDepth = 6.0,  endDepth = 6.0,  duration = 6,  gas = decoGas)
         plan.assertSegment(12, DiveSegment.Type.ASCENT,     startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = decoGas)
-        plan.assertSegment(13, DiveSegment.Type.DECO_STOP,  startDepth = 3.0,  endDepth = 3.0,  duration = 11, gas = decoGas)
+        plan.assertSegment(13, DiveSegment.Type.DECO_STOP,  startDepth = 3.0,  endDepth = 3.0,  duration = 12, gas = decoGas)
         plan.assertSegment(14, DiveSegment.Type.ASCENT,     startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = decoGas)
     }
 
@@ -273,9 +273,9 @@ class DivePlannerTest {
         plan.assertSegment(6,  DiveSegment.Type.ASCENT,    startDepth = 40.0, endDepth = 9.0,  duration = 7,  gas = bottomGas)
         plan.assertSegment(7,  DiveSegment.Type.DECO_STOP, startDepth = 9.0,  endDepth = 9.0,  duration = 3,  gas = bottomGas)
         plan.assertSegment(8,  DiveSegment.Type.ASCENT,    startDepth = 9.0,  endDepth = 6.0,  duration = 1,  gas = bottomGas)
-        plan.assertSegment(9,  DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 5,  gas = bottomGas)
+        plan.assertSegment(9,  DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 6,  gas = bottomGas)
         plan.assertSegment(10, DiveSegment.Type.ASCENT,    startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = bottomGas)
-        plan.assertSegment(11, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 14, gas = bottomGas)
+        plan.assertSegment(11, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 16, gas = bottomGas)
         plan.assertSegment(12, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = bottomGas)
     }
 
@@ -344,11 +344,9 @@ class DivePlannerTest {
 
         segments.assertSegment(0, DiveSegment.Type.DECENT,    startDepth = 0.0,  endDepth = 30.0, duration = 6,  gas = diluent, breathingMode = low)
         segments.assertSegment(1, DiveSegment.Type.FLAT,      startDepth = 30.0, endDepth = 30.0, duration = 24, gas = diluent, breathingMode = high)
-        segments.assertSegment(2, DiveSegment.Type.ASCENT,    startDepth = 30.0, endDepth = 6.0,  duration = 5,  gas = diluent, breathingMode = high)
-        segments.assertSegment(3, DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 1,  gas = diluent, breathingMode = high)
-        segments.assertSegment(4, DiveSegment.Type.ASCENT,    startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = high)
-        segments.assertSegment(5, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = high)
-        segments.assertSegment(6, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = high)
+        segments.assertSegment(2, DiveSegment.Type.ASCENT,    startDepth = 30.0, endDepth = 3.0,  duration = 6,  gas = diluent, breathingMode = high)
+        segments.assertSegment(3, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 2,  gas = diluent, breathingMode = high)
+        segments.assertSegment(4, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = high)
     }
 
     /**
@@ -398,9 +396,9 @@ class DivePlannerTest {
         segments.assertSegment(3, DiveSegment.Type.ASCENT,     startDepth = 30.0, endDepth = 9.0,  duration = 5,  gas = diluent, breathingMode = oc)
         segments.assertSegment(4, DiveSegment.Type.DECO_STOP,  startDepth = 9.0,  endDepth = 9.0,  duration = 1,  gas = diluent, breathingMode = oc)
         segments.assertSegment(5, DiveSegment.Type.ASCENT,     startDepth = 9.0,  endDepth = 6.0,  duration = 1,  gas = diluent, breathingMode = oc)
-        segments.assertSegment(6, DiveSegment.Type.DECO_STOP,  startDepth = 6.0,  endDepth = 6.0,  duration = 3,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(6, DiveSegment.Type.DECO_STOP,  startDepth = 6.0,  endDepth = 6.0,  duration = 4,  gas = diluent, breathingMode = oc)
         segments.assertSegment(7, DiveSegment.Type.ASCENT,     startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = oc)
-        segments.assertSegment(8, DiveSegment.Type.DECO_STOP,  startDepth = 3.0,  endDepth = 3.0,  duration = 7,  gas = diluent, breathingMode = oc)
+        segments.assertSegment(8, DiveSegment.Type.DECO_STOP,  startDepth = 3.0,  endDepth = 3.0,  duration = 8,  gas = diluent, breathingMode = oc)
         segments.assertSegment(9, DiveSegment.Type.ASCENT,     startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = oc)
     }
 
@@ -431,8 +429,8 @@ class DivePlannerTest {
 
         // println(plan.toString(compact = false))
 
-        assertEquals(28.775, plan.totalCns, 1e-3)
-        assertEquals(80.898, plan.totalOtu, 1e-3)
+        assertEquals(29.243, plan.totalCns, 1e-3)
+        assertEquals(82.221, plan.totalOtu, 1e-3)
 
         val low = BreathingMode.ClosedCircuit(0.7)
         val high = BreathingMode.ClosedCircuit(1.2)
@@ -448,13 +446,13 @@ class DivePlannerTest {
         segments.assertSegment(8,  DiveSegment.Type.ASCENT,    startDepth = 18.0, endDepth = 15.0, duration = 1,  gas = diluent, breathingMode = high)
         segments.assertSegment(9,  DiveSegment.Type.DECO_STOP, startDepth = 15.0, endDepth = 15.0, duration = 2,  gas = diluent, breathingMode = high)
         segments.assertSegment(10, DiveSegment.Type.ASCENT,    startDepth = 15.0, endDepth = 12.0, duration = 1,  gas = diluent, breathingMode = high)
-        segments.assertSegment(11, DiveSegment.Type.DECO_STOP, startDepth = 12.0, endDepth = 12.0, duration = 4,  gas = diluent, breathingMode = high)
+        segments.assertSegment(11, DiveSegment.Type.DECO_STOP, startDepth = 12.0, endDepth = 12.0, duration = 3,  gas = diluent, breathingMode = high)
         segments.assertSegment(12, DiveSegment.Type.ASCENT,    startDepth = 12.0, endDepth = 9.0,  duration = 1,  gas = diluent, breathingMode = high)
         segments.assertSegment(13, DiveSegment.Type.DECO_STOP, startDepth = 9.0,  endDepth = 9.0,  duration = 5,  gas = diluent, breathingMode = high)
         segments.assertSegment(14, DiveSegment.Type.ASCENT,    startDepth = 9.0,  endDepth = 6.0,  duration = 1,  gas = diluent, breathingMode = high)
-        segments.assertSegment(15, DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 7,  gas = diluent, breathingMode = high)
+        segments.assertSegment(15, DiveSegment.Type.DECO_STOP, startDepth = 6.0,  endDepth = 6.0,  duration = 8,  gas = diluent, breathingMode = high)
         segments.assertSegment(16, DiveSegment.Type.ASCENT,    startDepth = 6.0,  endDepth = 3.0,  duration = 1,  gas = diluent, breathingMode = high)
-        segments.assertSegment(17, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 12, gas = diluent, breathingMode = high)
+        segments.assertSegment(17, DiveSegment.Type.DECO_STOP, startDepth = 3.0,  endDepth = 3.0,  duration = 13, gas = diluent, breathingMode = high)
         segments.assertSegment(18, DiveSegment.Type.ASCENT,    startDepth = 3.0,  endDepth = 0.0,  duration = 1,  gas = diluent, breathingMode = high)
     }
 }
