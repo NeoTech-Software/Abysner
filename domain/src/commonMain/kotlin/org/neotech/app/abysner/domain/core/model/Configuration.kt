@@ -13,7 +13,9 @@
 package org.neotech.app.abysner.domain.core.model
 
 import org.neotech.app.abysner.domain.core.physics.altitudeToPressure
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.persistence.EnumPreference
+import org.neotech.app.abysner.domain.utilities.ceilTolerant
 import kotlin.math.ceil
 import kotlin.math.max
 
@@ -88,7 +90,7 @@ data class Configuration(
     fun descentSetpointSwitch(breathingMode: BreathingMode): SetpointSwitch? =
         ccrToHighSetpointSwitchDepth?.let { depth ->
             (breathingMode as? BreathingMode.ClosedCircuit)?.let {
-                SetpointSwitch(depth = depth, toBreathingMode = BreathingMode.ClosedCircuit(ccrHighSetpoint))
+                SetpointSwitch(ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value, toBreathingMode = BreathingMode.ClosedCircuit(ccrHighSetpoint))
             }
         }
 
@@ -99,7 +101,7 @@ data class Configuration(
     fun ascentSetpointSwitch(breathingMode: BreathingMode): SetpointSwitch? =
         ccrToLowSetpointSwitchDepth?.let { depth ->
             (breathingMode as? BreathingMode.ClosedCircuit)?.let {
-                SetpointSwitch(depth = depth, toBreathingMode = BreathingMode.ClosedCircuit(ccrLowSetpoint))
+                SetpointSwitch(ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value, toBreathingMode = BreathingMode.ClosedCircuit(ccrLowSetpoint))
             }
         }
 
@@ -116,7 +118,8 @@ data class Configuration(
     }
 
     /**
-     * Calculate travel time, negative distance is descending, positive is ascending.
+     * Calculate travel time from a depth distance in meters. Negative distance is descending,
+     * positive is ascending.
      */
     fun travelTime(distance: Double): Int {
         val rate = if(distance > 0) {
@@ -128,6 +131,25 @@ data class Configuration(
             0
         } else {
             max(ceil(distance / rate).toInt(), 1)
+        }
+    }
+
+    /**
+     * Calculate travel time from a pressure difference. Positive means ascending (pressure
+     * decreasing), negative means descending (pressure increasing).
+     */
+    fun travelTime(pressureDifference: Double, environment: Environment): Int {
+        val ascentRatePressure = metersToAmbientPressure(maxAscentRate, environment).value - environment.atmosphericPressure
+        val descentRatePressure = metersToAmbientPressure(maxDescentRate, environment).value - environment.atmosphericPressure
+        val rate = if (pressureDifference > 0) {
+            ascentRatePressure
+        } else {
+            -descentRatePressure
+        }
+        return if (pressureDifference == 0.0) {
+            0
+        } else {
+            max(ceilTolerant(pressureDifference / rate).toInt(), 1)
         }
     }
 }

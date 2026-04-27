@@ -14,6 +14,8 @@ package org.neotech.app.abysner.domain.decompression.model
 
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.Environment
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.equalsTolerant
 import kotlin.math.max
 
@@ -27,13 +29,24 @@ data class DiveSegment(
      * Duration is minutes.
      */
     val duration: Int,
+
     /**
-     * Start depth of this segment (in meters)
+     * Absolute ambient pressure at the start of this segment (bar).
+     */
+    val startPressure: Double,
+
+    /**
+     * Absolute ambient pressure at the end of this segment (bar).
+     */
+    val endPressure: Double,
+
+    /**
+     * Start depth in display units (meters or feet, depending on configuration).
      */
     val startDepth: Double,
 
     /**
-     * End depth of this segment (in meters)
+     * End depth in display units (meters or feet, depending on configuration).
      */
     val endDepth: Double,
     /**
@@ -41,6 +54,11 @@ data class DiveSegment(
      */
     val cylinder: Cylinder,
 
+    /**
+     * Gradient-factor ceiling depth at the end of this segment, in display units (meters or feet).
+     * Zero means no decompression obligation. This is a display value only, not used in
+     * pressure-based calculations.
+     */
     val gfCeilingAtEnd: Double,
 
     /**
@@ -68,7 +86,15 @@ data class DiveSegment(
      */
     val breathingModeAtEnd: BreathingMode.ClosedCircuit? = null,
 
+    /**
+     * Travel speed in display units (meters or feet) per minute for this segment, derived from the depth values.
+     */
     val travelSpeed: Double = (startDepth - endDepth) / duration.toDouble(),
+
+    /**
+     * Pressure change in bar per minute for this segment, derived from the pressure values.
+     */
+    val pressureRate: Double = (startPressure - endPressure) / duration.toDouble(),
 
     /**
      * Time to surface (in minutes) at the end of this segment, using the dive's own breathing
@@ -84,6 +110,40 @@ data class DiveSegment(
      */
     val ttsBailoutAfter: Int? = null,
 ) {
+
+    companion object {
+
+        /**
+         * Creates a [DiveSegment] from depths in meters, computing the ambient pressure values
+         * from the given [environment]. Intended for tests and Compose previews. Core decompression
+         * code should use the primary constructor with raw pressure values and convert those to
+         * display-unit depths.
+         */
+        fun fromMeters(
+            start: Int,
+            duration: Int,
+            startDepth: Double,
+            endDepth: Double,
+            cylinder: Cylinder,
+            type: Type,
+            environment: Environment,
+            gfCeilingAtEnd: Double,
+            breathingMode: BreathingMode = BreathingMode.OpenCircuit,
+            breathingModeAtEnd: BreathingMode.ClosedCircuit? = null,
+        ) = DiveSegment(
+            start = start,
+            duration = duration,
+            startPressure = metersToAmbientPressure(startDepth, environment).value,
+            endPressure = metersToAmbientPressure(endDepth, environment).value,
+            startDepth = startDepth,
+            endDepth = endDepth,
+            cylinder = cylinder,
+            type = type,
+            gfCeilingAtEnd = gfCeilingAtEnd,
+            breathingMode = breathingMode,
+            breathingModeAtEnd = breathingModeAtEnd,
+        )
+    }
 
     val end = start + duration
 
@@ -167,7 +227,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
         if (
             currentSegment.type.isFlat &&
             currentSegment.type == nextSegment.type &&
-            currentSegment.endDepth.equalsTolerant(nextSegment.startDepth) &&
+            currentSegment.endPressure.equalsTolerant(nextSegment.startPressure) &&
             currentSegment.cylinder == nextSegment.cylinder &&
             currentSegment.breathingMode == nextSegment.breathingMode
         ) {
@@ -182,8 +242,8 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             this.removeAt(i + 1)
         } else if (
             !currentSegment.type.isFlat &&
-            currentSegment.travelSpeed.equalsTolerant(nextSegment.travelSpeed) &&
-            currentSegment.endDepth.equalsTolerant(nextSegment.startDepth) &&
+            currentSegment.pressureRate.equalsTolerant(nextSegment.pressureRate) &&
+            currentSegment.endPressure.equalsTolerant(nextSegment.startPressure) &&
             currentSegment.cylinder == nextSegment.cylinder &&
             (currentSegment.breathingMode == nextSegment.breathingMode ||
                 currentSegment.breathingModeAtEnd == nextSegment.breathingMode)
@@ -191,6 +251,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             val mergedModeAtEnd = (nextSegment.breathingModeAtEnd ?: currentSegment.breathingModeAtEnd)
                 ?.takeIf { it != currentSegment.breathingMode }
             val combinedSegment = currentSegment.copy(
+                endPressure = nextSegment.endPressure,
                 endDepth = nextSegment.endDepth,
                 duration = currentSegment.duration + nextSegment.duration,
                 gfCeilingAtEnd = nextSegment.gfCeilingAtEnd,
@@ -202,7 +263,7 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             compactAscentsAndStops &&
             currentSegment.isGasSwitch &&
             nextSegment.isDecompressionStop &&
-            currentSegment.endDepth.equalsTolerant(nextSegment.startDepth)
+            currentSegment.endPressure.equalsTolerant(nextSegment.startPressure)
         ) {
             // A gas switch followed by a deco stop at the same depth: absorb the stop into the
             // switch so both appear as a single row. The cylinder is kept from the switch segment
@@ -224,6 +285,8 @@ fun MutableList<DiveSegment>.compactSimilarSegments(
             // Previous and next segments are both stops, make this segment the next stop instead.
             val combinedSegment = DiveSegment(
                 start = currentSegment.start,
+                startPressure = nextSegment.startPressure,
+                endPressure = nextSegment.endPressure,
                 endDepth = nextSegment.endDepth,
                 startDepth = nextSegment.startDepth,
                 duration = currentSegment.duration + nextSegment.duration,

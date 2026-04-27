@@ -55,6 +55,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
@@ -113,7 +114,7 @@ fun DecoPlanGraph(
         majorTickSize = 0.dp,
         lineWidth = 1.dp,
     )
-    
+
     Column {
 
         FlowLegend2(
@@ -246,55 +247,61 @@ fun DecoPlanGraph(
 private fun DecoPlanGraphPreview() {
 
     val cylinder = Cylinder.steel12Liter(Gas.Air)
+    val environment = Environment.Default
 
     Surface {
         DecoPlanGraph(
             modifier = Modifier.height(164.dp), divePlan = DivePlan(
                 segments = persistentListOf(
-                    DiveSegment(
-                        0,
-                        3,
-                        0.0,
-                        25.0,
-                        cylinder,
+                    DiveSegment.fromMeters(
+                        start = 0,
+                        duration = 3,
+                        startDepth = 0.0,
+                        endDepth = 25.0,
+                        cylinder = cylinder,
                         type = DiveSegment.Type.DECENT,
-                        gfCeilingAtEnd = 0.0
+                        gfCeilingAtEnd = 0.0,
+                        environment = environment,
                     ),
-                    DiveSegment(
-                        3,
-                        20,
-                        25.0,
-                        25.0,
-                        cylinder,
+                    DiveSegment.fromMeters(
+                        start = 3,
+                        duration = 20,
+                        startDepth = 25.0,
+                        endDepth = 25.0,
+                        cylinder = cylinder,
                         type = DiveSegment.Type.FLAT,
-                        gfCeilingAtEnd = 3.0
+                        gfCeilingAtEnd = 3.0,
+                        environment = environment,
                     ),
-                    DiveSegment(
-                        23,
-                        3,
-                        25.0,
-                        5.0,
-                        cylinder,
+                    DiveSegment.fromMeters(
+                        start = 23,
+                        duration = 3,
+                        startDepth = 25.0,
+                        endDepth = 5.0,
+                        cylinder = cylinder,
                         type = DiveSegment.Type.ASCENT,
-                        gfCeilingAtEnd = 2.0
+                        gfCeilingAtEnd = 2.0,
+                        environment = environment,
                     ),
-                    DiveSegment(
-                        26,
-                        3,
-                        5.0,
-                        5.0,
-                        cylinder,
+                    DiveSegment.fromMeters(
+                        start = 26,
+                        duration = 3,
+                        startDepth = 5.0,
+                        endDepth = 5.0,
+                        cylinder = cylinder,
                         type = DiveSegment.Type.DECO_STOP,
-                        gfCeilingAtEnd = 1.0
+                        gfCeilingAtEnd = 1.0,
+                        environment = environment,
                     ),
-                    DiveSegment(
-                        29,
-                        1,
-                        5.0,
-                        0.0,
-                        cylinder,
+                    DiveSegment.fromMeters(
+                        start = 29,
+                        duration = 1,
+                        startDepth = 5.0,
+                        endDepth = 0.0,
+                        cylinder = cylinder,
                         type = DiveSegment.Type.ASCENT,
-                        gfCeilingAtEnd = 0.0
+                        gfCeilingAtEnd = 0.0,
+                        environment = environment,
                     ),
                 ),
                 alternativeAccents = persistentMapOf(),

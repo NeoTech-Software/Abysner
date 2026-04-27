@@ -106,7 +106,7 @@ class OxygenToxicityCalculatorTest {
 
     private fun flatSegment(depth: Double, duration: Int, gas: Gas, breathingMode: BreathingMode) =
         listOf(
-            DiveSegment(
+            DiveSegment.fromMeters(
                 start = 0,
                 duration = duration,
                 startDepth = depth,
@@ -115,6 +115,7 @@ class OxygenToxicityCalculatorTest {
                 gfCeilingAtEnd = 0.0,
                 type = DiveSegment.Type.FLAT,
                 breathingMode = breathingMode,
+                environment = environment,
             )
         )
 }
