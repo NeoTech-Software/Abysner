@@ -104,6 +104,7 @@ fun PlannerScreen(
         onUpdateSurfaceInterval = { i, d -> viewModel.updateSurfaceInterval(i, d) },
         onDiveModeChanged = { viewModel.setDiveMode(it) },
         onAvailableForBailoutChanged = { cylinder, value -> viewModel.toggleAvailableForBailout(cylinder, value) },
+        onEditDive = { viewModel.onEditDive() },
     )
 }
 
@@ -126,6 +127,7 @@ fun PlannerScreen(
     onUpdateSurfaceInterval: (Int, Duration) -> Unit = { _, _ -> },
     onDiveModeChanged: (DiveMode) -> Unit = {},
     onAvailableForBailoutChanged: (Cylinder, Boolean) -> Unit = { _, _ -> },
+    onEditDive: () -> Unit = {},
 ) {
     AbysnerTheme {
 
@@ -145,10 +147,13 @@ fun PlannerScreen(
         val onDiveButtonClick: (Int, DefaultPathwayButtonItem) -> Unit = { index, _ ->
             if (index == uiState.selectedDiveIndex) {
                 diveSheet = ModalTarget.Edit(index)
+                onEditDive()
             } else {
                 onSelectDive(index)
             }
         }
+
+        val showEditTooltip = uiState.settingsModel.showDiveEditTooltip
 
         BoxWithConstraints {
             val isWide = maxWidth >= 600.dp
@@ -178,7 +183,7 @@ fun PlannerScreen(
                                 onAddClicked = { diveSheet = ModalTarget.Add },
                                 addButtonLabel = "Add dive",
                                 limit = MAX_DIVES,
-                                limitTooltipText = MAX_DIVES_TOOLTIP,
+                                showEditTooltip = showEditTooltip,
                             )
                         }
                         Box(modifier = Modifier.weight(1f)) {
@@ -231,7 +236,7 @@ fun PlannerScreen(
                                     onAddClicked = { diveSheet = ModalTarget.Add },
                                     addButtonLabel = "Add dive",
                                     limit = MAX_DIVES,
-                                    limitTooltipText = MAX_DIVES_TOOLTIP,
+                                    showEditTooltip = showEditTooltip,
                                 )
                             }
                         }
@@ -293,7 +298,6 @@ fun PlannerScreen(
 }
 
 private const val MAX_DIVES = 10
-private const val MAX_DIVES_TOOLTIP = "Easy there, Cousteau!\nPlans are limited to $MAX_DIVES dives."
 
 @Preview(device = DEVICE_PHONE_MAX_HEIGHT)
 @Composable

@@ -57,7 +57,7 @@ import kotlin.time.measureTimedValue
 @Inject
 class PlanScreenViewModel(
     private val planningRepository: PlanningRepository,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     calculationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
@@ -108,6 +108,12 @@ class PlanScreenViewModel(
     fun setContingency(deeper: Boolean, longer: Boolean, bailout: Boolean) = mutateDive { DiveEditorViewModelDelegate.setContingency(it, deeper, longer, bailout) }
     fun setDiveMode(mode: DiveMode) = mutateDive { DiveEditorViewModelDelegate.setDiveMode(it, mode) }
     fun toggleAvailableForBailout(cylinder: Cylinder, availableForBailout: Boolean) = mutateDive { DiveEditorViewModelDelegate.toggleAvailableForBailout(it, cylinder, availableForBailout) }
+
+    fun onEditDive() {
+        if (settingsRepository.settings.value.showDiveEditTooltip) {
+            settingsRepository.updateSettings { it.copy(showDiveEditTooltip = false) }
+        }
+    }
 
     fun selectDive(index: Int) {
         planInput.update { it.copy(selectedDiveIndex = index) }
