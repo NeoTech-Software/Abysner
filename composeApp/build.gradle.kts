@@ -58,6 +58,8 @@ kotlin {
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
+        withHostTest {}
+
         androidResources {
             enable = true
         }
@@ -70,7 +72,7 @@ kotlin {
             freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -84,7 +86,7 @@ kotlin {
             binaryOption("bundleVersion", abysnerBuildNumber)
         }
     }
-    
+
     sourceSets {
 
         androidMain.dependencies {
