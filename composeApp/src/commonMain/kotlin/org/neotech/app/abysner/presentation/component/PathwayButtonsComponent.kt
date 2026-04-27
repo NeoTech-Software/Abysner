@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.presentation.component
 
+import androidx.compose.animation.core.AnimationConstants
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -58,7 +59,9 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,6 +204,9 @@ private fun <T : PathwayButtonItem> SelectableButton(
 
         LaunchedEffect(showEditTooltip) {
             if (showEditTooltip) {
+                // Delay showing the tooltip, to wait for screen animations to settle after
+                // navigating to this screen or closing a bottom sheet.
+                delay(AnimationConstants.DefaultDurationMillis.milliseconds)
                 tooltipState.show()
             }
         }
