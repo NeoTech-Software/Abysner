@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -229,6 +230,18 @@ fun GasPlanCardComponent(
 }
 
 @Composable
+private fun headerWithUnit(label: String, unit: String) = buildAnnotatedString {
+    append(label)
+    append(" ")
+    withStyle(SpanStyle(
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+    )) {
+        append(unit)
+    }
+}
+
+@Composable
 fun CylindersTable(
     modifier: Modifier = Modifier,
     divePlanSet: DivePlanSet,
@@ -237,9 +250,9 @@ fun CylindersTable(
     Table(
         modifier = modifier,
         header = {
-            Text(modifier = Modifier.weight(0.3f), text = "Mix")
-            Text(modifier = Modifier.weight(0.3f), text = "Size (ℓ)")
-            Text(modifier = Modifier.weight(0.4f), text = "Pressure (bar)")
+            Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = "Mix")
+            Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = headerWithUnit("Size", "ℓ"))
+            Text(modifier = Modifier.weight(0.4f), maxLines = 1, text = headerWithUnit("Pressure", "bar"))
         }
     ) {
         rows(divePlanSet.gasPlan, key = { it.cylinder.uniqueIdentifier }) { usage ->
@@ -292,10 +305,10 @@ fun GasTotalsTable(
     Table(
         modifier = modifier,
         header = {
-            Text(modifier = Modifier.weight(0.17f), text = "Mix")
-            Text(modifier = Modifier.weight(0.32f), text = "Capacity (ℓ)")
-            Text(modifier = Modifier.weight(0.26f), text = "$usageLabel (ℓ)")
-            Text(modifier = Modifier.weight(0.25f), text = "$emergencyLabel (ℓ)")
+            Text(modifier = Modifier.weight(0.17f), maxLines = 1, text = "Mix")
+            Text(modifier = Modifier.weight(0.32f), maxLines = 1, text = headerWithUnit("Capacity", "ℓ"))
+            Text(modifier = Modifier.weight(0.26f), maxLines = 1, text = headerWithUnit(usageLabel, "ℓ"))
+            Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = headerWithUnit(emergencyLabel, "ℓ"))
         }
     ) {
         rows(gasPlan.groupBy { it.cylinder.gas }.toList(), key = { (gas, _) -> gas }) { (gas, entries) ->
@@ -339,10 +352,10 @@ fun GasLimitsTable(
     Table(
         modifier = modifier,
         header = {
-            Text(modifier = Modifier.weight(0.2f), text = "Mix")
-            Text(modifier = Modifier.weight(0.3f), text = "Depth (m)")
-            Text(modifier = Modifier.weight(0.3f), text = "Density (g/ℓ)")
-            Text(modifier = Modifier.weight(0.2f), text = "PPO2")
+            Text(modifier = Modifier.weight(0.2f), maxLines = 1, text = "Mix")
+            Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = "Depth")
+            Text(modifier = Modifier.weight(0.35f), maxLines = 1, text = headerWithUnit("Density", "g/ℓ"))
+            Text(modifier = Modifier.weight(0.2f), maxLines = 1, text = "PPO2")
         }
     ) {
         rows(
@@ -350,7 +363,7 @@ fun GasLimitsTable(
             key = { it.gas },
         ) { gasAtDepth ->
             Text(modifier = Modifier.weight(0.2f), text = gasAtDepth.gas.toString())
-            Text(modifier = Modifier.weight(0.3f), text = "${gasAtDepth.depth.toInt()}m")
+            Text(modifier = Modifier.weight(0.25f), text = "${gasAtDepth.depth.toInt()}m")
 
             val alertSeverityDensity = when {
                 gasAtDepth.density.greaterThanTolerant(Gas.MAX_GAS_DENSITY, DISPLAY_TOLERANCE) -> AlertSeverity.ERROR
@@ -358,7 +371,7 @@ fun GasLimitsTable(
                 else -> AlertSeverity.NONE
             }
             TextAlert(
-                modifier = Modifier.weight(0.3f),
+                modifier = Modifier.weight(0.35f),
                 alertSeverity = alertSeverityDensity,
                 text = DecimalFormat.format(2, gasAtDepth.density),
             )

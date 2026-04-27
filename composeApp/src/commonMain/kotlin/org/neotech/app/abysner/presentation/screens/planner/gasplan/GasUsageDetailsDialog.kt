@@ -100,7 +100,7 @@ fun GasUsageDetailsDialog(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = "Volume", fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${cylinderGasRequirements.cylinder.waterVolume.format(1)} ℓ")
+                        Text(modifier = Modifier.weight(1f), text = "${cylinderGasRequirements.cylinder.waterVolume.format(1)}\u00A0ℓ")
                     }
                     row {
                         Text(
@@ -114,7 +114,7 @@ fun GasUsageDetailsDialog(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = "Capacity", fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${capacity.format(0)} ℓ")
+                        Text(modifier = Modifier.weight(1f), text = "${capacity.format(0)}\u00A0ℓ")
                     }
                 }
 
@@ -137,14 +137,14 @@ fun GasUsageDetailsDialog(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = usageLabel, fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${totalUsage.format(0)} ℓ")
+                        Text(modifier = Modifier.weight(1f), text = "${totalUsage.format(0)}\u00A0ℓ")
                     }
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = emergencyLabel, fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${totalReserve.format(0)} ℓ")
+                        Text(modifier = Modifier.weight(1f), text = "${totalReserve.format(0)}\u00A0ℓ")
                     }
                     row {
                         Text(
@@ -152,7 +152,7 @@ fun GasUsageDetailsDialog(
                             text = "Unused", fontWeight = FontWeight.Bold
                         )
                         val totalUnused = totalCapacity - totalRequired
-                        Text(modifier = Modifier.weight(1f), text = "${totalUnused.format(0)} ℓ")
+                        Text(modifier = Modifier.weight(1f), text = "${totalUnused.format(0)}\u00A0ℓ")
                     }
                 }
 
@@ -168,17 +168,17 @@ fun GasUsageDetailsDialog(
                     )
                 }
 
-                val totalCapacityFormatted = "${totalCapacity.format(0)} ℓ"
+                val totalCapacityFormatted = "${totalCapacity.format(0)}\u00A0ℓ"
 
                 // Bar pressure for a single cylinder (what divers read on gauges), liters for
                 // multiple cylinders (no meaningful single pressure to show).
                 val unusedNormalFormatted = if (showTotals) {
-                    "${(totalCapacity - totalUsage).format(0)} ℓ"
+                    "${(totalCapacity - totalUsage).format(0)}\u00A0ℓ"
                 } else {
                     "${cylinderGasRequirements.pressureLeft?.format(0)} bar"
                 }
                 val unusedEmergencyFormatted = if (showTotals) {
-                    "${(totalCapacity - totalRequired).format(0)} ℓ"
+                    "${(totalCapacity - totalRequired).format(0)}\u00A0ℓ"
                 } else {
                     "${cylinderGasRequirements.pressureLeftWithEmergency?.format(0)} bar"
                 }
@@ -199,7 +199,7 @@ fun GasUsageDetailsDialog(
                                 appendBoldLine("This cylinder has a critical gas shortage!")
                             }
                             append("You need at least ")
-                            appendBold("${totalUsage.format(0)} ℓ")
+                            appendBold("${totalUsage.format(0)}\u00A0ℓ")
                             append(if (showTotals) " for the dive, but only have a combined " else " for the dive, but only have ")
                             appendBold(totalCapacityFormatted)
                             append(".")
@@ -211,7 +211,7 @@ fun GasUsageDetailsDialog(
                                 appendBoldLine("This cylinder has insufficient ${emergencyLabel.lowercase()}!")
                             }
                             append("You need ")
-                            appendBold("${totalRequired.format(0)} ℓ")
+                            appendBold("${totalRequired.format(0)}\u00A0ℓ")
                             append(if (showTotals) " including ${emergencyLabel.lowercase()}, but only have a combined " else " including ${emergencyLabel.lowercase()}, but only have ")
                             appendBold(totalCapacityFormatted)
                             append(". Without accounting for ${emergencyLabel.lowercase()}, there is enough gas.")

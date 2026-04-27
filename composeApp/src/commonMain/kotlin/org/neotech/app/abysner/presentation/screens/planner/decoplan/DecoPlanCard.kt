@@ -367,9 +367,9 @@ fun DecoPlanTable(
                 text = "Depth",
                 icon = ColorPainter(Color.Transparent),
             )
-            Text(modifier = Modifier.weight(0.30f), text = "Runtime")
-            Text(modifier = Modifier.weight(0.25f), text = "Gas")
-            Text(modifier = Modifier.weight(0.22f), text = "PPO2")
+            Text(modifier = Modifier.weight(0.30f), maxLines = 1, text = "Runtime")
+            Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = "Gas")
+            Text(modifier = Modifier.weight(0.22f), maxLines = 1, text = "PPO2")
         }
     ) {
         val segments = divePlan.segmentsCollapsed
