@@ -57,7 +57,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.onlyBottom
-import org.neotech.app.abysner.presentation.component.core.withoutBottom
+import org.neotech.app.abysner.presentation.component.core.onlyHorizontal
+import org.neotech.app.abysner.presentation.component.core.onlyTop
 import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsViewModel.UiState
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.EventEffect
@@ -133,15 +134,19 @@ fun TermsAndConditionsScreen(
             }
 
             Column(
-                modifier = Modifier.fillMaxSize().padding(insets.withoutBottom()),
+                modifier = Modifier.fillMaxSize().padding(insets.onlyTop()),
                 verticalArrangement = Arrangement.Center
             ) {
 
                 if (uiState is UiState.Content) {
                     Markdown(
-                        modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(16.dp).ifTrue(uiState.accepted) {
-                            padding(insets.onlyBottom())
-                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(insets.onlyHorizontal())
+                            .padding(16.dp)
+                            .ifTrue(uiState.accepted) { padding(insets.onlyBottom()) },
                         content = uiState.termsAndConditionsText,
                         colors = markdownColor(),
                         padding = markdownPadding(
@@ -170,7 +175,10 @@ fun TermsAndConditionsScreen(
                             shadowElevation = 8.dp
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(insets.onlyBottom())
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(insets.onlyHorizontal())
+                                    .padding(insets.onlyBottom())
                                     .padding(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {

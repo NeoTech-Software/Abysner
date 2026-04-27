@@ -29,3 +29,14 @@ fun PaddingValues.withoutBottom(layoutDirection: LayoutDirection = LocalLayoutDi
 fun PaddingValues.onlyBottom(): PaddingValues = PaddingValues(
     bottom = calculateBottomPadding()
 )
+
+fun PaddingValues.onlyTop(): PaddingValues = PaddingValues(
+    top = calculateTopPadding()
+)
+
+@Composable
+fun PaddingValues.onlyHorizontal(layoutDirection: LayoutDirection = LocalLayoutDirection.current): PaddingValues = PaddingValues(
+    start = calculateStartPadding(layoutDirection),
+    end = calculateEndPadding(layoutDirection),
+)
+
