@@ -364,8 +364,12 @@ class DecompressionPlanner(
 
         // For bailout (transitioning from CCR to OC), select the best available bailout cylinder
         // and emit a GAS_SWITCH with duration 1 (a minimal problem-solving time for coming off the
-        // loop and switching to the bailout regulator).
-        // TODO: Should this be configurable, or even tied to the existing Configuration.gasSwitchTime?
+        // loop and switching to the bailout regulator). The switch segment is emitted with the
+        // gas that is being switched to (unlike OC-to-OC switches), because in a real bailout the
+        // diver grabs a bailout regulator directly (skipping the usual team-OC switch procedure).
+        // This also avoids incorrectly charging diluent as open-circuit gas consumption in the gas
+        // plan (which should not happen if diluent is not available as bailout).
+        // TODO: Should this be configurable?
         val isBailout = !isCcr && segments.last().breathingMode is BreathingMode.ClosedCircuit
         if (isBailout) {
             val bestBailoutGas = findBetterGasAtPressure(
@@ -373,8 +377,8 @@ class DecompressionPlanner(
                 ambientPressure = fromPressure,
             )
             if (bestBailoutGas != null) {
-                addGasSwitch(fromPressure, gas, 1, breathingMode)
                 gas = bestBailoutGas
+                addGasSwitch(fromPressure, gas, 1, breathingMode)
             }
         }
 

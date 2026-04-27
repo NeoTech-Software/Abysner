@@ -277,7 +277,7 @@ fun DiveConfigurationScreen(
 
                     NumberPreference(
                         label = "Gas switch time",
-                        description = "Adds a flat section to the profile at each gas switch, to account for the time needed to switch gases. Also applied to the bailout switch on CCR dives.",
+                        description = "Adds a flat section to the profile at each gas switch, to account for the time needed to switch gases in open-circuit/bailout mode.",
                         initialValue = configuration.gasSwitchTime,
                         minValue = 0,
                         maxValue = 5,
