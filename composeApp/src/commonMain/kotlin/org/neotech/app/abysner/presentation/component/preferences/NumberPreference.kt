@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.presentation.component.preferences
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialogCustomContent
 import androidx.compose.material3.MaterialTheme.typography
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
 fun NumberPreference(
@@ -113,7 +115,7 @@ fun NumberPreferenceDialog(
         title = { Text(title) },
         content = {
             OutlinedNumberInputField(
-                modifier = Modifier.padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 minValue = minValue,
                 maxValue = maxValue,
                 initialValue = initialValue,
@@ -149,11 +151,13 @@ private fun NumberPreferencePreview() {
 @Preview
 @Composable
 fun NumberPreferenceDialogPreview() {
-    NumberPreferenceDialog(
-        title = "Altitude",
-        visualTransformation = SuffixVisualTransformation(" m"),
-        minValue = -450,
-        maxValue = 3000,
-        initialValue = 0
-    )
+    AbysnerTheme {
+        NumberPreferenceDialog(
+            title = "Altitude",
+            visualTransformation = SuffixVisualTransformation(" m"),
+            minValue = -450,
+            maxValue = 3000,
+            initialValue = 0
+        )
+    }
 }

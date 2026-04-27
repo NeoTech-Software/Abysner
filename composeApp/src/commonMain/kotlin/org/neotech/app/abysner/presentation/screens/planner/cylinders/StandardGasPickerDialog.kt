@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -13,9 +13,11 @@
 package org.neotech.app.abysner.presentation.screens.planner.cylinders
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreferenceDialog
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
 fun StandardGasPickerDialog(
@@ -26,7 +28,7 @@ fun StandardGasPickerDialog(
         title = "Standard gases",
         confirmButtonText = null,
         onItemSelected = { item, _ ->
-            item?.let{
+            item?.let {
                 onGasSelected(it)
             }
             onDismissRequest()
@@ -39,4 +41,15 @@ fun StandardGasPickerDialog(
             "${it.diveIndustryName()} ($it)"
         }
     )
+}
+
+@Preview
+@Composable
+fun StandardGasPickerDialogPreview() {
+    AbysnerTheme {
+        StandardGasPickerDialog(
+            onGasSelected = {},
+            onDismissRequest = {}
+        )
+    }
 }

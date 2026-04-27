@@ -51,6 +51,7 @@ import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.appendBoldLine
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
 import kotlin.math.roundToInt
@@ -298,52 +299,63 @@ fun AlertCard(
 
 @Preview
 @Composable
-private fun TwoCylindersPositivePreview() {
-    val cylinderA = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0), 800.0, 300.0)
-    val cylinderB = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0), 800.0, 300.0)
-    GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+fun TwoCylindersPositivePreview() {
+    AbysnerTheme {
+        val cylinderA = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0), 800.0, 300.0)
+        val cylinderB = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0), 800.0, 300.0)
+        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+    }
 }
 
 @Preview
 @Composable
-private fun TwoCylindersWarningPreview() {
-    val cylinderA = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 2000.0, 900.0)
-    val cylinderB = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 2000.0, 900.0)
-    GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+fun TwoCylindersWarningPreview() {
+    AbysnerTheme {
+        val cylinderA = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 2000.0, 900.0)
+        val cylinderB = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 2000.0, 900.0)
+        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+    }
 }
 
 @Preview
 @Composable
-private fun TwoCylindersErrorPreview() {
-    val cylinderA = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Air, 200.0), 2500.0, 400.0)
-    val cylinderB = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Air, 200.0), 2500.0, 400.0)
-    GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+fun TwoCylindersErrorPreview() {
+    AbysnerTheme {
+        val cylinderA = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Air, 200.0), 2500.0, 400.0)
+        val cylinderB = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Air, 200.0), 2500.0, 400.0)
+        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+    }
 }
 
 @Preview
 @Composable
-private fun OneCylinderPositivePreview() {
-    GasUsageDetailsDialog(
-        gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 1200.0, 600.0)),
-        index = 0,
-    ) {}
+fun OneCylinderPositivePreview() {
+    AbysnerTheme {
+        GasUsageDetailsDialog(
+            gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 1200.0, 600.0)),
+            index = 0,
+        ) {}
+    }
 }
 
 @Preview
 @Composable
-private fun OneCylinderWarningPreview() {
-    GasUsageDetailsDialog(
-        gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0), 1900.0, 600.0)),
-        index = 0,
-    ) {}
+fun OneCylinderWarningPreview() {
+    AbysnerTheme {
+        GasUsageDetailsDialog(
+            gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0),1900.0, 600.0)),
+            index = 0,
+        ) {}
+    }
 }
 
 @Preview
 @Composable
-private fun OneCylinderErrorPreview() {
-    GasUsageDetailsDialog(
-        gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 2800.0, 400.0)),
-        index = 0,
-    ) {}
+fun OneCylinderErrorPreview() {
+    AbysnerTheme {
+        GasUsageDetailsDialog(
+            gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 2800.0, 400.0)),
+            index = 0,
+        ) {}
+    }
 }
-

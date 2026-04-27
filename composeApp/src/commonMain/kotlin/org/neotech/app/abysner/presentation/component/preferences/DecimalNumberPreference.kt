@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.presentation.component.preferences
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialogCustomContent
 import androidx.compose.material3.MaterialTheme.typography
@@ -32,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
 fun DecimalNumberPreference(
@@ -112,7 +114,7 @@ fun DecimalNumberPreferenceDialog(
         title = { Text(title) },
         content = {
             OutlinedDecimalInputField(
-                modifier = Modifier.padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 minValue = minValue,
                 maxValue = maxValue,
                 fractionDigits = fractionDigits,
@@ -147,11 +149,13 @@ private fun DecimalNumberPreferencePreview() {
 @Preview
 @Composable
 fun DecimalNumberPreferenceDialogPreview() {
-    DecimalNumberPreferenceDialog(
-        title = "Metabolic oxygen rate",
-        visualTransformation = SuffixVisualTransformation(" L/min"),
-        minValue = 0.1,
-        maxValue = 5.0,
-        initialValue = 0.8
-    )
+    AbysnerTheme {
+        DecimalNumberPreferenceDialog(
+            title = "Metabolic oxygen rate",
+            visualTransformation = SuffixVisualTransformation(" L/min"),
+            minValue = 0.1,
+            maxValue = 5.0,
+            initialValue = 0.8
+        )
+    }
 }

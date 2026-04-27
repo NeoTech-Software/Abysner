@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
 import org.neotech.app.abysner.presentation.component.toAnnotatedString
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Preview
 @Composable
@@ -184,11 +185,13 @@ fun <T> SingleChoicePreferenceDialog(
 @Preview
 @Composable
 fun SingleChoicePreferenceDialogPreview() {
-    SingleChoicePreferenceDialog(
-        title = "Salinity",
-        items = Salinity.entries.toImmutableList(),
-        itemToStringMapper = {
-            "${it.humanReadableName} (${it.density} kg/m3)"
-        }
-    )
+    AbysnerTheme {
+        SingleChoicePreferenceDialog(
+            title = "Salinity",
+            items = Salinity.entries.toImmutableList(),
+            itemToStringMapper = {
+                "${it.humanReadableName} (${it.density} kg/m3)"
+            }
+        )
+    }
 }

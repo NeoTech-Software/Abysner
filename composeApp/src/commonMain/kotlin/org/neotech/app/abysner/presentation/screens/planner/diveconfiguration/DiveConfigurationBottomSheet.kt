@@ -43,6 +43,8 @@ import org.neotech.app.abysner.presentation.component.RadioCardGroup
 import org.neotech.app.abysner.presentation.component.RadioCardItem
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
+import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpandedSheetState
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.component.textfield.DurationInputField
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import kotlin.time.Duration
@@ -236,46 +238,54 @@ private fun DiveConfigurationBottomSheetContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun DiveConfigurationBottomSheetAddPreview() {
-    DiveConfigurationBottomSheet(
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        title = "Dive 1",
-        initialSurfaceInterval = 60.minutes,
-    )
+fun DiveConfigurationBottomSheetAddPreview() {
+    AbysnerTheme {
+        DiveConfigurationBottomSheet(
+            sheetState = rememberExpandedSheetState(),
+            title = "Dive 1",
+            initialSurfaceInterval = 60.minutes,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun DiveConfigurationBottomSheetEditPreview() {
-    DiveConfigurationBottomSheet(
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        title = "Dive 2",
-        initialSurfaceInterval = 90.minutes,
-        onDelete = {},
-    )
+fun DiveConfigurationBottomSheetEditPreview() {
+    AbysnerTheme {
+        DiveConfigurationBottomSheet(
+            sheetState = rememberExpandedSheetState(),
+            title = "Dive 2",
+            initialSurfaceInterval = 90.minutes,
+            onDelete = {},
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun DiveConfigurationBottomSheetFirstDivePreview() {
-    DiveConfigurationBottomSheet(
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        title = "Dive 1",
-        initialSurfaceInterval = null,
-        onDelete = {},
-    )
+fun DiveConfigurationBottomSheetFirstDivePreview() {
+    AbysnerTheme {
+        DiveConfigurationBottomSheet(
+            sheetState = rememberExpandedSheetState(),
+            title = "Dive 1",
+            initialSurfaceInterval = null,
+            onDelete = {},
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-private fun DiveConfigurationBottomSheetCcrPreview() {
-    DiveConfigurationBottomSheet(
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        title = "Dive 1",
-        initialSurfaceInterval = null,
-        initialDiveMode = DiveMode.CLOSED_CIRCUIT,
-    )
+fun DiveConfigurationBottomSheetCcrPreview() {
+    AbysnerTheme {
+        DiveConfigurationBottomSheet(
+            sheetState = rememberExpandedSheetState(),
+            title = "Dive 1",
+            initialSurfaceInterval = null,
+            initialDiveMode = DiveMode.CLOSED_CIRCUIT,
+        )
+    }
 }
