@@ -40,6 +40,8 @@ kotlin {
         namespace = "nl.neotech.app.abysner.data"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
+
+        withHostTest {}
     }
 
     // Pure JVM is suitable for Android and Desktop usage
