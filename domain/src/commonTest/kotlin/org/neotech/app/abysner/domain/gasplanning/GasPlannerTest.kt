@@ -267,7 +267,7 @@ class GasPlannerTest {
 
         // Proportional distribution: the ratio of requirements must match the ratio of capacities
         val expectedRatio = backMount.capacity() / stage.capacity()
-        val actualRatio   = backMountEntry.totalGasRequirement / stageEntry.totalGasRequirement
+        val actualRatio = backMountEntry.totalGasRequirement / stageEntry.totalGasRequirement
 
         assertEquals(expectedRatio, actualRatio, 1e-2)
     }
@@ -328,13 +328,42 @@ class GasPlannerTest {
         assertTrue(bailoutEntry.extraEmergencyRequirement > 0.0)
     }
 
+    /**
+     * When bailing out from CCR to OC, the 1-minute gas switch segment must be attributed as a
+     * whole to the bailout cylinder, not the diluent (if the diluent is not enabled as bailout).
+     * The diluent is only used on the loop (closed-circuit), so it should have zero bailout
+     * (emergency) gas requirement.
+     */
+    @Test
+    fun calculateGasPlan_ccrBailoutDoesNotChargeDiluentForSwitchTime() {
+        val bailoutCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox32)
+        val divePlan = ccrDivePlan(
+            depth = 40,
+            duration = 20,
+            extraCylinders = listOf(bailoutCylinder),
+            bailout = true,
+        )
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+
+        val diluentEntry = gasPlan.first { it.cylinder.gas == Gas.Air }
+        assertEquals(0.0, diluentEntry.extraEmergencyRequirement)
+    }
+
     private fun ccrDivePlan(
+        depth: Int = 30,
+        duration: Int = 30,
         extraCylinders: List<Cylinder> = emptyList(),
         bailout: Boolean = false,
     ) = DivePlanner(ccrConfiguration).addDive(
-        plan = listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluentCylinder)),
+        plan = listOf(
+            DiveProfileSection(
+                duration = duration,
+                depth = depth,
+                cylinder = diluentCylinder
+            )
+        ),
         cylinders = listOf(
-            diluentCylinder.assign(),
+            diluentCylinder.assign(role = CylinderRole.CCR_DILUENT),
             oxygenCylinder.assign(role = CylinderRole.CCR_OXYGEN),
         ) + extraCylinders.assign(),
         diveMode = DiveMode.CLOSED_CIRCUIT,
