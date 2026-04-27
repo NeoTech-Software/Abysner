@@ -8,6 +8,9 @@ annotation class PreviewForScreenshotTestsMaxHeight
 @Preview(fontScale = 1.0f, device = DEVICE_SCREENSHOT_TESTS_DEFAULT_HEIGHT, locale = "en")
 annotation class PreviewForScreenshotTestsDefaultHeight
 
+@Preview(fontScale = 1.0f, device = DEVICE_SCREENSHOT_TESTS_DIALOG, locale = "en")
+annotation class PreviewForScreenshotTestsDialog
+
 @Preview(fontScale = 1.0f, device = DEVICE_FOLDABLE_SCREENSHOT_TESTS_DEFAULT_HEIGHT, locale = "en")
 annotation class PreviewForScreenshotTestsFoldableDefaultHeight
 
@@ -22,6 +25,12 @@ const val DEVICE_SCREENSHOT_TESTS_MAX = "spec:width=411dp,height=2350dp,dpi=240"
  * reference images from becoming too big.
  */
 const val DEVICE_SCREENSHOT_TESTS_DEFAULT_HEIGHT = "spec:width=411dp,height=891dp,dpi=240"
+
+/**
+ * Narrower device for dialog screenshot tests. Dialogs don't fill the screen width, so a smaller
+ * specification makes for more realistic screenshots.
+ */
+const val DEVICE_SCREENSHOT_TESTS_DIALOG = "spec:width=340dp,height=891dp,dpi=240"
 
 /**
  * Same as [androidx.compose.ui.tooling.preview.Devices.FOLDABLE] but with dpi set lower to prevent

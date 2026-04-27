@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
 fun GradientFactorPreference(
@@ -134,9 +135,11 @@ private fun GradientFactorPreferenceDialog(
 @Preview
 @Composable
 fun GradientFactorPreferenceDialogPreview() {
-    GradientFactorPreferenceDialog(
-        title = "Gradient factor",
-        gfLow = 30,
-        gfHigh = 70
-    )
+    AbysnerTheme {
+        GradientFactorPreferenceDialog(
+            title = "Gradient factor",
+            gfLow = 30,
+            gfHigh = 70
+        )
+    }
 }

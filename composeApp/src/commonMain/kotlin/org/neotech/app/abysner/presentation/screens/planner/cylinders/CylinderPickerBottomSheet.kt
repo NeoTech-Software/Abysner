@@ -56,6 +56,7 @@ import org.neotech.app.abysner.presentation.component.GasPickerComponent
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
+import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpandedSheetState
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
@@ -369,17 +370,15 @@ private fun ShowStandardGasPickerDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-private fun GasPickerBottomSheetPreview() {
+fun GasPickerBottomSheetPreview() {
     AbysnerTheme {
         CylinderPickerBottomSheet(
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
+            sheetState = rememberExpandedSheetState(),
             environment = Environment.Default,
             maxPPO2 = 1.4,
             maxPPO2Secondary = 1.6,
             isAdd = true,
-            initialValue = Cylinder.steel10Liter(Gas.Air)
+            initialValue = Cylinder.steel10Liter(Gas.Air),
         )
     }
 }
@@ -387,19 +386,17 @@ private fun GasPickerBottomSheetPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-private fun GasPickerBottomSheetBailoutPreview() {
+fun GasPickerBottomSheetBailoutPreview() {
     AbysnerTheme {
         CylinderPickerBottomSheet(
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
+            sheetState = rememberExpandedSheetState(),
             environment = Environment.Default,
             maxPPO2 = 1.4,
             maxPPO2Secondary = 1.6,
             isAdd = false,
             showBailoutToggle = true,
             initialBailoutValue = true,
-            initialValue = Cylinder.aluminium80Cuft(Gas.Trimix1555)
+            initialValue = Cylinder.aluminium80Cuft(Gas.Trimix1555),
         )
     }
 }
@@ -407,18 +404,16 @@ private fun GasPickerBottomSheetBailoutPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-private fun GasPickerBottomSheetLockedGasPreview() {
+fun GasPickerBottomSheetLockedGasPreview() {
     AbysnerTheme {
         CylinderPickerBottomSheet(
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
+            sheetState = rememberExpandedSheetState(),
             environment = Environment.Default,
             maxPPO2 = 1.4,
             maxPPO2Secondary = 1.6,
             isAdd = false,
             lockGas = true,
-            initialValue = Cylinder.steel3LiterOxygen()
+            initialValue = Cylinder.steel3LiterOxygen(),
         )
     }
 }

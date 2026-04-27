@@ -20,6 +20,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
+import androidx.compose.ui.tooling.preview.Preview
+import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
 @Composable
 fun DecoPlanConfigurationSummeryDialog(
@@ -75,4 +77,15 @@ fun DecoPlanConfigurationSummeryDialog(
             }
         }
     )
+}
+
+@Preview
+@Composable
+fun DecoPlanConfigurationSummeryDialogPreview() {
+    AbysnerTheme {
+        DecoPlanConfigurationSummeryDialog(
+            configuration = Configuration(),
+            onDismissRequest = {}
+        )
+    }
 }
