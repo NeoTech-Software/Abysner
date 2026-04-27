@@ -120,7 +120,7 @@ private fun RowScope.AppBarActions(
     IconButton(onClick = { navController.navigate(Destinations.DIVE_CONFIGURATION.destinationName) }) {
         Icon(
             painter = painterResource(resource = Res.drawable.ic_outline_tune_24),
-            contentDescription = "Dive configuration"
+            contentDescription = "Plan configuration"
         )
     }
 

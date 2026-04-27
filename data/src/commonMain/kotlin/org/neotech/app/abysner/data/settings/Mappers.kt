@@ -20,13 +20,15 @@ import org.neotech.app.abysner.domain.settings.model.ThemeMode
 fun SettingsModel.toResource() = SettingsResourceV1(
     showBasicDecoTable = showBasicDecoTable,
     termsAndConditionsAccepted = termsAndConditionsAccepted,
-    themeMode = themeMode.toResource()
+    themeMode = themeMode.toResource(),
+    showDiveEditTooltip = showDiveEditTooltip,
 )
 
 fun SettingsResourceV1.toModel() = SettingsModel(
     showBasicDecoTable = showBasicDecoTable,
     termsAndConditionsAccepted = termsAndConditionsAccepted,
-    themeMode = themeMode.toModel()
+    themeMode = themeMode.toModel(),
+    showDiveEditTooltip = showDiveEditTooltip,
 )
 
 private fun ThemeMode.toResource() = when (this) {

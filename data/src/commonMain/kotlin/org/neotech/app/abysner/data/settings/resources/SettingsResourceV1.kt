@@ -21,6 +21,7 @@ data class SettingsResourceV1(
     val showBasicDecoTable: Boolean,
     val termsAndConditionsAccepted: Boolean,
     val themeMode: ThemeModeResource = ThemeModeResource.SYSTEM,
+    val showDiveEditTooltip: Boolean = true,
 ): SerializableResource {
 
     @Serializable

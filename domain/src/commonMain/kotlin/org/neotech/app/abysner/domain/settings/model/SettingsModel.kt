@@ -16,4 +16,5 @@ data class SettingsModel(
     val showBasicDecoTable: Boolean = false,
     val termsAndConditionsAccepted: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val showDiveEditTooltip: Boolean = true,
 )

@@ -92,7 +92,7 @@ fun DiveConfigurationScreen(
             topBar = {
                 Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.background) {
                     TopAppBar(
-                        title = { Text("Dive configuration") },
+                        title = { Text("Plan configuration") },
                         navigationIcon = {
 
                             val currentBackStackEntry by navController.currentBackStackEntryAsState()
