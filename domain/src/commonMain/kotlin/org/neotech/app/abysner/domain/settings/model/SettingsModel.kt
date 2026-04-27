@@ -14,6 +14,6 @@ package org.neotech.app.abysner.domain.settings.model
 
 data class SettingsModel(
     val showBasicDecoTable: Boolean = false,
-    val termsAndConditionsAccepted: Boolean = true,
+    val termsAndConditionsAccepted: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
 )
