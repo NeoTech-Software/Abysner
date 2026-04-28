@@ -25,15 +25,12 @@ import org.neotech.app.abysner.domain.core.physics.Pressure
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.utilities.ceilTolerant
-import org.neotech.app.abysner.domain.utilities.equalsTolerant
-import kotlin.math.floor
 import org.neotech.app.abysner.domain.utilities.greaterThanOrEqualTolerant
 import org.neotech.app.abysner.domain.utilities.greaterThanTolerant
 import org.neotech.app.abysner.domain.utilities.lessThanOrEqualTolerant
 import org.neotech.app.abysner.domain.utilities.lessThanTolerant
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.round
 
 /**
  * The decompression planner makes use of a decompression model and adds algorithms to figure out
@@ -46,44 +43,14 @@ import kotlin.math.round
  */
 class DecompressionPlanner(
     val model: DecompressionModel,
-    val surfacePressure: Double,
+    val grid: DecoGrid,
     val maxPpO2: Double,
     val maxEquivalentNarcoticAmbientPressure: Double,
     val ascentRatePressureDelta: Double,
-    /**
-     * The deco step size in pressure (for example about 0.3 bar for 3m steps) used to determine at
-     * which pressures deco stops are required. Must be an exact multiple of
-     * [displayUnitPressureDelta].
-     */
-    val decoStepSizePressureDelta: Double,
-    /**
-     * The ambient pressure of the last allowed deco stop, must be aligned to the deco step size.
-     */
-    val lastDecoStopAmbientPressure: Double,
-    /**
-     * The pressure delta that corresponds to the smallest display unit step (for example about
-     * 0.1 bar for steps of 1 meter).
-     */
-    val displayUnitPressureDelta: Double,
     val forceMinimalDecoStopTime: Boolean,
     val gasSwitchTime: Int,
     val pressureToDepth: (Double) -> Double,
 ) {
-
-    init {
-        // Both decoStepSizePressureDelta and lastDecoStopAmbientPressure must align to
-        // displayUnitPressureDelta so that deco stops always land on whole display units (e.g.
-        // 3, 6 or 9 meter instead of 2.9, 5.8 or 8.7 meter).
-        val decoStepInDisplayUnits = decoStepSizePressureDelta / displayUnitPressureDelta
-        require(decoStepInDisplayUnits.equalsTolerant(round(decoStepInDisplayUnits))) {
-            "decoStepSizePressureDelta ($decoStepSizePressureDelta) must be an exact multiple of displayUnitPressureDelta ($displayUnitPressureDelta)."
-        }
-        val lastDecoStopDepthPressure = lastDecoStopAmbientPressure - surfacePressure
-        val lastDecoStopInDisplayUnits = lastDecoStopDepthPressure / displayUnitPressureDelta
-        require(lastDecoStopInDisplayUnits.equalsTolerant(round(lastDecoStopInDisplayUnits))) {
-            "lastDecoStopAmbientPressure ($lastDecoStopAmbientPressure) must fall on a display unit grid point relative to surfacePressure ($surfacePressure)."
-        }
-    }
 
     private var isLookahead = false
 
@@ -96,7 +63,7 @@ class DecompressionPlanner(
     /**
      * Current dive depth in ambient pressure (bar).
      */
-    var ambientPressure: Double = surfacePressure
+    var ambientPressure: Double = grid.surfacePressure
         private set
 
     private val decoGases = mutableListOf<Cylinder>()
@@ -230,7 +197,7 @@ class DecompressionPlanner(
             return 0
         }
         val decoSegments = lookahead {
-            calculateDecompression(toAmbientPressure = surfacePressure, breathingMode = breathingMode, setpointSwitch = setpointSwitch).toList()
+            calculateDecompression(toAmbientPressure = grid.surfacePressure, breathingMode = breathingMode, setpointSwitch = setpointSwitch).toList()
         }
         alternativeAccents[runtime] = decoSegments
         return decoSegments.sumOf { it.duration }
@@ -260,7 +227,7 @@ class DecompressionPlanner(
                 // Check if there is a better gas to breathe at the current pressure
                 val betterDecoGas = findBetterGas(currentCylinder = gas, pressure = currentPressure)
                 // Only start using the better gas when we reach a deco increment point
-                if (betterDecoGas != null && betterDecoGas.gas != gas.gas && isAtDecoIncrement(currentPressure)) {
+                if (betterDecoGas != null && betterDecoGas.gas != gas.gas && grid.isAtDecoStop(currentPressure)) {
                     // Gas switch time is spent on the old gas: the diver is still breathing the
                     // previous gas while preparing to switch (grabbing regulator, purging, etc.).
                     // The actual switch to the new gas happens after the gas switch time.
@@ -277,7 +244,7 @@ class DecompressionPlanner(
                 // Figure out if before we reach the targetPressure gas switches are required at any
                 // of the deco increments between currentPressure and targetPressure (gas switches
                 // are aligned to the decompression stops).
-                var nextPressure = findNextDecoStopPressure(currentPressure)
+                var nextPressure = grid.findNextDecoStopPressure(currentPressure)
                 var nextDecoGas: Cylinder?
                 while(nextPressure.greaterThanOrEqualTolerant(targetPressure)) {
                     nextDecoGas = findBetterGas(currentCylinder = gas, pressure = nextPressure)
@@ -285,7 +252,7 @@ class DecompressionPlanner(
                         targetPressure = nextPressure
                         break
                     }
-                    nextPressure -= decoStepSizePressureDelta
+                    nextPressure -= grid.decoStepSizePressureDelta
                 }
             }
 
@@ -313,7 +280,7 @@ class DecompressionPlanner(
 
         if (!isCcr) {
             val betterDecoGas = findBetterGas(currentCylinder = gas, pressure = currentPressure)
-            if (betterDecoGas != null && betterDecoGas.gas != gas.gas && isAtDecoIncrement(currentPressure)) {
+            if (betterDecoGas != null && betterDecoGas.gas != gas.gas && grid.isAtDecoStop(currentPressure)) {
                 // Gas switch time on the old gas before switching
                 addGasSwitch(currentPressure, gas, gasSwitchTime, effectiveBreathingMode)
                 gas = betterDecoGas
@@ -419,7 +386,7 @@ class DecompressionPlanner(
         }
 
         // Keep making deco stops until the deco ceiling is at or above the surface
-        while (ceiling.greaterThanTolerant(surfacePressure)) {
+        while (ceiling.greaterThanTolerant(grid.surfacePressure)) {
 
             val currentPressure = ceiling
             if(currentPressure.lessThanOrEqualTolerant(toAmbientPressure)) {
@@ -432,7 +399,7 @@ class DecompressionPlanner(
             }
 
             // Check the new ceiling
-            ceiling = max(this.getDecoCeiling(), toAmbientPressure)
+            ceiling = max(this.getGridDecoCeiling(), toAmbientPressure)
 
             // Don't allow ceiling below start depth
             // TODO this check feels a bit weird, shouldn't we just throw if this happens?
@@ -450,9 +417,9 @@ class DecompressionPlanner(
 
                 // If minimal deco step times are required, force stops to also be symmetric!
                 val nextDecoPressure = if(forceMinimalDecoStopTime) {
-                    max(findNextDecoStopPressure(currentPressure), toAmbientPressure)
+                    max(grid.findNextDecoStopPressure(currentPressure), toAmbientPressure)
                 } else {
-                    max(findNextDecoStopPressure(ceiling), toAmbientPressure)
+                    max(grid.findNextDecoStopPressure(ceiling), toAmbientPressure)
                 }
 
                 // Stop at the current deco stop until we can safely ascend to the next deco stop.
@@ -462,7 +429,7 @@ class DecompressionPlanner(
                     this.addDecoStop(currentPressure, gas, 1, effectiveBreathingMode)
                     stopTime++
 
-                    ceiling = max(this.getDecoCeiling(), toAmbientPressure)
+                    ceiling = max(this.getGridDecoCeiling(), toAmbientPressure)
                     if(ceiling.lessThanTolerant(nextDecoPressure) && forceMinimalDecoStopTime) {
                         // Ceiling is skipping a deco step, force the ceiling to be deeper to avoid skipping
                         ceiling = nextDecoPressure
@@ -503,7 +470,7 @@ class DecompressionPlanner(
         breathingMode: BreathingMode,
     ): Double {
 
-        var ceiling: Double = getDecoCeiling()
+        var ceiling: Double = getGridDecoCeiling()
         var nextCeiling = ceiling
         do {
 
@@ -511,8 +478,8 @@ class DecompressionPlanner(
 
             nextCeiling = lookahead {
 
-                if (ceiling.lessThanOrEqualTolerant(surfacePressure)) {
-                    return@lookahead surfacePressure
+                if (ceiling.lessThanOrEqualTolerant(grid.surfacePressure)) {
+                    return@lookahead grid.surfacePressure
                 }
 
                 // Move diver up
@@ -527,14 +494,14 @@ class DecompressionPlanner(
                 )
 
                 // Check new ceiling (could already be higher)
-                getDecoCeiling()
+                getGridDecoCeiling()
             }
         } while(ceiling.greaterThanTolerant(nextCeiling))
 
         // Check if off-gassing during the ascent to the next shallower deco stop clears the
         // ceiling, allowing the current stop to be skipped entirely.
-        val nextDecoPressure = findNextDecoStopPressure(nextCeiling)
-        if (nextCeiling.greaterThanTolerant(surfacePressure) && nextDecoPressure.greaterThanOrEqualTolerant(surfacePressure)) {
+        val nextDecoPressure = grid.findNextDecoStopPressure(nextCeiling)
+        if (nextCeiling.greaterThanTolerant(grid.surfacePressure) && nextDecoPressure.greaterThanOrEqualTolerant(grid.surfacePressure)) {
             if (isCeilingClearedDuringAscent(fromPressure, nextDecoPressure, gas, breathingMode)) {
                 return nextDecoPressure
             }
@@ -558,13 +525,13 @@ class DecompressionPlanner(
         breathingMode: BreathingMode,
         setpointSwitch: SetpointSwitch? = null,
     ): Boolean {
-        if (targetDecoAmbientPressure.lessThanTolerant(surfacePressure)) {
+        if (targetDecoAmbientPressure.lessThanTolerant(grid.surfacePressure)) {
             return false
         }
         val ceilingAfterAscent = lookahead {
             addDecoDepthChange(
                 fromAmbientPressure,
-                targetDecoAmbientPressure.coerceAtLeast(surfacePressure),
+                targetDecoAmbientPressure.coerceAtLeast(grid.surfacePressure),
                 maxPpO2,
                 maxEquivalentNarcoticAmbientPressure,
                 gas,
@@ -572,80 +539,12 @@ class DecompressionPlanner(
                 breathingMode,
                 setpointSwitch
             )
-            getDecoCeiling()
+            getGridDecoCeiling()
         }
         return ceilingAfterAscent.lessThanOrEqualTolerant(targetDecoAmbientPressure)
     }
 
-    private fun getDecoCeiling(): Double {
-        val rawCeiling = model.getCeiling().value
-        if (rawCeiling.lessThanOrEqualTolerant(surfacePressure)) {
-            return surfacePressure
-        }
-
-        val depthPressure = rawCeiling - surfacePressure
-
-        // Snap (ceil) to the deco grid (e.g. 3 meter or 10 feet increments). Because
-        // decoStepSizePressureDelta is guaranteed to be an exact multiple of
-        // displayUnitPressureDelta, this always lands on a display-unit boundary too.
-        val decoGridSteps = ceilTolerant(depthPressure / decoStepSizePressureDelta).toInt()
-        if (decoGridSteps <= 0) {
-            return surfacePressure
-        }
-        val snappedPressure = surfacePressure + decoGridSteps * decoStepSizePressureDelta
-
-        // If the deco stop falls between surface and the last allowed deco stop depth, clamp to
-        // the last allowed deco stop.
-        return if (snappedPressure.lessThanTolerant(lastDecoStopAmbientPressure) && snappedPressure.greaterThanTolerant(surfacePressure)) {
-            lastDecoStopAmbientPressure
-        } else {
-            snappedPressure
-        }
-    }
-
-    private fun findNextDecoStopPressure(fromAmbientPressure: Double): Double {
-        val depthPressure = fromAmbientPressure - surfacePressure
-        if (depthPressure.lessThanOrEqualTolerant(0.0)) {
-            return surfacePressure
-        }
-
-        val steps = depthPressure / decoStepSizePressureDelta
-        val nearestWholeStep = round(steps)
-        val isOnGrid = steps.equalsTolerant(nearestWholeStep)
-
-        // If exactly on a deco-grid point, go one step shallower, so we select the next stop. If
-        // not, we are in between deco-grid points. In that case the next stop is the nearest
-        // shallower one, so use floor to find it.
-        val nextStep = if (isOnGrid) {
-            nearestWholeStep.toInt() - 1
-        } else {
-            // No need for tolerance, if there was any floating-point noise the isOnGrid check would have caught it
-            floor(steps).toInt()
-        }
-        if (nextStep <= 0) {
-            // No more deco stops, next step on the grid is surface, return early and exactly
-            return surfacePressure
-        }
-
-        val nextPressure = surfacePressure + nextStep * decoStepSizePressureDelta
-
-        // If the next stop falls between surface and the configured last deco stop depth, skip to
-        // surface (the dive was configured to not stop in between the surface and
-        // lastDecoStopAmbientPressure).
-        return if (nextPressure.lessThanTolerant(lastDecoStopAmbientPressure)) {
-            surfacePressure
-        } else {
-            nextPressure
-        }
-    }
-
-    private fun isAtDecoIncrement(pressure: Double): Boolean {
-        val steps = (pressure - surfacePressure) / decoStepSizePressureDelta
-        val nearestWholeStep = round(steps)
-        // If nearest whole step is within tolerance to the actual step we are at, the diver is on a
-        // deco grid point.
-        return steps.equalsTolerant(nearestWholeStep)
-    }
+    private fun getGridDecoCeiling(): Double = grid.snapCeilingToDecoGrid(model.getCeiling().value)
 
     private fun <T> lookahead(block: () -> T): T {
         val savedRuntime = runtime
@@ -679,4 +578,3 @@ class DecompressionPlanner(
         return segments.toPersistentList()
     }
 }
-

@@ -17,7 +17,6 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.physics.ambientPressureToFeet
-import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
 import org.neotech.app.abysner.domain.core.physics.feetToAmbientPressure
 import org.neotech.app.abysner.domain.core.physics.feetToHydrostaticPressure
 import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
@@ -27,65 +26,10 @@ import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.utilities.removeFloatingPointNoise
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class DecompressionPlannerTest {
 
     private val environment = Environment.SeaLevelFresh
-
-    @Test
-    fun init_rejectsDecoStepNotMultipleOfDisplayUnit() {
-        assertFailsWith<IllegalArgumentException> {
-            buildPlanner(
-                decoStepSizePressureDelta = metersToHydrostaticPressure(2.0, environment).value,
-                displayUnitPressureDelta = metersToHydrostaticPressure(3.0, environment).value,
-                lastDecoStopAmbientPressure = metersToAmbientPressure(2.0, environment).value,
-                pressureToDepth = { ambientPressureToMeters(it, environment) }
-            )
-        }
-    }
-
-    @Test
-    fun init_acceptsDecoStepThatIsMultipleOfDisplayUnit() {
-        buildPlanner(
-            decoStepSizePressureDelta = metersToHydrostaticPressure(3.0, environment).value,
-            displayUnitPressureDelta = metersToHydrostaticPressure(1.0, environment).value,
-            lastDecoStopAmbientPressure = metersToAmbientPressure(3.0, environment).value,
-            pressureToDepth = { ambientPressureToMeters(it, environment) }
-        )
-    }
-
-    @Test
-    fun init_rejectsLastDecoStopNotOnDisplayUnitGrid() {
-        assertFailsWith<IllegalArgumentException> {
-            buildPlanner(
-                decoStepSizePressureDelta = metersToHydrostaticPressure(3.0, environment).value,
-                displayUnitPressureDelta = metersToHydrostaticPressure(1.0, environment).value,
-                lastDecoStopAmbientPressure = metersToAmbientPressure(2.5, environment).value,
-                pressureToDepth = { ambientPressureToMeters(it, environment) }
-            )
-        }
-    }
-
-    @Test
-    fun init_acceptsLastDecoStopOnDisplayUnitGrid() {
-        buildPlanner(
-            decoStepSizePressureDelta = metersToHydrostaticPressure(3.0, environment).value,
-            displayUnitPressureDelta = metersToHydrostaticPressure(1.0, environment).value,
-            lastDecoStopAmbientPressure = metersToAmbientPressure(6.0, environment).value,
-            pressureToDepth = { ambientPressureToMeters(it, environment) }
-        )
-    }
-
-    @Test
-    fun init_acceptsImperialAlignedStepSize() {
-        buildPlanner(
-            decoStepSizePressureDelta = feetToHydrostaticPressure(10.0, environment).value,
-            displayUnitPressureDelta = feetToHydrostaticPressure(1.0, environment).value,
-            lastDecoStopAmbientPressure = feetToAmbientPressure(6.0, environment).value,
-            pressureToDepth = { ambientPressureToFeet(it, environment) }
-        )
-    }
 
     @Test
     fun imperialDecoSteps_allSegmentDepthsAlignToTenFootGrid() {
@@ -141,13 +85,15 @@ class DecompressionPlannerTest {
             gfLow = 0.3,
             gfHigh = 0.7,
         ),
-        surfacePressure = environment.atmosphericPressure,
+        grid = DecoGrid(
+            surfacePressure = environment.atmosphericPressure,
+            decoStepSizePressureDelta = decoStepSizePressureDelta,
+            lastDecoStopAmbientPressure = lastDecoStopAmbientPressure,
+            displayUnitPressureDelta = displayUnitPressureDelta,
+        ),
         maxPpO2 = 1.6,
         maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(30.0, environment).value,
         ascentRatePressureDelta = metersToHydrostaticPressure(5.0, environment).value,
-        decoStepSizePressureDelta = decoStepSizePressureDelta,
-        lastDecoStopAmbientPressure = lastDecoStopAmbientPressure,
-        displayUnitPressureDelta = displayUnitPressureDelta,
         forceMinimalDecoStopTime = false,
         gasSwitchTime = 1,
         pressureToDepth = pressureToDepth,

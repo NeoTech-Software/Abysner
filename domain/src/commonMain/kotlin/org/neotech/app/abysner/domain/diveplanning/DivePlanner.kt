@@ -22,6 +22,7 @@ import org.neotech.app.abysner.domain.core.model.SetpointSwitch
 import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
 import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.core.physics.metersToHydrostaticPressure
+import org.neotech.app.abysner.domain.decompression.DecoGrid
 import org.neotech.app.abysner.domain.decompression.DecompressionPlanner
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.decompression.algorithm.buhlmann.Buhlmann
@@ -256,17 +257,20 @@ class DivePlanner(
         configuration: Configuration,
     ): DecompressionPlanner {
         val environment = configuration.environment
-        return DecompressionPlanner(
+        val grid = DecoGrid(
             surfacePressure = environment.atmosphericPressure,
-            maxPpO2 = configuration.maxPPO2Deco,
-            maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(configuration.maxEND, environment).value,
-            ascentRatePressureDelta = metersToHydrostaticPressure(configuration.maxAscentRate, environment).value,
             decoStepSizePressureDelta = metersToHydrostaticPressure(configuration.decoStepSize.toDouble(), environment).value,
             lastDecoStopAmbientPressure = metersToAmbientPressure(configuration.lastDecoStopDepth.toDouble(), environment).value,
             displayUnitPressureDelta = metersToHydrostaticPressure(1.0, environment).value,
+        )
+        return DecompressionPlanner(
+            model = model,
+            grid = grid,
+            maxPpO2 = configuration.maxPPO2Deco,
+            maxEquivalentNarcoticAmbientPressure = metersToAmbientPressure(configuration.maxEND, environment).value,
+            ascentRatePressureDelta = metersToHydrostaticPressure(configuration.maxAscentRate, environment).value,
             forceMinimalDecoStopTime = configuration.forceMinimalDecoStopTime,
             gasSwitchTime = configuration.gasSwitchTime,
-            model = model,
             pressureToDepth = { pressure ->
                 // This is not strictly required to make the UI work, since the UI already formats
                 // to zero decimals or 1 maybe 2 decimals at most. However, it makes the current
