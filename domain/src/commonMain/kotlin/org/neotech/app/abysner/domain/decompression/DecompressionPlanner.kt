@@ -22,11 +22,8 @@ import org.neotech.app.abysner.domain.core.model.SetpointSwitch
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.core.model.findBetterGasOrFallback
 import org.neotech.app.abysner.domain.core.physics.Pressure
-import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
-import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.decompression.algorithm.DecompressionModel
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
-import org.neotech.app.abysner.domain.decompression.model.subList
 import org.neotech.app.abysner.domain.utilities.ceilTolerant
 import org.neotech.app.abysner.domain.utilities.equalsTolerant
 import kotlin.math.floor
@@ -88,7 +85,7 @@ class DecompressionPlanner(
         }
     }
 
-    private var isCalculatingTts = false
+    private var isLookahead = false
 
     /**
      * Current dive runtime in minutes.
@@ -157,7 +154,8 @@ class DecompressionPlanner(
     }
 
     private fun addDepthChangeInternal(startAmbientPressure: Double, endAmbientPressure: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type, breathingMode: BreathingMode, setpointSwitch: SetpointSwitch? = null) {
-        if(timeInMinutes > 0 && calculateTissueChangesPerMinute && !isCalculatingTts) {
+        // In lookahead mode we are not interested in minute-level details, apply the change as a whole.
+        if(timeInMinutes > 0 && !isLookahead) {
             val diff = startAmbientPressure - endAmbientPressure
             var currentBreathingMode = breathingMode
             repeat(timeInMinutes) { minute ->
@@ -178,7 +176,6 @@ class DecompressionPlanner(
      * breathing mode at the end of this pressure change.
      */
     private fun applyPressureChange(startAmbientPressure: Double, endAmbientPressure: Double, gas: Cylinder, timeInMinutes: Int, type: DiveSegment.Type, breathingMode: BreathingMode, setpointSwitch: SetpointSwitch? = null): BreathingMode {
-
         // Check if the setpoint switch pressure is crossed during this segment
         val switchPressure = setpointSwitch?.ambientPressure
         val crossesSwitchPressure = switchPressure != null &&
@@ -225,27 +222,18 @@ class DecompressionPlanner(
     }
 
     fun calculateTimeToSurface(breathingMode: BreathingMode, setpointSwitch: SetpointSwitch? = null): Int {
-        // TODO this is not an ideal method to acquire this information, as we generate a lot
-        //      of info we don't need.
-
-        // This call is very expensive as it could be recursive
-        if(isCalculatingTts) {
+        // Prevent nested lookahead (calculateDecompression may trigger another TTS call)
+        if(isLookahead) {
             return -1
         }
         if(segments.isEmpty()) {
             return 0
         }
-        isCalculatingTts = true
-        var alternativeAscentSegments: List<DiveSegment> = emptyList()
-        val start = runtime
-        val result = resetAfter {
-            calculateDecompression(toAmbientPressure = surfacePressure, breathingMode = breathingMode, setpointSwitch = setpointSwitch).sumOf { it.duration }.also {
-                alternativeAscentSegments = segments.subList(start).toList()
-            }
+        val decoSegments = lookahead {
+            calculateDecompression(toAmbientPressure = surfacePressure, breathingMode = breathingMode, setpointSwitch = setpointSwitch).toList()
         }
-        alternativeAccents[start] = alternativeAscentSegments
-        isCalculatingTts = false
-        return result
+        alternativeAccents[runtime] = decoSegments
+        return decoSegments.sumOf { it.duration }
     }
 
     /**
@@ -506,7 +494,6 @@ class DecompressionPlanner(
         }
     }
 
-
     private fun findFirstDecoCeiling(
         fromPressure: Double,
         maxPpO2: Double,
@@ -522,10 +509,10 @@ class DecompressionPlanner(
 
             ceiling = nextCeiling
 
-            nextCeiling = resetAfter {
+            nextCeiling = lookahead {
 
                 if (ceiling.lessThanOrEqualTolerant(surfacePressure)) {
-                    return@resetAfter surfacePressure
+                    return@lookahead surfacePressure
                 }
 
                 // Move diver up
@@ -574,7 +561,7 @@ class DecompressionPlanner(
         if (targetDecoAmbientPressure.lessThanTolerant(surfacePressure)) {
             return false
         }
-        val ceilingAfterAscent = resetAfter {
+        val ceilingAfterAscent = lookahead {
             addDecoDepthChange(
                 fromAmbientPressure,
                 targetDecoAmbientPressure.coerceAtLeast(surfacePressure),
@@ -660,14 +647,17 @@ class DecompressionPlanner(
         return steps.equalsTolerant(nearestWholeStep)
     }
 
-    private fun <T> resetAfter(block: () -> T): T {
+    private fun <T> lookahead(block: () -> T): T {
         val savedRuntime = runtime
         val savedAmbientPressure = ambientPressure
         val savedSegments = segments.toList()
         val savedAlternativeAscents = alternativeAccents.toMap()
+        val savedIsLookahead = isLookahead
+        isLookahead = true
         val result = model.resetAfter {
             block()
         }
+        isLookahead = savedIsLookahead
         runtime = savedRuntime
         ambientPressure = savedAmbientPressure
         segments.clear()
@@ -690,4 +680,3 @@ class DecompressionPlanner(
     }
 }
 
-private const val calculateTissueChangesPerMinute: Boolean = true
