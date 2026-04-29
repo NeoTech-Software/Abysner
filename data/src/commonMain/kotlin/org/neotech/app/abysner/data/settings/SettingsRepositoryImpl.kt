@@ -25,9 +25,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.data.PREFERENCE_DEPRECATION_WARNING
+import org.neotech.app.abysner.data.detectSystemUnitSystem
 import org.neotech.app.abysner.data.getJson
 import org.neotech.app.abysner.data.setJson
 import org.neotech.app.abysner.data.settings.resources.SettingsResourceV1
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.persistence.PersistenceRepository
 import org.neotech.app.abysner.domain.persistence.get
 import org.neotech.app.abysner.domain.settings.SettingsRepository
@@ -38,17 +40,30 @@ class SettingsRepositoryImpl(
     private val persistenceRepository: PersistenceRepository,
 ) : SettingsRepository {
 
+    private val defaultUnitSystem: UnitSystem = detectSystemUnitSystem()
+
     override val settings: MutableStateFlow<SettingsModel> = MutableStateFlow(SettingsModel())
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     init {
         scope.launch {
             persistenceRepository.getPreferences().collect { preferences ->
-                if(preferences.contains(PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED)) {
+                if (preferences.contains(PREFERENCE_KEY_TERMS_AND_CONDITIONS_ACCEPTED)) {
                     preferences.migrateSettings()
                 }
 
-                settings.emit(preferences.getJson<SettingsResourceV1>(PREFERENCE_KEY_GLOBAL_SETTINGS)?.toModel() ?: SettingsModel())
+                val resource = preferences.getJson<SettingsResourceV1>(PREFERENCE_KEY_GLOBAL_SETTINGS)
+                val model = resource?.toModel(defaultUnitSystem) ?: SettingsModel(unitSystem = defaultUnitSystem)
+
+                // If no settings are found, or the unit system is missing, lock-in the default
+                // settings, so they don't change unexpectedly on next app start.
+                if (resource == null || resource.unitSystem == null) {
+                    persistenceRepository.updatePreferences {
+                        it.setJson(PREFERENCE_KEY_GLOBAL_SETTINGS, model.toResource())
+                    }
+                }
+
+                settings.emit(model)
             }
         }
     }
@@ -87,7 +102,9 @@ class SettingsRepositoryImpl(
     }
 
     override suspend fun getSettings(): SettingsModel {
-        return persistenceRepository.getPreferences().first().getJson<SettingsResourceV1>(PREFERENCE_KEY_GLOBAL_SETTINGS)?.toModel() ?: SettingsModel()
+        return persistenceRepository.getPreferences().first()
+            .getJson<SettingsResourceV1>(PREFERENCE_KEY_GLOBAL_SETTINGS)
+            ?.toModel(defaultUnitSystem) ?: SettingsModel(unitSystem = defaultUnitSystem)
     }
 }
 
