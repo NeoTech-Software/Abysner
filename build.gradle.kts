@@ -57,3 +57,51 @@ kover {
         }
     }
 }
+
+tasks.register<org.neotech.plugin.FrameScreenshotsTask>("frameAndroidScreenshots") {
+    group = "store"
+    description = "Frames Nothing Phone screenshots into device bezels."
+
+    val nothingPhone = layout.projectDirectory.dir("store-art/Nothing Phone 1")
+
+    bezelFile = nothingPhone.file("bezel-58-59-1524-3386.png")
+    maskFile = nothingPhone.file("mask.png")
+    screenshotFiles = listOf(
+        "screenshot-1.png",
+        "screenshot-2.png",
+        "screenshot-3.png",
+        "screenshot-4.png",
+    ).map { nothingPhone.file(it).asFile }
+}
+
+tasks.register<org.neotech.plugin.FrameScreenshotsTask>("frameIosSmallScreenshots") {
+    group = "store"
+    description = "Frames iPhone 6s screenshots into device bezels."
+
+    val nothingPhone = layout.projectDirectory.dir("store-art/iPhone 6s Plus (5.5)")
+
+    bezelFile = nothingPhone.file("bezel-102-379-1242-2210.png")
+    maskFile = nothingPhone.file("mask.png")
+    screenshotFiles = listOf(
+        "screenshot-1.png",
+        "screenshot-2.png",
+        "screenshot-3.png",
+        "screenshot-4.png",
+    ).map { nothingPhone.file(it).asFile }
+}
+
+tasks.register<org.neotech.plugin.FrameScreenshotsTask>("frameIosLargeScreenshots") {
+    group = "store"
+    description = "Frames iPhone 15 screenshots into device bezels."
+
+    val nothingPhone = layout.projectDirectory.dir("store-art/iPhone 15 Pro Max (6.7)")
+
+    bezelFile = nothingPhone.file("bezel-120-120-1290-2796.png")
+    maskFile = nothingPhone.file("mask.png")
+    screenshotFiles = listOf(
+        "screenshot-1.png",
+        "screenshot-2.png",
+        "screenshot-3.png",
+        "screenshot-4.png",
+    ).map { nothingPhone.file(it).asFile }
+}

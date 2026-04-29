@@ -162,9 +162,9 @@ fun CylinderSelectionCardComponent(
                 val message = if (gases.isEmpty()) {
                     "Add at least one cylinder to start planning your dive."
                 } else if (diveMode.isCcr) {
-                    "Cylinders marked as bail-out are offered to the decompression algorithm for ascent planning."
+                    "Checked bail-out cylinders are available for ascent planning."
                 } else {
-                    "Checked cylinders are offered to the decompression algorithm for ascent planning."
+                    "Checked cylinders are available for ascent planning."
                 }
                 Text(
                     modifier = Modifier.weight(1f).padding(end = 16.dp),
