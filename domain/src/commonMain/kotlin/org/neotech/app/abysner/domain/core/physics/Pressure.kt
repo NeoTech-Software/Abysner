@@ -30,10 +30,15 @@ import kotlin.math.ln
 @JvmInline
 value class Pressure(val value: Double) {
     operator fun plus(other: Pressure): Pressure = Pressure(this.value + other.value)
+    operator fun plus(other: Double): Pressure = Pressure(this.value + other)
     operator fun minus(other: Pressure): Pressure = Pressure(this.value - other.value)
     operator fun times(factor: Double): Pressure = Pressure(this.value * factor)
     operator fun div(divisor: Double): Pressure = Pressure(this.value / divisor)
+    operator fun compareTo(other: Pressure): Int = this.value.compareTo(other.value)
 }
+
+operator fun Double.plus(other: Pressure): Pressure = Pressure(this + other.value)
+operator fun Double.times(other: Pressure): Pressure = Pressure(this * other.value)
 
 /**
  * Calculates the partial pressure of an individual gas component from the total pressure of the gas
@@ -61,9 +66,9 @@ fun pascalToBar(pascals: Double): Double = pascals / 100000.0
  */
 fun barToPascal(bars: Double): Double = bars * 100000.0
 
-fun Double.asPsiToBar(): Double = this / 14.503774
+fun Double.asPsiToBar(): Double = this / PSI_PER_BAR
 
-fun Double.asBarToPsi(): Double = this * 14.503774
+fun Double.asBarToPsi(): Double = this * PSI_PER_BAR
 
 /**
  * Converts depth in meters given a certain density (salinity) and atmospheric pressure to pressure
@@ -180,4 +185,14 @@ internal const val GRAVITY_ON_EARTH = 9.80665
 /**
  * Constant for foot to meter conversion, according to international standard.
  */
-private const val METERS_PER_FOOT = 0.3048
+const val METERS_PER_FOOT = 0.3048
+
+/**
+ * Conversion factor from bar to psi (pounds per square inch).
+ */
+const val PSI_PER_BAR = 14.503773773
+
+/**
+ * Conversion factor from liters to cubic feet.
+ */
+const val LITERS_PER_CUBIC_FOOT = 28.316846592

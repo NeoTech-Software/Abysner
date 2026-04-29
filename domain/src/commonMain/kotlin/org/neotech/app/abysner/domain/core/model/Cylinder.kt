@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.domain.core.model
 
 import org.neotech.app.abysner.domain.core.physics.GasEquationOfStateModel
+import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.domain.utilities.generateUUID
 
@@ -29,6 +30,18 @@ data class Cylinder(
         val workingPressure: Double,
     ) {
         fun fill(gas: Gas, pressure: Double = workingPressure) = Cylinder(gas, pressure, this)
+
+        /**
+         * Capacity in liters (uses real-gas properties based on Air at working pressure). This is
+         * what manufacturers might list on spec sheets as the cylinder's true capacity.
+         *
+         * For an exact fill capacity for a specific gas use: [Cylinder.capacity] or
+         * [Cylinder.capacityAt].
+         */
+        fun ratedCapacity(
+            gasEquationOfStateModel: GasEquationOfStateModel = GasEquationOfStateModel.Default
+        ): Double =
+            gasEquationOfStateModel.getGasVolume(Gas.Air, waterVolume, workingPressure)
 
         companion object {
 
@@ -97,6 +110,10 @@ data class Cylinder(
 
     companion object {
 
+        private const val BAR_3000_PSI = 3000.0 / PSI_PER_BAR
+        private const val BAR_3300_PSI = 3300.0 / PSI_PER_BAR
+        private const val BAR_3442_PSI = 3442.0 / PSI_PER_BAR
+
         // Common (EU) metric steel cylinders (not based on any specific manufacturer's specs, but
         // very consistently available in Europe)
 
@@ -116,37 +133,48 @@ data class Cylinder(
 
         // Aluminium cylinders (Luxfer specs)
         // Source: https://scubapro.ae/wp-content/uploads/2015/03/Luxfer-Aluminum-Specifications.pdf
+        // Note: Luxfer lists working pressures in both bar and PSI, but they don't round-trip
+        // exactly, since working pressure is more important in imperial mode, the exact PSI values
+        // are used as reference.
 
-        val AL6 = Size(name = "AL6", waterVolume = 0.9, workingPressure = 207.0)
-        val AL13 = Size(name = "AL13", waterVolume = 1.9, workingPressure = 207.0)
-        val AL19 = Size(name = "AL19", waterVolume = 2.9, workingPressure = 207.0)
-        val AL30 = Size(name = "AL30", waterVolume = 4.3, workingPressure = 207.0)
-        val AL40 = Size(name = "AL40", waterVolume = 5.7, workingPressure = 207.0)
-        val AL50 = Size(name = "AL50", waterVolume = 6.9, workingPressure = 207.0)
-        val AL63 = Size(name = "AL63", waterVolume = 9.0, workingPressure = 207.0)
-        val AL80 = Size(name = "AL80", waterVolume = 11.1, workingPressure = 207.0)
-        val AL100 = Size(name = "AL100", waterVolume = 13.2, workingPressure = 227.0)
+        val AL6 = Size(name = "AL6", waterVolume = 0.9, workingPressure = BAR_3000_PSI)
+        val AL13 = Size(name = "AL13", waterVolume = 1.9, workingPressure = BAR_3000_PSI)
+        val AL19 = Size(name = "AL19", waterVolume = 2.9, workingPressure = BAR_3000_PSI)
+        val AL30 = Size(name = "AL30", waterVolume = 4.3, workingPressure = BAR_3000_PSI)
+        val AL40 = Size(name = "AL40", waterVolume = 5.7, workingPressure = BAR_3000_PSI)
+        val AL50 = Size(name = "AL50", waterVolume = 6.9, workingPressure = BAR_3000_PSI)
+        val AL63 = Size(name = "AL63", waterVolume = 9.0, workingPressure = BAR_3000_PSI)
+        val AL80 = Size(name = "AL80", waterVolume = 11.1, workingPressure = BAR_3000_PSI)
+        val AL100 = Size(name = "AL100", waterVolume = 13.2, workingPressure = BAR_3300_PSI)
 
         // Imperial steel cylinders (Faber specs)
         // Source: https://www.divegearexpress.com/library/articles/calculating-scuba-cylinder-capacities#truecapacitytable
+        // Note: Faber lists working pressures in both bar and PSI, but they don't round-trip
+        // exactly, since working pressure is more important in imperial mode, the exact PSI values
+        // are used as reference.
 
-        val HP80 = Size(name = "HP80", waterVolume = 10.2, workingPressure = 237.0)
-        val HP100 = Size(name = "HP100", waterVolume = 12.9, workingPressure = 237.0)
-        val HP117 = Size(name = "HP117", waterVolume = 15.0, workingPressure = 237.0)
-        val HP120 = Size(name = "HP120", waterVolume = 15.3, workingPressure = 237.0)
-        val HP133 = Size(name = "HP133", waterVolume = 17.0, workingPressure = 237.0)
+        val HP80 = Size(name = "HP80", waterVolume = 10.2, workingPressure = BAR_3442_PSI)
+        val HP100 = Size(name = "HP100", waterVolume = 12.9, workingPressure = BAR_3442_PSI)
+        val HP117 = Size(name = "HP117", waterVolume = 15.0, workingPressure = BAR_3442_PSI)
+        val HP120 = Size(name = "HP120", waterVolume = 15.3, workingPressure = BAR_3442_PSI)
+        val HP133 = Size(name = "HP133", waterVolume = 17.0, workingPressure = BAR_3442_PSI)
 
-        val StandardSizes = listOf(
+        val StandardMetricSizes = listOf(
             STEEL_3L, STEEL_7L, STEEL_8_5L, STEEL_10L, STEEL_12L, STEEL_15L,
             D7, D8_5, D10, D12,
+        )
+
+        val StandardImperialSizes = listOf(
             AL40, AL63, AL80, AL100,
             HP80, HP100, HP117, HP120, HP133,
         )
 
+        val StandardSizes = StandardMetricSizes + StandardImperialSizes
+
         fun steel3LiterOxygen(pressure: Double = 200.0) = STEEL_3L.fill(Gas.Oxygen, pressure)
         fun steel10Liter(gas: Gas, pressure: Double = 232.0) = STEEL_10L.fill(gas, pressure)
         fun steel12Liter(gas: Gas, pressure: Double = 232.0) = STEEL_12L.fill(gas, pressure)
-        fun aluminium80Cuft(gas: Gas, pressure: Double = 207.0) = AL80.fill(gas, pressure)
-        fun aluminium63Cuft(gas: Gas, pressure: Double = 207.0) = AL63.fill(gas, pressure)
+        fun aluminium80Cuft(gas: Gas, pressure: Double = BAR_3000_PSI) = AL80.fill(gas, pressure)
+        fun aluminium63Cuft(gas: Gas, pressure: Double = BAR_3000_PSI) = AL63.fill(gas, pressure)
     }
 }
