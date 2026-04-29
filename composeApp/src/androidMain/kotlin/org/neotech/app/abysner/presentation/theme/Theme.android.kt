@@ -23,6 +23,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import org.neotech.app.abysner.presentation.SCREENSHOT_MODE_FAKE_IOS
 
 @Composable
 actual fun getColorScheme(dynamicColor: Boolean, isDarkMode: Boolean): ColorScheme = when {
@@ -46,5 +47,13 @@ actual fun applyPlatformSpecificThemeConfiguration(colorScheme: ColorScheme, isD
     }
 }
 
-@Suppress("SameReturnValue")
-actual fun platform(): Platform = Platform.ANDROID
+actual fun platform(): Platform =
+    // Unlike the other platforms Android does not hardcode ANDROID, instead it can return IOS if
+    // SCREENSHOT_MODE_FAKE_IOS is set. This is so that the Android app can fake as if it is running
+    // on an iOS platform, for easier capturing of store images.
+    // See: StoreScreenshotGeneratorTest.kt
+    if (System.getProperty(SCREENSHOT_MODE_FAKE_IOS).toBoolean()) {
+        Platform.IOS
+    } else {
+        Platform.ANDROID
+    }

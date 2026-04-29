@@ -8,7 +8,7 @@
 [![Download on the App Store](resources/store-badge-apple.svg)](https://apps.apple.com/nl/app/abysner/id6636477320)
 
 
-<img align="right" width="250" src="resources/readme-demo-image.png">
+<img align="right" width="250" src="store-art/android-light/framed-screenshot-4.png">
 
 **The decompression models we use and trust today to plan our dives are the result of decades of
 collective research by thousands of people. There is a lot of software available to plan dives,

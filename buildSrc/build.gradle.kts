@@ -26,3 +26,7 @@ gradlePlugin {
         }
     }
 }
+
+dependencies {
+    implementation(libs.jsvg)
+}

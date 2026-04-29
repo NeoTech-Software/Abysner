@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
@@ -55,6 +56,7 @@ internal fun PlanScreenContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CylinderSelectionCardComponent(
+                modifier = Modifier.testTag(PlanScreenTestTags.CYLINDERS_CARD),
                 gases = uiState.availableGas,
                 diveMode = uiState.diveMode,
                 unitSystem = uiState.settingsModel.unitSystem,
@@ -72,6 +74,7 @@ internal fun PlanScreenContent(
                 onEditSegment = { index, _ -> onEditSegment(index) },
             )
             DecoPlanCardComponent(
+                modifier = Modifier.testTag(PlanScreenTestTags.DECO_PLAN_CARD),
                 divePlanSet = uiState.selectedDivePlanSet.getOrNull(),
                 settings = uiState.settingsModel,
                 planningException = uiState.selectedDivePlanSet.exceptionOrNull() ?: uiState.multiDivePlanSet.exceptionOrNull(),
@@ -79,6 +82,7 @@ internal fun PlanScreenContent(
                 onContingencyInputChanged = onContingencyInputChanged,
             )
             GasPlanCardComponent(
+                modifier = Modifier.testTag(PlanScreenTestTags.GAS_PLAN_CARD),
                 isLoading = uiState.isCalculatingDivePlan,
                 divePlanSet = uiState.selectedDivePlanSet.getOrNull(),
                 planningException = uiState.selectedDivePlanSet.exceptionOrNull(),
@@ -88,3 +92,8 @@ internal fun PlanScreenContent(
     }
 }
 
+object PlanScreenTestTags {
+    const val CYLINDERS_CARD = "cylindersCard"
+    const val DECO_PLAN_CARD = "decoPlanCard"
+    const val GAS_PLAN_CARD = "gasPlanCard"
+}

@@ -46,6 +46,10 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = abysnerBuildNumber.toInt()
         versionName = abysnerVersion
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Used by StoreScreenshotGeneratorTest, so screenshots can be read from the AVD
+        testInstrumentationRunnerArguments["useTestStorageService"] = "true"
     }
     packaging {
         resources {
@@ -110,6 +114,20 @@ android {
 
     @Suppress("UnstableApiUsage")
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
+
+    testOptions {
+        animationsDisabled = true
+        @Suppress("UnstableApiUsage")
+        managedDevices {
+            localDevices {
+                create("storeDevice") {
+                    device = "Pixel 10"
+                    apiLevel = 36
+                    systemImageSource = "aosp"
+                }
+            }
+        }
+    }
 }
 
 tasks.withType<PreviewScreenshotValidationTask>().configureEach {
@@ -125,5 +143,19 @@ dependencies {
     screenshotTestImplementation(libs.androidx.ui.tooling)
     screenshotTestImplementation(libs.jetbrains.compose.material3)
     screenshotTestImplementation(project(":domain"))
+
+    androidTestImplementation(project(":composeApp"))
+    androidTestImplementation(project(":data"))
+    androidTestImplementation(project(":domain"))
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.uiautomator)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.datastore.preferences)
+    androidTestImplementation(libs.okio)
+    androidTestImplementation(libs.kotlinx.serialization)
+    androidTestImplementation(libs.kotlinx.coroutines.core)
+    androidTestUtil(libs.androidx.test.services)
 }
 
