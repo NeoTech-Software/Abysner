@@ -19,7 +19,10 @@ import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.SetpointSwitch
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.ambientPressureToFeet
 import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
+import org.neotech.app.abysner.domain.core.physics.feetToHydrostaticPressure
 import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.core.physics.metersToHydrostaticPressure
 import org.neotech.app.abysner.domain.decompression.DecoGrid
@@ -39,10 +42,11 @@ import kotlin.time.Duration
  * adds multi-level dive handling.
  */
 class DivePlanner(
-    configuration: Configuration = Configuration()
+    configuration: Configuration = Configuration(),
+    private val unitSystem: UnitSystem = UnitSystem.METRIC,
 ) {
 
-    var configuration: Configuration = configuration
+    var configuration: Configuration = configuration.snapToDisplayUnit(unitSystem)
         private set
 
     private var model: DecompressionModel = createDecompressionModel()
@@ -53,7 +57,7 @@ class DivePlanner(
      */
     fun updateConfiguration(newConfiguration: Configuration) {
         val snapshot = model.snapshot()
-        configuration = newConfiguration
+        configuration = newConfiguration.snapToDisplayUnit(unitSystem)
         model = createDecompressionModel()
         model.reset(snapshot)
     }
@@ -69,6 +73,7 @@ class DivePlanner(
         cylinders: List<AssignedCylinder>,
         diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
         bailout: Boolean = false,
+        unitSystem: UnitSystem = UnitSystem.METRIC,
     ): DivePlan {
 
         require(!bailout || diveMode.isCcr) {
@@ -99,7 +104,7 @@ class DivePlanner(
             )
         }
 
-        val decompressionPlanner = createDecompressionPlanner(model, configuration)
+        val decompressionPlanner = createDecompressionPlanner(model, configuration, unitSystem)
 
         decompressionPlanner.setDecoGases(decoCylinders)
 
@@ -255,14 +260,24 @@ class DivePlanner(
     private fun createDecompressionPlanner(
         model: DecompressionModel,
         configuration: Configuration,
+        unitSystem: UnitSystem = UnitSystem.METRIC,
     ): DecompressionPlanner {
         val environment = configuration.environment
         val grid = DecoGrid(
             surfacePressure = environment.atmosphericPressure,
             decoStepSizePressureDelta = metersToHydrostaticPressure(configuration.decoStepSize, environment).value,
             lastDecoStopAmbientPressure = metersToAmbientPressure(configuration.lastDecoStopDepth, environment).value,
-            displayUnitPressureDelta = metersToHydrostaticPressure(1.0, environment).value,
+            displayUnitPressureDelta = when (unitSystem) {
+                UnitSystem.METRIC -> metersToHydrostaticPressure(1.0, environment).value
+                UnitSystem.IMPERIAL -> feetToHydrostaticPressure(1.0, environment).value
+            },
         )
+        // removeFloatingPointNoise makes test assertions easier to read since depths are
+        // usually whole numbers without requiring tolerance handling at every call site.
+        val pressureToDepth: (Double) -> Double = when (unitSystem) {
+            UnitSystem.METRIC -> { pressure -> removeFloatingPointNoise(ambientPressureToMeters(pressure, environment)) }
+            UnitSystem.IMPERIAL -> { pressure -> removeFloatingPointNoise(ambientPressureToFeet(pressure, environment)) }
+        }
         return DecompressionPlanner(
             model = model,
             grid = grid,
@@ -271,14 +286,7 @@ class DivePlanner(
             ascentRatePressureDelta = metersToHydrostaticPressure(configuration.maxAscentRate, environment).value,
             forceMinimalDecoStopTime = configuration.forceMinimalDecoStopTime,
             gasSwitchTime = configuration.gasSwitchTime,
-            pressureToDepth = { pressure ->
-                // This is not strictly required to make the UI work, since the UI already formats
-                // to zero decimals or 1 maybe 2 decimals at most. However, it makes the current
-                // test assertions easier to read, since these are usually in whole meters, without
-                // this noise normalization tolerance handling at assertion call sites would be
-                // required, or more precise less readable floating point numbers.
-                removeFloatingPointNoise(ambientPressureToMeters(pressure, environment))
-            },
+            pressureToDepth = pressureToDepth,
         )
     }
 
@@ -314,5 +322,3 @@ class DivePlanner(
 
     class NotEnoughTimeToDecompress : PlanningException()
 }
-
-

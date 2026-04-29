@@ -20,6 +20,8 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.METERS_PER_FOOT
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.assign
@@ -511,6 +513,48 @@ class DivePlannerTest {
         // O2 switch at 6m (tolerant MOD ~6.3m, on the 3m grid)
         plan.assertSegment(7, DiveSegment.Type.GAS_SWITCH, startDepth = 6.0,  endDepth = 6.0,  duration = 1, gas = decoGas80)
         plan.assertSegment(8, DiveSegment.Type.ASCENT,     startDepth = 6.0,  endDepth = 3.0,  duration = 1, gas = decoGasO2)
+    }
+
+    @Test
+    fun referencePlanImperial_producesSegmentsInFeetWithTenFootDecoStops() {
+        val divePlanner = DivePlanner(
+            configuration = Configuration(
+                maxAscentRate = 10.0 * METERS_PER_FOOT,
+                maxDescentRate = 20.0 * METERS_PER_FOOT,
+                gfLow = 0.3,
+                gfHigh = 0.7,
+                salinity = Salinity.WATER_SALT,
+                algorithm = Algorithm.BUHLMANN_ZH16C,
+                altitude = 0.0,
+                decoStepSize = 10.0 * METERS_PER_FOOT,
+                lastDecoStopDepth = 10.0 * METERS_PER_FOOT,
+                gasSwitchTime = 1,
+            ),
+            unitSystem = UnitSystem.IMPERIAL,
+        )
+
+        val bottomGas = Cylinder.steel12Liter(Gas.Air)
+
+        val divePlan = divePlanner.addDive(
+            plan = listOf(DiveProfileSection(duration = 25, 100.0 * METERS_PER_FOOT, bottomGas)),
+            cylinders = listOf(bottomGas, Cylinder.aluminium80Cuft(Gas.Nitrox50)).assign(),
+            unitSystem = UnitSystem.IMPERIAL,
+        )
+        val plan = divePlan.segmentsCollapsed
+
+        // Verify the decent and bottom sections are in feet
+        plan.assertSegment(index = 0, type = DiveSegment.Type.DECENT, startDepth = 0.0, endDepth = 100.0, duration = 5, gas = bottomGas)
+        plan.assertSegment(index = 1, type = DiveSegment.Type.FLAT, startDepth = 100.0, endDepth = 100.0, duration = 20, gas = bottomGas)
+
+        // Verify all stop and gas switch depths align to the 10 feet grid
+        plan.filter {
+            it.type == DiveSegment.Type.DECO_STOP || it.type == DiveSegment.Type.GAS_SWITCH
+        }.forEach {
+            assertEquals(0.0, it.endDepth % 10.0)
+        }
+
+        // Verify the dive ends at the surface (0 feet)
+        assertEquals(0.0, plan.last().endDepth)
     }
 }
 
