@@ -61,6 +61,7 @@ import org.neotech.app.abysner.presentation.component.preferences.SwitchPreferen
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 
 typealias DiveConfigurationScreen = @Composable (navController: NavHostController) -> Unit
@@ -231,28 +232,18 @@ fun DiveConfigurationScreen(
 
                     SettingsSubTitle(subTitle = "Decompression & Planing")
 
-                    /*
-                    SwitchPreference(
-                        label = "Force minimal stop time",
-                        value = "If while ascending to a deco stop the diver already off-gassed enough, force a minimal deco stop of 1 minute instead of skipping the stop.",
-                        isChecked = configuration.forceMinimalDecoStopTime
-                    ) { isChecked ->
-                        onConfigurationChanged(configuration.copy(forceMinimalDecoStopTime = isChecked))
-                    }
-                     */
-
                     SingleChoicePreference(
                         label = "Deco stop interval",
                         description = "The interval at which to make deco stops.",
-                        items = persistentListOf(3, 6, 9),
+                        items = persistentListOf(3.0, 6.0, 9.0),
                         selectedItemIndex = when (configuration.decoStepSize) {
-                            3 -> 0
-                            6 -> 1
-                            9 -> 2
+                            3.0 -> 0
+                            6.0 -> 1
+                            9.0 -> 2
                             else -> 1
                         },
                         itemToStringMapper = {
-                            "$it m"
+                            "${it.roundToInt()} m"
                         }
                     ) { decoStepSize ->
                         updateConfiguration { it.copy(decoStepSize = decoStepSize) }
@@ -261,15 +252,15 @@ fun DiveConfigurationScreen(
                     SingleChoicePreference(
                         label = "Last deco stop",
                         description = "Depth at which the last deco stop will be made.",
-                        items = persistentListOf(3, 6, 9),
+                        items = persistentListOf(3.0, 6.0, 9.0),
                         selectedItemIndex = when (configuration.lastDecoStopDepth) {
-                            3 -> 0
-                            6 -> 1
-                            9 -> 2
+                            3.0 -> 0
+                            6.0 -> 1
+                            9.0 -> 2
                             else -> 0
                         },
                         itemToStringMapper = {
-                            "$it m"
+                            "${it.roundToInt()} m"
                         }
                     ) { lastDecoStopDepth ->
                         updateConfiguration { it.copy(lastDecoStopDepth = lastDecoStopDepth) }
@@ -331,13 +322,13 @@ fun DiveConfigurationScreen(
                     NumberPreference(
                         label = "Deeper",
                         description = "How much deeper the contingency plan should be, this is added to the deepest section of the planned dive.",
-                        initialValue = configuration.contingencyDeeper,
+                        initialValue = configuration.contingencyDeeper.roundToInt(),
                         minValue = 0,
                         maxValue = 5,
                         valueFormatter = { "$it m"},
                         textFieldVisualTransformation = SuffixVisualTransformation(" m")
                     ) { deeper ->
-                        updateConfiguration { it.copy(contingencyDeeper = deeper) }
+                        updateConfiguration { it.copy(contingencyDeeper = deeper.toDouble()) }
                     }
 
                     NumberPreference(
@@ -358,18 +349,18 @@ fun DiveConfigurationScreen(
                         label = "Low setpoint",
                         description = "The CCR setpoint used during descent, with optional auto-switch depth to the high setpoint.",
                         setpoint = configuration.ccrLowSetpoint,
-                        switchDepth = configuration.ccrToHighSetpointSwitchDepth,
+                        switchDepth = configuration.ccrToHighSetpointSwitchDepth?.roundToInt(),
                     ) { setpoint, switchDepth ->
-                        updateConfiguration { it.copy(ccrLowSetpoint = setpoint, ccrToHighSetpointSwitchDepth = switchDepth) }
+                        updateConfiguration { it.copy(ccrLowSetpoint = setpoint, ccrToHighSetpointSwitchDepth = switchDepth?.toDouble()) }
                     }
 
                     CcrSetpointPreference(
                         label = "High setpoint",
                         description = "The CCR setpoint used during bottom time and ascent, with optional auto-switch depth to the low setpoint.",
                         setpoint = configuration.ccrHighSetpoint,
-                        switchDepth = configuration.ccrToLowSetpointSwitchDepth,
+                        switchDepth = configuration.ccrToLowSetpointSwitchDepth?.roundToInt(),
                     ) { setpoint, switchDepth ->
-                        updateConfiguration { it.copy(ccrHighSetpoint = setpoint, ccrToLowSetpointSwitchDepth = switchDepth) }
+                        updateConfiguration { it.copy(ccrHighSetpoint = setpoint, ccrToLowSetpointSwitchDepth = switchDepth?.toDouble()) }
                     }
 
                     DecimalNumberPreference(

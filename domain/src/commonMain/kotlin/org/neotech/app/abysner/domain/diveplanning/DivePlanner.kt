@@ -114,7 +114,7 @@ class DivePlanner(
 
         var currentPressure = configuration.environment.atmosphericPressure
         effectivePlan.forEach {
-            val sectionPressure = metersToAmbientPressure(it.depth.toDouble(), configuration.environment).value
+            val sectionPressure = metersToAmbientPressure(it.depth, configuration.environment).value
             if (sectionPressure != currentPressure) {
 
                 val pressureDifference = currentPressure - sectionPressure
@@ -259,8 +259,8 @@ class DivePlanner(
         val environment = configuration.environment
         val grid = DecoGrid(
             surfacePressure = environment.atmosphericPressure,
-            decoStepSizePressureDelta = metersToHydrostaticPressure(configuration.decoStepSize.toDouble(), environment).value,
-            lastDecoStopAmbientPressure = metersToAmbientPressure(configuration.lastDecoStopDepth.toDouble(), environment).value,
+            decoStepSizePressureDelta = metersToHydrostaticPressure(configuration.decoStepSize, environment).value,
+            lastDecoStopAmbientPressure = metersToAmbientPressure(configuration.lastDecoStopDepth, environment).value,
             displayUnitPressureDelta = metersToHydrostaticPressure(1.0, environment).value,
         )
         return DecompressionPlanner(

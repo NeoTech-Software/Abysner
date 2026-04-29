@@ -23,11 +23,11 @@ class SurfaceIntervalTest {
             salinity = Salinity.WATER_FRESH,
             algorithm = Algorithm.BUHLMANN_ZH16C,
             altitude = 0.0,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0
         ))
 
-        val plannedDive = listOf(DiveProfileSection(duration = 30, 30, bottomGas))
+        val plannedDive = listOf(DiveProfileSection(duration = 30, 30.0, bottomGas))
 
         val divePlan1 = divePlanner.addDive(plannedDive, emptyList())
         divePlanner.addSurfaceInterval(30.toDuration(DurationUnit.MINUTES))

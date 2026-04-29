@@ -38,9 +38,9 @@ data class Configuration(
     val forceMinimalDecoStopTime: Boolean = true,
     val gasSwitchTime: Int = 1,
     val useDecoGasBetweenSections: Boolean = false,
-    val decoStepSize: Int = 3,
-    val lastDecoStopDepth: Int = 3,
-    val contingencyDeeper: Int = 3,
+    val decoStepSize: Double = 3.0,
+    val lastDecoStopDepth: Double = 3.0,
+    val contingencyDeeper: Double = 3.0,
     val contingencyLonger: Int = 3,
     val salinity: Salinity = Salinity.WATER_FRESH,
     val altitude: Double = 0.0,
@@ -70,13 +70,13 @@ data class Configuration(
      * during descent. Null disables the auto-switch and causes the switch to occur when a bottom
      * section is reached.
      */
-    val ccrToHighSetpointSwitchDepth: Int? = null,
+    val ccrToHighSetpointSwitchDepth: Double? = null,
     /**
      * Depth (meters) at which the planner switches from the high setpoint to the low setpoint
      * during ascent. Null disables the auto-switch, meaning the high setpoint remains active until
      * the surface is reached or a new descent starts.
      */
-    val ccrToLowSetpointSwitchDepth: Int? = null,
+    val ccrToLowSetpointSwitchDepth: Double? = null,
 ) {
 
     val environment = Environment(salinity, altitudeToPressure(altitude))
@@ -90,7 +90,7 @@ data class Configuration(
     fun descentSetpointSwitch(breathingMode: BreathingMode): SetpointSwitch? =
         ccrToHighSetpointSwitchDepth?.let { depth ->
             (breathingMode as? BreathingMode.ClosedCircuit)?.let {
-                SetpointSwitch(ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value, toBreathingMode = BreathingMode.ClosedCircuit(ccrHighSetpoint))
+                SetpointSwitch(ambientPressure = metersToAmbientPressure(depth, environment).value, toBreathingMode = BreathingMode.ClosedCircuit(ccrHighSetpoint))
             }
         }
 
@@ -101,7 +101,7 @@ data class Configuration(
     fun ascentSetpointSwitch(breathingMode: BreathingMode): SetpointSwitch? =
         ccrToLowSetpointSwitchDepth?.let { depth ->
             (breathingMode as? BreathingMode.ClosedCircuit)?.let {
-                SetpointSwitch(ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value, toBreathingMode = BreathingMode.ClosedCircuit(ccrLowSetpoint))
+                SetpointSwitch(ambientPressure = metersToAmbientPressure(depth, environment).value, toBreathingMode = BreathingMode.ClosedCircuit(ccrLowSetpoint))
             }
         }
 

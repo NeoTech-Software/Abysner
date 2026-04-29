@@ -76,7 +76,7 @@ fun GasBarChartPreview() = PreviewWrapper {
     val plan = listOf(
         DiveProfileSection(
             duration = 25,
-            depth = 40,
+            depth = 40.0,
             Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)
         ),
     )

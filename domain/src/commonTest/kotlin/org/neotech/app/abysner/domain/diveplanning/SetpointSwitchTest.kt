@@ -35,8 +35,8 @@ class CcrSetpointSwitchTest {
     private val highMode = BreathingMode.ClosedCircuit(highSetpoint)
 
     private fun createPlanner(
-        switchDepthDescend: Int? = 6,
-        switchDepthAscend: Int? = 6,
+        switchDepthDescend: Double? = 6.0,
+        switchDepthAscend: Double? = 6.0,
     ): DivePlanner = DivePlanner(
         Configuration(
             maxAscentRate = 9.0,
@@ -45,8 +45,8 @@ class CcrSetpointSwitchTest {
             gfHigh = 0.7,
             salinity = Salinity.WATER_SALT,
             algorithm = Algorithm.BUHLMANN_ZH16C,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0,
             ccrLowSetpoint = lowSetpoint,
             ccrHighSetpoint = highSetpoint,
             ccrToHighSetpointSwitchDepth = switchDepthDescend,
@@ -57,10 +57,10 @@ class CcrSetpointSwitchTest {
     @Test
     fun ccrDive_descentSwitchDepthSetsBreathingModeAtEnd() {
         val diluent = Cylinder.aluminium80Cuft(Gas.Air)
-        val planner = createPlanner(switchDepthDescend = 6, switchDepthAscend = null)
+        val planner = createPlanner(switchDepthDescend = 6.0, switchDepthAscend = null)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 20, depth = 36, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 20, depth = 36.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -78,10 +78,10 @@ class CcrSetpointSwitchTest {
     @Test
     fun ccrDive_ascentSwitchDepthSetsBreathingModeAtEnd() {
         val diluent = Cylinder.aluminium80Cuft(Gas.Air)
-        val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = 6)
+        val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = 6.0)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 10, depth = 18, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 10, depth = 18.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -99,10 +99,10 @@ class CcrSetpointSwitchTest {
     @Test
     fun ccrDive_ascentSwitchDepthWithDecoStopSwitchesAtStopDepth() {
         val diluent = Cylinder.aluminium80Cuft(Gas.Air)
-        val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = 6)
+        val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = 6.0)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -135,7 +135,7 @@ class CcrSetpointSwitchTest {
         val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = null)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )

@@ -20,9 +20,10 @@ data class DiveProfileSection(
      */
     val duration: Int,
     /**
-     * Depth of this segment
+     * Depth of this segment in meters.
+     * TODO: Update documentation to indicate that this will be in display-units
      */
-    val depth: Int,
+    val depth: Double,
     /**
      * Selected gas for this segment (usually travel or bottom gas)
      */

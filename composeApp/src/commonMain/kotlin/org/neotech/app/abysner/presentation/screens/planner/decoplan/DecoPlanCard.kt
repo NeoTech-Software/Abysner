@@ -89,6 +89,7 @@ import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
 import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 @Composable
 fun DecoPlanCardComponent(
@@ -172,7 +173,7 @@ fun DecoPlanCardComponent(
                 } else {
 
                     val items = buildList {
-                        add("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper}")
+                        add("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper.roundToInt()}")
                         add("Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
                         if (divePlanSet.isCcr) { add("Bail-out") }
                     }.toImmutableList()
@@ -498,7 +499,7 @@ fun DecoPlanCardComponentPreview() {
 
         val divePlan = DivePlanner().addDive(
             plan = listOf(
-                DiveProfileSection(16, 45, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
+                DiveProfileSection(16, 45.0, Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)),
             ),
             cylinders = listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50)).assign(),
         )

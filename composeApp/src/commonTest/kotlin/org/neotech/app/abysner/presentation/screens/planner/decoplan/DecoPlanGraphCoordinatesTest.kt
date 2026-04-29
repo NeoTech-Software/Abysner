@@ -40,12 +40,12 @@ class DecoPlanGraphCoordinatesTest {
             salinity = Salinity.WATER_SALT,
             algorithm = Algorithm.BUHLMANN_ZH16C,
             altitude = 0.0,
-            decoStepSize = 3,
-            lastDecoStopDepth = 6,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 6.0,
             gasSwitchTime = 0,
         ))
         return divePlanner.addDive(
-            plan = listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
+            plan = listOf(DiveProfileSection(duration = 30, 30.0, bottomGas)),
             cylinders = listOf(decoGas).assign(),
         )
     }
@@ -65,7 +65,7 @@ class DecoPlanGraphCoordinatesTest {
             altitude = 0.0,
         ))
         return divePlanner.addDive(
-            plan = listOf(DiveProfileSection(duration = 20, 20, bottomGas)),
+            plan = listOf(DiveProfileSection(duration = 20, 20.0, bottomGas)),
             cylinders = emptyList(),
         )
     }

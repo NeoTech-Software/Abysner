@@ -34,11 +34,11 @@ object PreviewData {
     private val diluentCylinder = Cylinder.aluminium80Cuft(gas = Gas.Trimix1845)
 
     val diveProfile30Meters by lazy {
-        persistentListOf(DiveProfileSection(25, 30, airCylinder))
+        persistentListOf(DiveProfileSection(25, 30.0, airCylinder))
     }
 
     val diveProfile60Meters by lazy {
-        persistentListOf(DiveProfileSection(15, 60, airCylinder))
+        persistentListOf(DiveProfileSection(15, 60.0, airCylinder))
     }
 
     val divePlan1Cylinders by lazy {
@@ -66,7 +66,7 @@ object PreviewData {
     }
 
     val divePlan2Segments by lazy {
-        persistentListOf(DiveProfileSection(35, 68, airCylinder))
+        persistentListOf(DiveProfileSection(35, 68.0, airCylinder))
     }
 
     val divePlan2Cylinders by lazy {
