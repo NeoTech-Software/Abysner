@@ -18,9 +18,9 @@ import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
+import org.neotech.app.abysner.domain.core.physics.Pressure
+import org.neotech.app.abysner.domain.core.physics.times
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import kotlin.math.ceil
 
@@ -56,21 +56,24 @@ data class DivePlan(
     val totalDeco = segmentsCollapsed.totalDeco()
     val averageDepth = segmentsCollapsed.calculateAverageDepth()
 
+    // TODO this does more then just density, perhaps needs to move to call site.
     val maximumGasDensities: List<GasAtDepth>
         get() = segmentsCollapsed
             .groupBy { it.cylinder }
-            .mapValues { it.value.maxOf { segment -> segment.maxDepth } }
-            .map {
-                GasAtDepth(it.key.gas, it.value, configuration.environment)
+            .map { (cylinder, segments) ->
+                val maxPressureSegment = segments.maxBy { maxOf(it.startPressure, it.endPressure) }
+                val maxPressure = maxOf(maxPressureSegment.startPressure, maxPressureSegment.endPressure)
+                val maxDepth = segments.maxOf { it.maxDepth }
+                GasAtDepth(cylinder.gas, maxDepth, Pressure(maxPressure))
             }
 
     data class GasAtDepth(
         val gas: Gas,
         val depth: Double,
-        val environment: Environment,
+        val ambientPressure: Pressure,
     ) {
-        val ppo2 = gas.oxygenFraction * metersToAmbientPressure(depth, environment).value
-        val density: Double = gas.densityAtDepth(depth, environment)
+        val ppo2 = gas.oxygenFraction * ambientPressure
+        val density: Double = gas.densityAtAmbientPressure(ambientPressure)
     }
 
     fun toString(compact: Boolean = false): String {

@@ -25,9 +25,13 @@ import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.core.physics.ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL
+import org.neotech.app.abysner.domain.core.physics.Pressure
+import org.neotech.app.abysner.domain.utilities.floorTolerant
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
 import kotlin.math.round
 
 @Composable
@@ -87,9 +91,9 @@ fun GasPropertiesComponent(
         Row(modifier = Modifier.wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            val mod = gas?.let {
-                "${it.oxygenModRounded(maxPPO2, environment)}m"
-            } ?: EMPTY_PLACEHOLDER
+            val mod = gas?.oxygenModAmbientPressureWithTolerance(maxPPO2)
+                ?.formatModDepth(UnitSystem.METRIC, environment)
+                ?: EMPTY_PLACEHOLDER
 
             FlipCardComponent(
                 modifier = Modifier.weight(0.3f),
@@ -115,9 +119,10 @@ fun GasPropertiesComponent(
 
             if(showSecondaryPPO2) {
 
-                val modSecondary = gas?.let {
-                    "${it.oxygenModRounded(maxPPO2Secondary!!, environment)}m"
-                } ?: EMPTY_PLACEHOLDER
+                val modSecondary = gas
+                    ?.oxygenModAmbientPressureWithTolerance(maxPPO2Secondary)
+                    ?.formatModDepth(UnitSystem.METRIC, environment)
+                    ?: EMPTY_PLACEHOLDER
 
                 FlipCardComponent(
                     modifier = Modifier.weight(0.3f),
@@ -142,9 +147,10 @@ fun GasPropertiesComponent(
                 )
             }
 
-            val densityMod = gas?.let {
-                "${round(it.densityMod(maxAllowedDensity = maxDensity, environment = environment)).toInt()}m"
-            } ?: EMPTY_PLACEHOLDER
+            val densityMod = gas
+                ?.densityModAmbientPressure(maxDensity)
+                ?.formatModDepthRounded(UnitSystem.METRIC, environment)
+                ?: EMPTY_PLACEHOLDER
 
             FlipCardComponent(
                 modifier = Modifier.weight(0.3f),
@@ -194,6 +200,12 @@ fun GasPropertiesComponent(
         }
     }
 }
+
+private fun Pressure.formatModDepth(unitSystem: UnitSystem, environment: Environment): String =
+    floorTolerant(unitSystem.ambientPressureToDepth(this, environment)).formatDisplayDepth(unitSystem)
+
+private fun Pressure.formatModDepthRounded(unitSystem: UnitSystem, environment: Environment): String =
+    unitSystem.ambientPressureToDepth(this, environment).formatDisplayDepth(unitSystem)
 
 private const val EMPTY_PLACEHOLDER = "…"
 

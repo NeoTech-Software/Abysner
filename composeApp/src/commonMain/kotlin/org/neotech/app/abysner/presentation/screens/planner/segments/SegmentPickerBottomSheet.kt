@@ -102,7 +102,7 @@ internal fun SegmentPickerBottomSheetHost(
             environment = configuration.environment,
             cylinders = cylinders,
             diveMode = diveMode,
-            previousDepth = segments.getOrNull(previousIndex)?.depth ?: 0.0,
+            previousDepth = segments.getOrNull(previousIndex)?.depthInMeters ?: 0.0,
             configuration = configuration,
             onAddOrUpdateDiveSegment = {
                 if (editIndex != null) {
@@ -195,7 +195,7 @@ private fun SegmentPickerBottomSheetContent(
     }
 
     var selectedCylinder: Cylinder by remember { mutableStateOf(initialCylinder ?: availableCylinders.first()) }
-    var depth by remember { mutableIntStateOf(initialValue?.depth?.roundToInt() ?: 10) }
+    var depth by remember { mutableIntStateOf(initialValue?.depthInMeters?.roundToInt() ?: 10) }
     var time by remember { mutableIntStateOf(initialValue?.duration ?: 15) }
 
     val errorMessageDepth = remember { mutableStateOf<String?>(null) }
@@ -222,7 +222,7 @@ private fun SegmentPickerBottomSheetContent(
                     onAddOrUpdateDiveSegment(
                         DiveProfileSection(
                             duration = time,
-                            depth = depth.toDouble(),
+                            depthInMeters = depth.toDouble(),
                             cylinder = selectedCylinder
                         )
                     )
@@ -236,6 +236,9 @@ private fun SegmentPickerBottomSheetContent(
                 .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            val ambientPressure = metersToAmbientPressure(depth.toDouble(), environment)
+
             if (!diveMode.isCcr) {
                 GasPropertiesComponent(
                     modifier = Modifier.padding(vertical = 16.dp),
@@ -270,10 +273,9 @@ private fun SegmentPickerBottomSheetContent(
                 if (diluentGas != null) {
                     CcrLoopPropertiesComponent(
                         modifier = Modifier.padding(top = 16.dp),
-                        depth = depth,
+                        ambientPressure = ambientPressure,
                         setpoint = configuration.ccrHighSetpoint,
-                        diluent = diluentGas,
-                        environment = environment,
+                        diluent = diluentGas
                     )
                 }
             }
@@ -289,7 +291,7 @@ private fun SegmentPickerBottomSheetContent(
                     minValue = 1,
                     maxValue = 150,
                     visualTransformation = SuffixVisualTransformation(" m"),
-                    initialValue = initialValue?.depth?.roundToInt() ?: 10,
+                    initialValue = initialValue?.depthInMeters?.roundToInt() ?: 10,
                     errorMessage = errorMessageDepth,
                     isValid = isDepthValid,
                     onNumberChanged = {
@@ -326,9 +328,9 @@ private fun SegmentPickerBottomSheetContent(
             // OC-specific warnings: MOD and density limits apply to the breathed gas directly.
             // On a rebreather the setpoint controls O2, so these do not apply.
             if (!diveMode.isCcr) {
-                if (anyErrorMessage == null && depth > gas.oxygenModRounded(maxPPO2, environment)) {
+                if (anyErrorMessage == null && ambientPressure > gas.oxygenModAmbientPressureWithTolerance(maxPPO2)) {
                     anyErrorMessage = "Warning: Depth exceeds oxygen MOD!"
-                } else if (anyErrorMessage == null && depth > gas.densityModRounded(environment = environment)) {
+                } else if (anyErrorMessage == null && ambientPressure > gas.densityModAmbientPressure()) {
                     anyErrorMessage = "Warning: Depth exceeds density MOD!"
                 }
             } else if (anyErrorMessage == null) {
@@ -343,7 +345,7 @@ private fun SegmentPickerBottomSheetContent(
 
                 if (anyErrorMessage == null) {
                     val hasBailoutAtDepth = cylinders.bailoutCylinders().any {
-                        depth <= it.cylinder.gas.oxygenModRounded(maxPPO2, environment)
+                        ambientPressure <= it.cylinder.gas.oxygenModAmbientPressureWithTolerance(maxPPO2)
                     }
                     if (!hasBailoutAtDepth) {
                         anyErrorMessage = "Warning: No bailout gas within MOD at this depth!"

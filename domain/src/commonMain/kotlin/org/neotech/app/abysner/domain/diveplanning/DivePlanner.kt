@@ -119,7 +119,7 @@ class DivePlanner(
 
         var currentPressure = configuration.environment.atmosphericPressure
         effectivePlan.forEach {
-            val sectionPressure = metersToAmbientPressure(it.depth, configuration.environment).value
+            val sectionPressure = metersToAmbientPressure(it.depthInMeters, configuration.environment).value
             if (sectionPressure != currentPressure) {
 
                 val pressureDifference = currentPressure - sectionPressure
@@ -233,8 +233,8 @@ class DivePlanner(
             cylinders = cylinders.toPersistentList(),
             configuration = configuration,
             // TODO should this be part of DivePlan? Or part of DivePlanSet as a OxygenPlan? Like GasPlan?
-            totalCns = OxygenToxicityCalculator.calculateCns(segments, configuration.environment),
-            totalOtu = OxygenToxicityCalculator.calculateOtu(segments, configuration.environment)
+            totalCns = OxygenToxicityCalculator.calculateCns(segments),
+            totalOtu = OxygenToxicityCalculator.calculateOtu(segments)
         )
     }
 

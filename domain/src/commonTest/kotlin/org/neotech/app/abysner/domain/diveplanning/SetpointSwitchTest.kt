@@ -60,7 +60,7 @@ class CcrSetpointSwitchTest {
         val planner = createPlanner(switchDepthDescend = 6.0, switchDepthAscend = null)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 20, depth = 36.0, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 20, depthInMeters = 36.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -81,7 +81,7 @@ class CcrSetpointSwitchTest {
         val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = 6.0)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 10, depth = 18.0, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 10, depthInMeters = 18.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -102,7 +102,7 @@ class CcrSetpointSwitchTest {
         val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = 6.0)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depthInMeters = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -135,7 +135,7 @@ class CcrSetpointSwitchTest {
         val planner = createPlanner(switchDepthDescend = null, switchDepthAscend = null)
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depthInMeters = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )

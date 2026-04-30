@@ -376,7 +376,7 @@ fun GasLimitsTable(
                 text = DecimalFormat.format(2, gasAtDepth.density),
             )
 
-            val alertSeverityPPO2 = if (gasAtDepth.ppo2.greaterThanTolerant(Gas.MAX_PPO2, DISPLAY_TOLERANCE)) {
+            val alertSeverityPPO2 = if (gasAtDepth.ppo2.value.greaterThanTolerant(Gas.MAX_PPO2, DISPLAY_TOLERANCE)) {
                 AlertSeverity.ERROR
             } else {
                 AlertSeverity.NONE
@@ -384,7 +384,7 @@ fun GasLimitsTable(
             TextAlert(
                 modifier = Modifier.weight(0.2f),
                 alertSeverity = alertSeverityPPO2,
-                text = DecimalFormat.format(2, gasAtDepth.ppo2),
+                text = DecimalFormat.format(2, gasAtDepth.ppo2.value),
             )
         }
     }

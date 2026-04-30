@@ -16,9 +16,7 @@ import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
@@ -55,13 +53,13 @@ class GasPlanner {
                 val (other, otherTts) = iterator.next()
                 when {
                     other === segment -> continue
-                    other.endDepth >= segment.endDepth && otherTts >= segmentTts -> {
+                    other.endPressure >= segment.endPressure && otherTts >= segmentTts -> {
                         // Found a segment at the same or deeper depth with an equal or longer TTS,
                         // so this segment cannot be the worst case.
                         eliminated = true
                         break
                     }
-                    other.endDepth < segment.endDepth && otherTts < segmentTts -> {
+                    other.endPressure < segment.endPressure && otherTts < segmentTts -> {
                         // This other segment is shallower and has a shorter TTS, so it can never be
                         // the worst case either. Remove it early so we don't check it again.
                         // Adjust the main loop index if the removal shifts elements before it.
@@ -81,28 +79,26 @@ class GasPlanner {
 
     fun calculateGasPlan(divePlan: DivePlan): GasPlan {
         val configuration = divePlan.configuration
-        val environment = configuration.environment
         val segments = divePlan.segmentsCollapsed
 
         val ccrSegments = segments.filter { it.breathingMode is BreathingMode.ClosedCircuit }
         val isCcr = ccrSegments.isNotEmpty()
 
         return if (isCcr) {
-            calculateCcrGasPlan(divePlan, configuration, environment, ccrSegments)
+            calculateCcrGasPlan(divePlan, configuration, ccrSegments)
         } else {
-            calculateOcGasPlan(divePlan, configuration, environment, segments)
+            calculateOcGasPlan(divePlan, configuration, segments)
         }
     }
 
     private fun calculateOcGasPlan(
         divePlan: DivePlan,
         configuration: Configuration,
-        environment: Environment,
         segments: List<DiveSegment>,
     ): GasPlan {
 
         val normalByGas = mutableMapOf<Gas, Double>()
-        segments.calculateOpenCircuitGasRequirements(configuration.sacRate, environment).forEach { (cylinder, requirement) ->
+        segments.calculateOpenCircuitGasRequirements(configuration.sacRate).forEach { (cylinder, requirement) ->
             normalByGas.updateOrInsert(cylinder.gas, requirement, Double::plus)
         }
 
@@ -110,7 +106,7 @@ class GasPlanner {
         val reserveByGas = mutableMapOf<Gas, Double>()
         val outOfAirScenarios = findWorstCaseAscentCandidates(divePlan).map { maxTtsSegment ->
             val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
-            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRateOutOfAir, environment)
+            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRateOutOfAir)
                 ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
         }
 
@@ -127,7 +123,6 @@ class GasPlanner {
     private fun calculateCcrGasPlan(
         divePlan: DivePlan,
         configuration: Configuration,
-        environment: Environment,
         ccrSegments: List<DiveSegment>,
     ): GasPlan {
 
@@ -146,7 +141,7 @@ class GasPlanner {
         val reserveByGas = mutableMapOf<Gas, Double>()
         val bailoutScenarios = findWorstCaseAscentCandidates(divePlan, bailout = true).map { maxTtsSegment ->
             val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
-            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRate, environment)
+            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRate)
                 ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
         }
 
@@ -164,7 +159,6 @@ class GasPlanner {
             oxygenCylinder = divePlan.ccrOxygenCylinder,
             ccrMetabolicOxygenRate = configuration.ccrMetabolicO2LitersPerMinute,
             ccrLoopVolume = configuration.ccrLoopVolumeLiters,
-            environment = environment,
         )
 
         return closedCircuitResult.merge(bailoutResult).toImmutableList()
@@ -213,7 +207,6 @@ class GasPlanner {
         oxygenCylinder: Cylinder? = cylinders.filter { it.gas == Gas.Oxygen }.minByOrNull { it.waterVolume },
         ccrMetabolicOxygenRate: Double,
         ccrLoopVolume: Double,
-        environment: Environment,
     ): List<CylinderGasRequirements> {
 
         // Metabolic oxygen usage
@@ -223,9 +216,7 @@ class GasPlanner {
         // Diluent usage due to loop expansion
         val diluentLitersByCylinder = mutableMapOf<Cylinder, Double>()
         forEach { segment ->
-            val startPressure = metersToAmbientPressure(segment.startDepth, environment).value
-            val endPressure = metersToAmbientPressure(segment.endDepth, environment).value
-            val pressureIncrease = endPressure - startPressure
+            val pressureIncrease = segment.endPressure - segment.startPressure
             if (pressureIncrease > 0.0) {
                 val expansion = pressureIncrease * ccrLoopVolume
                 diluentLitersByCylinder.updateOrInsert(segment.cylinder, expansion, Double::plus)
@@ -246,12 +237,12 @@ class GasPlanner {
      * Calculates gas requirements (based on SAC) per cylinder for open-circuit segments.
      * Closed-circuit segments are skipped.
      */
-    private fun List<DiveSegment>.calculateOpenCircuitGasRequirements(sac: Double, environment: Environment): Map<Cylinder, Double> {
+    private fun List<DiveSegment>.calculateOpenCircuitGasRequirements(sac: Double): Map<Cylinder, Double> {
         val requiredLitersByCylinder = mutableMapOf<Cylinder, Double>()
         forEach { segment ->
             if (segment.breathingMode is BreathingMode.OpenCircuit) {
-                val pressure = metersToAmbientPressure(segment.averageDepth, environment)
-                val sacAtDepth = sac * pressure.value
+                val averagePressure = (segment.startPressure + segment.endPressure) / 2.0
+                val sacAtDepth = sac * averagePressure
                 val liters = segment.duration * sacAtDepth
                 requiredLitersByCylinder.updateOrInsert(segment.cylinder, liters, Double::plus)
             }

@@ -37,7 +37,7 @@ class DivePlannerTest {
         val profile = listOf(
             DiveProfileSection(
                 duration = 30,
-                depth = 30.0,
+                depthInMeters = 30.0,
                 cylinder = Cylinder.steel12Liter(Gas.Air)
             )
         )
@@ -60,7 +60,7 @@ class DivePlannerTest {
         val profile = listOf(
             DiveProfileSection(
                 duration = 30,
-                depth = 30.0,
+                depthInMeters = 30.0,
                 cylinder = Cylinder.steel12Liter(Gas.Air)
             )
         )
@@ -303,7 +303,7 @@ class DivePlannerTest {
         // decompression planner will have both cylinders available, but with cylinder1 first in the
         // list. A switch to that first cylinder should not occur, since the gas mixes are the same.
         val divePlan = planner.addDive(
-            plan = listOf(DiveProfileSection(duration = 20, depth = 20.0, cylinder = cylinder2)),
+            plan = listOf(DiveProfileSection(duration = 20, depthInMeters = 20.0, cylinder = cylinder2)),
             cylinders = listOf(cylinder1, cylinder2).assign(),
         )
 
@@ -330,7 +330,7 @@ class DivePlannerTest {
         )
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depthInMeters = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -374,7 +374,7 @@ class DivePlannerTest {
         )
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depthInMeters = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT,
             bailout = true
@@ -423,7 +423,7 @@ class DivePlannerTest {
         )
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 20, depth = 60.0, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 20, depthInMeters = 60.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )

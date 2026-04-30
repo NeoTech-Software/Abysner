@@ -122,7 +122,7 @@ private fun SegmentListItemComponent(
         TextWithStartIcon(
             modifier = Modifier.padding(start = 16.dp),
             // TODO: Format depth to no decimals places specifically (round?)
-            text = "${diveProfileSection.depth.roundToInt()} m",
+            text = "${diveProfileSection.depthInMeters.roundToInt()} m",
             icon = painterResource(resource = Res.drawable.ic_outline_vertical_align_bottom_24)
         )
         TextWithStartIcon(

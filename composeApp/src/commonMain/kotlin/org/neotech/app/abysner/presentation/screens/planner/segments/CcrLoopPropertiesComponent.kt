@@ -27,6 +27,7 @@ import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.core.physics.ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL
+import org.neotech.app.abysner.domain.core.physics.Pressure
 import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
@@ -39,14 +40,12 @@ import org.neotech.app.abysner.presentation.theme.warning
 @Composable
 fun CcrLoopPropertiesComponent(
     modifier: Modifier = Modifier,
-    depth: Int,
+    ambientPressure: Pressure,
     setpoint: Double,
     diluent: Gas,
-    environment: Environment,
 ) {
-    val ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value
     val inspiredGas = diluent.inspiredGas(ambientPressure, setpoint)
-    val inspiredDensity = inspiredGas.densityAtDepth(depth.toDouble(), environment)
+    val inspiredDensity = inspiredGas.densityAtAmbientPressure(ambientPressure)
 
     val (densityContainerColor, densityValueColor) = when {
         inspiredDensity > Gas.MAX_GAS_DENSITY -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
@@ -93,10 +92,9 @@ private fun CcrLoopPropertiesComponentPreview() {
     AbysnerTheme {
         Surface {
             CcrLoopPropertiesComponent(
-                depth = 30,
+                ambientPressure = metersToAmbientPressure(30.0, Environment.Default),
                 setpoint = 1.3,
-                diluent = Gas.Air,
-                environment = Environment.Default,
+                diluent = Gas.Air
             )
         }
     }
@@ -108,13 +106,12 @@ private fun CcrLoopPropertiesComponentTrimixPreview() {
     AbysnerTheme {
         Surface {
             CcrLoopPropertiesComponent(
-                depth = 60,
-                setpoint = 1.3,
-                diluent = Gas.Trimix2135,
-                environment = Environment(
+                ambientPressure = metersToAmbientPressure(60.0, Environment(
                     salinity = Salinity.WATER_SALT,
                     atmosphericPressure = ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL
-                ),
+                )),
+                setpoint = 1.3,
+                diluent = Gas.Trimix2135
             )
         }
     }

@@ -201,7 +201,7 @@ object DiveEditorViewModelDelegate {
         cylinders: List<PlannedCylinderModel>,
         profile: List<DiveProfileSection>
     ): List<PlannedCylinderModel> {
-        val diluentGas = profile.maxByOrNull { it.depth }?.cylinder?.gas
+        val diluentGas = profile.maxByOrNull { it.depthInMeters }?.cylinder?.gas
 
         val mostLikelyDiluentCylinder = if (diluentGas != null) {
             cylinders.filter { it.cylinder.gas == diluentGas && !it.isCcrOxygen }

@@ -12,6 +12,7 @@
 
 package org.neotech.app.abysner.domain.core.model
 
+import org.neotech.app.abysner.domain.core.physics.Pressure
 import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
 import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
@@ -37,37 +38,19 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
     /**
      * Returns the oxygen MOD as absolute ambient pressure in bar.
      */
-    fun oxygenModAmbientPressure(ppO2: Double): Double = ppO2 / oxygenFraction
+    fun oxygenModAmbientPressure(ppO2: Double): Pressure = Pressure(ppO2 / oxygenFraction)
 
     /**
-     * Returns the oxygen MOD in depth meters for the given environment.
-     * TODO: this method must be made unit aware when imperial unit support is added.
-     */
-    fun oxygenMod(ppO2: Double, environment: Environment): Double {
-        return ambientPressureToMeters(oxygenModAmbientPressure(ppO2), environment)
-    }
-
-    /**
-     * Returns the oxygen MOD in depth meters, floored to a whole number while taking into account
-     * the [MOD_TOLERANCE], which adds a bit of margin to the allowed ambient pressure for this gas
-     * before making the conversion. This allows values like 20.92 meters to become 21 meters,
-     * instead of being floored to 20 meters. Which is often closer to what divers expect, as they
-     * often work with rules of thumb.
-     *
-     * This approach is very similar to simply rounding the true MOD in meters to the nearest
-     * integer. However since it operates on the raw ambient pressure this will keep working for
-     * imperial units as well, however it is probably less important for imperial units since the
-     * feet granularity is finer than meters.
+     * Returns the oxygen MOD as absolute ambient pressure in bar, with [modTolerance] applied.
+     * The tolerance adds a small margin so that common rule-of-thumb MODs (e.g. oxygen at 6m with
+     * ppO2 1.6) are achievable. See [MOD_TOLERANCE] for details.
      *
      * [findBestGas][org.neotech.app.abysner.domain.core.model.findBestGas] and this method both
      * use the same tolerances, so switch depths are consistent with the MODs shown to the user
      * (except those clamp to a 3 meter or 10 feet step size).
-     *
-     * TODO: this method must be made unit aware when imperial unit support is added.
      */
-    fun oxygenModRounded(ppO2: Double, environment: Environment, modTolerance: Double = MOD_TOLERANCE): Int {
-        return floor(ambientPressureToMeters(oxygenModAmbientPressure(ppO2) + modTolerance, environment)).toInt()
-    }
+    fun oxygenModAmbientPressureWithTolerance(ppO2: Double, modTolerance: Double = MOD_TOLERANCE): Pressure =
+        oxygenModAmbientPressure(ppO2) + modTolerance
 
     /**
      * Calculates END (Equivalent Narcotic Depth) as absolute ambient pressure in bar. Only oxygen
@@ -87,39 +70,13 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         oxygenDensity + heliumDensity + nitrogenDensity
     }
 
-    fun densityAtAmbientPressure(ambientPressure: Double): Double = density * ambientPressure
-
-    fun densityAtDepth(depth: Double, environment: Environment): Double {
-        return densityAtAmbientPressure(metersToAmbientPressure(depth, environment).value)
-    }
+    fun densityAtAmbientPressure(ambientPressure: Pressure): Double = density * ambientPressure.value
 
     /**
      * Returns the gas density MOD as absolute ambient pressure in bar.
      */
-    fun densityModAmbientPressure(maxAllowedDensity: Double = MAX_GAS_DENSITY): Double =
-        maxAllowedDensity / density
-
-    /**
-     * Returns the gas density MOD in depth meters.
-     *
-     * TODO: this method must be made unit aware when imperial unit support is added.
-     */
-    fun densityMod(maxAllowedDensity: Double = MAX_GAS_DENSITY, environment: Environment): Double {
-        return ambientPressureToMeters(densityModAmbientPressure(maxAllowedDensity), environment)
-    }
-
-    /**
-     * Returns the gas density MOD in depth meters, rounded to the nearest integer.
-     *
-     * TODO: this method must be made unit aware when imperial unit support is added. Note that
-     *       rounding here is fine in both metric and imperial units, since there are not really
-     *       rules of thumb for density MODs like there are for oxygen MODs. So a tolerance on
-     *       pressure would not be required here. In metric we round a bit more compared to
-     *       imperial, but that is fine.
-     */
-    fun densityModRounded(maxAllowedDensity: Double = MAX_GAS_DENSITY, environment: Environment): Int {
-        return round(densityMod(maxAllowedDensity, environment)).toInt()
-    }
+    fun densityModAmbientPressure(maxAllowedDensity: Double = MAX_GAS_DENSITY): Pressure =
+        Pressure(maxAllowedDensity / density)
 
     /**
      * Returns the CCR loop gas composition for the given setpoint and ambient pressure, when this
@@ -127,8 +84,8 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
      * and N2 scale proportionally in the remaining fraction. No water vapor correction is applied,
      * since this models not the lungs but rather the loop composition.
      */
-    fun inspiredGas(ambientPressure: Double, setpoint: Double): Gas {
-        val inspiredOxygenFraction = (setpoint / ambientPressure).coerceIn(oxygenFraction, 1.0)
+    fun inspiredGas(ambientPressure: Pressure, setpoint: Double): Gas {
+        val inspiredOxygenFraction = (setpoint / ambientPressure.value).coerceIn(oxygenFraction, 1.0)
         val inertScale = if (oxygenFraction < 1.0) {
             (1.0 - inspiredOxygenFraction) / (1.0 - oxygenFraction)
         } else {
