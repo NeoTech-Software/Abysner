@@ -21,12 +21,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialogCustomContent
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -55,27 +55,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.neotech.app.abysner.domain.core.model.Cylinder
+import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.GasEquationOfStateModel
+import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
+import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.component.textfield.defaultInputFieldLabel
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
+import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
+import kotlin.math.roundToInt
 
 @Composable
 fun CylinderSizeField(
     modifier: Modifier = Modifier,
     cylinderSize: Cylinder.Size,
+    unitSystem: UnitSystem,
     onCylinderSizeSelected: (Cylinder.Size) -> Unit,
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
-    val displayText = DecimalFormat.format(1, cylinderSize.waterVolume)
+    val displayText = when (unitSystem) {
+        UnitSystem.METRIC -> DecimalFormat.format(1, cylinderSize.waterVolume)
+        UnitSystem.IMPERIAL -> (cylinderSize.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt().toString()
+    }
 
     OutlinedTextField(
         modifier = modifier.clickable { showDialog = true },
         value = TextFieldValue(displayText),
-        visualTransformation = SuffixVisualTransformation(" L"),
+        visualTransformation = SuffixVisualTransformation(" ${unitSystem.volumeUnitLabel}"),
         onValueChange = {},
         readOnly = true,
         enabled = false,
@@ -98,6 +110,7 @@ fun CylinderSizeField(
     if (showDialog) {
         CylinderSizeDialog(
             currentCylinderSize = cylinderSize,
+            unitSystem = unitSystem,
             onDismiss = { showDialog = false },
             onCylinderSizeSelected = { selectedSize ->
                 showDialog = false
@@ -110,6 +123,7 @@ fun CylinderSizeField(
 @Composable
 private fun CylinderSizeDialog(
     currentCylinderSize: Cylinder.Size,
+    unitSystem: UnitSystem,
     onDismiss: () -> Unit,
     onCylinderSizeSelected: (Cylinder.Size) -> Unit,
 ) {
@@ -125,8 +139,22 @@ private fun CylinderSizeDialog(
     val pagerState = rememberPagerState(initialPage = initialTab) { 2 }
     val coroutineScope = rememberCoroutineScope()
 
-    var customVolume: Double? by remember { mutableStateOf(currentCylinderSize.waterVolume) }
-    var customPressure: Double? by remember { mutableStateOf(currentCylinderSize.workingPressure) }
+    var customVolume: Double? by remember {
+        mutableStateOf(
+            when (unitSystem) {
+                UnitSystem.METRIC -> currentCylinderSize.waterVolume
+                UnitSystem.IMPERIAL -> currentCylinderSize.ratedCapacity() / LITERS_PER_CUBIC_FOOT
+            }
+        )
+    }
+    var customPressure: Double? by remember {
+        mutableStateOf(
+            when (unitSystem) {
+                UnitSystem.METRIC -> currentCylinderSize.workingPressure
+                UnitSystem.IMPERIAL -> currentCylinderSize.workingPressure * PSI_PER_BAR
+            }
+        )
+    }
     val isVolumeValid = remember { mutableStateOf(true) }
     val isPressureValid = remember { mutableStateOf(true) }
 
@@ -143,12 +171,22 @@ private fun CylinderSizeDialog(
                 TextButton(
                     enabled = isVolumeValid.value && isPressureValid.value,
                     onClick = {
-                        onCylinderSizeSelected(
-                            Cylinder.Size(
+                        val size = when (unitSystem) {
+                            UnitSystem.METRIC -> Cylinder.Size(
                                 waterVolume = customVolume!!,
                                 workingPressure = customPressure!!,
                             )
-                        )
+                            UnitSystem.IMPERIAL -> {
+                                val pressureBar = customPressure!! / PSI_PER_BAR
+                                val targetCapacityLiters = customVolume!! * LITERS_PER_CUBIC_FOOT
+                                val gasVolumePerLiter = GasEquationOfStateModel.Default.getGasVolume(Gas.Air, 1.0, pressureBar)
+                                Cylinder.Size(
+                                    waterVolume = targetCapacityLiters / gasVolumePerLiter,
+                                    workingPressure = pressureBar,
+                                )
+                            }
+                        }
+                        onCylinderSizeSelected(size)
                     }
                 ) {
                     Text("OK")
@@ -165,9 +203,7 @@ private fun CylinderSizeDialog(
                         selected = pagerState.currentPage == TAB_PRESETS,
                         onClick = {
                             coroutineScope.launch {
-                                pagerState.animateScrollToPage(
-                                    TAB_PRESETS
-                                )
+                                pagerState.animateScrollToPage(TAB_PRESETS)
                             }
                         },
                         text = { Text("Presets") },
@@ -176,9 +212,7 @@ private fun CylinderSizeDialog(
                         selected = pagerState.currentPage == TAB_CUSTOM,
                         onClick = {
                             coroutineScope.launch {
-                                pagerState.animateScrollToPage(
-                                    TAB_CUSTOM
-                                )
+                                pagerState.animateScrollToPage(TAB_CUSTOM)
                             }
                         },
                         text = { Text("Custom") },
@@ -193,6 +227,7 @@ private fun CylinderSizeDialog(
                         TAB_PRESETS -> {
                             PresetsTankSizeTab(
                                 currentCylinderSize = currentCylinderSize,
+                                unitSystem = unitSystem,
                                 onPresetSelected = { preset ->
                                     onCylinderSizeSelected(preset)
                                 },
@@ -201,6 +236,7 @@ private fun CylinderSizeDialog(
 
                         TAB_CUSTOM -> {
                             CustomTankSizeTab(
+                                unitSystem = unitSystem,
                                 volume = customVolume,
                                 pressure = customPressure,
                                 isVolumeValid = isVolumeValid,
@@ -219,13 +255,18 @@ private fun CylinderSizeDialog(
 @Composable
 private fun PresetsTankSizeTab(
     currentCylinderSize: Cylinder.Size,
+    unitSystem: UnitSystem,
     onPresetSelected: (Cylinder.Size) -> Unit,
 ) {
+    val presets = when (unitSystem) {
+        UnitSystem.METRIC -> Cylinder.StandardMetricSizes + Cylinder.StandardImperialSizes
+        UnitSystem.IMPERIAL -> Cylinder.StandardImperialSizes + Cylinder.StandardMetricSizes
+    }
     val selectedPreset = Cylinder.Size.findMatching(
         currentCylinderSize.waterVolume,
         currentCylinderSize.workingPressure
     )
-    val selectedIndex = selectedPreset?.let { Cylinder.StandardSizes.indexOf(it) } ?: -1
+    val selectedIndex = selectedPreset?.let { presets.indexOf(it) } ?: -1
     val listState = rememberLazyListState()
 
     LaunchedEffect(selectedIndex) {
@@ -235,7 +276,7 @@ private fun PresetsTankSizeTab(
     }
 
     LazyColumnWithScrollIndicators(state = listState) {
-        items(Cylinder.StandardSizes) { preset ->
+        items(presets) { preset ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -256,8 +297,20 @@ private fun PresetsTankSizeTab(
                     modifier = Modifier.padding(start = 8.dp).weight(1f),
                 )
                 InfoPill(
-                    label = null,
-                    value = "${DecimalFormat.format(1, preset.waterVolume)} L",
+                    label = when (unitSystem) {
+                        UnitSystem.METRIC -> null
+                        UnitSystem.IMPERIAL -> {
+                            val pressurePsi = (preset.workingPressure * PSI_PER_BAR).roundToInt()
+                            "$pressurePsi ${unitSystem.pressureUnitLabel}"
+                        }
+                    },
+                    value = when (unitSystem) {
+                        UnitSystem.METRIC -> "${DecimalFormat.format(1, preset.waterVolume)} ${unitSystem.volumeUnitLabel}"
+                        UnitSystem.IMPERIAL -> {
+                            val capacityCuFt = (preset.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt()
+                            "$capacityCuFt ${unitSystem.volumeUnitLabel}"
+                        }
+                    },
                     size = InfoPillSize.SMALL,
                 )
             }
@@ -267,6 +320,7 @@ private fun PresetsTankSizeTab(
 
 @Composable
 private fun CustomTankSizeTab(
+    unitSystem: UnitSystem,
     volume: Double?,
     pressure: Double?,
     isVolumeValid: MutableState<Boolean>,
@@ -274,6 +328,23 @@ private fun CustomTankSizeTab(
     onVolumeChanged: (Double?) -> Unit,
     onPressureChanged: (Double?) -> Unit,
 ) {
+    val volumeLabel = when (unitSystem) {
+        UnitSystem.METRIC -> "Volume"
+        UnitSystem.IMPERIAL -> "True capacity"
+    }
+    val volumeRange = when (unitSystem) {
+        UnitSystem.METRIC -> 0.1 to 50.0
+        UnitSystem.IMPERIAL -> 6.0 to 160.0
+    }
+    val volumeFractionDigits = when (unitSystem) {
+        UnitSystem.METRIC -> 1
+        UnitSystem.IMPERIAL -> 0
+    }
+    val pressureRange = when (unitSystem) {
+        UnitSystem.METRIC -> 10.0 to 300.0
+        UnitSystem.IMPERIAL -> 1800.0 to 4500.0
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -284,12 +355,12 @@ private fun CustomTankSizeTab(
         OutlinedDecimalInputField(
             modifier = Modifier.fillMaxWidth(),
             initialValue = volume,
-            label = "Volume",
-            fractionDigits = 1,
-            minValue = 0.1,
-            maxValue = 50.0,
+            label = volumeLabel,
+            fractionDigits = volumeFractionDigits,
+            minValue = volumeRange.first,
+            maxValue = volumeRange.second,
             isValid = isVolumeValid,
-            visualTransformation = SuffixVisualTransformation(" L"),
+            visualTransformation = SuffixVisualTransformation(" ${unitSystem.volumeUnitLabel}"),
             onNumberChanged = onVolumeChanged,
             supportingText = null,
         )
@@ -298,13 +369,20 @@ private fun CustomTankSizeTab(
             initialValue = pressure,
             label = "Working pressure",
             fractionDigits = 0,
-            minValue = 10.0,
-            maxValue = 300.0,
+            minValue = pressureRange.first,
+            maxValue = pressureRange.second,
             isValid = isPressureValid,
-            visualTransformation = SuffixVisualTransformation(" bar"),
+            visualTransformation = SuffixVisualTransformation(" ${unitSystem.pressureUnitLabel}"),
             onNumberChanged = onPressureChanged,
             supportingText = null,
         )
+        if (unitSystem == UnitSystem.IMPERIAL) {
+            Text(
+                text = "Use real-gas capacity from the manufacturer's specifications sheet. This may differ from the marketing name.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -317,6 +395,7 @@ fun CylinderSizeDialogPresetsPreview() {
     AbysnerTheme {
         CylinderSizeDialog(
             currentCylinderSize = Cylinder.STEEL_12L,
+            unitSystem = UnitSystem.METRIC,
             onDismiss = {},
             onCylinderSizeSelected = {},
         )
@@ -329,9 +408,39 @@ fun CylinderSizeDialogCustomPreview() {
     AbysnerTheme {
         CylinderSizeDialog(
             currentCylinderSize = Cylinder.Size(
-                waterVolume = 11.1,
+                waterVolume = 9.0,
                 workingPressure = 232.0,
             ),
+            unitSystem = UnitSystem.METRIC,
+            onDismiss = {},
+            onCylinderSizeSelected = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun CylinderSizeDialogImperialPresetsPreview() {
+    AbysnerTheme {
+        CylinderSizeDialog(
+            currentCylinderSize = Cylinder.AL80,
+            unitSystem = UnitSystem.IMPERIAL,
+            onDismiss = {},
+            onCylinderSizeSelected = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+fun CylinderSizeDialogImperialCustomPreview() {
+    AbysnerTheme {
+        CylinderSizeDialog(
+            currentCylinderSize = Cylinder.Size(
+                waterVolume = 9.0,
+                workingPressure = 232.0,
+            ),
+            unitSystem = UnitSystem.IMPERIAL,
             onDismiss = {},
             onCylinderSizeSelected = {},
         )

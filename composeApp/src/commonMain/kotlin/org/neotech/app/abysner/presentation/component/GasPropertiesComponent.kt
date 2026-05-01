@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.component
 
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +20,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -31,7 +31,6 @@ import org.neotech.app.abysner.domain.core.physics.Pressure
 import org.neotech.app.abysner.domain.utilities.floorTolerant
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
 import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
 import kotlin.math.round
 
@@ -135,7 +134,7 @@ fun GasPropertiesComponent(
                             onClick = onClick,
                             size = BigNumberSize.SMALL,
                             value = modSecondary,
-                            label = "O2 MOD (${maxPPO2Secondary!!.format(1)})",
+                            label = "O2 MOD (${maxPPO2Secondary.format(1)})",
                         )
                     },
                     back = { modifier, onClick ->

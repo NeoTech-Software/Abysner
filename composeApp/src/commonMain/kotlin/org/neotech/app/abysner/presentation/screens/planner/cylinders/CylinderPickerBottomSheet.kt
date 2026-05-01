@@ -50,6 +50,7 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
@@ -63,6 +64,7 @@ import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.component.CylinderSizeField
+import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,7 +196,10 @@ private fun CylinderPickerBottomSheetContent(
     }
 
     var startPressure: Double? by remember(initialValue) {
-        mutableStateOf(initialValue.pressure)
+        mutableStateOf(when (unitSystem) {
+            UnitSystem.METRIC -> initialValue.pressure
+            UnitSystem.IMPERIAL -> initialValue.pressure * PSI_PER_BAR
+        })
     }
     val isStartPressureValid = remember { mutableStateOf(true) }
 
@@ -218,6 +223,10 @@ private fun CylinderPickerBottomSheetContent(
                 primaryEnabled = isStartPressureValid.value,
                 onClose = dismiss,
                 onPrimary = {
+                    val pressureBar = when (unitSystem) {
+                        UnitSystem.METRIC -> startPressure!!
+                        UnitSystem.IMPERIAL -> startPressure!! / PSI_PER_BAR
+                    }
                     onAddOrUpdateCylinder(
                         // Copy since we want to maintain the uniqueIdentifier
                         initialValue.copy(
@@ -225,7 +234,7 @@ private fun CylinderPickerBottomSheetContent(
                                 oxygenFraction = oxygenPercentage / 100.0,
                                 heliumFraction = heliumPercentage / 100.0
                             ),
-                            pressure = startPressure!!,
+                            pressure = pressureBar,
                             size = Cylinder.Size(
                                 waterVolume = volume!!,
                                 workingPressure = workingPressure,
@@ -239,7 +248,8 @@ private fun CylinderPickerBottomSheetContent(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-        ) {            val errorMessagePressure = remember { mutableStateOf<String?>(null) }
+        ) {
+            val errorMessagePressure = remember { mutableStateOf<String?>(null) }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -251,22 +261,27 @@ private fun CylinderPickerBottomSheetContent(
                         waterVolume = volume ?: initialValue.waterVolume,
                         workingPressure = workingPressure,
                     ),
+                    unitSystem = unitSystem,
                     onCylinderSizeSelected = { selectedSize ->
                         volume = selectedSize.waterVolume
                         workingPressure = selectedSize.workingPressure
+                        startPressure = when (unitSystem) {
+                            UnitSystem.METRIC -> selectedSize.workingPressure
+                            UnitSystem.IMPERIAL -> selectedSize.workingPressure * PSI_PER_BAR
+                        }
                     },
                 )
 
                 OutlinedDecimalInputField(
                     modifier = Modifier.weight(1f)
                         .recordLayoutCoordinates("pressure", textFieldPositions),
-                    initialValue = initialValue.pressure,
+                    initialValue = startPressure!!,
                     label = "Start pressure",
-                    minValue = 10.0,
-                    maxValue = 300.0,
+                    minValue = if (unitSystem == UnitSystem.IMPERIAL)  {150.0 } else { 10.0 },
+                    maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 4500.0 } else { 300.0 },
                     fractionDigits = 0,
                     isValid = isStartPressureValid,
-                    visualTransformation = SuffixVisualTransformation(" bar"),
+                    visualTransformation = SuffixVisualTransformation(" ${unitSystem.pressureUnitLabel}"),
                     errorMessage = errorMessagePressure,
                     onNumberChanged = {
                         startPressure = it
@@ -422,6 +437,23 @@ fun GasPickerBottomSheetLockedGasPreview() {
             isAdd = false,
             lockGas = true,
             initialValue = Cylinder.steel3LiterOxygen(),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun GasPickerBottomSheetImperialPreview() {
+    AbysnerTheme {
+        CylinderPickerBottomSheet(
+            sheetState = rememberExpandedSheetState(),
+            environment = Environment.Default,
+            maxPPO2 = 1.4,
+            maxPPO2Secondary = 1.6,
+            unitSystem = UnitSystem.IMPERIAL,
+            isAdd = true,
+            initialValue = Cylinder.aluminium80Cuft(Gas.Air),
         )
     }
 }

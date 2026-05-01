@@ -23,13 +23,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -46,6 +43,8 @@ import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
 import kotlinx.collections.immutable.persistentListOf
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.assign
@@ -66,6 +65,7 @@ import org.neotech.app.abysner.presentation.component.graphs.StackedHorizontalBa
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconFont
 import org.neotech.app.abysner.presentation.theme.appendIcon
+import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -88,7 +88,7 @@ fun GasBarChartPreview() = PreviewWrapper {
 
     val gasPlan = GasPlanner().calculateGasPlan(divePlan)
     AbysnerTheme(dynamicColor = false) {
-        GasPlanBarChart(gasPlan = gasPlan)
+        GasPlanBarChart(gasPlan = gasPlan, unitSystem = UnitSystem.METRIC)
     }
 }
 
@@ -98,6 +98,7 @@ fun GasBarChartPreview() = PreviewWrapper {
 fun GasPlanBarChart(
     modifier: Modifier = Modifier,
     gasPlan: GasPlan,
+    unitSystem: UnitSystem,
     emergencyLabel: String = "Reserve",
     usageLabel: String = "Used",
     compact: Boolean = false,
@@ -158,7 +159,11 @@ fun GasPlanBarChart(
             }
         )
 
-        val max = max(gasPlan.maxOf { it.cylinder.pressure }.toFloat(), 200f)
+        val pressureScale = when (unitSystem) {
+            UnitSystem.METRIC -> 1.0f
+            UnitSystem.IMPERIAL -> PSI_PER_BAR.toFloat()
+        }
+        val max = max(gasPlan.maxOf { it.cylinder.pressure }.toFloat() * pressureScale, MINIMUM_AXIS_PRESSURE_BAR * pressureScale)
         val min = 0f
         val range = max - min
 
@@ -181,14 +186,13 @@ fun GasPlanBarChart(
                             )
                         }
                     )
-                    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            style = MaterialTheme.typography.labelSmall,
-                            textAlign = TextAlign.Center,
-                            text = "Pressure in bar"
-                        )
-                    }
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelSmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = "Pressure in ${unitSystem.pressureUnitLabel}"
+                    )
                 }
             },
             verticalAxis = {
@@ -212,7 +216,7 @@ fun GasPlanBarChart(
 
                     drawContent()
 
-                    val negativeWidth = (size.width) * (50f / range)
+                    val negativeWidth = (size.width) * (RECOMMENDED_END_PRESSURE_BAR * pressureScale / range)
 
                     drawLine(
                         color = Color.Red.copy(alpha = 0.5f),
@@ -229,6 +233,7 @@ fun GasPlanBarChart(
                                     onGasBarClicked(index, it)
                                 },
                                 cylinderGasRequirements = it,
+                                unitSystem = unitSystem,
                                 maxValue = max,
                                 minValue = min
                             )
@@ -267,7 +272,7 @@ fun GasPlanBarChart(
 @Composable
 fun GasUsageBarPreview() = PreviewWrapper {
     AbysnerTheme {
-        GasUsageBar(modifier = Modifier.fillMaxWidth().height(48.dp), maxValue = 230f, minValue = 0f)
+        GasUsageBar(modifier = Modifier.fillMaxWidth().height(48.dp), unitSystem = UnitSystem.METRIC, maxValue = 230f, minValue = 0f)
     }
 }
 
@@ -275,11 +280,16 @@ fun GasUsageBarPreview() = PreviewWrapper {
 fun GasUsageBar(
     modifier: Modifier = Modifier,
     cylinderGasRequirements: CylinderGasRequirements = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 1000.0, 500.0),
+    unitSystem: UnitSystem,
     maxValue: Float,
     minValue: Float,
 ) {
-    val pressureLeftWithEmergency = cylinderGasRequirements.pressureLeftWithEmergency?.toFloat() ?: 0f
-    val pressureLeftWithoutEmergency = cylinderGasRequirements.pressureLeft?.toFloat() ?: 0f
+    val pressureScale = when (unitSystem) {
+        UnitSystem.METRIC -> 1.0f
+        UnitSystem.IMPERIAL -> PSI_PER_BAR.toFloat()
+    }
+    val pressureLeftWithEmergency = (cylinderGasRequirements.pressureLeftWithEmergency?.toFloat() ?: 0f) * pressureScale
+    val pressureLeftWithoutEmergency = (cylinderGasRequirements.pressureLeft?.toFloat() ?: 0f) * pressureScale
 
     val redShades =
         MaterialTheme.colorScheme.error.setSaturation(0.7f).getGradient(lightnessMiddle = 0.65f, difference = 0.2f)
@@ -307,7 +317,7 @@ fun GasUsageBar(
         ),
         // Usage
         BarSection(
-            value = cylinderGasRequirements.cylinder.pressure.toFloat() - pressureLeftWithoutEmergency,
+            value = cylinderGasRequirements.cylinder.pressure.toFloat() * pressureScale - pressureLeftWithoutEmergency,
             color = SolidColor(MaterialTheme.colorScheme.outlineVariant),
             textColor = SolidColor(MaterialTheme.colorScheme.contentColorFor(MaterialTheme.colorScheme.outlineVariant)),
             textStyle = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Right)
@@ -332,3 +342,6 @@ fun GasUsageBar(
         }
     )
 }
+
+private const val MINIMUM_AXIS_PRESSURE_BAR = 200f
+private const val RECOMMENDED_END_PRESSURE_BAR = 50f

@@ -59,6 +59,7 @@ internal fun PlanScreenContent(
             CylinderSelectionCardComponent(
                 gases = uiState.availableGas,
                 diveMode = uiState.diveMode,
+                unitSystem = uiState.settingsModel.unitSystem,
                 onAddCylinder = onAddCylinder,
                 onRemoveCylinder = onRemoveCylinder,
                 onCylinderChecked = onToggleCylinder,

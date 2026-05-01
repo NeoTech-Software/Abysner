@@ -54,9 +54,10 @@ import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
 import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
-import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
 import org.neotech.app.abysner.presentation.component.InfoPill
 import org.neotech.app.abysner.presentation.component.InfoPillSize
@@ -64,12 +65,17 @@ import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.invisible
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.formatPressure
+import org.neotech.app.abysner.presentation.utilities.formatVolume
+import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
+import kotlin.math.roundToInt
 
 @Composable
 fun CylinderSelectionCardComponent(
     modifier: Modifier = Modifier,
     gases: List<PlannedCylinderModel>,
-    diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
+    diveMode: DiveMode,
+    unitSystem: UnitSystem,
     onAddCylinder: () -> Unit,
     onRemoveCylinder: (cylinder: Cylinder) -> Unit,
     onCylinderChecked: (cylinder: Cylinder, checked: Boolean) -> Unit,
@@ -120,6 +126,7 @@ fun CylinderSelectionCardComponent(
                             isChecked = availableGas.isChecked,
                             isLocked = availableGas.isLocked,
                             cylinder = availableGas.cylinder,
+                            unitSystem = unitSystem,
                             showBailoutPill = availableGas.isCcrDiluent && availableGas.isAvailableForBailout,
                             onDelete = { onRemoveCylinder(availableGas.cylinder) },
                             onChecked = { _, checked -> onCylinderChecked(availableGas.cylinder, checked) },
@@ -136,6 +143,7 @@ fun CylinderSelectionCardComponent(
                         isChecked = availableGas.isChecked,
                         isLocked = availableGas.isLocked,
                         cylinder = availableGas.cylinder,
+                        unitSystem = unitSystem,
                         onDelete = { onRemoveCylinder(availableGas.cylinder) },
                         onChecked = { _, checked -> onCylinderChecked(availableGas.cylinder, checked) },
                         onLockedClick = { showLockedExplanation = availableGas },
@@ -148,6 +156,7 @@ fun CylinderSelectionCardComponent(
                         isChecked = availableGas.isChecked,
                         isLocked = availableGas.isLocked,
                         cylinder = availableGas.cylinder,
+                        unitSystem = unitSystem,
                         onDelete = { onRemoveCylinder(availableGas.cylinder) },
                         onChecked = { _, checked -> onCylinderChecked(availableGas.cylinder, checked) },
                         onLockedClick = { showLockedExplanation = availableGas },
@@ -240,12 +249,20 @@ fun CylinderListItemComponent(
     cylinder: Cylinder,
     isChecked: Boolean,
     isLocked: Boolean,
+    unitSystem: UnitSystem,
     showBailoutPill: Boolean = false,
     onDelete: (cylinder: Cylinder) -> Unit = {},
     onChecked: (cylinder: Cylinder, isChecked: Boolean) -> Unit = { _, _ -> },
     onLockedClick: () -> Unit = {},
 ) {
-    val cylinderSuffix = " - ${DecimalFormat.format(0, cylinder.pressure)} bar (${DecimalFormat.format(1, cylinder.waterVolume)} L)"
+    val capacityDisplay = when (unitSystem) {
+        UnitSystem.METRIC -> cylinder.waterVolume.formatVolume(unitSystem, decimals = 1)
+        UnitSystem.IMPERIAL -> {
+            val ratedCapacityCuFt = cylinder.size.ratedCapacity() / LITERS_PER_CUBIC_FOOT
+            "${ratedCapacityCuFt.roundToInt()} ${unitSystem.volumeUnitLabel}"
+        }
+    }
+    val cylinderSuffix = " - ${cylinder.pressure.formatPressure(unitSystem)} ($capacityDisplay)"
 
     Row(
         modifier = modifier.padding(start = 16.dp),
@@ -306,6 +323,7 @@ fun CylinderListItemComponent(
 fun CylinderSelectionCardComponentPreview() {
     AbysnerTheme {
         CylinderSelectionCardComponent(
+            diveMode = DiveMode.OPEN_CIRCUIT,
             gases = listOf(
                 PlannedCylinderModel(
                     isChecked = true,
@@ -323,6 +341,7 @@ fun CylinderSelectionCardComponentPreview() {
                     cylinder = Cylinder(gas = Gas.Nitrox80, 207.0, 9.0)
                 )
             ),
+            unitSystem = UnitSystem.METRIC,
             onAddCylinder = {},
             onRemoveCylinder = {},
             onCylinderChecked = { _, _ -> },
@@ -362,6 +381,7 @@ fun CylinderSelectionCardComponentCcrPreview() {
                     cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80)
                 ),
             ),
+            unitSystem = UnitSystem.METRIC,
             onAddCylinder = {},
             onRemoveCylinder = {},
             onCylinderChecked = { _, _ -> },

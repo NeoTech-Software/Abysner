@@ -47,6 +47,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.vectorResource
 import org.neotech.app.abysner.domain.core.model.DiveMode
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.utilities.format
@@ -165,6 +166,7 @@ fun ShareImage(
 
                     GasTotalsTable(
                         gasPlan = divePlan.gasPlan,
+                        unitSystem = settingsModel.unitSystem,
                         emergencyLabel = emergencyLabel,
                         usageLabel = usageLabel
                     )
@@ -175,7 +177,7 @@ fun ShareImage(
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
 
-                    CylindersTable(divePlanSet = divePlan)
+                    CylindersTable(divePlanSet = divePlan, unitSystem = settingsModel.unitSystem)
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
@@ -192,6 +194,16 @@ fun ShareImage(
 
                     val configuration = divePlan.configuration
 
+                    Text(
+                        text = buildAnnotatedString {
+                            appendBold("Units: ")
+                            append(when (settingsModel.unitSystem) {
+                                UnitSystem.METRIC -> "Metric"
+                                UnitSystem.IMPERIAL -> "Imperial"
+                            })
+                        },
+                        style = MaterialTheme.typography.bodySmall
+                    )
                     Text(
                         text = buildAnnotatedString {
                             appendBold("Deco model: ")
@@ -301,4 +313,19 @@ fun ShareImagePreviewCcrBailout() {
     )
 }
 
-private const val DEVICE_SHARE_IMAGE = "spec:width=411dp,height=2350dp"
+@Preview(device = DEVICE_SHARE_IMAGE)
+@Composable
+fun ShareImagePreviewImperial() {
+    ShareImage(
+        divePlan = PreviewData.divePlan1Imperial,
+        diveNumber = 1,
+        surfaceInterval = null,
+        settingsModel = SettingsModel(
+            showBasicDecoTable = true,
+            termsAndConditionsAccepted = true,
+            unitSystem = UnitSystem.IMPERIAL
+        ),
+    )
+}
+
+const val DEVICE_SHARE_IMAGE = "spec:width=1080px,height=3000px"

@@ -34,10 +34,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
-import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.domain.utilities.greaterThanTolerant
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
@@ -54,6 +54,12 @@ import org.neotech.app.abysner.presentation.theme.IconFont
 import org.neotech.app.abysner.presentation.theme.appendIcon
 import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
 import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
+import org.neotech.app.abysner.presentation.utilities.formatPressure
+import org.neotech.app.abysner.presentation.utilities.formatVolume
+import org.neotech.app.abysner.presentation.utilities.noUnitLabel
+import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
+import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
+import kotlin.math.roundToInt
 
 @Composable
 fun GasPlanCardComponent(
@@ -123,6 +129,7 @@ fun GasPlanCardComponent(
                         GasUsageDetailsDialog(
                             gasPlan = gasRequirements,
                             index = index,
+                            unitSystem = unitSystem,
                             emergencyLabel = emergencyLabel,
                             usageLabel = usageLabel
                         ) {
@@ -133,6 +140,7 @@ fun GasPlanCardComponent(
                     GasPlanBarChart(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         gasPlan = gasRequirements,
+                        unitSystem = unitSystem,
                         emergencyLabel = emergencyLabel,
                         usageLabel = usageLabel,
                     ) { index, _ ->
@@ -149,6 +157,7 @@ fun GasPlanCardComponent(
                     GasTotalsTable(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         gasPlan = gasRequirements,
+                        unitSystem = unitSystem,
                         emergencyLabel = emergencyLabel,
                         usageLabel = usageLabel,
                     )
@@ -163,6 +172,7 @@ fun GasPlanCardComponent(
                     CylindersTable(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         divePlanSet = divePlanSet,
+                        unitSystem = unitSystem,
                         // On CCR: Not enough bailout is a true error not a warning.
                         // On OC: Not enough gas for an out-of-air buddy is warning
                         emergencyIsError = divePlanSet.isCcr,
@@ -250,14 +260,15 @@ private fun headerWithUnit(label: String, unit: String) = buildAnnotatedString {
 fun CylindersTable(
     modifier: Modifier = Modifier,
     divePlanSet: DivePlanSet,
+    unitSystem: UnitSystem,
     emergencyIsError: Boolean = false,
 ) {
     Table(
         modifier = modifier,
         header = {
             Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = "Mix")
-            Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = headerWithUnit("Size", "ℓ"))
-            Text(modifier = Modifier.weight(0.4f), maxLines = 1, text = headerWithUnit("Pressure", "bar"))
+            Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = headerWithUnit("Size", unitSystem.volumeUnitLabel))
+            Text(modifier = Modifier.weight(0.4f), maxLines = 1, text = headerWithUnit("Pressure", unitSystem.pressureUnitLabel))
         }
     ) {
         rows(divePlanSet.gasPlan, key = { it.cylinder.uniqueIdentifier }) { usage ->
@@ -267,11 +278,14 @@ fun CylindersTable(
             )
             Text(
                 modifier = Modifier.weight(0.3f),
-                text = DecimalFormat.format(1, usage.cylinder.waterVolume),
+                text = when (unitSystem) {
+                    UnitSystem.METRIC -> usage.cylinder.waterVolume.formatVolume(unitSystem, decimals = 1, unit = noUnitLabel)
+                    UnitSystem.IMPERIAL -> (usage.cylinder.size.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt().toString()
+                },
             )
 
             val endPressure = usage.cylinder.pressureAfter(volumeUsage = usage.totalGasRequirement)
-            val startPressure = DecimalFormat.format(0, usage.cylinder.pressure)
+            val startPressureFormatted = usage.cylinder.pressure.formatPressure(unitSystem, includeUnit = false)
 
             val alertSeverity = if (endPressure == null) {
                 if (!emergencyIsError && usage.cylinder.pressureAfter(volumeUsage = usage.normalRequirement) != null) {
@@ -286,9 +300,9 @@ fun CylindersTable(
             }
 
             val pressureText = if (endPressure == null) {
-                "$startPressure > empty"
+                "$startPressureFormatted > empty"
             } else {
-                "$startPressure > ${endPressure.format(0)}"
+                "$startPressureFormatted > ${endPressure.formatPressure(unitSystem, includeUnit = false)}"
             }
 
             TextAlert(
@@ -304,6 +318,7 @@ fun CylindersTable(
 fun GasTotalsTable(
     modifier: Modifier = Modifier,
     gasPlan: List<CylinderGasRequirements>,
+    unitSystem: UnitSystem,
     emergencyLabel: String = "Reserve",
     usageLabel: String = "Used",
 ) {
@@ -311,9 +326,9 @@ fun GasTotalsTable(
         modifier = modifier,
         header = {
             Text(modifier = Modifier.weight(0.17f), maxLines = 1, text = "Mix")
-            Text(modifier = Modifier.weight(0.32f), maxLines = 1, text = headerWithUnit("Capacity", "ℓ"))
-            Text(modifier = Modifier.weight(0.26f), maxLines = 1, text = headerWithUnit(usageLabel, "ℓ"))
-            Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = headerWithUnit(emergencyLabel, "ℓ"))
+            Text(modifier = Modifier.weight(0.32f), maxLines = 1, text = headerWithUnit("Available", unitSystem.volumeUnitLabel))
+            Text(modifier = Modifier.weight(0.26f), maxLines = 1, text = headerWithUnit(usageLabel, unitSystem.volumeUnitLabel))
+            Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = headerWithUnit(emergencyLabel, unitSystem.volumeUnitLabel))
         }
     ) {
         rows(gasPlan.groupBy { it.cylinder.gas }.toList(), key = { (gas, _) -> gas }) { (gas, entries) ->
@@ -334,16 +349,16 @@ fun GasTotalsTable(
             }
 
             Text(modifier = Modifier.weight(0.17f), text = gas.toString())
-            Text(modifier = Modifier.weight(0.32f), text = DecimalFormat.format(0, totalCapacity))
+            Text(modifier = Modifier.weight(0.32f), text = totalCapacity.formatVolume(unitSystem, unit = noUnitLabel))
             TextAlert(
                 modifier = Modifier.weight(0.26f),
                 alertSeverity = alertSeverityUsage,
-                text = DecimalFormat.format(0, totalUsage),
+                text = totalUsage.formatVolume(unitSystem, unit = noUnitLabel),
             )
             TextAlert(
                 modifier = Modifier.weight(0.25f),
                 alertSeverity = alertSeverityReserve,
-                text = DecimalFormat.format(0, totalReserve),
+                text = totalReserve.formatVolume(unitSystem, unit = noUnitLabel),
             )
         }
     }
@@ -360,7 +375,7 @@ fun GasLimitsTable(
         header = {
             Text(modifier = Modifier.weight(0.2f), maxLines = 1, text = "Mix")
             Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = "Depth")
-            Text(modifier = Modifier.weight(0.35f), maxLines = 1, text = headerWithUnit("Density", "g/ℓ"))
+            Text(modifier = Modifier.weight(0.35f), maxLines = 1, text = headerWithUnit("Density", "g/L"))
             Text(modifier = Modifier.weight(0.2f), maxLines = 1, text = "PPO2")
         }
     ) {

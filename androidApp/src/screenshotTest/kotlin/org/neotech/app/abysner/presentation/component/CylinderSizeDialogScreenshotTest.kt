@@ -30,3 +30,17 @@ fun CylinderSizeDialogCustomScreenshotTest() {
     CylinderSizeDialogCustomPreview()
 }
 
+@PreviewTest
+@PreviewForScreenshotTestsDialog
+@Composable
+fun CylinderSizeDialogImperialPresetsScreenshotTest() {
+    CylinderSizeDialogImperialPresetsPreview()
+}
+
+@PreviewTest
+@PreviewForScreenshotTestsDialog
+@Composable
+fun CylinderSizeDialogImperialCustomScreenshotTest() {
+    CylinderSizeDialogImperialCustomPreview()
+}
+
