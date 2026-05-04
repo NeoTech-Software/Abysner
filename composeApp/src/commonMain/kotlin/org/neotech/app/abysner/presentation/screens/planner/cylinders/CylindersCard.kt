@@ -245,7 +245,7 @@ fun CylinderListItemComponent(
     onChecked: (cylinder: Cylinder, isChecked: Boolean) -> Unit = { _, _ -> },
     onLockedClick: () -> Unit = {},
 ) {
-    val cylinderSuffix = " - ${DecimalFormat.format(0, cylinder.pressure)} bar (${DecimalFormat.format(1, cylinder.waterVolume)} l)"
+    val cylinderSuffix = " - ${DecimalFormat.format(0, cylinder.pressure)} bar (${DecimalFormat.format(1, cylinder.waterVolume)} L)"
 
     Row(
         modifier = modifier.padding(start = 16.dp),

@@ -26,7 +26,7 @@ class SuffixVisualTransformation(private val suffix: String) : VisualTransformat
     override fun filter(text: AnnotatedString): TransformedText {
 
         val result = text + buildAnnotatedString {
-            withStyle(style = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight(300))) {
+            withStyle(style = SpanStyle(fontSize = 18.sp, fontWeight = FontWeight(300))) {
                 append(suffix)
             }
         }
