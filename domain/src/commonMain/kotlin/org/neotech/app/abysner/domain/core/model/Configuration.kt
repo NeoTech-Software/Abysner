@@ -152,4 +152,24 @@ data class Configuration(
             max(ceilTolerant(pressureDifference / rate).toInt(), 1)
         }
     }
+
+    /**
+     * Snaps all depth-related configuration values to whole display units for the given
+     * [UnitSystem]. For example a stored value of 3.0 meters would in imperial otherwise become
+     * 9.84251969 feet, while we need to be using exactly 10 feet to align with the display and
+     * diver expectations (align to 10 feet grid). The configuration returned by this method remains
+     * in meters, but the values might be fractions now so that when converted to display-units they
+     * align to the display unit grid.
+     */
+    fun snapToDisplayUnit(unitSystem: UnitSystem): Configuration = copy(
+        decoStepSize = unitSystem.snapMetersToDisplayUnit(decoStepSize),
+        lastDecoStopDepth = unitSystem.snapMetersToDisplayUnit(lastDecoStopDepth),
+        maxAscentRate = unitSystem.snapMetersToDisplayUnit(maxAscentRate),
+        maxDescentRate = unitSystem.snapMetersToDisplayUnit(maxDescentRate),
+        maxEND = unitSystem.snapMetersToDisplayUnit(maxEND),
+        contingencyDeeper = unitSystem.snapMetersToDisplayUnit(contingencyDeeper),
+        altitude = unitSystem.snapMetersToDisplayUnit(altitude),
+        ccrToHighSetpointSwitchDepth = ccrToHighSetpointSwitchDepth?.let { unitSystem.snapMetersToDisplayUnit(it) },
+        ccrToLowSetpointSwitchDepth = ccrToLowSetpointSwitchDepth?.let { unitSystem.snapMetersToDisplayUnit(it) },
+    )
 }
