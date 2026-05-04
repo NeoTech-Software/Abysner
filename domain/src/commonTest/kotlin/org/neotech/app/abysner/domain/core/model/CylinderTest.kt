@@ -12,6 +12,8 @@
 
 package org.neotech.app.abysner.domain.core.model
 
+import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
+import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,17 +21,26 @@ class CylinderTest {
 
     @Test
     fun capacityAt_returnsCorrectCapacity() {
-        // Steel 12 liter tank
         val cylinder = Cylinder(Gas.Air, 232.0, 12.0)
-
         assertEquals(2316.0, cylinder.capacityAt(pressure = 200.0), 1.0)
     }
 
     @Test
     fun pressureAt_returnsCorrectPressure() {
-        // Steel 12 liter tank
         val cylinder = Cylinder(Gas.Air, 232.0, 12.0)
-
         assertEquals(99.0, cylinder.pressureAt(volume = 1200.0), 1.0)
+    }
+
+    @Test
+    fun ratedCapacity_returnsCorrectRatedCapacity() {
+        assertEquals(2206.0, Cylinder.AL80.ratedCapacity(), 1.0)
+        assertEquals(2633.0, Cylinder.STEEL_12L.ratedCapacity(), 1.0)
+    }
+
+    @Test
+    fun workingPressure_roundTripsToExactPsiForImperialCylinders() {
+        assertEquals(3000, (Cylinder.AL80.workingPressure * PSI_PER_BAR).roundToInt())
+        assertEquals(3300, (Cylinder.AL100.workingPressure * PSI_PER_BAR).roundToInt())
+        assertEquals(3442, (Cylinder.HP100.workingPressure * PSI_PER_BAR).roundToInt())
     }
 }
