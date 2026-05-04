@@ -22,6 +22,7 @@ data class SettingsResourceV1(
     val termsAndConditionsAccepted: Boolean,
     val themeMode: ThemeModeResource = ThemeModeResource.SYSTEM,
     val showDiveEditTooltip: Boolean = true,
+    val unitSystem: UnitSystemResource? = null,
 ): SerializableResource {
 
     @Serializable
@@ -29,6 +30,12 @@ data class SettingsResourceV1(
         @SerialName("system") SYSTEM,
         @SerialName("light") LIGHT,
         @SerialName("dark") DARK,
+    }
+
+    @Serializable
+    enum class UnitSystemResource {
+        @SerialName("metric") METRIC,
+        @SerialName("imperial") IMPERIAL,
     }
 }
 

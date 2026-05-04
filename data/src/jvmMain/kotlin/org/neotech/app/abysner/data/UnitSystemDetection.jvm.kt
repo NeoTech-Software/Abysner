@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024-2026 Neotech
+ * Copyright (C) 2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -10,14 +10,18 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-package org.neotech.app.abysner.domain.settings.model
+package org.neotech.app.abysner.data
 
 import org.neotech.app.abysner.domain.core.model.UnitSystem
+import java.util.Locale
 
-data class SettingsModel(
-    val showBasicDecoTable: Boolean = false,
-    val termsAndConditionsAccepted: Boolean = false,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val showDiveEditTooltip: Boolean = true,
-    val unitSystem: UnitSystem = UnitSystem.METRIC,
-)
+private val IMPERIAL_COUNTRIES = setOf("US", "LR", "MM")
+
+actual fun detectSystemUnitSystem(): UnitSystem {
+    val country = Locale.getDefault().country.uppercase()
+    return if (country in IMPERIAL_COUNTRIES) {
+        UnitSystem.IMPERIAL
+    } else {
+        UnitSystem.METRIC
+    }
+}

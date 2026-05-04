@@ -14,6 +14,8 @@ package org.neotech.app.abysner.data.settings
 
 import org.neotech.app.abysner.data.settings.resources.SettingsResourceV1
 import org.neotech.app.abysner.data.settings.resources.SettingsResourceV1.ThemeModeResource
+import org.neotech.app.abysner.data.settings.resources.SettingsResourceV1.UnitSystemResource
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.settings.model.ThemeMode
 
@@ -22,13 +24,15 @@ fun SettingsModel.toResource() = SettingsResourceV1(
     termsAndConditionsAccepted = termsAndConditionsAccepted,
     themeMode = themeMode.toResource(),
     showDiveEditTooltip = showDiveEditTooltip,
+    unitSystem = unitSystem.toResource(),
 )
 
-fun SettingsResourceV1.toModel() = SettingsModel(
+fun SettingsResourceV1.toModel(defaultUnitSystem: UnitSystem) = SettingsModel(
     showBasicDecoTable = showBasicDecoTable,
     termsAndConditionsAccepted = termsAndConditionsAccepted,
     themeMode = themeMode.toModel(),
     showDiveEditTooltip = showDiveEditTooltip,
+    unitSystem = unitSystem?.toModel() ?: defaultUnitSystem,
 )
 
 private fun ThemeMode.toResource() = when (this) {
@@ -41,5 +45,15 @@ private fun ThemeModeResource.toModel() = when (this) {
     ThemeModeResource.SYSTEM -> ThemeMode.SYSTEM
     ThemeModeResource.LIGHT -> ThemeMode.LIGHT
     ThemeModeResource.DARK -> ThemeMode.DARK
+}
+
+private fun UnitSystem.toResource() = when (this) {
+    UnitSystem.METRIC -> UnitSystemResource.METRIC
+    UnitSystem.IMPERIAL -> UnitSystemResource.IMPERIAL
+}
+
+private fun UnitSystemResource.toModel() = when (this) {
+    UnitSystemResource.METRIC -> UnitSystem.METRIC
+    UnitSystemResource.IMPERIAL -> UnitSystem.IMPERIAL
 }
 
