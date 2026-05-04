@@ -44,12 +44,12 @@ class GasSwitchTimeTest {
             salinity = Salinity.WATER_SALT,
             algorithm = Algorithm.BUHLMANN_ZH16C,
             altitude = 0.0,
-            decoStepSize = 3,
-            lastDecoStopDepth = 6,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 6.0,
             gasSwitchTime = gasSwitchTime
         ))
         return divePlanner.addDive(
-            listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
+            listOf(DiveProfileSection(duration = 30, 30.0, bottomGas)),
             listOf(decoGas).assign()
         )
     }
@@ -106,12 +106,12 @@ class GasSwitchTimeTest {
             salinity = Salinity.WATER_SALT,
             algorithm = Algorithm.BUHLMANN_ZH16C,
             altitude = 0.0,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0,
             gasSwitchTime = 0
         ))
         val plan = divePlanner.addDive(
-            listOf(DiveProfileSection(duration = 30, 30, bottomGas)),
+            listOf(DiveProfileSection(duration = 30, 30.0, bottomGas)),
             listOf(decoGas, nitrox80Cylinder).assign()
         )
 

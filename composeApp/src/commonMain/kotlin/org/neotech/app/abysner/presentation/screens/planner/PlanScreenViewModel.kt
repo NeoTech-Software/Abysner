@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -39,17 +41,16 @@ import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.diveplanning.model.truncateAtRuntime
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.diveplanning.model.toAssignedCylinder
+import org.neotech.app.abysner.domain.diveplanning.model.truncateAtRuntime
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.utilities.combine
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -231,7 +232,7 @@ class PlanScreenViewModel(
             if (deepestIdx != null) {
                 segments[deepestIdx] = segments[deepestIdx].let {
                     it.copy(
-                        depth = it.depth + (deeper ?: 0),
+                        depth = it.depth + (deeper ?: 0.0),
                         duration = it.duration + (longer ?: 0),
                     )
                 }
@@ -283,7 +284,7 @@ class PlanScreenViewModel(
 
             DivePlanSet(
                 base = divePlan,
-                deeper = deeper,
+                deeper = deeper?.roundToInt(),
                 longer = longer,
                 bailout = diveInput.bailout,
                 diveMode = diveInput.diveMode,
@@ -312,11 +313,8 @@ class PlanScreenViewModel(
         val configuration: Configuration = Configuration(),
     )
 }
-
-// TODO consider removing defaults from the production version of the app.
 private val defaultCylinderAir = Cylinder.steel12Liter(gas = Gas.Air, pressure = 232.0)
 
-// TODO consider removing defaults from the production version of the app.
 private val defaultCylinders: List<PlannedCylinderModel> = listOf(
     PlannedCylinderModel(
         cylinder = defaultCylinderAir,
@@ -335,11 +333,10 @@ private val defaultCylinders: List<PlannedCylinderModel> = listOf(
     )
 )
 
-// TODO consider removing defaults from the production version of the app.
 private val defaultProfile = listOf(
     DiveProfileSection(
         30,
-        25,
+        25.0,
         defaultCylinderAir
     )
 )

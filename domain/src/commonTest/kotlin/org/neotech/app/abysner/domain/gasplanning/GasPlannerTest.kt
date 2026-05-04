@@ -42,8 +42,8 @@ class GasPlannerTest {
         gfLow = 0.3,
         gfHigh = 0.7,
         forceMinimalDecoStopTime = true,
-        decoStepSize = 3,
-        lastDecoStopDepth = 3,
+        decoStepSize = 3.0,
+        lastDecoStopDepth = 3.0,
         salinity = Salinity.WATER_SALT,
         algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
         ccrLowSetpoint = 0.7,
@@ -68,18 +68,18 @@ class GasPlannerTest {
             gfLow = 0.4,
             gfHigh = 0.8,
             forceMinimalDecoStopTime = true,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0,
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
             gasSwitchTime = 0
         ))
         val divePlan = divePlanner.addDive(
             plan = listOf(
-                DiveProfileSection(10, 50, bottomGas),
-                DiveProfileSection(1, 50, bottomGas),
-                DiveProfileSection(10, 20, bottomGas),
-                DiveProfileSection(30, 20, bottomGas)
+                DiveProfileSection(10, 50.0, bottomGas),
+                DiveProfileSection(1, 50.0, bottomGas),
+                DiveProfileSection(10, 20.0, bottomGas),
+                DiveProfileSection(30, 20.0, bottomGas)
             ),
             cylinders = listOf(bottomGas, decoGas).assign()
         )
@@ -117,17 +117,17 @@ class GasPlannerTest {
             gfLow = 0.3,
             gfHigh = 0.7,
             forceMinimalDecoStopTime = true,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0,
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C
         ))
         val divePlan = divePlanner.addDive(
             plan = listOf(
-                DiveProfileSection(15, 10, bottomGas),
-                DiveProfileSection(15, 15, bottomGas),
+                DiveProfileSection(15, 10.0, bottomGas),
+                DiveProfileSection(15, 15.0, bottomGas),
                 // +3 + 3 (contingency plan)
-                DiveProfileSection(18, 23, bottomGas),
+                DiveProfileSection(18, 23.0, bottomGas),
             ),
             cylinders = listOf(bottomGas).assign()
         )
@@ -161,15 +161,15 @@ class GasPlannerTest {
             gfLow = 0.4,
             gfHigh = 0.8,
             forceMinimalDecoStopTime = true,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0,
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
             gasSwitchTime = 0
         ))
         val divePlan = divePlanner.addDive(
             plan = listOf(
-                DiveProfileSection(30, 50, bottomGas),
+                DiveProfileSection(30, 50.0, bottomGas),
             ),
             cylinders = listOf(bottomGas, decoGas).assign()
         )
@@ -200,8 +200,8 @@ class GasPlannerTest {
             gfLow = 0.4,
             gfHigh = 0.8,
             forceMinimalDecoStopTime = true,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0,
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
             gasSwitchTime = 0
@@ -211,7 +211,7 @@ class GasPlannerTest {
         val bottomGasTwo = Cylinder.steel12Liter(Gas.Air)
         val gasPlan = GasPlanner().calculateGasPlan(
             DivePlanner(config).addDive(
-                plan = listOf(DiveProfileSection(30, 50, bottomGasOne)),
+                plan = listOf(DiveProfileSection(30, 50.0, bottomGasOne)),
                 cylinders = listOf(bottomGasOne, bottomGasTwo, decoGas).assign()
             )
         )
@@ -243,8 +243,8 @@ class GasPlannerTest {
             gfLow = 0.8,
             gfHigh = 1.0,
             forceMinimalDecoStopTime = true,
-            decoStepSize = 3,
-            lastDecoStopDepth = 3,
+            decoStepSize = 3.0,
+            lastDecoStopDepth = 3.0,
             salinity = Salinity.WATER_FRESH,
             algorithm = Configuration.Algorithm.BUHLMANN_ZH16C,
             gasSwitchTime = 0
@@ -254,7 +254,7 @@ class GasPlannerTest {
         val stage = Cylinder.aluminium63Cuft(Gas.Air)
 
         val divePlan = DivePlanner(config).addDive(
-            plan = listOf(DiveProfileSection(25, 20, backMount)),
+            plan = listOf(DiveProfileSection(25, 20.0, backMount)),
             cylinders = listOf(backMount, stage).assign()
         )
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
@@ -338,7 +338,7 @@ class GasPlannerTest {
     fun calculateGasPlan_ccrBailoutDoesNotChargeDiluentForSwitchTime() {
         val bailoutCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox32)
         val divePlan = ccrDivePlan(
-            depth = 40,
+            depth = 40.0,
             duration = 20,
             extraCylinders = listOf(bailoutCylinder),
             bailout = true,
@@ -350,7 +350,7 @@ class GasPlannerTest {
     }
 
     private fun ccrDivePlan(
-        depth: Int = 30,
+        depth: Double = 30.0,
         duration: Int = 30,
         extraCylinders: List<Cylinder> = emptyList(),
         bailout: Boolean = false,

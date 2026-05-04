@@ -32,7 +32,7 @@ class DiveEditorViewModelDelegateTest {
 
     private val airCylinder = Cylinder.steel12Liter(gas = Gas.Air, pressure = 232.0)
     private val nitrox50 = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50, pressure = 207.0)
-    private val airSegment = DiveProfileSection(duration = 30, depth = 25, cylinder = airCylinder)
+    private val airSegment = DiveProfileSection(duration = 30, depth = 25.0, cylinder = airCylinder)
 
     @Test
     fun addSegment_referencedCylinderIsLocked() {
@@ -88,7 +88,7 @@ class DiveEditorViewModelDelegateTest {
             ),
             segments = listOf(
                 airSegment,
-                DiveProfileSection(duration = 10, depth = 6, cylinder = nitrox50),
+                DiveProfileSection(duration = 10, depth = 6.0, cylinder = nitrox50),
             ),
         ).copy(diveMode = DiveMode.CLOSED_CIRCUIT)
 

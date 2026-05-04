@@ -44,34 +44,35 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
-import androidx.compose.ui.tooling.preview.Preview
+import kotlin.math.roundToInt
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
+import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.diveplanning.model.bailoutCylinders
 import org.neotech.app.abysner.domain.diveplanning.model.ccrDiluentCylinder
-import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
-import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.presentation.component.DropDown
 import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpandedSheetState
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
+import org.neotech.app.abysner.presentation.component.core.pluralsStringBuilder
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
-import org.neotech.app.abysner.presentation.component.core.pluralsStringBuilder
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.bodyExtraLarge
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
@@ -101,7 +102,7 @@ internal fun SegmentPickerBottomSheetHost(
             environment = configuration.environment,
             cylinders = cylinders,
             diveMode = diveMode,
-            previousDepth = segments.getOrNull(previousIndex)?.depth?.toDouble() ?: 0.0,
+            previousDepth = segments.getOrNull(previousIndex)?.depth ?: 0.0,
             configuration = configuration,
             onAddOrUpdateDiveSegment = {
                 if (editIndex != null) {
@@ -194,7 +195,7 @@ private fun SegmentPickerBottomSheetContent(
     }
 
     var selectedCylinder: Cylinder by remember { mutableStateOf(initialCylinder ?: availableCylinders.first()) }
-    var depth by remember { mutableIntStateOf(initialValue?.depth ?: 10) }
+    var depth by remember { mutableIntStateOf(initialValue?.depth?.roundToInt() ?: 10) }
     var time by remember { mutableIntStateOf(initialValue?.duration ?: 15) }
 
     val errorMessageDepth = remember { mutableStateOf<String?>(null) }
@@ -221,7 +222,7 @@ private fun SegmentPickerBottomSheetContent(
                     onAddOrUpdateDiveSegment(
                         DiveProfileSection(
                             duration = time,
-                            depth = depth,
+                            depth = depth.toDouble(),
                             cylinder = selectedCylinder
                         )
                     )
@@ -288,7 +289,7 @@ private fun SegmentPickerBottomSheetContent(
                     minValue = 1,
                     maxValue = 150,
                     visualTransformation = SuffixVisualTransformation(" m"),
-                    initialValue = initialValue?.depth ?: 10,
+                    initialValue = initialValue?.depth?.roundToInt() ?: 10,
                     errorMessage = errorMessageDepth,
                     isValid = isDepthValid,
                     onNumberChanged = {
@@ -400,7 +401,7 @@ fun SegmentPickerBottomSheetPreview() {
             environment = Environment.Default,
             initialValue = DiveProfileSection(
                 10,
-                15,
+                15.0,
                 Cylinder.steel12Liter(gas = Gas.Air)
             ),
             cylinders = persistentListOf(
@@ -427,7 +428,7 @@ fun SegmentPickerBottomSheetCcrPreview() {
             diveMode = DiveMode.CLOSED_CIRCUIT,
             initialValue = DiveProfileSection(
                 30,
-                25,
+                25.0,
                 Cylinder.steel12Liter(gas = Gas.Air)
             ),
             cylinders = persistentListOf(

@@ -16,9 +16,9 @@ data class ConfigurationResourceV1(
     val gfHigh: Double,
     val forceMinimalDecoStopTime: Boolean,
     val useDecoGasBetweenSections: Boolean,
-    val decoStepSize: Int,
-    val lastDecoStopDepth: Int,
-    val contingencyDeeper: Int,
+    val decoStepSize: Double,
+    val lastDecoStopDepth: Double,
+    val contingencyDeeper: Double,
     val contingencyLonger: Int,
     // Default allows deserializing saves that predate this field.
     val gasSwitchTime: Int = 1,
@@ -30,6 +30,6 @@ data class ConfigurationResourceV1(
     val ccrHighSetpoint: Double = 1.2,
     val ccrLoopVolumeLiters: Double = 7.0,
     val ccrMetabolicO2LitersPerMinute: Double = 0.8,
-    val ccrToHighSetpointSwitchDepth: Int? = null,
-    val ccrToLowSetpointSwitchDepth: Int? = null,
+    val ccrToHighSetpointSwitchDepth: Double? = null,
+    val ccrToLowSetpointSwitchDepth: Double? = null,
 ): SerializableResource

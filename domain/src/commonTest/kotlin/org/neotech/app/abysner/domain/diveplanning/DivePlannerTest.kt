@@ -35,7 +35,7 @@ class DivePlannerTest {
         val profile = listOf(
             DiveProfileSection(
                 duration = 30,
-                depth = 30,
+                depth = 30.0,
                 cylinder = Cylinder.steel12Liter(Gas.Air)
             )
         )
@@ -58,7 +58,7 @@ class DivePlannerTest {
         val profile = listOf(
             DiveProfileSection(
                 duration = 30,
-                depth = 30,
+                depth = 30.0,
                 cylinder = Cylinder.steel12Liter(Gas.Air)
             )
         )
@@ -84,12 +84,12 @@ class DivePlannerTest {
                 salinity = Salinity.WATER_FRESH,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
                 altitude = 0.0,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0
             )
         )
 
-        val plannedSections = listOf(DiveProfileSection(duration = 20, 20, bottomGas))
+        val plannedSections = listOf(DiveProfileSection(duration = 20, 20.0, bottomGas))
 
         val divePlan = divePlanner.addDive(plannedSections, emptyList())
         val plan = divePlan.segmentsCollapsed
@@ -117,14 +117,14 @@ class DivePlannerTest {
                 salinity = Salinity.WATER_SALT,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
                 altitude = 0.0,
-                decoStepSize = 3,
-                lastDecoStopDepth = 6,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 6.0,
                 gasSwitchTime = 1
             )
         )
 
         val plannedSections = listOf(
-            DiveProfileSection(duration = 30, 30, bottomGas)
+            DiveProfileSection(duration = 30, 30.0, bottomGas)
         )
 
         val divePlan = divePlanner.addDive(plannedSections, listOf(bottomGas, decoGas).assign())
@@ -159,13 +159,13 @@ class DivePlannerTest {
                 salinity = Salinity.WATER_SALT,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
                 altitude = 0.0,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0,
                 gasSwitchTime = 1
             )
         )
 
-        val plannedSections = listOf(DiveProfileSection(duration = 15, 45, bottomGas))
+        val plannedSections = listOf(DiveProfileSection(duration = 15, 45.0, bottomGas))
 
         val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas).assign())
         val plan = divePlan.segmentsCollapsed
@@ -199,13 +199,13 @@ class DivePlannerTest {
                 salinity = Salinity.WATER_FRESH,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
                 altitude = 1000.0,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0,
                 gasSwitchTime = 1
             )
         )
 
-        val plannedSections = listOf(DiveProfileSection(duration = 20, 60, bottomGas))
+        val plannedSections = listOf(DiveProfileSection(duration = 20, 60.0, bottomGas))
 
         val divePlan = divePlanner.addDive(plannedSections, listOf(decoGas).assign())
         val plan = divePlan.segmentsCollapsed
@@ -244,16 +244,16 @@ class DivePlannerTest {
                 salinity = Salinity.WATER_FRESH,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
                 altitude = 0.0,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0
             )
         )
 
         val plannedSections = listOf(
-            DiveProfileSection(duration = 10, 40, bottomGas),
-            DiveProfileSection(duration = 10, 30, bottomGas),
-            DiveProfileSection(duration = 8, 30, bottomGas),
-            DiveProfileSection(duration = 4, 40, bottomGas)
+            DiveProfileSection(duration = 10, 40.0, bottomGas),
+            DiveProfileSection(duration = 10, 30.0, bottomGas),
+            DiveProfileSection(duration = 8, 30.0, bottomGas),
+            DiveProfileSection(duration = 4, 40.0, bottomGas)
         )
 
         val divePlan = divePlanner.addDive(plannedSections, emptyList())
@@ -291,8 +291,8 @@ class DivePlannerTest {
                 gfLow = 0.3, gfHigh = 0.7,
                 salinity = Salinity.WATER_FRESH,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0,
                 gasSwitchTime = 1,
             )
         )
@@ -301,7 +301,7 @@ class DivePlannerTest {
         // decompression planner will have both cylinders available, but with cylinder1 first in the
         // list. A switch to that first cylinder should not occur, since the gas mixes are the same.
         val divePlan = planner.addDive(
-            plan = listOf(DiveProfileSection(duration = 20, depth = 20, cylinder = cylinder2)),
+            plan = listOf(DiveProfileSection(duration = 20, depth = 20.0, cylinder = cylinder2)),
             cylinders = listOf(cylinder1, cylinder2).assign(),
         )
 
@@ -320,15 +320,15 @@ class DivePlannerTest {
                 gfHigh = 0.7,
                 salinity = Salinity.WATER_SALT,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0,
                 ccrLowSetpoint = 0.7,
                 ccrHighSetpoint = 1.2,
             )
         )
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -364,15 +364,15 @@ class DivePlannerTest {
                 gfHigh = 0.7,
                 salinity = Salinity.WATER_SALT,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0,
                 ccrLowSetpoint = 0.7,
                 ccrHighSetpoint = 1.2,
             )
         )
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 30, depth = 30, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 30, depth = 30.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT,
             bailout = true
@@ -413,15 +413,15 @@ class DivePlannerTest {
                 gfHigh = 0.7,
                 salinity = Salinity.WATER_SALT,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0,
                 ccrLowSetpoint = 0.7,
                 ccrHighSetpoint = 1.2,
             )
         )
 
         val plan = planner.addDive(
-            listOf(DiveProfileSection(duration = 20, depth = 60, cylinder = diluent)),
+            listOf(DiveProfileSection(duration = 20, depth = 60.0, cylinder = diluent)),
             listOf(diluent).assign(),
             diveMode = DiveMode.CLOSED_CIRCUIT
         )
@@ -488,13 +488,13 @@ class DivePlannerTest {
                 salinity = Salinity.WATER_SALT,
                 algorithm = Algorithm.BUHLMANN_ZH16C,
                 altitude = 0.0,
-                decoStepSize = 3,
-                lastDecoStopDepth = 3,
+                decoStepSize = 3.0,
+                lastDecoStopDepth = 3.0,
                 gasSwitchTime = 1
             )
         )
 
-        val plannedSections = listOf(DiveProfileSection(duration = 20, 40, bottomGas))
+        val plannedSections = listOf(DiveProfileSection(duration = 20, 40.0, bottomGas))
 
         val divePlan = divePlanner.addDive(
             plan = plannedSections,

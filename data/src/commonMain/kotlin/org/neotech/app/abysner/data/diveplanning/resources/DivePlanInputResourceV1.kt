@@ -33,7 +33,7 @@ data class DivePlanInputResourceV1(
     @Serializable
     data class ProfileSegmentResource(
         val duration: Int,
-        val depth: Int,
+        val depth: Double,
         val cylinderIdentifier: String
     )
 

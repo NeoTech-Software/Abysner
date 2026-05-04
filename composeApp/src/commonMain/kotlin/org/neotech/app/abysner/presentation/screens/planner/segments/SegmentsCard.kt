@@ -16,7 +16,6 @@ import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_outline_scuba_tank_24
 import abysner.composeapp.generated.resources.ic_outline_timer_24
 import abysner.composeapp.generated.resources.ic_outline_vertical_align_bottom_24
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,7 +35,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -111,7 +112,7 @@ fun SegmentsCardComponent(
 @Composable
 private fun SegmentListItemComponent(
     modifier: Modifier,
-    diveProfileSection: DiveProfileSection = DiveProfileSection(10, 15, Cylinder(Gas.Air, 232, 12)),
+    diveProfileSection: DiveProfileSection = DiveProfileSection(10, 15.0, Cylinder(Gas.Air, 232, 12)),
     onDelete: (diveProfileSection: DiveProfileSection) -> Unit = {},
 ) {
     Row(
@@ -120,7 +121,8 @@ private fun SegmentListItemComponent(
     ) {
         TextWithStartIcon(
             modifier = Modifier.padding(start = 16.dp),
-            text = "${diveProfileSection.depth} m",
+            // TODO: Format depth to no decimals places specifically (round?)
+            text = "${diveProfileSection.depth.roundToInt()} m",
             icon = painterResource(resource = Res.drawable.ic_outline_vertical_align_bottom_24)
         )
         TextWithStartIcon(
@@ -152,9 +154,9 @@ private fun SegmentsCardComponentPreview() {
 
         SegmentsCardComponent(
             segments = listOf(
-                DiveProfileSection(5, 20, cylinder),
-                DiveProfileSection(15, 15, cylinder),
-                DiveProfileSection(30, 10, cylinder)
+                DiveProfileSection(5, 20.0, cylinder),
+                DiveProfileSection(15, 15.0, cylinder),
+                DiveProfileSection(30, 10.0, cylinder)
             ),
             addAllowed = true,
             onAddSegment = {},
