@@ -31,6 +31,7 @@ import org.neotech.app.abysner.domain.core.physics.Pressure
 import org.neotech.app.abysner.domain.utilities.floorTolerant
 import org.neotech.app.abysner.domain.utilities.format
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
 import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
 import kotlin.math.round
 
@@ -42,6 +43,7 @@ fun GasPropertiesComponent(
     maxPPO2Secondary: Double?,
     maxDensity: Double,
     environment: Environment,
+    unitSystem: UnitSystem,
     showTopRow: Boolean = true,
     onClickMix: (() -> Unit)? = null
 ) {
@@ -91,8 +93,9 @@ fun GasPropertiesComponent(
         Row(modifier = Modifier.wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            val mod = gas?.oxygenModAmbientPressureWithTolerance(maxPPO2)
-                ?.formatModDepth(UnitSystem.METRIC, environment)
+            val mod = gas
+                ?.oxygenModAmbientPressureWithTolerance(maxPPO2)
+                ?.formatModDepth(unitSystem, environment)
                 ?: EMPTY_PLACEHOLDER
 
             FlipCardComponent(
@@ -121,7 +124,7 @@ fun GasPropertiesComponent(
 
                 val modSecondary = gas
                     ?.oxygenModAmbientPressureWithTolerance(maxPPO2Secondary)
-                    ?.formatModDepth(UnitSystem.METRIC, environment)
+                    ?.formatModDepth(unitSystem, environment)
                     ?: EMPTY_PLACEHOLDER
 
                 FlipCardComponent(
@@ -149,7 +152,7 @@ fun GasPropertiesComponent(
 
             val densityMod = gas
                 ?.densityModAmbientPressure(maxDensity)
-                ?.formatModDepthRounded(UnitSystem.METRIC, environment)
+                ?.formatModDepthRounded(unitSystem, environment)
                 ?: EMPTY_PLACEHOLDER
 
             FlipCardComponent(
@@ -220,6 +223,7 @@ private fun GasPropertiesComponentPreview() {
             maxPPO2Secondary = 1.6,
             maxDensity = 6.8,
             environment = Environment(Salinity.WATER_FRESH, ATMOSPHERIC_PRESSURE_AT_SEA_LEVEL),
+            unitSystem = UnitSystem.METRIC,
             showTopRow = true
         )
     }

@@ -50,11 +50,10 @@ val UnitSystem.sacRateUnitLabel: String
 
 /**
  * Formats a depth value that is already in display-units (meters for metric, feet for imperial).
- * Rounds to integer and optionally appends the unit suffix.
  */
-fun Double.formatDisplayDepth(unitSystem: UnitSystem, includeUnit: Boolean = true): String {
-    val value = roundToInt()
-    return if (includeUnit) { "$value ${unitSystem.depthUnitLabel}" } else { value.toString() }
+fun Double.formatDisplayDepth(unitSystem: UnitSystem, decimals: Int = 0, includeUnit: Boolean = true): String {
+    val value = DecimalFormat.format(decimals, this)
+    return if (includeUnit) { "$value ${unitSystem.depthUnitLabel}" } else { value }
 }
 
 /**

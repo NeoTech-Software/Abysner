@@ -73,7 +73,6 @@ class DivePlanner(
         cylinders: List<AssignedCylinder>,
         diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
         bailout: Boolean = false,
-        unitSystem: UnitSystem = UnitSystem.METRIC,
     ): DivePlan {
 
         require(!bailout || diveMode.isCcr) {

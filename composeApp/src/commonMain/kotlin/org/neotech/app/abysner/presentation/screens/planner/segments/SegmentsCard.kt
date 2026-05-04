@@ -37,19 +37,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.formatDepth
 
 @Composable
 fun SegmentsCardComponent(
     modifier: Modifier = Modifier,
     segments: List<DiveProfileSection>,
+    unitSystem: UnitSystem,
     addAllowed: Boolean,
     onAddSegment: () -> Unit,
     onRemoveSegment: (index: Int, segment: DiveProfileSection) -> Unit,
@@ -70,6 +72,7 @@ fun SegmentsCardComponent(
                         onEditSegment(index, diveSegment)
                     },
                     diveProfileSection = diveSegment,
+                    unitSystem = unitSystem,
                     onDelete = {
                         onRemoveSegment(index, diveSegment)
                     }
@@ -113,6 +116,7 @@ fun SegmentsCardComponent(
 private fun SegmentListItemComponent(
     modifier: Modifier,
     diveProfileSection: DiveProfileSection = DiveProfileSection(10, 15.0, Cylinder(Gas.Air, 232, 12)),
+    unitSystem: UnitSystem = UnitSystem.METRIC,
     onDelete: (diveProfileSection: DiveProfileSection) -> Unit = {},
 ) {
     Row(
@@ -121,8 +125,7 @@ private fun SegmentListItemComponent(
     ) {
         TextWithStartIcon(
             modifier = Modifier.padding(start = 16.dp),
-            // TODO: Format depth to no decimals places specifically (round?)
-            text = "${diveProfileSection.depthInMeters.roundToInt()} m",
+            text = diveProfileSection.depthInMeters.formatDepth(unitSystem),
             icon = painterResource(resource = Res.drawable.ic_outline_vertical_align_bottom_24)
         )
         TextWithStartIcon(
@@ -158,6 +161,7 @@ private fun SegmentsCardComponentPreview() {
                 DiveProfileSection(15, 15.0, cylinder),
                 DiveProfileSection(30, 10.0, cylinder)
             ),
+            unitSystem = UnitSystem.METRIC,
             addAllowed = true,
             onAddSegment = {},
             onRemoveSegment = { _, _ -> },

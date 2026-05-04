@@ -66,6 +66,7 @@ internal fun PlanScreenContent(
             )
             SegmentsCardComponent(
                 segments = uiState.segments,
+                unitSystem = uiState.settingsModel.unitSystem,
                 addAllowed = uiState.availableGas.isNotEmpty(),
                 onAddSegment = onAddSegment,
                 onRemoveSegment = { index, _ -> onRemoveSegment(index) },
@@ -82,6 +83,7 @@ internal fun PlanScreenContent(
                 isLoading = uiState.isCalculatingDivePlan,
                 divePlanSet = uiState.selectedDivePlanSet.getOrNull(),
                 planningException = uiState.selectedDivePlanSet.exceptionOrNull(),
+                unitSystem = uiState.settingsModel.unitSystem,
             )
         }
     }

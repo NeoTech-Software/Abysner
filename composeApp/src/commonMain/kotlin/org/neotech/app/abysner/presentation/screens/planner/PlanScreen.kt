@@ -267,6 +267,7 @@ fun PlannerScreen(
                 diveMode = uiState.diveMode,
                 cylinders = uiState.availableGas,
                 segments = uiState.segments,
+                unitSystem = uiState.settingsModel.unitSystem,
                 onDismiss = { cylinderSheet = null },
                 onAddCylinder = onAddCylinder,
                 onUpdateCylinder = onUpdateCylinder,
@@ -276,6 +277,7 @@ fun PlannerScreen(
             SegmentPickerBottomSheetHost(
                 show = segmentSheet,
                 configuration = uiState.configuration,
+                unitSystem = uiState.settingsModel.unitSystem,
                 segments = uiState.segments,
                 diveMode = uiState.diveMode,
                 cylinders = uiState.availableGas.toImmutableList(),
