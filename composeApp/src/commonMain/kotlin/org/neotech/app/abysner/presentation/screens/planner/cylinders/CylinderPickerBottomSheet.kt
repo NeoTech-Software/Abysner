@@ -61,6 +61,7 @@ import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
+import org.neotech.app.abysner.presentation.component.CylinderSizeField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,7 +182,10 @@ private fun CylinderPickerBottomSheetContent(
     var volume: Double? by remember(initialValue) {
         mutableStateOf(initialValue.waterVolume)
     }
-    val isVolumeValid = remember { mutableStateOf(true) }
+
+    var workingPressure: Double by remember(initialValue) {
+        mutableStateOf(initialValue.workingPressure)
+    }
 
     var startPressure: Double? by remember(initialValue) {
         mutableStateOf(initialValue.pressure)
@@ -205,7 +209,7 @@ private fun CylinderPickerBottomSheetContent(
             BottomSheetHeader(
                 title = if (lockGas) { "Cylinder" } else { "Gas & cylinder" },
                 primaryLabel = if (isAdd) { "Add" } else { "Update" },
-                primaryEnabled = isVolumeValid.value && isStartPressureValid.value,
+                primaryEnabled = isStartPressureValid.value,
                 onClose = dismiss,
                 onPrimary = {
                     onAddOrUpdateCylinder(
@@ -216,7 +220,10 @@ private fun CylinderPickerBottomSheetContent(
                                 heliumFraction = heliumPercentage / 100.0
                             ),
                             pressure = startPressure!!,
-                            waterVolume = volume!!,
+                            size = Cylinder.Size(
+                                waterVolume = volume!!,
+                                workingPressure = workingPressure,
+                            ),
                         )
                     )
                     dismiss()
@@ -226,28 +233,22 @@ private fun CylinderPickerBottomSheetContent(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-        ) {            val errorMessageVolume = remember { mutableStateOf<String?>(null) }
-            val errorMessagePressure = remember { mutableStateOf<String?>(null) }
+        ) {            val errorMessagePressure = remember { mutableStateOf<String?>(null) }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
 
-                OutlinedDecimalInputField(
-                    modifier = Modifier.weight(1f)
-                        .recordLayoutCoordinates("volume", textFieldPositions),
-                    initialValue = initialValue.waterVolume,
-                    isValid = isVolumeValid,
-                    fractionDigits = 1,
-                    visualTransformation = SuffixVisualTransformation(" ℓ"),
-                    label = "Volume",
-                    minValue = 0.1,
-                    maxValue = 50.0,
-                    errorMessage = errorMessageVolume,
-                    onNumberChanged = {
-                        volume = it
+                CylinderSizeField(
+                    modifier = Modifier.weight(1f),
+                    cylinderSize = Cylinder.Size(
+                        waterVolume = volume ?: initialValue.waterVolume,
+                        workingPressure = workingPressure,
+                    ),
+                    onCylinderSizeSelected = { selectedSize ->
+                        volume = selectedSize.waterVolume
+                        workingPressure = selectedSize.workingPressure
                     },
-                    supportingText = null
                 )
 
                 OutlinedDecimalInputField(
@@ -268,7 +269,7 @@ private fun CylinderPickerBottomSheetContent(
                 )
             }
 
-            val anyErrorMessage = errorMessageVolume.value ?: errorMessagePressure.value
+            val anyErrorMessage = errorMessagePressure.value
             if(anyErrorMessage != null) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),

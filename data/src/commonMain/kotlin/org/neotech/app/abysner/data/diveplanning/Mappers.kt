@@ -112,6 +112,7 @@ private fun Cylinder.toResource() = DivePlanInputResourceV1.CylinderResource(
     gas = gas.toResource(),
     pressure = pressure,
     volume = waterVolume,
+    workingPressure = workingPressure,
     uniqueIdentifier = uniqueIdentifier
 )
 
@@ -161,6 +162,7 @@ private fun DivePlanInputResourceV1.CylinderResource.toModel() = Cylinder(
     gas = gas.toModel(),
     pressure = pressure,
     waterVolume = volume,
+    workingPressure = workingPressure,
     uniqueIdentifier = uniqueIdentifier
 )
 

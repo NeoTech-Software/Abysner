@@ -49,6 +49,7 @@ data class DivePlanInputResourceV1(
         val gas: GasResource,
         val pressure: Double,
         val volume: Double,
+        val workingPressure: Double = pressure,
         val uniqueIdentifier: String,
     )
 
