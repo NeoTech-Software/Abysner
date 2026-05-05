@@ -98,7 +98,7 @@ fun DivePlanInputModel.toResource() = DivePlanInputResourceV1(
 
 private fun DiveProfileSection.toResource() = DivePlanInputResourceV1.ProfileSegmentResource(
     duration = duration,
-    depth = depth,
+    depth = depthInMeters,
     cylinderIdentifier = cylinder.uniqueIdentifier
 )
 
@@ -154,7 +154,7 @@ private fun DivePlanInputResourceV1.CheckableCylinderResource.toModel() = Planne
 
 private fun DivePlanInputResourceV1.ProfileSegmentResource.toModel(cylinder: Cylinder) = DiveProfileSection(
     duration = duration,
-    depth = depth,
+    depthInMeters = depth,
     cylinder = cylinder
 )
 

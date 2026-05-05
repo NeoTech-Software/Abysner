@@ -225,14 +225,14 @@ class PlanScreenViewModel(
             }
 
             val segments = diveInput.plannedProfile.toMutableList()
-            val deepestIdx = segments.indices.maxByOrNull { segments[it].depth }
+            val deepestIdx = segments.indices.maxByOrNull { segments[it].depthInMeters }
             val deeper = configuration.contingencyDeeper.takeIf { diveInput.deeper }
             val longer = configuration.contingencyLonger.takeIf { diveInput.longer }
 
             if (deepestIdx != null) {
                 segments[deepestIdx] = segments[deepestIdx].let {
                     it.copy(
-                        depth = it.depth + (deeper ?: 0.0),
+                        depthInMeters = it.depthInMeters + (deeper ?: 0.0),
                         duration = it.duration + (longer ?: 0),
                     )
                 }

@@ -43,8 +43,8 @@ class OxygenToxicityCalculatorTest {
         val equivalentGas = Gas(oxygenFraction = equivalentOxygenFraction, heliumFraction = 0.0)
         val ocSegments = flatSegment(depth, duration, equivalentGas, BreathingMode.oc())
 
-        val ccrCns = OxygenToxicityCalculator.calculateCns(ccrSegments, environment)
-        val ocCns = OxygenToxicityCalculator.calculateCns(ocSegments, environment)
+        val ccrCns = OxygenToxicityCalculator.calculateCns(ccrSegments)
+        val ocCns = OxygenToxicityCalculator.calculateCns(ocSegments)
 
         assertEquals(ocCns, ccrCns, 1e-6)
     }
@@ -59,8 +59,8 @@ class OxygenToxicityCalculatorTest {
         val ccrSegments = flatSegment(0.0, 30, Gas.Air, BreathingMode.ccr(1.3))
         val ocSegments = flatSegment(0.0, 30, Gas.Oxygen, BreathingMode.oc())
 
-        val ccrCns = OxygenToxicityCalculator.calculateCns(ccrSegments, environment)
-        val ocCns = OxygenToxicityCalculator.calculateCns(ocSegments, environment)
+        val ccrCns = OxygenToxicityCalculator.calculateCns(ccrSegments)
+        val ocCns = OxygenToxicityCalculator.calculateCns(ocSegments)
 
         assertEquals(ocCns, ccrCns, 1e-6)
     }
@@ -75,8 +75,8 @@ class OxygenToxicityCalculatorTest {
         val ccrSegments = flatSegment(60.0, 10, Gas.Air, BreathingMode.ccr(1.3))
         val ocSegments = flatSegment(60.0, 10, Gas.Air, BreathingMode.oc())
 
-        val ccrCns = OxygenToxicityCalculator.calculateCns(ccrSegments, environment)
-        val ocCns = OxygenToxicityCalculator.calculateCns(ocSegments, environment)
+        val ccrCns = OxygenToxicityCalculator.calculateCns(ccrSegments)
+        val ocCns = OxygenToxicityCalculator.calculateCns(ocSegments)
         assertEquals(ocCns, ccrCns, 1e-6)
     }
 
@@ -98,8 +98,8 @@ class OxygenToxicityCalculatorTest {
         val equivalentGas = Gas(oxygenFraction = equivalentOxygenFraction, heliumFraction = 0.0)
         val ocSegments = flatSegment(depth, duration, equivalentGas, BreathingMode.oc())
 
-        val ccrOtu = OxygenToxicityCalculator.calculateOtu(ccrSegments, environment)
-        val ocOtu = OxygenToxicityCalculator.calculateOtu(ocSegments, environment)
+        val ccrOtu = OxygenToxicityCalculator.calculateOtu(ccrSegments)
+        val ocOtu = OxygenToxicityCalculator.calculateOtu(ocSegments)
 
         assertEquals(ocOtu, ccrOtu, 1e-6)
     }

@@ -358,7 +358,7 @@ class GasPlannerTest {
         plan = listOf(
             DiveProfileSection(
                 duration = duration,
-                depth = depth,
+                depthInMeters = depth,
                 cylinder = diluentCylinder
             )
         ),

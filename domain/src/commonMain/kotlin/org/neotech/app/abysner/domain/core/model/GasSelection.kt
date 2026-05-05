@@ -39,7 +39,7 @@ fun List<Cylinder>.findBestGas(
         // Perhaps the use of a tolerance is only required for metric? Since in metric we want oxygen
         // to be usable at 6 meters? But in imperial this might not be as important? Or perhaps this
         // should even be an advanced level setting?
-        ambientPressure <= it.gas.oxygenModAmbientPressure(maxPpO2) + modTolerance
+        ambientPressure <= it.gas.oxygenModAmbientPressure(maxPpO2).value + modTolerance
     }.maxWithOrNull(
         compareBy(
             // Step 2: Prefer gas that is within END
