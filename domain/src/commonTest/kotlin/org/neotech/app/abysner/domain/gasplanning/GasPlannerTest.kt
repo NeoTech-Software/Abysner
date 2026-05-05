@@ -349,6 +349,26 @@ class GasPlannerTest {
         assertEquals(0.0, diluentEntry.extraEmergencyRequirement)
     }
 
+    @Test
+    fun calculateGasPlan_ccrBailoutDistributesOnlyAcrossBailoutEligibleCylinders() {
+        val bailoutCylinder = Cylinder(Gas.Air, pressure = 232.0, waterVolume = 12.0)
+        val divePlan = ccrDivePlan(
+            depth = 40.0,
+            duration = 20,
+            extraCylinders = listOf(bailoutCylinder),
+            bailout = true,
+        )
+        assertEquals(diluentCylinder.gas, bailoutCylinder.gas)
+
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+
+        val diluentEntry = gasPlan.first { it.cylinder == diluentCylinder }
+        assertEquals(0.0, diluentEntry.extraEmergencyRequirement)
+
+        val bailoutEntry = gasPlan.first { it.cylinder == bailoutCylinder }
+        assertTrue(bailoutEntry.extraEmergencyRequirement > 0.0)
+    }
+
     private fun ccrDivePlan(
         depth: Double = 30.0,
         duration: Int = 30,

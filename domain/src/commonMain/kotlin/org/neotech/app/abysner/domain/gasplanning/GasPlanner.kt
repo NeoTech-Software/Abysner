@@ -18,6 +18,7 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
+import org.neotech.app.abysner.domain.diveplanning.model.AssignedCylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
@@ -117,7 +118,7 @@ class GasPlanner {
             }
         }
 
-        return distributeByGas(divePlan, normalByGas, reserveByGas).toImmutableList()
+        return distributeByGas(divePlan.cylinders, normalByGas, reserveByGas).toImmutableList()
     }
 
     private fun calculateCcrGasPlan(
@@ -152,7 +153,8 @@ class GasPlanner {
             }
         }
 
-        val bailoutResult = distributeByGas(divePlan, emptyMap(), reserveByGas)
+        val bailoutCylinders = divePlan.cylinders.filter { it.isAvailableForBailout }
+        val bailoutResult = distributeByGas(bailoutCylinders, emptyMap(), reserveByGas)
 
         val closedCircuitResult = ccrSegments.calculateClosedCircuitGasRequirements(
             cylinders = divePlan.cylinders.map { it.cylinder },
@@ -178,11 +180,11 @@ class GasPlanner {
      * change in the planner, which is now based on 'best-gas' not on 'make it work'.
      */
     private fun distributeByGas(
-        divePlan: DivePlan,
+        cylinders: List<AssignedCylinder>,
         normalByGas: Map<Gas, Double>,
         reserveByGas: Map<Gas, Double>,
     ): List<CylinderGasRequirements> {
-        val cylindersByGas = divePlan.cylinders.groupBy { it.gas }
+        val cylindersByGas = cylinders.groupBy { it.gas }
         return cylindersByGas
             .filter { (gas, _) -> gas in normalByGas || gas in reserveByGas }
             .flatMap { (gas, cylinders) ->
