@@ -267,7 +267,6 @@ fun PlannerScreen(
                 configuration = uiState.configuration,
                 diveMode = uiState.diveMode,
                 cylinders = uiState.availableGas,
-                segments = uiState.segments,
                 unitSystem = uiState.settingsModel.unitSystem,
                 onDismiss = { cylinderSheet = null },
                 onAddCylinder = onAddCylinder,

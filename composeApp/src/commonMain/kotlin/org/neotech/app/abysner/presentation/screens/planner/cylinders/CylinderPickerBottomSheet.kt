@@ -51,7 +51,6 @@ import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
-import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
@@ -73,7 +72,6 @@ internal fun CylinderPickerBottomSheetHost(
     configuration: Configuration,
     diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     cylinders: List<PlannedCylinderModel> = emptyList(),
-    segments: List<DiveProfileSection> = emptyList(),
     unitSystem: UnitSystem,
     onDismiss: () -> Unit,
     onAddCylinder: (Cylinder) -> Unit,
@@ -87,11 +85,9 @@ internal fun CylinderPickerBottomSheetHost(
         }
         val lockGas = plannedCylinder?.isCcrOxygen == true
 
-        val gasesInSegments = segments.mapTo(mutableSetOf()) { it.cylinder.gas }
         val showBailoutToggle = diveMode.isCcr
                 && plannedCylinder != null
-                && !plannedCylinder.isCcrOxygen
-                && plannedCylinder.cylinder.gas in gasesInSegments
+                && plannedCylinder.isCcrDiluent
 
         CylinderPickerBottomSheet(
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
