@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialogCustomContent
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +44,7 @@ fun CcrSetpointPreference(
     modifier: Modifier = Modifier,
     label: String,
     description: String,
+    switchDepthDescription: String,
     setpoint: Double,
     switchDepth: Int?,
     onValueChanged: (setpoint: Double, switchDepth: Int?) -> Unit,
@@ -54,6 +56,7 @@ fun CcrSetpointPreference(
             title = label,
             setpoint = setpoint,
             switchDepth = switchDepth,
+            switchDepthDescription = switchDepthDescription,
             onConfirmButtonClicked = { newSetpoint, newSwitchDepth ->
                 if (newSetpoint != setpoint || newSwitchDepth != switchDepth) {
                     onValueChanged(newSetpoint, newSwitchDepth)
@@ -91,6 +94,7 @@ private fun CcrSetpointPreferenceDialog(
     onDismissRequest: () -> Unit = {},
     setpoint: Double,
     switchDepth: Int?,
+    switchDepthDescription: String = "",
 ) {
     val setpointValue: MutableState<Double> = remember(setpoint) { mutableStateOf(setpoint) }
     val switchDepthValue: MutableState<Int?> = remember(switchDepth) { mutableStateOf(switchDepth) }
@@ -133,6 +137,7 @@ private fun CcrSetpointPreferenceDialog(
                     initialValue = setpoint,
                     isValid = isSetpointValid,
                     visualTransformation = SuffixVisualTransformation(" bar"),
+                    supportingText = null
                 ) {
                     if (it != null) {
                         setpointValue.value = it
@@ -171,6 +176,14 @@ private fun CcrSetpointPreferenceDialog(
                         }
                     }
                 }
+
+                if (switchDepthDescription.isNotEmpty()) {
+                    Text(
+                        text = switchDepthDescription,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     )
@@ -184,6 +197,7 @@ private fun CcrSetpointPreferencePreview() {
             CcrSetpointPreference(
                 label = "Low setpoint",
                 description = "The CCR setpoint used during descent, with optional auto-switch depth to the high setpoint.",
+                switchDepthDescription = "Auto-switch depth: during descent, switch to the high setpoint at this depth.",
                 setpoint = 0.7,
                 switchDepth = 6,
                 onValueChanged = { _, _ -> },
@@ -191,6 +205,7 @@ private fun CcrSetpointPreferencePreview() {
             CcrSetpointPreference(
                 label = "High setpoint",
                 description = "The CCR setpoint used during bottom time and ascent, with optional auto-switch depth to the low setpoint.",
+                switchDepthDescription = "Auto-switch depth: during ascent, switch to the low setpoint at this depth.",
                 setpoint = 1.2,
                 switchDepth = null,
                 onValueChanged = { _, _ -> },
@@ -206,7 +221,8 @@ fun CcrSetpointPreferenceDialogPreview() {
         CcrSetpointPreferenceDialog(
             title = "Low setpoint",
             setpoint = 1.2,
-            switchDepth = 6
+            switchDepth = 6,
+            switchDepthDescription = "Auto-switch depth: during descent, switch to the high setpoint at this depth.",
         )
     }
 }

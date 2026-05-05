@@ -399,6 +399,7 @@ fun DiveConfigurationScreen(
                     CcrSetpointPreference(
                         label = "Low setpoint",
                         description = "The CCR setpoint used during descent, with optional auto-switch depth to the high setpoint.",
+                        switchDepthDescription = "Auto-switch depth: during descent, switch to the high setpoint at this depth.",
                         setpoint = configuration.ccrLowSetpoint,
                         switchDepth = configuration.ccrToHighSetpointSwitchDepth?.roundToInt(),
                     ) { setpoint, switchDepth ->
@@ -408,6 +409,7 @@ fun DiveConfigurationScreen(
                     CcrSetpointPreference(
                         label = "High setpoint",
                         description = "The CCR setpoint used during bottom time and ascent, with optional auto-switch depth to the low setpoint.",
+                        switchDepthDescription = "Auto-switch depth: during ascent, switch to the low setpoint at this depth.",
                         setpoint = configuration.ccrHighSetpoint,
                         switchDepth = configuration.ccrToLowSetpointSwitchDepth?.roundToInt(),
                     ) { setpoint, switchDepth ->
