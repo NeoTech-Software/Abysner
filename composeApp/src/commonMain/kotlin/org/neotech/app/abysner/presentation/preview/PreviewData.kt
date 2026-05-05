@@ -17,6 +17,8 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.METERS_PER_FOOT
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
@@ -28,6 +30,7 @@ import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 object PreviewData {
 
     private val airCylinder = Cylinder.steel12Liter(gas = Gas.Air)
+    private val airCylinderImperial = Cylinder.AL100.fill(gas = Gas.Air)
     private val nitrox50Cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50)
     private val nitrox80Cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80)
     private val oxygenCylinder = Cylinder.steel3LiterOxygen()
@@ -142,6 +145,37 @@ object PreviewData {
             longer = null,
             bailout = true,
             diveMode = DiveMode.CLOSED_CIRCUIT,
+            gasPlan = gasPlan
+        )
+    }
+
+    val divePlan1ImperialProfile by lazy {
+        persistentListOf(DiveProfileSection(25, 100.0 * METERS_PER_FOOT, airCylinderImperial))
+    }
+
+    val divePlan1ImperialCylinders by lazy {
+        listOf(
+            PlannedCylinderModel(cylinder = airCylinderImperial, isLocked = true, isChecked = true),
+            PlannedCylinderModel(cylinder = nitrox50Cylinder, isLocked = false, isChecked = true),
+        )
+    }
+
+    /**
+     * Similar to [divePlan1] but with depth and cylinders changed to the closest sensible imperial
+     * numbers.
+     */
+    val divePlan1Imperial: DivePlanSet by lazy {
+        val divePlan = DivePlanner(unitSystem = UnitSystem.IMPERIAL).addDive(
+            plan = divePlan1ImperialProfile,
+            cylinders = divePlan1ImperialCylinders.filter { it.isChecked }.toAssignedCylinders(),
+        )
+        val gasPlan = GasPlanner().calculateGasPlan(divePlan)
+        DivePlanSet(
+            base = divePlan,
+            deeper = null,
+            longer = null,
+            bailout = false,
+            diveMode = DiveMode.OPEN_CIRCUIT,
             gasPlan = gasPlan
         )
     }

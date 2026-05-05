@@ -24,7 +24,7 @@ import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.formatDepth
-import org.neotech.app.abysner.presentation.utilities.rateUnitLabel
+import org.neotech.app.abysner.presentation.utilities.depthPerMinuteUnitLabel
 
 @Composable
 fun DecoPlanConfigurationSummeryDialog(
@@ -59,11 +59,11 @@ fun DecoPlanConfigurationSummeryDialog(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Max ascent speed: ${configuration.maxAscentRate.formatDepth(unitSystem, includeUnit = false)} ${unitSystem.rateUnitLabel}",
+                    text = "Max ascent speed: ${configuration.maxAscentRate.formatDepth(unitSystem, includeUnit = false)} ${unitSystem.depthPerMinuteUnitLabel}",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Max descent speed: ${configuration.maxDescentRate.formatDepth(unitSystem, includeUnit = false)} ${unitSystem.rateUnitLabel}",
+                    text = "Max descent speed: ${configuration.maxDescentRate.formatDepth(unitSystem, includeUnit = false)} ${unitSystem.depthPerMinuteUnitLabel}",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(

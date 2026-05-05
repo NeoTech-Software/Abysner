@@ -24,7 +24,7 @@ val UnitSystem.depthUnitLabel: String
         UnitSystem.IMPERIAL -> "ft"
     }
 
-val UnitSystem.rateUnitLabel: String
+val UnitSystem.depthPerMinuteUnitLabel: String
     get() = when (this) {
         UnitSystem.METRIC -> "m/min"
         UnitSystem.IMPERIAL -> "ft/min"
@@ -42,11 +42,13 @@ val UnitSystem.volumeUnitLabel: String
         UnitSystem.IMPERIAL -> "ft³"
     }
 
-val UnitSystem.sacRateUnitLabel: String
+val UnitSystem.volumePerMinuteUnitLabel: String
     get() = when (this) {
         UnitSystem.METRIC -> "L/min"
         UnitSystem.IMPERIAL -> "ft³/min"
     }
+
+const val noUnitLabel = ""
 
 /**
  * Formats a depth value that is already in display-units (meters for metric, feet for imperial).

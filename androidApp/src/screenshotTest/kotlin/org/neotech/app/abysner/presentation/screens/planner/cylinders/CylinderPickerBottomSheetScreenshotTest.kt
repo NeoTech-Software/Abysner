@@ -44,3 +44,11 @@ fun CylinderPickerBottomSheetLockedGasScreenshotTest() {
 fun StandardGasPickerDialogScreenshotTest() {
     StandardGasPickerDialogPreview()
 }
+
+@PreviewTest
+@PreviewForScreenshotTestsDefaultHeight
+@Composable
+fun CylinderPickerBottomSheetImperialScreenshotTest() {
+    GasPickerBottomSheetImperialPreview()
+}
+

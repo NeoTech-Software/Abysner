@@ -55,6 +55,7 @@ import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
@@ -365,3 +366,25 @@ fun PlannerScreenFoldablePreview() {
         )
     }
 }
+
+@Preview(device = DEVICE_PHONE_MAX_HEIGHT)
+@Composable
+fun PlannerScreenImperialPreview() {
+    CompositionLocalProvider(
+        LocalBitmapRenderController provides remember { BitmapRenderController() },
+    ) {
+        PlannerScreen(
+            uiState = PlanScreenViewModel.UiState(
+                isLoading = false,
+                isCalculatingDivePlan = false,
+                segments = PreviewData.divePlan1ImperialProfile,
+                availableGas = PreviewData.divePlan1ImperialCylinders,
+                configuration = PreviewData.divePlan1Imperial.configuration,
+                selectedDivePlanSet = Result.success(PreviewData.divePlan1Imperial),
+                multiDivePlanSet = Result.success(MultiDivePlanSet(divePlanSets = listOf(PreviewData.divePlan1Imperial))),
+                settingsModel = SettingsModel(unitSystem = UnitSystem.IMPERIAL)
+            )
+        )
+    }
+}
+

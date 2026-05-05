@@ -57,7 +57,7 @@ class UnitFormatterTest {
 
     @Test
     fun formatVolume_supportsUnitOverride() {
-        assertEquals("20 L/min", 20.0.formatVolume(UnitSystem.METRIC, unit = UnitSystem.METRIC.sacRateUnitLabel))
-        assertEquals("1 ft³/min", 28.316846592.formatVolume(UnitSystem.IMPERIAL, unit = UnitSystem.IMPERIAL.sacRateUnitLabel))
+        assertEquals("20 L/min", 20.0.formatVolume(UnitSystem.METRIC, unit = UnitSystem.METRIC.volumePerMinuteUnitLabel))
+        assertEquals("1 ft³/min", 28.316846592.formatVolume(UnitSystem.IMPERIAL, unit = UnitSystem.IMPERIAL.volumePerMinuteUnitLabel))
     }
 }

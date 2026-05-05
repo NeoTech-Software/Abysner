@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -31,9 +30,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.buildAnnotatedString
@@ -49,6 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
 import org.neotech.app.abysner.domain.core.physics.METERS_PER_FOOT
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.settings.SettingsRepository
@@ -65,10 +62,10 @@ import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTran
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
 import org.neotech.app.abysner.presentation.utilities.formatDepth
-import org.neotech.app.abysner.presentation.utilities.rateUnitLabel
+import org.neotech.app.abysner.presentation.utilities.depthPerMinuteUnitLabel
+import org.neotech.app.abysner.presentation.utilities.volumePerMinuteUnitLabel
 import kotlin.math.abs
 import kotlin.math.roundToInt
-
 
 typealias DiveConfigurationScreen = @Composable (navController: NavHostController) -> Unit
 
@@ -201,8 +198,8 @@ fun DiveConfigurationScreen(
                         initialValue = unitSystem.metersToDisplayDepth(configuration.maxAscentRate).toInt(),
                         minValue = 1,
                         maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 60 } else { 18 },
-                        valueFormatter = { "$it ${unitSystem.rateUnitLabel}"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.rateUnitLabel}")
+                        valueFormatter = { "$it ${unitSystem.depthPerMinuteUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.depthPerMinuteUnitLabel}")
                     ) { ascentRate ->
                         val meters = unitSystem.displayDepthToMeters(ascentRate.toDouble())
                         updateConfiguration { it.copy(maxAscentRate = meters) }
@@ -214,35 +211,51 @@ fun DiveConfigurationScreen(
                         initialValue = unitSystem.metersToDisplayDepth(configuration.maxDescentRate).toInt(),
                         minValue = 1,
                         maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 130 } else { 40 },
-                        valueFormatter = { "$it ${unitSystem.rateUnitLabel}"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.rateUnitLabel}")
+                        valueFormatter = { "$it ${unitSystem.depthPerMinuteUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.depthPerMinuteUnitLabel}")
                     ) { descentRate ->
                         val meters = unitSystem.displayDepthToMeters(descentRate.toDouble())
                         updateConfiguration { it.copy(maxDescentRate = meters) }
                     }
 
-                    NumberPreference(
+                    DecimalNumberPreference(
                         label = "Gas usage",
                         description = "The average amount of gas the diver is breathing per minute at 1 atmosphere during normal diving conditions. This is also known as SAC or RMV rate.",
-                        initialValue = configuration.sacRate.toInt(),
-                        minValue = 5,
-                        maxValue = 99,
-                        valueFormatter = { "$it l/min"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" l/min")
+                        initialValue = when (unitSystem) {
+                            UnitSystem.METRIC -> configuration.sacRate
+                            UnitSystem.IMPERIAL -> configuration.sacRate / LITERS_PER_CUBIC_FOOT
+                        },
+                        minValue = if (unitSystem == UnitSystem.IMPERIAL) { 0.3 } else { 5.0 },
+                        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 3.5 } else { 99.0 },
+                        fractionDigits = if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0 },
+                        valueFormatter = { "${DecimalFormat.format(if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0} , it)} ${unitSystem.volumePerMinuteUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.volumePerMinuteUnitLabel}")
                     ) { sacRate ->
-                        updateConfiguration { it.copy(sacRate = sacRate.toDouble()) }
+                        val liters = when (unitSystem) {
+                            UnitSystem.METRIC -> sacRate
+                            UnitSystem.IMPERIAL -> sacRate * LITERS_PER_CUBIC_FOOT
+                        }
+                        updateConfiguration { it.copy(sacRate = liters) }
                     }
 
-                    NumberPreference(
+                    DecimalNumberPreference(
                         label = "Gas usage emergency",
                         description = "The average amount of gas a diver is breathing per minute at 1 atmosphere during an emergency scenario. This is also known as the panic SAC or RMV rate.",
-                        initialValue = configuration.sacRateOutOfAir.toInt(),
-                        minValue = 5,
-                        maxValue = 99,
-                        valueFormatter = { "$it l/min"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" l/min")
+                        initialValue = when (unitSystem) {
+                            UnitSystem.METRIC -> configuration.sacRateOutOfAir
+                            UnitSystem.IMPERIAL -> configuration.sacRateOutOfAir / LITERS_PER_CUBIC_FOOT
+                        },
+                        minValue = if (unitSystem == UnitSystem.IMPERIAL) { 0.3 } else { 5.0 },
+                        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 3.5 } else { 99.0 },
+                        fractionDigits = if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0 },
+                        valueFormatter = { "${DecimalFormat.format(if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0 }, it)} ${unitSystem.volumePerMinuteUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.volumePerMinuteUnitLabel}")
                     ) { sacRate ->
-                        updateConfiguration { it.copy(sacRateOutOfAir = sacRate.toDouble()) }
+                        val liters = when (unitSystem) {
+                            UnitSystem.METRIC -> sacRate
+                            UnitSystem.IMPERIAL -> sacRate * LITERS_PER_CUBIC_FOOT
+                        }
+                        updateConfiguration { it.copy(sacRateOutOfAir = liters) }
                     }
 
                     SettingsSubTitle(subTitle = "Decompression & Planing")
@@ -403,12 +416,12 @@ fun DiveConfigurationScreen(
 
                     DecimalNumberPreference(
                         label = "Loop volume",
-                        description = "Total internal loop volume in liters (counter-lung, scrubber, hoses). Used to calculate diluent usage from loop expansion during descent.",
+                        description = "Total internal loop volume (counter-lung, scrubber, hoses). Used to calculate diluent usage from loop expansion during descent.",
                         initialValue = configuration.ccrLoopVolumeLiters,
-                        minValue = 0.1,
+                        minValue = 1.0,
                         maxValue = 20.0,
                         fractionDigits = 1,
-                        valueFormatter = { "$it L" },
+                        valueFormatter = { "${DecimalFormat.format(1, it)} L" },
                         textFieldVisualTransformation = SuffixVisualTransformation(" L"),
                     ) { volume ->
                         updateConfiguration { it.copy(ccrLoopVolumeLiters = volume) }
@@ -442,4 +455,3 @@ fun DiveConfigurationScreenPreview() {
         unitSystem = UnitSystem.METRIC
     )
 }
-

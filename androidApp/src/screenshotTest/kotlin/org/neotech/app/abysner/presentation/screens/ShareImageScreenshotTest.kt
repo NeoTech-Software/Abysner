@@ -15,24 +15,33 @@ package org.neotech.app.abysner.presentation.screens
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
+import org.neotech.app.abysner.presentation.preview.DEVICE_PHONE_MAX_HEIGHT
 
 @PreviewTest
-@Preview
+@Preview(device = DEVICE_SHARE_IMAGE)
 @Composable
 fun ShareImageScreenshotTest() {
     ShareImagePreview()
 }
 
 @PreviewTest
-@Preview
+@Preview(device = DEVICE_SHARE_IMAGE)
 @Composable
 fun ShareImageExtremeScreenshotTest() {
     ShareImagePreviewExtreme()
 }
 
 @PreviewTest
-@Preview
+@Preview(device = DEVICE_SHARE_IMAGE)
 @Composable
 fun ShareImageCcrBailoutScreenshotTest() {
     ShareImagePreviewCcrBailout()
 }
+
+@PreviewTest
+@Preview(device = DEVICE_SHARE_IMAGE)
+@Composable
+fun ShareImageImperialScreenshotTest() {
+    ShareImagePreviewImperial()
+}
+

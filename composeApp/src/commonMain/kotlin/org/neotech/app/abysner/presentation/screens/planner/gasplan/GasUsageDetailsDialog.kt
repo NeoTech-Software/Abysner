@@ -37,16 +37,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
-import kotlinx.collections.immutable.persistentListOf
-import org.neotech.app.abysner.domain.utilities.format
-import androidx.compose.ui.text.font.FontWeight
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.appendBold
@@ -54,12 +55,16 @@ import org.neotech.app.abysner.presentation.component.appendBoldLine
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
+import org.neotech.app.abysner.presentation.utilities.formatPressure
+import org.neotech.app.abysner.presentation.utilities.formatVolume
+import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
 import kotlin.math.roundToInt
 
 @Composable
 fun GasUsageDetailsDialog(
     gasPlan: GasPlan,
     index: Int,
+    unitSystem: UnitSystem,
     emergencyLabel: String = "Reserve",
     usageLabel: String = "Used",
     onDismissRequest: () -> Unit
@@ -77,6 +82,9 @@ fun GasUsageDetailsDialog(
         text = {
             Column {
 
+                val capacity = cylinderGasRequirements.cylinder.capacity()
+                val labelWidthState = remember { mutableIntStateOf(0) }
+
                 Text(
                     modifier = Modifier.padding(bottom = 4.dp),
                     text = "Cylinder details",
@@ -84,10 +92,6 @@ fun GasUsageDetailsDialog(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                val capacity = cylinderGasRequirements.cylinder.capacity()
-                val labelWidthState = remember { mutableIntStateOf(0) }
-
-                // Cylinder-specific info
                 Table(striped = false, defaultRowModifier = Modifier.padding(vertical = 1.dp)) {
                     row {
                         Text(
@@ -101,21 +105,37 @@ fun GasUsageDetailsDialog(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = "Volume", fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${cylinderGasRequirements.cylinder.waterVolume.format(1)}\u00A0ℓ")
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = cylinderGasRequirements.cylinder.waterVolume.formatVolume(UnitSystem.METRIC, decimals = 1)
+                        )
+                    }
+                    if (unitSystem == UnitSystem.IMPERIAL) {
+                        row {
+                            Text(
+                                modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
+                                text = "True capacity", fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = "${(cylinderGasRequirements.cylinder.size.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt()} ${unitSystem.volumeUnitLabel}"
+                            )
+                        }
                     }
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = "Pressure", fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${cylinderGasRequirements.cylinder.pressure.format(0)} bar")
+                        Text(modifier = Modifier.weight(1f), text = cylinderGasRequirements.cylinder.pressure.formatPressure(unitSystem))
                     }
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
-                            text = "Capacity", fontWeight = FontWeight.Bold
+                            text = "Capacity",
+                            fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${capacity.format(0)}\u00A0ℓ")
+                        Text(modifier = Modifier.weight(1f), text = capacity.formatVolume(unitSystem))
                     }
                 }
 
@@ -138,14 +158,14 @@ fun GasUsageDetailsDialog(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = usageLabel, fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${totalUsage.format(0)}\u00A0ℓ")
+                        Text(modifier = Modifier.weight(1f), text = totalUsage.formatVolume(unitSystem))
                     }
                     row {
                         Text(
                             modifier = Modifier.uniformLabelWidth(labelWidthState).padding(end = 8.dp),
                             text = emergencyLabel, fontWeight = FontWeight.Bold
                         )
-                        Text(modifier = Modifier.weight(1f), text = "${totalReserve.format(0)}\u00A0ℓ")
+                        Text(modifier = Modifier.weight(1f), text = totalReserve.formatVolume(unitSystem))
                     }
                     row {
                         Text(
@@ -153,7 +173,7 @@ fun GasUsageDetailsDialog(
                             text = "Unused", fontWeight = FontWeight.Bold
                         )
                         val totalUnused = totalCapacity - totalRequired
-                        Text(modifier = Modifier.weight(1f), text = "${totalUnused.format(0)}\u00A0ℓ")
+                        Text(modifier = Modifier.weight(1f), text = totalUnused.formatVolume(unitSystem))
                     }
                 }
 
@@ -169,19 +189,19 @@ fun GasUsageDetailsDialog(
                     )
                 }
 
-                val totalCapacityFormatted = "${totalCapacity.format(0)}\u00A0ℓ"
+                val totalCapacityFormatted = totalCapacity.formatVolume(unitSystem)
 
                 // Bar pressure for a single cylinder (what divers read on gauges), liters for
                 // multiple cylinders (no meaningful single pressure to show).
                 val unusedNormalFormatted = if (showTotals) {
-                    "${(totalCapacity - totalUsage).format(0)}\u00A0ℓ"
+                    (totalCapacity - totalUsage).formatVolume(unitSystem)
                 } else {
-                    "${cylinderGasRequirements.pressureLeft?.format(0)} bar"
+                    cylinderGasRequirements.pressureLeft?.formatPressure(unitSystem) ?: "?"
                 }
                 val unusedEmergencyFormatted = if (showTotals) {
-                    "${(totalCapacity - totalRequired).format(0)}\u00A0ℓ"
+                    (totalCapacity - totalRequired).formatVolume(unitSystem)
                 } else {
-                    "${cylinderGasRequirements.pressureLeftWithEmergency?.format(0)} bar"
+                    cylinderGasRequirements.pressureLeftWithEmergency?.formatPressure(unitSystem) ?: "?"
                 }
 
                 val severity = when {
@@ -200,7 +220,7 @@ fun GasUsageDetailsDialog(
                                 appendBoldLine("This cylinder has a critical gas shortage!")
                             }
                             append("You need at least ")
-                            appendBold("${totalUsage.format(0)}\u00A0ℓ")
+                            appendBold(totalUsage.formatVolume(unitSystem))
                             append(if (showTotals) " for the dive, but only have a combined " else " for the dive, but only have ")
                             appendBold(totalCapacityFormatted)
                             append(".")
@@ -212,7 +232,7 @@ fun GasUsageDetailsDialog(
                                 appendBoldLine("This cylinder has insufficient ${emergencyLabel.lowercase()}!")
                             }
                             append("You need ")
-                            appendBold("${totalRequired.format(0)}\u00A0ℓ")
+                            appendBold(totalRequired.formatVolume(unitSystem))
                             append(if (showTotals) " including ${emergencyLabel.lowercase()}, but only have a combined " else " including ${emergencyLabel.lowercase()}, but only have ")
                             appendBold(totalCapacityFormatted)
                             append(". Without accounting for ${emergencyLabel.lowercase()}, there is enough gas.")
@@ -303,7 +323,7 @@ fun TwoCylindersPositivePreview() {
     AbysnerTheme {
         val cylinderA = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0), 800.0, 300.0)
         val cylinderB = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0), 800.0, 300.0)
-        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0, unitSystem = UnitSystem.METRIC) {}
     }
 }
 
@@ -313,7 +333,7 @@ fun TwoCylindersWarningPreview() {
     AbysnerTheme {
         val cylinderA = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 2000.0, 900.0)
         val cylinderB = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 2000.0, 900.0)
-        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0, unitSystem = UnitSystem.METRIC) {}
     }
 }
 
@@ -323,7 +343,7 @@ fun TwoCylindersErrorPreview() {
     AbysnerTheme {
         val cylinderA = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Air, 200.0), 2500.0, 400.0)
         val cylinderB = CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Air, 200.0), 2500.0, 400.0)
-        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0) {}
+        GasUsageDetailsDialog(gasPlan = persistentListOf(cylinderA, cylinderB), index = 0, unitSystem = UnitSystem.METRIC) {}
     }
 }
 
@@ -334,6 +354,7 @@ fun OneCylinderPositivePreview() {
         GasUsageDetailsDialog(
             gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 1200.0, 600.0)),
             index = 0,
+            unitSystem = UnitSystem.METRIC,
         ) {}
     }
 }
@@ -345,6 +366,7 @@ fun OneCylinderWarningPreview() {
         GasUsageDetailsDialog(
             gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Nitrox50, 207.0),1900.0, 600.0)),
             index = 0,
+            unitSystem = UnitSystem.METRIC,
         ) {}
     }
 }
@@ -356,6 +378,7 @@ fun OneCylinderErrorPreview() {
         GasUsageDetailsDialog(
             gasPlan = persistentListOf(CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 2800.0, 400.0)),
             index = 0,
+            unitSystem = UnitSystem.METRIC,
         ) {}
     }
 }

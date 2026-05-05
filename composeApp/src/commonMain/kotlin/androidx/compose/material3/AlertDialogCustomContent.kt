@@ -94,7 +94,7 @@ fun AlertDialogCustomContent(
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
         // Limit height to maximum that is equal to the maximum dialog width (internal: AlertDialog.DialogMaxWidth = 560)
-        modifier = Modifier.heightIn(max = (560 * 1.25).dp),
+        modifier = modifier.heightIn(max = (560 * 1.25).dp),
         properties = properties
     ) {
         AlertDialogContentCopy(
