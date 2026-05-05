@@ -14,6 +14,7 @@ package org.neotech.app.abysner.presentation.screens.planner.segments
 
 import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.segment_picker_travel_time_hint
+import abysner.composeapp.generated.resources.unit_foot
 import abysner.composeapp.generated.resources.unit_meter
 import abysner.composeapp.generated.resources.unit_minute
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +57,7 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.core.physics.partialPressure
 import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
@@ -75,6 +76,7 @@ import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberIn
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.bodyExtraLarge
+import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,6 +84,7 @@ import org.neotech.app.abysner.presentation.utilities.ModalTarget
 internal fun SegmentPickerBottomSheetHost(
     show: ModalTarget<Int>?,
     configuration: Configuration,
+    unitSystem: UnitSystem,
     segments: List<DiveProfileSection>,
     cylinders: ImmutableList<PlannedCylinderModel>,
     diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
@@ -104,6 +107,7 @@ internal fun SegmentPickerBottomSheetHost(
             diveMode = diveMode,
             previousDepth = segments.getOrNull(previousIndex)?.depthInMeters ?: 0.0,
             configuration = configuration,
+            unitSystem = unitSystem,
             onAddOrUpdateDiveSegment = {
                 if (editIndex != null) {
                     onUpdateSegment(editIndex, it)
@@ -129,6 +133,7 @@ private fun SegmentPickerBottomSheet(
     diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     previousDepth: Double,
     configuration: Configuration,
+    unitSystem: UnitSystem = UnitSystem.METRIC,
     onAddOrUpdateDiveSegment: (gas: DiveProfileSection) -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
@@ -148,6 +153,7 @@ private fun SegmentPickerBottomSheet(
             diveMode = diveMode,
             previousDepth = previousDepth,
             configuration = configuration,
+            unitSystem = unitSystem,
             onAddOrUpdateDiveSegment = onAddOrUpdateDiveSegment,
             onDismiss = onDismiss,
         )
@@ -167,6 +173,7 @@ private fun SegmentPickerBottomSheetContent(
     diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     previousDepth: Double,
     configuration: Configuration,
+    unitSystem: UnitSystem = UnitSystem.METRIC,
     onAddOrUpdateDiveSegment: (gas: DiveProfileSection) -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
@@ -195,7 +202,16 @@ private fun SegmentPickerBottomSheetContent(
     }
 
     var selectedCylinder: Cylinder by remember { mutableStateOf(initialCylinder ?: availableCylinders.first()) }
-    var depth by remember { mutableIntStateOf(initialValue?.depthInMeters?.roundToInt() ?: 10) }
+    var depthInDisplayUnit by remember {
+        mutableIntStateOf(
+            initialValue?.depthInMeters?.let { meters ->
+                unitSystem.metersToDisplayDepth(meters).roundToInt()
+            } ?: when (unitSystem) {
+                UnitSystem.METRIC -> 10
+                UnitSystem.IMPERIAL -> 30
+            }
+        )
+    }
     var time by remember { mutableIntStateOf(initialValue?.duration ?: 15) }
 
     val errorMessageDepth = remember { mutableStateOf<String?>(null) }
@@ -219,10 +235,11 @@ private fun SegmentPickerBottomSheetContent(
                 primaryEnabled = isTimeValid.value && isDepthValid.value,
                 onClose = dismiss,
                 onPrimary = {
+                    val depthMeters = unitSystem.displayDepthToMeters(depthInDisplayUnit.toDouble())
                     onAddOrUpdateDiveSegment(
                         DiveProfileSection(
                             duration = time,
-                            depthInMeters = depth.toDouble(),
+                            depthInMeters = depthMeters,
                             cylinder = selectedCylinder
                         )
                     )
@@ -237,7 +254,7 @@ private fun SegmentPickerBottomSheetContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            val ambientPressure = metersToAmbientPressure(depth.toDouble(), environment)
+            val ambientPressure = unitSystem.depthToAmbientPressure(depthInDisplayUnit.toDouble(), environment)
 
             if (!diveMode.isCcr) {
                 GasPropertiesComponent(
@@ -247,6 +264,7 @@ private fun SegmentPickerBottomSheetContent(
                     maxPPO2 = maxPPO2,
                     maxPPO2Secondary = null,
                     environment = environment,
+                    unitSystem = unitSystem,
                     showTopRow = false,
                 )
 
@@ -289,14 +307,14 @@ private fun SegmentPickerBottomSheetContent(
                         .recordLayoutCoordinates("depth", textFieldPositions),
                     label = "Depth",
                     minValue = 1,
-                    maxValue = 150,
-                    visualTransformation = SuffixVisualTransformation(" m"),
-                    initialValue = initialValue?.depthInMeters?.roundToInt() ?: 10,
+                    maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 500 } else { 150 },
+                    visualTransformation = SuffixVisualTransformation(" ${unitSystem.depthUnitLabel}"),
+                    initialValue = depthInDisplayUnit,
                     errorMessage = errorMessageDepth,
                     isValid = isDepthValid,
                     onNumberChanged = {
                         if (it != null) {
-                            depth = it
+                            depthInDisplayUnit = it
                         }
                     },
                     supportingText = null,
@@ -336,8 +354,7 @@ private fun SegmentPickerBottomSheetContent(
             } else if (anyErrorMessage == null) {
                 val diluentGas = cylinders.ccrDiluentCylinder()?.cylinder?.gas
                 if (diluentGas != null) {
-                    val ambientPressure = metersToAmbientPressure(depth.toDouble(), environment).value
-                    val diluentPpO2 = partialPressure(ambientPressure, diluentGas.oxygenFraction)
+                    val diluentPpO2 = partialPressure(ambientPressure.value, diluentGas.oxygenFraction)
                     if (diluentPpO2 > configuration.ccrHighSetpoint) {
                         anyErrorMessage = "Warning: Diluent PPO2 exceeds setpoint at this depth!"
                     }
@@ -353,13 +370,18 @@ private fun SegmentPickerBottomSheetContent(
                 }
             }
 
-            val distance = (previousDepth - depth)
+            val depthMetersForTravel = unitSystem.displayDepthToMeters(depthInDisplayUnit.toDouble())
+            val distance = (previousDepth - depthMetersForTravel)
             val travelTime = configuration.travelTime(distance)
             val bottomTime = time - travelTime
 
+            val depthUnitPlural = when (unitSystem) {
+                UnitSystem.METRIC -> Res.plurals.unit_meter
+                UnitSystem.IMPERIAL -> Res.plurals.unit_foot
+            }
             val travelTimeHint = pluralsStringBuilder(Res.string.segment_picker_travel_time_hint) {
                 pluralInt(Res.plurals.unit_minute, travelTime)
-                pluralInt(Res.plurals.unit_meter, depth)
+                pluralInt(depthUnitPlural, depthInDisplayUnit)
                 pluralInt(Res.plurals.unit_minute, bottomTime)
             }
 

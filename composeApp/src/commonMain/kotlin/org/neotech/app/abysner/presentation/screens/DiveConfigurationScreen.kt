@@ -48,7 +48,10 @@ import me.tatarka.inject.annotations.Inject
 import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Salinity
+import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.core.physics.METERS_PER_FOOT
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
+import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.preferences.CcrSetpointPreference
@@ -60,6 +63,9 @@ import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePr
 import org.neotech.app.abysner.presentation.component.preferences.SwitchPreference
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
+import org.neotech.app.abysner.presentation.utilities.formatDepth
+import org.neotech.app.abysner.presentation.utilities.rateUnitLabel
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -71,12 +77,15 @@ typealias DiveConfigurationScreen = @Composable (navController: NavHostControlle
 @Composable
 fun DiveConfigurationScreen(
     planningRepository: PlanningRepository,
+    settingsRepository: SettingsRepository,
     @Assisted navController: NavHostController = rememberNavController()
 ) {
     val configuration by planningRepository.configuration.collectAsState()
+    val settings by settingsRepository.settings.collectAsState()
     DiveConfigurationScreen(
         navController = navController,
         configuration = configuration,
+        unitSystem = settings.unitSystem,
         updateConfiguration = planningRepository::updateConfiguration,
     )
 }
@@ -86,6 +95,7 @@ fun DiveConfigurationScreen(
 fun DiveConfigurationScreen(
     navController: NavHostController = rememberNavController(),
     configuration: Configuration,
+    unitSystem: UnitSystem,
     updateConfiguration: ((Configuration) -> Configuration) -> Unit,
 ) {
     AbysnerTheme {
@@ -173,39 +183,44 @@ fun DiveConfigurationScreen(
                     NumberPreference(
                         label = "Altitude",
                         description = "The altitude of the water surface at which the dive is taking place, in most cases this will be 0 meter (sea level).",
-                        initialValue = configuration.altitude.toInt(),
-                        minValue = -450,
-                        maxValue = 3000,
-                        valueFormatter = { "$it m"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" m")
+                        initialValue = unitSystem.metersToDisplayDepth(configuration.altitude).toInt(),
+                        minValue = if (unitSystem == UnitSystem.IMPERIAL) { -1500 } else { -450 },
+                        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 10000 } else { 3000 },
+                        valueFormatter = { "$it ${unitSystem.depthUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.depthUnitLabel}")
                     ) { altitude ->
-                        updateConfiguration { it.copy(altitude = altitude.toDouble()) }
+                        val meters = unitSystem.displayDepthToMeters(altitude.toDouble())
+                        updateConfiguration { it.copy(altitude = meters) }
                     }
 
-
                     SettingsSubTitle(subTitle = "Diver")
+
                     NumberPreference(
                         label = "Ascent speed",
                         description = "The speed at which the diver is planning to ascent to stops or the surface.",
-                        initialValue = configuration.maxAscentRate.toInt(),
+                        initialValue = unitSystem.metersToDisplayDepth(configuration.maxAscentRate).toInt(),
                         minValue = 1,
-                        maxValue = 18,
-                        valueFormatter = { "$it m/min"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" m/min")
+                        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 60 } else { 18 },
+                        valueFormatter = { "$it ${unitSystem.rateUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.rateUnitLabel}")
                     ) { ascentRate ->
-                        updateConfiguration { it.copy(maxAscentRate = ascentRate.toDouble()) }
+                        val meters = unitSystem.displayDepthToMeters(ascentRate.toDouble())
+                        updateConfiguration { it.copy(maxAscentRate = meters) }
                     }
+
                     NumberPreference(
                         label = "Descent speed",
                         description = "The speed at which the diver is planning to descent to planned bottom sections.",
-                        initialValue = configuration.maxDescentRate.toInt(),
+                        initialValue = unitSystem.metersToDisplayDepth(configuration.maxDescentRate).toInt(),
                         minValue = 1,
-                        maxValue = 40,
-                        valueFormatter = { "$it m/min"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" m/min")
+                        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 130 } else { 40 },
+                        valueFormatter = { "$it ${unitSystem.rateUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.rateUnitLabel}")
                     ) { descentRate ->
-                        updateConfiguration { it.copy(maxDescentRate = descentRate.toDouble()) }
+                        val meters = unitSystem.displayDepthToMeters(descentRate.toDouble())
+                        updateConfiguration { it.copy(maxDescentRate = meters) }
                     }
+
                     NumberPreference(
                         label = "Gas usage",
                         description = "The average amount of gas the diver is breathing per minute at 1 atmosphere during normal diving conditions. This is also known as SAC or RMV rate.",
@@ -235,15 +250,26 @@ fun DiveConfigurationScreen(
                     SingleChoicePreference(
                         label = "Deco stop interval",
                         description = "The interval at which to make deco stops.",
-                        items = persistentListOf(3.0, 6.0, 9.0),
-                        selectedItemIndex = when (configuration.decoStepSize) {
-                            3.0 -> 0
-                            6.0 -> 1
-                            9.0 -> 2
-                            else -> 1
+                        items = when (unitSystem) {
+                            UnitSystem.METRIC -> persistentListOf(3.0, 6.0, 9.0)
+                            UnitSystem.IMPERIAL -> persistentListOf(10.0 * METERS_PER_FOOT, 20.0 * METERS_PER_FOOT, 30.0 * METERS_PER_FOOT)
+                        },
+                        selectedItemIndex = when (unitSystem) {
+                            UnitSystem.METRIC -> when (configuration.decoStepSize) {
+                                3.0 -> 0
+                                6.0 -> 1
+                                9.0 -> 2
+                                else -> 0
+                            }
+                            UnitSystem.IMPERIAL -> when ((configuration.decoStepSize / METERS_PER_FOOT).roundToInt()) {
+                                10 -> 0
+                                20 -> 1
+                                30 -> 2
+                                else -> 0
+                            }
                         },
                         itemToStringMapper = {
-                            "${it.roundToInt()} m"
+                            it.formatDepth(unitSystem)
                         }
                     ) { decoStepSize ->
                         updateConfiguration { it.copy(decoStepSize = decoStepSize) }
@@ -252,15 +278,26 @@ fun DiveConfigurationScreen(
                     SingleChoicePreference(
                         label = "Last deco stop",
                         description = "Depth at which the last deco stop will be made.",
-                        items = persistentListOf(3.0, 6.0, 9.0),
-                        selectedItemIndex = when (configuration.lastDecoStopDepth) {
-                            3.0 -> 0
-                            6.0 -> 1
-                            9.0 -> 2
-                            else -> 0
+                        items = when (unitSystem) {
+                            UnitSystem.METRIC -> persistentListOf(3.0, 6.0, 9.0)
+                            UnitSystem.IMPERIAL -> persistentListOf(10.0 * METERS_PER_FOOT, 20.0 * METERS_PER_FOOT, 30.0 * METERS_PER_FOOT)
+                        },
+                        selectedItemIndex = when (unitSystem) {
+                            UnitSystem.METRIC -> when (configuration.lastDecoStopDepth) {
+                                3.0 -> 0
+                                6.0 -> 1
+                                9.0 -> 2
+                                else -> 0
+                            }
+                            UnitSystem.IMPERIAL -> when ((configuration.lastDecoStopDepth / METERS_PER_FOOT).roundToInt()) {
+                                10 -> 0
+                                20 -> 1
+                                30 -> 2
+                                else -> 0
+                            }
                         },
                         itemToStringMapper = {
-                            "${it.roundToInt()} m"
+                            it.formatDepth(unitSystem)
                         }
                     ) { lastDecoStopDepth ->
                         updateConfiguration { it.copy(lastDecoStopDepth = lastDecoStopDepth) }
@@ -322,13 +359,14 @@ fun DiveConfigurationScreen(
                     NumberPreference(
                         label = "Deeper",
                         description = "How much deeper the contingency plan should be, this is added to the deepest section of the planned dive.",
-                        initialValue = configuration.contingencyDeeper.roundToInt(),
+                        initialValue = unitSystem.metersToDisplayDepth(configuration.contingencyDeeper).toInt(),
                         minValue = 0,
-                        maxValue = 5,
-                        valueFormatter = { "$it m"},
-                        textFieldVisualTransformation = SuffixVisualTransformation(" m")
+                        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 15 } else { 5 },
+                        valueFormatter = { "$it ${unitSystem.depthUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.depthUnitLabel}")
                     ) { deeper ->
-                        updateConfiguration { it.copy(contingencyDeeper = deeper.toDouble()) }
+                        val meters = unitSystem.displayDepthToMeters(deeper.toDouble())
+                        updateConfiguration { it.copy(contingencyDeeper = meters) }
                     }
 
                     NumberPreference(
@@ -400,7 +438,8 @@ fun DiveConfigurationScreen(
 fun DiveConfigurationScreenPreview() {
     DiveConfigurationScreen(
         configuration = Configuration(),
-        updateConfiguration = {}
+        updateConfiguration = {},
+        unitSystem = UnitSystem.METRIC
     )
 }
 

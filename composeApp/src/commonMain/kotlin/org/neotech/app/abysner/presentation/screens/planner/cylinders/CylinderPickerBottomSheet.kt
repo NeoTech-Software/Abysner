@@ -49,6 +49,7 @@ import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
@@ -71,6 +72,7 @@ internal fun CylinderPickerBottomSheetHost(
     diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
     cylinders: List<PlannedCylinderModel> = emptyList(),
     segments: List<DiveProfileSection> = emptyList(),
+    unitSystem: UnitSystem,
     onDismiss: () -> Unit,
     onAddCylinder: (Cylinder) -> Unit,
     onUpdateCylinder: (Cylinder) -> Unit,
@@ -96,6 +98,7 @@ internal fun CylinderPickerBottomSheetHost(
             environment = configuration.environment,
             maxPPO2 = configuration.maxPPO2,
             maxPPO2Secondary = configuration.maxPPO2Deco,
+            unitSystem = unitSystem,
             lockGas = lockGas,
             showBailoutToggle = showBailoutToggle,
             initialBailoutValue = plannedCylinder?.isAvailableForBailout ?: true,
@@ -122,6 +125,7 @@ private fun CylinderPickerBottomSheet(
     environment: Environment,
     maxPPO2: Double,
     maxPPO2Secondary: Double,
+    unitSystem: UnitSystem = UnitSystem.METRIC,
     lockGas: Boolean = false,
     showBailoutToggle: Boolean = false,
     initialBailoutValue: Boolean = true,
@@ -141,6 +145,7 @@ private fun CylinderPickerBottomSheet(
             environment = environment,
             maxPPO2 = maxPPO2,
             maxPPO2Secondary = maxPPO2Secondary,
+            unitSystem = unitSystem,
             lockGas = lockGas,
             showBailoutToggle = showBailoutToggle,
             initialBailoutValue = initialBailoutValue,
@@ -160,6 +165,7 @@ private fun CylinderPickerBottomSheetContent(
     environment: Environment,
     maxPPO2: Double,
     maxPPO2Secondary: Double?,
+    unitSystem: UnitSystem = UnitSystem.METRIC,
     lockGas: Boolean = false,
     showBailoutToggle: Boolean = false,
     initialBailoutValue: Boolean = true,
@@ -323,6 +329,7 @@ private fun CylinderPickerBottomSheetContent(
                 maxPPO2Secondary = maxPPO2Secondary,
                 maxDensity = Gas.MAX_GAS_DENSITY,
                 environment = environment,
+                unitSystem = unitSystem,
                 onClickMix = if (lockGas) { null } else {
                     { showStandardGasPickerDialog.value = true }
                 },

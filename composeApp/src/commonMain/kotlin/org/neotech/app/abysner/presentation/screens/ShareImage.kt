@@ -182,7 +182,7 @@ fun ShareImage(
                         text = "Limits",
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
-                    GasLimitsTable(divePlanSet = divePlan)
+                    GasLimitsTable(divePlanSet = divePlan, unitSystem = settingsModel.unitSystem)
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),

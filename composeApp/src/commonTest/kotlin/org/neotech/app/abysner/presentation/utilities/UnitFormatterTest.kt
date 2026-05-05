@@ -25,6 +25,12 @@ class UnitFormatterTest {
     }
 
     @Test
+    fun formatDisplayDepth_respectsDecimalParameter() {
+        assertEquals("30.5 m", 30.48.formatDisplayDepth(UnitSystem.METRIC, decimals = 1))
+        assertEquals("100.3 ft", 100.3.formatDisplayDepth(UnitSystem.IMPERIAL, decimals = 1))
+    }
+
+    @Test
     fun formatDepth_convertsMetersToDisplayUnit() {
         assertEquals("30 m", 30.48.formatDepth(UnitSystem.METRIC))
         assertEquals("100 ft", 30.48.formatDepth(UnitSystem.IMPERIAL))

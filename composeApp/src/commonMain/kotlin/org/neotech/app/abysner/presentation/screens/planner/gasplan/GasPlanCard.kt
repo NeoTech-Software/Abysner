@@ -12,7 +12,6 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.gasplan
 
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,14 +24,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
@@ -51,6 +52,8 @@ import org.neotech.app.abysner.presentation.screens.planner.decoplan.LoadingBoxW
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconFont
 import org.neotech.app.abysner.presentation.theme.appendIcon
+import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
+import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
 
 @Composable
 fun GasPlanCardComponent(
@@ -58,6 +61,7 @@ fun GasPlanCardComponent(
     divePlanSet: DivePlanSet?,
     planningException: Throwable?,
     isLoading: Boolean,
+    unitSystem: UnitSystem,
 ) {
 
     val errorMessage: String? = planningException?.getUserReadableMessage()
@@ -78,7 +82,7 @@ fun GasPlanCardComponent(
                         append("Gas plan")
                         withStyle(MaterialTheme.typography.titleSmall.toSpanStyle()) {
                             if(divePlanSet?.isDeeper == true) {
-                                append(" +${divePlanSet.deeper}m")
+                                append(" +${divePlanSet.deeper}${unitSystem.depthUnitLabel}")
                             }
                             if(divePlanSet?.isLonger == true) {
                                 append(" +${divePlanSet.longer}min")
@@ -174,7 +178,8 @@ fun GasPlanCardComponent(
                     GasLimitsTable(
                         modifier = Modifier.padding(horizontal = 16.dp)
                             .padding(bottom = 16.dp),
-                        divePlanSet
+                        divePlanSet = divePlanSet,
+                        unitSystem = unitSystem,
                     )
 
                     val explanationText = if (divePlanSet.isCcr) {
@@ -348,6 +353,7 @@ fun GasTotalsTable(
 fun GasLimitsTable(
     modifier: Modifier = Modifier,
     divePlanSet: DivePlanSet,
+    unitSystem: UnitSystem,
 ) {
     Table(
         modifier = modifier,
@@ -363,7 +369,7 @@ fun GasLimitsTable(
             key = { it.gas },
         ) { gasAtDepth ->
             Text(modifier = Modifier.weight(0.2f), text = gasAtDepth.gas.toString())
-            Text(modifier = Modifier.weight(0.25f), text = "${gasAtDepth.depth.toInt()}m")
+            Text(modifier = Modifier.weight(0.25f), text = gasAtDepth.depth.formatDisplayDepth(unitSystem))
 
             val alertSeverityDensity = when {
                 gasAtDepth.density.greaterThanTolerant(Gas.MAX_GAS_DENSITY, DISPLAY_TOLERANCE) -> AlertSeverity.ERROR
@@ -397,7 +403,8 @@ private fun GasPlanCardComponentPreview() {
         GasPlanCardComponent(
             divePlanSet = PreviewData.divePlan1,
             planningException = null,
-            isLoading = false
+            isLoading = false,
+            unitSystem = UnitSystem.METRIC,
         )
     }
 }
@@ -409,7 +416,8 @@ private fun GasPlanCardComponentWithWarningsPreview() {
         GasPlanCardComponent(
             divePlanSet = PreviewData.divePlan2,
             planningException = null,
-            isLoading = false
+            isLoading = false,
+            unitSystem = UnitSystem.METRIC,
         )
     }
 }
@@ -421,7 +429,8 @@ private fun GasPlanCardComponentEmptyPreview() {
         GasPlanCardComponent(
             divePlanSet = null,
             planningException = null,
-            isLoading = false
+            isLoading = false,
+            unitSystem = UnitSystem.METRIC,
         )
     }
 }
@@ -433,7 +442,8 @@ private fun GasPlanCardComponentCcrPreview() {
         GasPlanCardComponent(
             divePlanSet = PreviewData.divePlanCcr,
             planningException = null,
-            isLoading = false
+            isLoading = false,
+            unitSystem = UnitSystem.METRIC,
         )
     }
 }
@@ -445,7 +455,8 @@ private fun GasPlanCardComponentCcrBailoutPreview() {
         GasPlanCardComponent(
             divePlanSet = PreviewData.divePlanCcrBailout,
             planningException = null,
-            isLoading = false
+            isLoading = false,
+            unitSystem = UnitSystem.METRIC,
         )
     }
 }

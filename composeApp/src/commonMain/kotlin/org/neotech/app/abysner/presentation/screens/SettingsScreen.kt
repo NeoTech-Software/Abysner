@@ -37,8 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import kotlinx.collections.immutable.toImmutableList
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.settings.model.ThemeMode
@@ -46,7 +48,6 @@ import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTit
 import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreference
 import org.neotech.app.abysner.presentation.component.preferences.SwitchPreference
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import kotlinx.collections.immutable.toImmutableList
 
 typealias SettingsScreen = @Composable (navController: NavHostController) -> Unit
 
@@ -113,6 +114,24 @@ fun SettingsScreen(
                         itemToStringMapper = { it.humanReadableName },
                         onItemPicked = { picked ->
                             updateSettings { it.copy(themeMode = picked) }
+                        },
+                    )
+
+                    SettingsSubTitle(subTitle = "Units")
+
+                    SingleChoicePreference(
+                        label = "Unit system",
+                        description = "Choose between metric (meters, bar, liters) and imperial (feet, psi, cubic feet).",
+                        items = UnitSystem.entries.toImmutableList(),
+                        selectedItemIndex = UnitSystem.entries.indexOf(settings.unitSystem),
+                        itemToStringMapper = {
+                            when (it) {
+                                UnitSystem.METRIC -> "Metric"
+                                UnitSystem.IMPERIAL -> "Imperial"
+                            }
+                        },
+                        onItemPicked = { picked ->
+                            updateSettings { it.copy(unitSystem = picked) }
                         },
                     )
 

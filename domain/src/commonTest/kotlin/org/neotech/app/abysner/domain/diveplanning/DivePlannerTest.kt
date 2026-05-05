@@ -538,7 +538,6 @@ class DivePlannerTest {
         val divePlan = divePlanner.addDive(
             plan = listOf(DiveProfileSection(duration = 25, 100.0 * METERS_PER_FOOT, bottomGas)),
             cylinders = listOf(bottomGas, Cylinder.aluminium80Cuft(Gas.Nitrox50)).assign(),
-            unitSystem = UnitSystem.IMPERIAL,
         )
         val plan = divePlan.segmentsCollapsed
 

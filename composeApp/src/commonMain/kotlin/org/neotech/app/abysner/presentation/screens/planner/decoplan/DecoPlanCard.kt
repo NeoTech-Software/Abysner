@@ -62,9 +62,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.BreathingMode
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
-import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
 import org.neotech.app.abysner.domain.decompression.model.compactSimilarSegments
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
@@ -88,8 +87,10 @@ import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
+import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
+import org.neotech.app.abysner.presentation.utilities.formatDepth
+import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
 import kotlin.math.ceil
-import kotlin.math.roundToInt
 
 @Composable
 fun DecoPlanCardComponent(
@@ -122,7 +123,7 @@ fun DecoPlanCardComponent(
                             append("Deco plan")
                             withStyle(MaterialTheme.typography.titleSmall.toSpanStyle()) {
                                 if (divePlanSet?.isDeeper == true) {
-                                    append(" +${divePlanSet.deeper}m")
+                                    append(" +${divePlanSet.deeper}${settings.unitSystem.depthUnitLabel}")
                                 }
                                 if (divePlanSet?.isLonger == true) {
                                     append(" +${divePlanSet.longer}min")
@@ -144,7 +145,10 @@ fun DecoPlanCardComponent(
                 }
 
                 if (showConfigurationInfo && divePlanSet != null) {
-                    DecoPlanConfigurationSummeryDialog(configuration = divePlanSet.configuration) {
+                    DecoPlanConfigurationSummeryDialog(
+                        configuration = divePlanSet.configuration,
+                        unitSystem = settings.unitSystem,
+                    ) {
                         showConfigurationInfo = false
                     }
                 }
@@ -173,7 +177,7 @@ fun DecoPlanCardComponent(
                 } else {
 
                     val items = buildList {
-                        add("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper.roundToInt()}")
+                        add("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper.formatDepth(settings.unitSystem)}")
                         add("Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
                         if (divePlanSet.isCcr) { add("Bail-out") }
                     }.toImmutableList()
@@ -231,7 +235,8 @@ fun DecoPlanCardComponent(
 
                     DecoPlanExtraInfo(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        divePlan = planToShow
+                        divePlan = planToShow,
+                        unitSystem = settings.unitSystem,
                     )
                 }
             }
@@ -302,7 +307,8 @@ fun DecoPlanOxygenToxicityDisplay(
 @Composable
 fun DecoPlanExtraInfo(
     modifier: Modifier = Modifier,
-    divePlan: DivePlan
+    divePlan: DivePlan,
+    unitSystem: UnitSystem,
 ) {
     FlowRow(
         modifier = modifier,
@@ -311,7 +317,7 @@ fun DecoPlanExtraInfo(
     ) {
         InfoPill(
             label = "Depth",
-            value = "~${DecimalFormat.format(1, divePlan.averageDepth)} m",
+            value = "~${divePlan.averageDepth.formatDisplayDepth(unitSystem, decimals = 1)}",
             size = InfoPillSize.SMALL,
         )
         if (divePlan.firstDeco != -1) {
@@ -331,7 +337,7 @@ fun DecoPlanExtraInfo(
         if (divePlan.deepestCeiling > 0.0) {
             InfoPill(
                 label = "Ceiling",
-                value = "${DecimalFormat.format(1, divePlan.deepestCeiling)} m",
+                value = divePlan.deepestCeiling.formatDisplayDepth(unitSystem, decimals = 1),
                 size = InfoPillSize.SMALL,
             )
         }
@@ -376,7 +382,6 @@ fun DecoPlanTable(
         val segments = divePlan.segmentsCollapsed
             .toMutableList()
             .compactSimilarSegments(compactAscentsAndStops = settings.showBasicDecoTable)
-        val environment = divePlan.configuration.environment
 
         rowsIndexed(segments, key = { _, segment -> segment.start }) { index, diveSegment ->
             // For gas switch segments show the gas the diver is switching to, rather than the gas
@@ -397,7 +402,7 @@ fun DecoPlanTable(
                 runtime = diveSegment.end,
                 gas = displayGas,
                 isBailoutSwitch = isBailoutSwitch,
-                environment = environment,
+                unitSystem = settings.unitSystem,
             )
         }
     }
@@ -428,7 +433,7 @@ private fun RowScope.DecoPlanRow(
     runtime: Int,
     gas: Gas,
     isBailoutSwitch: Boolean = false,
-    environment: Environment,
+    unitSystem: UnitSystem,
 ) {
     val typeIcon = when (diveSegment.type) {
         DiveSegment.Type.DECO_STOP -> Res.drawable.ic_baseline_stop_square_24
@@ -440,7 +445,7 @@ private fun RowScope.DecoPlanRow(
 
     TextWithStartIcon(
         modifier = Modifier.weight(0.23f),
-        text = diveSegment.endDepth.toInt().toString(),
+        text = diveSegment.endDepth.formatDisplayDepth(unitSystem, includeUnit = false),
         icon = painterResource(resource = typeIcon)
     )
     Text(
@@ -457,12 +462,12 @@ private fun RowScope.DecoPlanRow(
         text = gas.toString(),
     )
 
-    val endAmbientPressure = metersToAmbientPressure(diveSegment.endDepth, environment).value
+    val endAmbientPressure = diveSegment.endPressure
 
     val ppO2Text = when (val mode = diveSegment.breathingMode) {
         is BreathingMode.ClosedCircuit -> {
             val endMode = diveSegment.breathingModeAtEnd ?: mode
-            val startAmbientPressure = metersToAmbientPressure(diveSegment.startDepth, environment).value
+            val startAmbientPressure = diveSegment.startPressure
             val ppO2Start = mode.effectivePpO2(startAmbientPressure)
             val ppO2End = endMode.effectivePpO2(endAmbientPressure)
 

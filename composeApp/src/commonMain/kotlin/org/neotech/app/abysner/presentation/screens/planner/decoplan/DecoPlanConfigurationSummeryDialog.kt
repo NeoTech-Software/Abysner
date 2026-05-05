@@ -19,13 +19,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import org.neotech.app.abysner.domain.core.model.Configuration
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.utilities.formatDepth
+import org.neotech.app.abysner.presentation.utilities.rateUnitLabel
 
 @Composable
 fun DecoPlanConfigurationSummeryDialog(
     configuration: Configuration,
+    unitSystem: UnitSystem,
     onDismissRequest: () -> Unit
 ) {
     AlertDialog(
@@ -51,15 +55,15 @@ fun DecoPlanConfigurationSummeryDialog(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Altitude pressure: ${DecimalFormat.format(0, configuration.environment.atmosphericPressure * 1000.0)} hPa (${DecimalFormat.format(0, configuration.altitude)} meters)",
+                    text = "Altitude pressure: ${DecimalFormat.format(0, configuration.environment.atmosphericPressure * 1000.0)} hPa (${configuration.altitude.formatDepth(unitSystem)})",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Max ascent speed: ${configuration.maxAscentRate} m/min",
+                    text = "Max ascent speed: ${configuration.maxAscentRate.formatDepth(unitSystem, includeUnit = false)} ${unitSystem.rateUnitLabel}",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Max descent speed: ${configuration.maxDescentRate} m/min",
+                    text = "Max descent speed: ${configuration.maxDescentRate.formatDepth(unitSystem, includeUnit = false)} ${unitSystem.rateUnitLabel}",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
@@ -71,7 +75,7 @@ fun DecoPlanConfigurationSummeryDialog(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Max END: ${configuration.maxEND}",
+                    text = "Max END: ${configuration.maxEND.formatDepth(unitSystem)}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -85,6 +89,7 @@ fun DecoPlanConfigurationSummeryDialogPreview() {
     AbysnerTheme {
         DecoPlanConfigurationSummeryDialog(
             configuration = Configuration(),
+            unitSystem = UnitSystem.METRIC,
             onDismissRequest = {}
         )
     }

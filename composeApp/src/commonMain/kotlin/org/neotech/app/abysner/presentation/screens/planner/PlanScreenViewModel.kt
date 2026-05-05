@@ -36,6 +36,7 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.DivePlanner
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
@@ -50,7 +51,6 @@ import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.utilities.combine
-import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -164,9 +164,10 @@ class PlanScreenViewModel(
     private val divePlanSet: StateFlow<Result<MultiDivePlanSet?>> = combine(
         planInput.map { it.model }.distinctUntilChanged(),
         planningRepository.configuration,
-    ) { model, config ->
+        settingsRepository.settings.map { it.unitSystem }.distinctUntilChanged(),
+    ) { model, config, unitSystem ->
         isCalculatingDivePlan.value = true
-        val result = measureTimedValue { calculateMultiDivePlan(model, config) }
+        val result = measureTimedValue { calculateMultiDivePlan(model, config, unitSystem) }
             .also { isCalculatingDivePlan.value = false }
         println("Duration: Calculating dive plan took ${result.duration}")
         result.value
@@ -213,8 +214,9 @@ class PlanScreenViewModel(
     private fun calculateMultiDivePlan(
         model: MultiDivePlanInputModel,
         configuration: Configuration,
+        unitSystem: UnitSystem,
     ): Result<MultiDivePlanSet?> = try {
-        val planner = DivePlanner(configuration)
+        val planner = DivePlanner(configuration, unitSystem)
         val gasPlanner = GasPlanner()
 
         val sets = model.dives.mapIndexed { index, diveInput ->
@@ -282,9 +284,11 @@ class PlanScreenViewModel(
                 plan to gasPlanner.calculateGasPlan(plan)
             }
 
+            val deeperDisplay = deeper?.let { unitSystem.metersToDisplayDepth(it).toInt() }
+
             DivePlanSet(
                 base = divePlan,
-                deeper = deeper?.roundToInt(),
+                deeper = deeperDisplay,
                 longer = longer,
                 bailout = diveInput.bailout,
                 diveMode = diveInput.diveMode,
