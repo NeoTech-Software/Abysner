@@ -280,7 +280,9 @@ private fun CylinderPickerBottomSheetContent(
                     visualTransformation = SuffixVisualTransformation(" ${unitSystem.pressureUnitLabel}"),
                     errorMessage = errorMessagePressure,
                     onNumberChanged = {
-                        startPressure = it
+                        if (it != null) {
+                            startPressure = it
+                        }
                     },
                     supportingText = null
                 )
