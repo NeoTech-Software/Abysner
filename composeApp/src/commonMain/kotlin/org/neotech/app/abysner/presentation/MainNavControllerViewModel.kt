@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 

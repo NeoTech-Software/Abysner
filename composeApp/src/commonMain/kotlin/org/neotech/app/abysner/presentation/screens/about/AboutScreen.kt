@@ -60,22 +60,27 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.version.VersionInfo
 
+// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
+// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
+// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
+@Inject
+class AboutScreen {
 
-typealias AboutScreen = @Composable (navController: NavHostController) -> Unit
+    @Composable
+    operator fun invoke(navController: NavHostController) {
+        AboutScreen(navController = navController)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Inject
 @Composable
-fun AboutScreen(
-    @Assisted navController: NavHostController = rememberNavController()
-) {
+fun AboutScreen(navController: NavHostController = rememberNavController()) {
     val uriHandler = LocalUriHandler.current
 
     AbysnerTheme {
@@ -297,5 +302,5 @@ private fun VersionText() {
 @Preview
 @Composable
 fun AboutScreenPreview() {
-    AboutScreen()
+    AboutScreen(navController = rememberNavController())
 }

@@ -38,9 +38,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.toImmutableList
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import org.neotech.app.abysner.domain.core.model.UnitSystem
+import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.settings.model.ThemeMode
@@ -49,15 +48,28 @@ import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePr
 import org.neotech.app.abysner.presentation.component.preferences.SwitchPreference
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
-typealias SettingsScreen = @Composable (navController: NavHostController) -> Unit
-
-@OptIn(ExperimentalMaterial3Api::class)
+// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
+// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
+// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
 @Inject
-@Composable
-fun SettingsScreen(
-    settingsRepository: SettingsRepository,
-    @Assisted navController: NavHostController = rememberNavController()
+class SettingsScreen(
+    private val settingsRepository: SettingsRepository,
 ) {
+    @Composable
+    operator fun invoke(navController: NavHostController) {
+        SettingsScreen(
+            navController = navController,
+            settingsRepository = settingsRepository
+        )
+    }
+}
+
+@Composable
+private fun SettingsScreen(
+    navController: NavHostController,
+    settingsRepository: SettingsRepository,
+) {
+    // TODO should be adding a ViewModel to this screen
     val settings by settingsRepository.settings.collectAsState()
     SettingsScreen(
         navController = navController,

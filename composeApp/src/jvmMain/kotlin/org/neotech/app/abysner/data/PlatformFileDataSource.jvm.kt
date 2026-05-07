@@ -13,13 +13,9 @@
 package org.neotech.app.abysner.data
 
 import ca.gosyer.appdirs.AppDirs
-import me.tatarka.inject.annotations.Inject
 import okio.Path
 import okio.Path.Companion.toPath
-import org.neotech.app.abysner.di.AppScope
 
-@AppScope
-@Inject
 class PlatformFileDataSourceImpl: PlatformFileDataSource {
 
     private val appDirs = AppDirs {

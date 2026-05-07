@@ -20,7 +20,7 @@ import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import okio.Path
 import org.neotech.app.abysner.domain.persistence.PersistenceRepository
 
