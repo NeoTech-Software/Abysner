@@ -1,10 +1,10 @@
 [versions]
 ####### START: Android target specific #######
-agp = "9.2.0"
+agp = "9.2.1"
 android-compileSdk = "37"
 android-minSdk = "26"
 android-targetSdk = "37"
-uiTooling = "1.11.0"
+uiTooling = "1.11.1"
 screenshot = "0.0.1-alpha14"
 startupRuntime = "1.2.0"
 androidx-activityCompose = "1.13.0"
@@ -12,7 +12,7 @@ androidx-activityCompose = "1.13.0"
 
 # Compose & Kotlin
 compose-plugin = "1.10.3"
-kotlin = "2.3.20"
+kotlin = "2.3.21"
 kover = "0.9.8"
 
 # Dependency Injection
@@ -69,7 +69,7 @@ compose-preview-renderer = { group = "com.android.tools.compose", name = "compos
 ####### END:   Android target specific #######
 
 # Graphs & Plots
-koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.11.0" }
+koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.11.2" }
 
 # Local storage
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
