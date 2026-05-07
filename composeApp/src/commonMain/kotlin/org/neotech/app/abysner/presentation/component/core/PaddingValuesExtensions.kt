@@ -19,13 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 
-@Composable
-fun PaddingValues.withoutBottom(layoutDirection: LayoutDirection = LocalLayoutDirection.current): PaddingValues = PaddingValues(
-    start = calculateStartPadding(layoutDirection),
-    end = calculateEndPadding(layoutDirection),
-    top = calculateTopPadding()
-)
-
 fun PaddingValues.onlyBottom(): PaddingValues = PaddingValues(
     bottom = calculateBottomPadding()
 )

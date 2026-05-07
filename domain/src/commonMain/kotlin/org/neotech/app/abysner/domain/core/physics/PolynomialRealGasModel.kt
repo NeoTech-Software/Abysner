@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -53,10 +53,12 @@ class PolynomialRealGasModel(
     /**
      * Find the pressure when compressing the given volume of gas (at 1 atm) into a 1 liter
      * cylinder/space.
+     *
+     * The iterative approach can get stuck (infinite loop) at very high pressures where the
+     * polynomial Z-factor curve peaks and starts decreasing. For air this happens above ~930 bar,
+     * well beyond any diving related pressures.
      */
     private fun approximatePressure(gas: Gas, volume: Double): Double {
-        // TODO some clamping needs to be done here, this can get stuck on high pressures.
-
         // Note: volume serves a double purpose here, it is both the initial estimate (Boyle's Law:
         // `pressure = volume / 1.0` where 1.0 is the size of the cylinder). But it also still
         // serves as the actual volume of gas that is being compressed.
@@ -74,43 +76,6 @@ class PolynomialRealGasModel(
         } while(abs(currentVolume - estimatedVolume) > VOLUME_PRECISION_DELTA)
 
         return adjustedEstimatedPressure
-    }
-
-    /**
-     * Same as [approximatePressure] but with some extra mechanics to detect a stable oscillation.
-     */
-    private fun approximatePressureWithOscillationDetection(gas: Gas, volume: Double): Double {
-        var estimatedPressure = volume
-        val zFactorAtOneAtm = compressibilityFactor(1.0, gas)
-
-        var previousDifferencePositive: Double = Double.MAX_VALUE
-        var previousDifferenceNegative: Double = Double.MIN_VALUE
-        do {
-            val currentVolume = zFactorAtOneAtm * estimatedPressure
-            val zFactorAtEstimatedPressure = compressibilityFactor(estimatedPressure, gas)
-
-            val estimatedVolume = zFactorAtEstimatedPressure * volume
-
-            // Update the pressure estimate based on the target volume
-            estimatedPressure = volume * zFactorAtEstimatedPressure / zFactorAtOneAtm
-
-           val difference = currentVolume - estimatedVolume
-
-            if(difference > 0) {
-                if(abs(previousDifferencePositive - difference) < 0.001) {
-                    // Delta has not changed enough since previous either we have stabilized precise enough, or a stabilized oscillation may be going on.
-                    return estimatedPressure
-                }
-                previousDifferencePositive = difference
-            } else {
-                if(abs(previousDifferenceNegative - difference) < 0.001) {
-                    // Delta has not changed enough since previous either we have stabilized precise enough, or a stabilized oscillation may be going on.
-                    return estimatedPressure
-                }
-                previousDifferenceNegative = difference
-            }
-        } while(abs(difference) > VOLUME_PRECISION_DELTA)
-        return estimatedPressure
     }
 
     override fun getGasVolume(gas: Gas, cylinderSize: Double, pressure: Double): Double {

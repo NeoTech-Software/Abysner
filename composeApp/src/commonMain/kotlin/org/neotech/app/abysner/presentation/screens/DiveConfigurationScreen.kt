@@ -44,7 +44,8 @@ import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
+import org.neotech.app.abysner.domain.core.physics.asCubicFeetToLiters
+import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.core.physics.METERS_PER_FOOT
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.settings.SettingsRepository
@@ -238,7 +239,7 @@ fun DiveConfigurationScreen(
                         description = "The average amount of gas the diver is breathing per minute at 1 atmosphere during normal diving conditions. This is also known as SAC or RMV rate.",
                         initialValue = when (unitSystem) {
                             UnitSystem.METRIC -> configuration.sacRate
-                            UnitSystem.IMPERIAL -> configuration.sacRate / LITERS_PER_CUBIC_FOOT
+                            UnitSystem.IMPERIAL -> configuration.sacRate.asLitersToCubicFeet()
                         },
                         minValue = if (unitSystem == UnitSystem.IMPERIAL) { 0.3 } else { 5.0 },
                         maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 3.5 } else { 99.0 },
@@ -248,7 +249,7 @@ fun DiveConfigurationScreen(
                     ) { sacRate ->
                         val liters = when (unitSystem) {
                             UnitSystem.METRIC -> sacRate
-                            UnitSystem.IMPERIAL -> sacRate * LITERS_PER_CUBIC_FOOT
+                            UnitSystem.IMPERIAL -> sacRate.asCubicFeetToLiters()
                         }
                         updateConfiguration { it.copy(sacRate = liters) }
                     }
@@ -258,7 +259,7 @@ fun DiveConfigurationScreen(
                         description = "The average amount of gas a diver is breathing per minute at 1 atmosphere during an emergency scenario. This is also known as the panic SAC or RMV rate.",
                         initialValue = when (unitSystem) {
                             UnitSystem.METRIC -> configuration.sacRateOutOfAir
-                            UnitSystem.IMPERIAL -> configuration.sacRateOutOfAir / LITERS_PER_CUBIC_FOOT
+                            UnitSystem.IMPERIAL -> configuration.sacRateOutOfAir.asLitersToCubicFeet()
                         },
                         minValue = if (unitSystem == UnitSystem.IMPERIAL) { 0.3 } else { 5.0 },
                         maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 3.5 } else { 99.0 },
@@ -268,7 +269,7 @@ fun DiveConfigurationScreen(
                     ) { sacRate ->
                         val liters = when (unitSystem) {
                             UnitSystem.METRIC -> sacRate
-                            UnitSystem.IMPERIAL -> sacRate * LITERS_PER_CUBIC_FOOT
+                            UnitSystem.IMPERIAL -> sacRate.asCubicFeetToLiters()
                         }
                         updateConfiguration { it.copy(sacRateOutOfAir = liters) }
                     }

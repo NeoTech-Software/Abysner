@@ -121,9 +121,9 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
 
         val classFiles = listOf(
             "com/android/tools/screenshot/renderer/Renderer.class",
-            "com/android/tools/screenshot/renderer/Renderer\$copyObject\$objectIn\$1.class",
+            $$"com/android/tools/screenshot/renderer/Renderer$copyObject$objectIn$1.class",
             "com/android/tools/screenshot/renderer/RendererKt.class",
-            "com/android/tools/screenshot/renderer/RendererKt\$createResourceEnhancedClassLoader\$1.class",
+            $$"com/android/tools/screenshot/renderer/RendererKt$createResourceEnhancedClassLoader$1.class",
         )
 
         for (classFile in classFiles) {

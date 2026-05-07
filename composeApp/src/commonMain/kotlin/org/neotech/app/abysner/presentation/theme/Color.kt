@@ -104,10 +104,12 @@ data class CustomColors(
     val onWarning: Color = onWarningLight,
 )
 
+@Suppress("UnusedReceiverParameter")
 val ColorScheme.warning: Color
     @Composable
     get() = LocalCustomColors.current.warning
 
+@Suppress("UnusedReceiverParameter")
 val ColorScheme.onWarning: Color
     @Composable
     get() = LocalCustomColors.current.onWarning

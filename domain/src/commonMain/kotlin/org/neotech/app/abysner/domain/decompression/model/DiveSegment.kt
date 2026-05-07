@@ -156,17 +156,6 @@ data class DiveSegment(
     val isStop: Boolean
         get() = isDecompressionStop || isGasSwitch
 
-    fun depthAt(duration: Int): Double {
-        require(duration >= 0 && duration <= this.duration)
-        if (startDepth == endDepth) {
-            return startDepth
-        } else {
-            val depthDifference =
-                (endDepth - startDepth) * (duration.toDouble() / this.duration.toDouble())
-            return startDepth + depthDifference
-        }
-    }
-
     /**
      * Average depth of this section (essentially the depth mid-point).
      */
@@ -188,16 +177,6 @@ data class DiveSegment(
 
         /** Whether this type represents a flat (constant depth) segment. */
         val isFlat: Boolean get() = this == FLAT || this == DECO_STOP || this == GAS_SWITCH
-    }
-}
-
-fun List<DiveSegment>.subList(fromTimeStamp: Int): List<DiveSegment> {
-    val indexOfFirstAffectedDiveSegment = indexOfFirst { it.start >= fromTimeStamp }
-    return if(indexOfFirstAffectedDiveSegment == -1) {
-        emptyList()
-    } else {
-        // TODO exact subList at the timestamp by averaging the found dive segment?
-        this.subList(indexOfFirstAffectedDiveSegment, this.size)
     }
 }
 

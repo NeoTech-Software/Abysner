@@ -55,7 +55,7 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
+import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
@@ -258,7 +258,7 @@ fun CylinderListItemComponent(
     val capacityDisplay = when (unitSystem) {
         UnitSystem.METRIC -> cylinder.waterVolume.formatVolume(unitSystem, decimals = 1)
         UnitSystem.IMPERIAL -> {
-            val ratedCapacityCuFt = cylinder.size.ratedCapacity() / LITERS_PER_CUBIC_FOOT
+            val ratedCapacityCuFt = cylinder.size.ratedCapacity().asLitersToCubicFeet()
             "${ratedCapacityCuFt.roundToInt()} ${unitSystem.volumeUnitLabel}"
         }
     }

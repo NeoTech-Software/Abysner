@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -12,6 +12,12 @@
 
 package org.neotech.app.abysner.domain.core.physics
 
-fun Double.asCubicFeetToLiters(): Double = this * 28.3168466
+fun Double.asCubicFeetToLiters(): Double = this * LITERS_PER_CUBIC_FOOT
 
-fun Double.asLitersToCubicFeet(): Double = this / 28.3168466
+fun Double.asLitersToCubicFeet(): Double = this / LITERS_PER_CUBIC_FOOT
+
+/**
+ * Conversion factor from liters to cubic feet.
+ */
+const val LITERS_PER_CUBIC_FOOT = 28.316846592
+

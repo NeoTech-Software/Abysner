@@ -34,7 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
+import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
@@ -280,7 +280,7 @@ fun CylindersTable(
                 modifier = Modifier.weight(0.3f),
                 text = when (unitSystem) {
                     UnitSystem.METRIC -> usage.cylinder.waterVolume.formatVolume(unitSystem, decimals = 1, unit = noUnitLabel)
-                    UnitSystem.IMPERIAL -> (usage.cylinder.size.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt().toString()
+                    UnitSystem.IMPERIAL -> usage.cylinder.size.ratedCapacity().asLitersToCubicFeet().roundToInt().toString()
                 },
             )
 

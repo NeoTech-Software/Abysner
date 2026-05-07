@@ -191,8 +191,3 @@ const val METERS_PER_FOOT = 0.3048
  * Conversion factor from bar to psi (pounds per square inch).
  */
 const val PSI_PER_BAR = 14.503773773
-
-/**
- * Conversion factor from liters to cubic feet.
- */
-const val LITERS_PER_CUBIC_FOOT = 28.316846592

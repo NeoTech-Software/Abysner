@@ -12,11 +12,9 @@
 
 package org.neotech.app.abysner.domain.core.model
 
+import org.neotech.app.abysner.domain.core.model.Gas.Companion.MOD_TOLERANCE
 import org.neotech.app.abysner.domain.core.physics.Pressure
-import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
-import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
-import kotlin.math.floor
 import kotlin.math.round
 
 data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {

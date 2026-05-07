@@ -94,6 +94,7 @@ data class CustomTypography(
     val bodyExtraLarge: TextStyle = baseline.bodyLarge.copy(fontSize = 24.sp),
 )
 
+@Suppress("UnusedReceiverParameter")
 val Typography.bodyExtraLarge: TextStyle
     @Composable
     get() = LocalCustomTypography.current.bodyExtraLarge
