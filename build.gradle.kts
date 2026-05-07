@@ -58,6 +58,26 @@ kover {
     }
 }
 
+val archiveIosApp = tasks.register<org.neotech.plugin.IosArchiveTask>("archiveIosApp") {
+    xcodeProjectDirectory = layout.projectDirectory.dir("iosApp")
+    scheme = "iosApp"
+    configuration = "Release"
+    outputDirectory = layout.projectDirectory.dir("iosApp/build")
+}
+
+tasks.register<org.neotech.plugin.IosExportTask>("exportIosApp") {
+    dependsOn(archiveIosApp)
+    archivePath = layout.projectDirectory.dir("iosApp/build/iosApp.xcarchive")
+    val localProperties = java.util.Properties()
+    try {
+        localProperties.load(rootProject.file("local.properties").inputStream())
+    } catch (_: Exception) {
+        logger.warn("w: Unable to load local.properties file!")
+    }
+    teamId = localProperties.getProperty("apple.teamId") ?: ""
+    outputDirectory = layout.projectDirectory.dir("iosApp/build/export")
+}
+
 tasks.register<org.neotech.plugin.FrameScreenshotsTask>("frameAndroidScreenshots") {
     group = "store"
     description = "Frames Nothing Phone screenshots into device bezels."
