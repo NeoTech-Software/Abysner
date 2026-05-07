@@ -14,11 +14,11 @@ package org.neotech.app.abysner.domain.core.model
 
 import org.neotech.app.abysner.domain.persistence.EnumPreference
 
-enum class DiveMode(val humanReadableName: String) : EnumPreference {
-    OPEN_CIRCUIT("Open circuit") {
+enum class DiveMode : EnumPreference {
+    OPEN_CIRCUIT {
         override val preferenceValue: String = "open-circuit"
     },
-    CLOSED_CIRCUIT("CCR") {
+    CLOSED_CIRCUIT {
         override val preferenceValue: String = "closed-circuit"
     };
 

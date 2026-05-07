@@ -18,7 +18,7 @@ import androidx.compose.animation.core.DurationBasedAnimationSpec
 import androidx.compose.animation.core.TwoWayConverter
 import androidx.compose.animation.core.VectorizedDurationBasedAnimationSpec
 
-fun <T> none(): AnimationSpec<T> = AnimationSpecNone<T>()
+fun <T> none(): AnimationSpec<T> = AnimationSpecNone()
 
 class AnimationSpecNone<T>: DurationBasedAnimationSpec<T> {
 

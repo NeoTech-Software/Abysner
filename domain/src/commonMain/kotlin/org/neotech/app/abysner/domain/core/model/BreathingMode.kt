@@ -44,7 +44,7 @@ sealed class BreathingMode {
 
         fun ccr(setpoint: Double) = ClosedCircuit(setpoint)
 
-        fun oc() = BreathingMode.OpenCircuit
+        fun oc() = OpenCircuit
     }
 }
 

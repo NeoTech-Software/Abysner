@@ -13,11 +13,9 @@
 package org.neotech.app.abysner
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import org.neotech.app.abysner.di.AppComponent
 
 @Composable
-@Preview
 fun App(appComponent: AppComponent) {
     appComponent.mainNavController()
 }

@@ -12,7 +12,7 @@
 
 package org.neotech.app.abysner.domain.core.model
 
-import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
+import org.neotech.app.abysner.domain.core.physics.asBarToPsi
 import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,8 +39,8 @@ class CylinderTest {
 
     @Test
     fun workingPressure_roundTripsToExactPsiForImperialCylinders() {
-        assertEquals(3000, (Cylinder.AL80.workingPressure * PSI_PER_BAR).roundToInt())
-        assertEquals(3300, (Cylinder.AL100.workingPressure * PSI_PER_BAR).roundToInt())
-        assertEquals(3442, (Cylinder.HP100.workingPressure * PSI_PER_BAR).roundToInt())
+        assertEquals(3000, Cylinder.AL80.workingPressure.asBarToPsi().roundToInt())
+        assertEquals(3300, Cylinder.AL100.workingPressure.asBarToPsi().roundToInt())
+        assertEquals(3442, Cylinder.HP100.workingPressure.asBarToPsi().roundToInt())
     }
 }

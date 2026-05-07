@@ -13,8 +13,8 @@
 package org.neotech.app.abysner.presentation.utilities
 
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
-import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
+import org.neotech.app.abysner.domain.core.physics.asBarToPsi
+import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import kotlin.math.roundToInt
 
@@ -73,7 +73,7 @@ fun Double.formatDepth(unitSystem: UnitSystem, includeUnit: Boolean = true): Str
 fun Double.formatPressure(unitSystem: UnitSystem, includeUnit: Boolean = true): String {
     val value = when (unitSystem) {
         UnitSystem.METRIC -> roundToInt()
-        UnitSystem.IMPERIAL -> (this * PSI_PER_BAR).roundToInt()
+        UnitSystem.IMPERIAL -> this.asBarToPsi().roundToInt()
     }
     return if (includeUnit) { "$value ${unitSystem.pressureUnitLabel}" } else { value.toString() }
 }
@@ -85,7 +85,7 @@ fun Double.formatPressure(unitSystem: UnitSystem, includeUnit: Boolean = true): 
 fun Double.formatVolume(unitSystem: UnitSystem, decimals: Int = 0, unit: String = unitSystem.volumeUnitLabel): String {
     val value = when (unitSystem) {
         UnitSystem.METRIC -> DecimalFormat.format(decimals, this)
-        UnitSystem.IMPERIAL -> DecimalFormat.format(decimals, this / LITERS_PER_CUBIC_FOOT)
+        UnitSystem.IMPERIAL -> DecimalFormat.format(decimals, this.asLitersToCubicFeet())
     }
     return if (unit.isNotEmpty()) { "$value $unit" } else { value }
 }

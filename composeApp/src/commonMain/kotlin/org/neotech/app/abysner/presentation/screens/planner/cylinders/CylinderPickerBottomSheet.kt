@@ -50,7 +50,8 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Environment
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
+import org.neotech.app.abysner.domain.core.physics.asBarToPsi
+import org.neotech.app.abysner.domain.core.physics.asPsiToBar
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import org.neotech.app.abysner.presentation.component.GasPickerComponent
@@ -194,7 +195,7 @@ private fun CylinderPickerBottomSheetContent(
     var startPressure: Double? by remember(initialValue) {
         mutableStateOf(when (unitSystem) {
             UnitSystem.METRIC -> initialValue.pressure
-            UnitSystem.IMPERIAL -> initialValue.pressure * PSI_PER_BAR
+            UnitSystem.IMPERIAL -> initialValue.pressure.asBarToPsi()
         })
     }
     val isStartPressureValid = remember { mutableStateOf(true) }
@@ -221,7 +222,7 @@ private fun CylinderPickerBottomSheetContent(
                 onPrimary = {
                     val pressureBar = when (unitSystem) {
                         UnitSystem.METRIC -> startPressure!!
-                        UnitSystem.IMPERIAL -> startPressure!! / PSI_PER_BAR
+                        UnitSystem.IMPERIAL -> startPressure!!.asPsiToBar()
                     }
                     onAddOrUpdateCylinder(
                         // Copy since we want to maintain the uniqueIdentifier
@@ -263,7 +264,7 @@ private fun CylinderPickerBottomSheetContent(
                         workingPressure = selectedSize.workingPressure
                         startPressure = when (unitSystem) {
                             UnitSystem.METRIC -> selectedSize.workingPressure
-                            UnitSystem.IMPERIAL -> selectedSize.workingPressure * PSI_PER_BAR
+                            UnitSystem.IMPERIAL -> selectedSize.workingPressure.asBarToPsi()
                         }
                     },
                 )

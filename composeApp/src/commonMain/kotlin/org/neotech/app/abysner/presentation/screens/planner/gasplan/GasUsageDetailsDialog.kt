@@ -45,7 +45,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
+import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.presentation.component.AlertSeverity
@@ -118,7 +118,7 @@ fun GasUsageDetailsDialog(
                             )
                             Text(
                                 modifier = Modifier.weight(1f),
-                                text = "${(cylinderGasRequirements.cylinder.size.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt()} ${unitSystem.volumeUnitLabel}"
+                                text = "${cylinderGasRequirements.cylinder.size.ratedCapacity().asLitersToCubicFeet().roundToInt()} ${unitSystem.volumeUnitLabel}"
                             )
                         }
                     }

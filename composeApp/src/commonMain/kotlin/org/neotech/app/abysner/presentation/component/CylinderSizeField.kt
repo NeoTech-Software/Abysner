@@ -58,8 +58,10 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.core.physics.GasEquationOfStateModel
-import org.neotech.app.abysner.domain.core.physics.LITERS_PER_CUBIC_FOOT
-import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
+import org.neotech.app.abysner.domain.core.physics.asBarToPsi
+import org.neotech.app.abysner.domain.core.physics.asCubicFeetToLiters
+import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
+import org.neotech.app.abysner.domain.core.physics.asPsiToBar
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
@@ -81,7 +83,7 @@ fun CylinderSizeField(
 
     val displayText = when (unitSystem) {
         UnitSystem.METRIC -> DecimalFormat.format(1, cylinderSize.waterVolume)
-        UnitSystem.IMPERIAL -> (cylinderSize.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt().toString()
+        UnitSystem.IMPERIAL -> cylinderSize.ratedCapacity().asLitersToCubicFeet().roundToInt().toString()
     }
 
     OutlinedTextField(
@@ -143,7 +145,7 @@ private fun CylinderSizeDialog(
         mutableStateOf(
             when (unitSystem) {
                 UnitSystem.METRIC -> currentCylinderSize.waterVolume
-                UnitSystem.IMPERIAL -> currentCylinderSize.ratedCapacity() / LITERS_PER_CUBIC_FOOT
+                UnitSystem.IMPERIAL -> currentCylinderSize.ratedCapacity().asLitersToCubicFeet()
             }
         )
     }
@@ -151,7 +153,7 @@ private fun CylinderSizeDialog(
         mutableStateOf(
             when (unitSystem) {
                 UnitSystem.METRIC -> currentCylinderSize.workingPressure
-                UnitSystem.IMPERIAL -> currentCylinderSize.workingPressure * PSI_PER_BAR
+                UnitSystem.IMPERIAL -> currentCylinderSize.workingPressure.asBarToPsi()
             }
         )
     }
@@ -177,8 +179,8 @@ private fun CylinderSizeDialog(
                                 workingPressure = customPressure!!,
                             )
                             UnitSystem.IMPERIAL -> {
-                                val pressureBar = customPressure!! / PSI_PER_BAR
-                                val targetCapacityLiters = customVolume!! * LITERS_PER_CUBIC_FOOT
+                                val pressureBar = customPressure!!.asPsiToBar()
+                                val targetCapacityLiters = customVolume!!.asCubicFeetToLiters()
                                 val gasVolumePerLiter = GasEquationOfStateModel.Default.getGasVolume(Gas.Air, 1.0, pressureBar)
                                 Cylinder.Size(
                                     waterVolume = targetCapacityLiters / gasVolumePerLiter,
@@ -300,14 +302,14 @@ private fun PresetsTankSizeTab(
                     label = when (unitSystem) {
                         UnitSystem.METRIC -> null
                         UnitSystem.IMPERIAL -> {
-                            val pressurePsi = (preset.workingPressure * PSI_PER_BAR).roundToInt()
+                            val pressurePsi = preset.workingPressure.asBarToPsi().roundToInt()
                             "$pressurePsi ${unitSystem.pressureUnitLabel}"
                         }
                     },
                     value = when (unitSystem) {
                         UnitSystem.METRIC -> "${DecimalFormat.format(1, preset.waterVolume)} ${unitSystem.volumeUnitLabel}"
                         UnitSystem.IMPERIAL -> {
-                            val capacityCuFt = (preset.ratedCapacity() / LITERS_PER_CUBIC_FOOT).roundToInt()
+                            val capacityCuFt = preset.ratedCapacity().asLitersToCubicFeet().roundToInt()
                             "$capacityCuFt ${unitSystem.volumeUnitLabel}"
                         }
                     },

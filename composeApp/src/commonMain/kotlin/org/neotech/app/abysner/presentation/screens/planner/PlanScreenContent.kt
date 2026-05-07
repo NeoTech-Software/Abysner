@@ -18,7 +18,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
@@ -26,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Cylinder
-import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.presentation.screens.planner.cylinders.CylinderSelectionCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanCardComponent
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanCardComponent
