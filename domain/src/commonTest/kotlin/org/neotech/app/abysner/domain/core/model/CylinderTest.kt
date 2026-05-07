@@ -16,6 +16,9 @@ import org.neotech.app.abysner.domain.core.physics.asBarToPsi
 import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class CylinderTest {
 
@@ -42,5 +45,51 @@ class CylinderTest {
         assertEquals(3000, Cylinder.AL80.workingPressure.asBarToPsi().roundToInt())
         assertEquals(3300, Cylinder.AL100.workingPressure.asBarToPsi().roundToInt())
         assertEquals(3442, Cylinder.HP100.workingPressure.asBarToPsi().roundToInt())
+    }
+
+    @Test
+    fun pressureAfter_returnsReducedPressure() {
+        val cylinder = Cylinder(Gas.Air, 200.0, 10.0)
+        val pressure = cylinder.pressureAfter(volumeUsage = 1500.0)
+        // Not asserting on exact value, to avoid coupling to the equation of state model.
+        assertNotNull(pressure)
+        assertTrue(pressure < 100.0)
+        assertTrue(pressure > 0.0)
+    }
+
+    @Test
+    fun pressureAfter_returnsNullWhenVolumeExceedsCapacity() {
+        val cylinder = Cylinder(Gas.Air, 200.0, 10.0)
+        val pressure = cylinder.pressureAfter(volumeUsage = 20000.0)
+        assertNull(pressure)
+    }
+
+    @Test
+    fun sizeFindMatching_returnsMatchingStandardSize() {
+        val found = Cylinder.Size.findMatching(waterVolume = 12.0, workingPressure = 232.0)
+        assertNotNull(found)
+        assertEquals("12L", found.name)
+    }
+
+    @Test
+    fun sizeFindMatching_matchesWithinTolerance() {
+        // Tolerance is 0.05L and 0.5 bar
+        val found = Cylinder.Size.findMatching(waterVolume = 12.04, workingPressure = 231.6)
+        assertNotNull(found)
+        assertEquals("12L", found.name)
+    }
+
+    @Test
+    fun sizeFindMatching_returnsNullForDeviationBeyondTolerance() {
+        val found = Cylinder.Size.findMatching(waterVolume = 12.1, workingPressure = 232.0)
+        assertNull(found)
+    }
+
+    @Test
+    fun sizeFill_createsCylinderWithWorkingPressure() {
+        val cylinder = Cylinder.STEEL_12L.fill(Gas.Air)
+        assertEquals(Cylinder.STEEL_12L.workingPressure, cylinder.pressure)
+        assertEquals(Cylinder.STEEL_12L.waterVolume, cylinder.waterVolume)
+        assertEquals(Gas.Air, cylinder.gas)
     }
 }

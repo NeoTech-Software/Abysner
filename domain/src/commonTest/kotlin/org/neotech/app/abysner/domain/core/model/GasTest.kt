@@ -15,10 +15,18 @@ package org.neotech.app.abysner.domain.core.model
 import org.neotech.app.abysner.domain.core.physics.ambientPressureToMeters
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import kotlin.math.floor
 
 class GasTest {
+
+    @Test
+    fun init_rejectsGasWhenCombinedOxygenAndHeliumFractionsExceedOneHundredPercent() {
+        assertFailsWith<IllegalStateException> {
+            Gas(oxygenFraction = 0.8, heliumFraction = 0.3)
+        }
+    }
 
     @Test
     fun oxygenMod_returnsCorrectModForCommonGases() {
@@ -72,10 +80,10 @@ class GasTest {
     }
 
     @Test
-    fun nitrogenFraction_isComputedFromOxygenAndHelium() {
-        val newGas = Gas(oxygenFraction = 21f / 100.0, heliumFraction = 0f / 100.0)
-        val nitrogenPercentage = (newGas.nitrogenFraction * 100.0).toInt()
-        println(nitrogenPercentage)
+    fun nitrogenFraction_isRemainderOfOxygenAndHelium() {
+        assertEquals(0.79, Gas.Air.nitrogenFraction, DOUBLE_TOLERANCE)
+        assertEquals(0.44, Gas.Trimix2135.nitrogenFraction, DOUBLE_TOLERANCE)
+        assertEquals(0.0, Gas.Oxygen.nitrogenFraction, DOUBLE_TOLERANCE)
     }
 
     @Test
@@ -187,6 +195,86 @@ class GasTest {
         val inspired = Gas.Trimix2135.inspiredGas(metersToAmbientPressure(30.0, Environment.SeaLevelFresh), 1.3)
         assertEquals(0.328, inspired.oxygenFraction, DOUBLE_TOLERANCE)
         assertEquals(0.298, inspired.heliumFraction, DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun inspiredGas_pureOxygenDiluentReturnsOxygenOnly() {
+        val inspired = Gas.Oxygen.inspiredGas(metersToAmbientPressure(6.0, Environment.SeaLevelFresh), 1.3)
+        assertEquals(1.0, inspired.oxygenFraction, DOUBLE_TOLERANCE)
+        assertEquals(0.0, inspired.heliumFraction, DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun endAmbientPressure_airEqualsAmbientPressure() {
+        // Air has no helium, so END equals actual depth
+        val ambient = metersToAmbientPressure(30.0, Environment.SeaLevelFresh).value
+        assertEquals(ambient, Gas.Air.endAmbientPressure(ambient), DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun endAmbientPressure_trimixReducesNarcoticDepth() {
+        val ambient = metersToAmbientPressure(60.0, Environment.SeaLevelFresh).value
+        // Trimix 21/35 has 35% helium (non-narcotic), so at 60m (6.897 bar ambient) only the
+        // remaining 65% (21% O2 + 44% N2) counts towards narcotic depth, an END of about 4.483 bar.
+        assertEquals(4.483, Gas.Trimix2135.endAmbientPressure(ambient), DOUBLE_TOLERANCE)
+    }
+
+    @Test
+    fun diveIndustryName_returnsOxygenForPureO2() {
+        assertEquals("Oxygen", Gas.Oxygen.diveIndustryName())
+    }
+
+    @Test
+    fun diveIndustryName_returnsAirForStandardAir() {
+        assertEquals("Air", Gas.Air.diveIndustryName())
+    }
+
+    @Test
+    fun diveIndustryName_returnsNitroxForAnyEnrichedAirAbove21Percent() {
+        for (percentage in 22..99) {
+            val gas = Gas(oxygenFraction = percentage / 100.0, heliumFraction = 0.0)
+            assertEquals("Nitrox", gas.diveIndustryName())
+        }
+    }
+
+    @Test
+    fun diveIndustryName_returnsHelioxForAnyZeroNitrogenHeliumBlend() {
+        // Any gas with He > 0 and N2 = 0 (and not pure O2) is Heliox
+        for (oxygenPercentage in 1..99) {
+            val heliumPercentage = 100 - oxygenPercentage
+            val gas = Gas(oxygenFraction = oxygenPercentage / 100.0, heliumFraction = heliumPercentage / 100.0)
+            assertEquals("Heliox", gas.diveIndustryName())
+        }
+    }
+
+    @Test
+    fun diveIndustryName_returnsTrimixForHypoxicHeliumBlendWithNitrogen() {
+        // Any gas with O2 <= 21%, He > 0, and N2 > 0 is Trimix
+        for (oxygenPercentage in 1..21) {
+            for (heliumPercentage in 1 until (100 - oxygenPercentage)) {
+                val gas = Gas(oxygenFraction = oxygenPercentage / 100.0, heliumFraction = heliumPercentage / 100.0)
+                assertEquals("Trimix", gas.diveIndustryName())
+            }
+        }
+    }
+
+    @Test
+    fun diveIndustryName_returnsHelitroxForHyperoxicHeliumBlendWithNitrogen() {
+        // Any gas with O2 > 21%, He > 0, and N2 > 0 is Helitrox
+        for (oxygenPercentage in 22..98) {
+            for (heliumPercentage in 1 until (100 - oxygenPercentage)) {
+                val gas = Gas(oxygenFraction = oxygenPercentage / 100.0, heliumFraction = heliumPercentage / 100.0)
+                assertEquals("Helitrox", gas.diveIndustryName(), "Expected Helitrox for $oxygenPercentage/$heliumPercentage")
+            }
+        }
+    }
+
+    @Test
+    fun diveIndustryName_returnsHypoxicForAnySubAirO2WithoutHelium() {
+        for (percentage in 1..20) {
+            val gas = Gas(oxygenFraction = percentage / 100.0, heliumFraction = 0.0)
+            assertEquals("Hypoxic", gas.diveIndustryName(), "Expected Hypoxic for $percentage% O2")
+        }
     }
 }
 
