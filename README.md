@@ -29,6 +29,11 @@ mobile solution to date), available on both Android and iOS, and free to inspect
 > affiliates) can be held responsible for the outcomes of your use of the information provided by
 > this application. The use of this application is entirely at your own risk.
 
+Want to build Abysner yourself, contribute, or understand how it works under the hood? Start at
+[Building from source](#building-from-source) and the [`docs/`](docs) folder. The
+[architecture overview](docs/ARCHITECTURE.md) explains how the code is laid out, and the
+[decompression engine deep-dive](docs/DECOMPRESSION.md) documents the deco algorithm in detail.
+
 
 # Philosophy
 Abysner is built with simplicity in mind. Other planners may offer more data or options, but Abysner
@@ -908,11 +913,87 @@ calculating the reserve gas requirements.
 </details>
 
 
+# Building from source
+Abysner is a [Kotlin Multiplatform](https://kotlinlang.org/docs/multiplatform.html) project that
+runs on Android and iOS, with a JVM/desktop target that exists mainly to render Compose previews.
+Almost all of the code is shared, so most work happens once and runs everywhere.
+
+**Prerequisites:**
+
+- A JDK to run Gradle. The build uses Gradle toolchains to provision JDK 21 (Temurin) automatically,
+  so the exact JDK you launch Gradle with is not critical, but JDK 21 is recommended.
+- The **Android SDK** (compile and target SDK 37, minimum SDK 26) for the Android app. Android
+  Studio is the easiest way to get this.
+- **Xcode** for the iOS app (macOS only).
+
+You do not need to install Gradle itself, use the included wrapper (`./gradlew`), which pins the
+Gradle version for you.
+
+**Quickstart:**
+
+```sh
+# Clone
+git clone https://github.com/NeoTech-Software/abysner.git
+cd abysner
+
+# Run the decompression engine tests (the domain module is pure Kotlin, no Android/iOS SDK needed)
+./gradlew :domain:jvmTest
+
+# Run everything CI runs (JVM tests, coverage and screenshot validation)
+./gradlew :koverXmlReportDomain :koverXmlReportPresentation
+```
+
+**Running the app:**
+
+```sh
+# Android: build a debug APK, or install it on a connected device/emulator
+./gradlew :androidApp:assembleDebug
+./gradlew :androidApp:installDebug
+
+# Desktop (JVM): the fastest way to see the UI without a device or simulator
+./gradlew :composeApp:run
+```
+
+For iOS, open `iosApp/iosApp.xcodeproj` in Xcode and run it on a simulator or device. Gradle builds
+the shared `ComposeApp` framework as part of the Xcode build.
+
+**Common first-run issues:**
+
+- *Gradle cannot find a JDK*: install JDK 21 (Temurin) and make sure `java -version` works, or point
+  Gradle at it.
+- *Android SDK not found*: open the project once in Android Studio, or create a `local.properties`
+  file with `sdk.dir=/path/to/Android/sdk`.
+
+The codebase is split into four Gradle modules (`domain`, `data`, `composeApp`, `androidApp`). See
+[Architecture](#architecture) below for what each one does.
+
+
+# Architecture
+Abysner uses a layered architecture split across Gradle modules, with dependencies pointing in one
+direction only (`composeApp` -> `data` -> `domain`):
+
+| Module       | What it contains                                                                    |
+|--------------|-------------------------------------------------------------------------------------|
+| `domain`     | Pure Kotlin business logic: the decompression engine, gas planning, and the models. |
+| `data`       | Persistence: repositories, serialization, and platform file access.                 |
+| `composeApp` | The shared Compose Multiplatform UI: screens, view models, navigation, theming.     |
+| `androidApp` | The Android application wrapper (the iOS wrapper lives in `iosApp`).                 |
+
+The `domain` module has no Android, iOS, or UI dependencies, so the decompression math can be read,
+tested, and verified in isolation.
+
+For a full tour of the codebase (how it is divided, the design patterns used, where to find things,
+and how the UI talks to the decompression engine) see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+For an in-depth explanation of the decompression algorithm itself, which is the heart of the app and
+the part most worth verifying, see [docs/DECOMPRESSION.md](docs/DECOMPRESSION.md).
+
+
 # Contributing
 If you'd like to contribute, please open an issue or start a discussion before putting significant
 effort into a feature or refactor. This project has a specific scope and direction, and not all
 pull requests will be accepted. A conversation upfront is the best way to make sure your time is
-well spent. Detailed contribution guidelines are not yet available, but the basics are covered here.
+well spent. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guidelines, including how to report
+bugs, the development workflow, and commit conventions.
 
 All contributors are required to sign a [Contributor License Agreement (CLA)](cla.txt) before
 their pull request can be merged. The CLA process is automated via
