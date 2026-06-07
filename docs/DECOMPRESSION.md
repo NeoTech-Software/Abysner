@@ -283,8 +283,8 @@ The ceiling is where decompression theory becomes a number. There are two relate
 
 ### The raw per-compartment ceiling
 
-`TissueCompartment.calculateCeiling(gf)` returns the ceiling for a single compartment (the shallowest
-depth, which is the lowest ambient pressure, it can tolerate) for a given gradient factor. Because
+`TissueCompartment.calculateCeiling(gf)` returns the ceiling for a single compartment, that is, the
+shallowest depth (the lowest ambient pressure) it can tolerate, for a given gradient factor. Because
 both nitrogen and helium are present, their `a` and `b` coefficients are first combined, weighted by
 their partial pressures:
 
@@ -306,13 +306,13 @@ ceiling and `gfHigh` at the surface. This is `toleratedInertGasPressure()`, the 
 of math in the engine. It:
 
 1. Computes the tolerated inert gas pressure at the surface using `gfHigh`.
-2. Computes the tolerated inert gas pressure at the lowest ceiling reached so far using `gfLow`.
+2. Computes the tolerated inert gas pressure at the deepest ceiling reached so far using `gfLow`.
 3. Treats those as two points on a line, solves for that line's slope and intercept, and inverts it
    to get the tolerated ambient pressure for the compartment's current loading.
 
-The "lowest ceiling reached so far" is tracked across the whole dive in the `Buhlmann.lowestCeiling`
+The deepest ceiling encountered so far is tracked across the whole dive in the `Buhlmann.lowestCeiling`
 field, and updated in `getMinimumToleratedAmbientPressure()`. That history matters: the gradient
-factor line is anchored to the deepest stop the diver actually needed, not just the current depth.
+factor line is anchored to the deepest ceiling reached during the dive, not just the current depth.
 The source has an extended comment deriving the slope and intercept, along with the references it was
 built from (Subsurface, the OSTC gradient factor document, dive-tech's M-values paper, and
 DecoTengu).
