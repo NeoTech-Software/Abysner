@@ -88,6 +88,51 @@ bundle id) use `nl.neotech.app.abysner`, while the Kotlin packages use `org.neot
 | Platform entry points                  | `androidApp/`, `composeApp/src/iosMain/`, `composeApp/src/jvmMain/` |
 
 
+## Repository layout
+
+Beyond the Gradle modules above, the repository has a number of supporting folders and files:
+
+| Path                          | What it is                                                                           |
+|-------------------------------|-------------------------------------------------------------------------------------|
+| `iosApp/`                     | The Xcode project (SwiftUI wrapper and iOS config) that hosts the shared Compose UI. |
+| `docs/`                       | This documentation.                                                                  |
+| `gradle/`                     | The Gradle wrapper (`wrapper/`) and the version catalog (`libs.versions.toml`) that pins every dependency and plugin version. |
+| `buildSrc/`                   | Custom Gradle build logic (see below).                                               |
+| `resources/`                  | Images used by this README (header, demo, store badges).                             |
+| `store-art/`                  | Marketing and store assets: app icon, feature images, and framed device screenshots for the Play Store and App Store. |
+| `build.gradle.kts`            | Root build script (also defines the iOS archive/export and screenshot-framing tasks). |
+| `settings.gradle.kts`         | Declares the included modules.                                                       |
+| `gradle.properties`           | Versions plus JVM and Gradle daemon-toolchain config.                                |
+| `gradlew`, `gradlew.bat`      | Gradle wrapper scripts. Use these instead of a local Gradle install.                 |
+| `Dockerfile`, `.dockerignore` | A `temurin:21-jdk` container for a reproducible build environment.                   |
+| `.gitattributes`              | Git LFS rules for binary assets (`.psd`, `.ai`, screenshot reference PNGs, store art). |
+| `LICENSE`, `cla.txt`          | The AGPLv3 license and the contributor license agreement.                            |
+
+### buildSrc
+
+`buildSrc` is Gradle's convention for build logic that is compiled and applied to the build itself.
+Here it provides the project's own plugins and task types, all under
+`buildSrc/src/main/kotlin/org/neotech/plugin/`:
+
+- `ScreenshotReferenceCleanupPlugin` and `ScreenshotTestCoveragePlugin`, applied by `androidApp`.
+- `IosArchiveTask` and `IosExportTask`, used by the root build to archive the iOS app and upload it
+  to App Store Connect.
+- `FrameScreenshotsTask`, used to frame screenshots for the store listings.
+
+### Generated folders (not in version control)
+
+These appear after building and are git-ignored, so you will see them locally but not in the repo:
+
+- `build/` (in the root and in each module): build outputs. Compiled code, test results, the Android
+  APKs, Kover coverage reports under `build/reports/kover/`, and screenshot diffs under
+  `androidApp/build/reports/screenshotTest/`.
+- `.gradle/` (root and `buildSrc/.gradle/`): Gradle's per-project cache and daemon state.
+- `iosApp/build/`: Xcode and iOS build output.
+
+All of these are safe to delete and will regenerate. `./gradlew clean` removes the modules' `build/`
+folders.
+
+
 ## Design patterns
 
 The project follows a small set of well-known patterns. Each is described below with a real file to
