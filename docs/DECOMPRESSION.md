@@ -48,9 +48,10 @@ planner works out how much inert gas your body has taken on, and how slowly you 
 **The Bühlmann ZHL-16 model** is the standard way to estimate this. It models the body as 16
 theoretical **tissue compartments**, each on-gassing and off-gassing at a different speed (a
 different "half-time"). Fast compartments load and unload quickly (think blood), slow ones take
-hours (think bone and fat). At any moment, each compartment has a tolerated ceiling: the shallowest
-depth (lowest pressure) it can be exposed to without exceeding its limit. The overall **ceiling** is
-the shallowest of all 16. You may not ascend above it.
+hours (think bone and fat). At any moment, each compartment has a ceiling: the shallowest depth (the
+lowest pressure) it can be exposed to without exceeding its limit. The overall **ceiling** is the
+deepest of those 16, because the diver has to obey the most restrictive compartment. You may not
+ascend above it.
 
 **Gradient factors** make the model more conservative. The raw Bühlmann limits (the "M-values")
 represent the most a compartment can supposedly tolerate. Many divers do not want to ride right up
@@ -282,9 +283,10 @@ The ceiling is where decompression theory becomes a number. There are two relate
 
 ### The raw per-compartment ceiling
 
-`TissueCompartment.calculateCeiling(gf)` returns the shallowest pressure a single compartment
-tolerates, for a given gradient factor. Because both nitrogen and helium are present, their `a` and
-`b` coefficients are first combined, weighted by their partial pressures:
+`TissueCompartment.calculateCeiling(gf)` returns the ceiling for a single compartment (the shallowest
+depth, which is the lowest ambient pressure, it can tolerate) for a given gradient factor. Because
+both nitrogen and helium are present, their `a` and `b` coefficients are first combined, weighted by
+their partial pressures:
 
 ```kotlin
 val a = ((parameters.n2ValueA * this.pNitrogen) + (parameters.heValueA * this.pHelium)) / (this.pTotal)
@@ -413,7 +415,7 @@ ambient pressure at shallow depths.
 ### CNS
 
 CNS (central nervous system) toxicity is accumulated per segment, using the average pressure of the
-segment. Below a ppO2 of 0.5 bar it contributes nothing. Above that, the per-minute rate is an
+segment. Below a ppO2 of 0.5 bar it contributes nothing. Above that, the rate comes from an
 exponential fit to the NOAA exposure table, with two line segments (one up to ppO2 1.5, one above):
 
 ```kotlin
