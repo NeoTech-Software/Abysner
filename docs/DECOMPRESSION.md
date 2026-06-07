@@ -511,8 +511,8 @@ The result is three segments, matching the test and the readme's reference plan 
 | Ascent  | 20 -> 0 m    | 4 min    | 24 min  |
 
 with `totalCns = 2.731` and `totalOtu = 5.443` (both asserted to three decimals in the test). For a
-plan that does involve stops and gas switches, see reference plans 2 and onward in the
-[readme](../README.md#compared-to-other-planners), all of which are also covered by `DivePlannerTest`.
+plan that does involve stops and gas switches, see reference plans 2 and onward in
+[REFERENCE_PLANS.md](REFERENCE_PLANS.md), all of which are also covered by `DivePlannerTest`.
 
 
 ## Design decisions and known divergences

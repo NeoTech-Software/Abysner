@@ -29,7 +29,7 @@ reproduce it exactly:
 - What you expected, and what Abysner produced. If you can, compare against another planner and say
   which one and which version.
 
-The reference plan tables in the [readme](README.md#compared-to-other-planners) are a good template
+The reference plan tables in [docs/REFERENCE_PLANS.md](docs/REFERENCE_PLANS.md) are a good template
 for how to present a plan clearly. The more your report looks like those, the faster it can be
 checked.
 
