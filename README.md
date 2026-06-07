@@ -920,8 +920,8 @@ Almost all of the code is shared, so most work happens once and runs everywhere.
 
 **Prerequisites:**
 
-- A JDK to run Gradle. The build uses Gradle toolchains to provision JDK 21 (Temurin) automatically,
-  so the exact JDK you launch Gradle with is not critical, but JDK 21 is recommended.
+- **JDK 21 or newer** to run Gradle. The Metro dependency-injection plugin requires the build to run
+  on Java 21+, so an older JDK fails at configuration. CI uses Temurin (Adoptium) 21.
 - The **Android SDK** (compile and target SDK 37, minimum SDK 26) for the Android app. Android
   Studio is the easiest way to get this.
 - **Xcode** for the iOS app (macOS only).
@@ -936,7 +936,7 @@ Gradle version for you.
 git clone https://github.com/NeoTech-Software/abysner.git
 cd abysner
 
-# Run the decompression engine tests (the domain module is pure Kotlin, no Android/iOS SDK needed)
+# Run the decompression engine tests
 ./gradlew :domain:jvmTest
 
 # Run everything CI runs (JVM tests, coverage and screenshot validation)
@@ -959,8 +959,9 @@ the shared `ComposeApp` framework as part of the Xcode build.
 
 **Common first-run issues:**
 
-- *Gradle cannot find a JDK*: install JDK 21 (Temurin) and make sure `java -version` works, or point
-  Gradle at it.
+- *Build fails with "requires at least JVM runtime version 21", or cannot resolve the Metro plugin*:
+  Gradle is running on too old a JDK. Install JDK 21 and make sure Gradle uses it (set `JAVA_HOME` to
+  your JDK 21, or select it in your IDE's Gradle settings).
 - *Android SDK not found*: open the project once in Android Studio, or create a `local.properties`
   file with `sdk.dir=/path/to/Android/sdk`.
 
