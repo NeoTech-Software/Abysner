@@ -129,9 +129,9 @@ data class CompartmentParameters(
 
 The nitrogen half-times run from 5 minutes (the fastest compartment) to 635 minutes (the slowest).
 There are three versions of the table, `ZH16A`, `ZH16B`, and `ZH16C`, selected by the
-`algorithm` setting. As the comment in the source notes, the N2 half-times and the `b` coefficients
-are identical across all three versions; **only the nitrogen `a` coefficients differ**. ZHL-16C is
-the most conservative of the three and is the default.
+`algorithm` setting. As the comment in the source notes, **across the three versions only the
+nitrogen `a` coefficients differ**. The half-times, the `b` coefficients, and all of the helium
+values are identical. ZHL-16C is the most conservative of the three and is the default.
 
 The full tables (all 16 rows for each version, with the helium values too) are the canonical copy in
 `Buhlmann.kt`, in the `ZH16A_COMPARTMENTS`, `ZH16B_COMPARTMENTS`, and `ZH16C_COMPARTMENTS` lists.
@@ -295,8 +295,9 @@ val b = ((parameters.n2ValueB * this.pNitrogen) + (parameters.heValueB * this.pH
 val ceiling = (this.pTotal - (a * gf)) / ((gf / b) + 1.0 - gf)
 ```
 
-With `gf = 1.0` this is the raw Bühlmann M-value limit. A smaller `gf` pulls the tolerated pressure
-deeper (more conservative). The result is clamped so it never goes above the surface pressure.
+With `gf = 1.0` this is the raw Bühlmann M-value limit. A smaller `gf` raises the ceiling (forces a
+deeper stop), which is more conservative. The result is clamped so it never goes above the surface
+pressure.
 
 ### Applying gradient factors across the dive
 

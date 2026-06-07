@@ -28,9 +28,12 @@ app's data folder), KMP uses the `expect`/`actual` mechanism: `commonMain` decla
 function or class, and each platform source set provides the matching `actual` implementation. You
 will see this in the `data` module, where file access differs per platform.
 
-The `domain` module is special: it only has `commonMain` (plus tests) and no platform code at all.
-That is deliberate. All the decompression and planning logic is pure Kotlin, so it behaves
-identically on every platform and can be tested without any device or simulator.
+The `domain` module is almost entirely `commonMain`. Its only platform-specific code is a pair of
+small `Polyfills` files in `jvmMain` and `iosMain` that provide helpers common Kotlin lacks
+(generating a UUID, formatting numbers) through `expect`/`actual`. None of the decompression or
+planning logic is platform-specific, so it is plain Kotlin that behaves identically everywhere and
+can be tested without any device or simulator. (The module targets the JVM, which Android also uses,
+and iOS; it has no separate Android target.)
 
 
 ## Modules
@@ -48,6 +51,7 @@ graph TD
     domain["domain<br/>(business logic + deco engine)"]
 
     androidApp --> composeApp
+    androidApp --> data
     iosApp --> composeApp
     composeApp --> data
     composeApp --> domain
@@ -62,8 +66,10 @@ graph TD
 | `androidApp` | [`androidApp/`](../androidApp) | Android `Application` and `Activity` entry points.                       |
 | iOS app      | [`iosApp/`](../iosApp)         | SwiftUI wrapper that hosts the shared Compose UI.                        |
 
-All Kotlin code lives under the reverse-domain package `org.neotech.app.abysner` (note: the app's
-build identifier is `nl.neotech.app.abysner`, the Kotlin package uses `org`).
+Most Kotlin code lives under the package `org.neotech.app.abysner`. The exceptions are the two
+platform entry-point files (`main.kt` for desktop and `MainViewController.kt` for iOS), which sit in
+the default package. Note also that the build identifiers (the Android `applicationId` and the iOS
+bundle id) use `nl.neotech.app.abysner`, while the Kotlin packages use `org.neotech.app.abysner`.
 
 
 ### Where do I find...?
@@ -132,8 +138,8 @@ Each platform creates the graph at startup and hands it to the shared `App` comp
 | Platform | Entry point                                                                   | Creates the graph in           |
 |----------|------------------------------------------------------------------------------|--------------------------------|
 | Android  | [`MainActivity`](../androidApp/src/main/kotlin/org/neotech/app/abysner/MainActivity.kt) / [`AbysnerApplication`](../androidApp/src/main/kotlin/org/neotech/app/abysner/AbysnerApplication.kt) | `AbysnerApplication.onCreate()` |
-| iOS      | [`MainViewController`](../composeApp/src/iosMain/kotlin/MainViewController.kt) | lazily, in `iosMain`           |
-| Desktop  | [`main.kt`](../composeApp/src/jvmMain/kotlin/main.kt)                         | `main()`                       |
+| iOS      | [`MainViewController`](../composeApp/src/iosMain/kotlin/MainViewController.kt) | a top-level property (`iosMain`) |
+| Desktop  | [`main.kt`](../composeApp/src/jvmMain/kotlin/main.kt)                         | a top-level property (`jvmMain`) |
 
 
 ## Persistence

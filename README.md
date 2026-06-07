@@ -979,8 +979,8 @@ direction only (`composeApp` -> `data` -> `domain`):
 | `composeApp` | The shared Compose Multiplatform UI: screens, view models, navigation, theming.     |
 | `androidApp` | The Android application wrapper (the iOS wrapper lives in `iosApp`).                 |
 
-The `domain` module has no Android, iOS, or UI dependencies, so the decompression math can be read,
-tested, and verified in isolation.
+The `domain` module has no UI dependencies and is almost entirely shared Kotlin code, so the
+decompression math can be read, tested, and verified in isolation.
 
 For a full tour of the codebase (how it is divided, the design patterns used, where to find things,
 and how the UI talks to the decompression engine) see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
