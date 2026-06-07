@@ -268,6 +268,18 @@ the shared `ComposeApp` framework as part of the Xcode build.
 - *Android SDK not found*: open the project once in Android Studio, or create a `local.properties`
   file with `sdk.dir=/path/to/Android/sdk`.
 
+**Reproducible build environment (Docker):**
+
+If you would rather not set up a local JDK, the included `Dockerfile` provides a `temurin:21-jdk`
+environment with the project's dependencies pre-fetched. It targets the JVM build (the decompression
+engine and its tests), and does not include the Android SDK or Xcode, so it is not meant for full
+Android or iOS app builds.
+
+```sh
+docker build -t abysner-build .
+docker run --rm abysner-build ./gradlew :domain:jvmTest
+```
+
 The codebase is split into four Gradle modules (`domain`, `data`, `composeApp`, `androidApp`). See
 [Architecture](#architecture) below for what each one does.
 

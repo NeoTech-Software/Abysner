@@ -104,7 +104,7 @@ Beyond the Gradle modules above, the repository has a number of supporting folde
 | `settings.gradle.kts`         | Declares the included modules.                                                       |
 | `gradle.properties`           | Versions plus JVM and Gradle daemon-toolchain config.                                |
 | `gradlew`, `gradlew.bat`      | Gradle wrapper scripts. Use these instead of a local Gradle install.                 |
-| `Dockerfile`, `.dockerignore` | A `temurin:21-jdk` container for a reproducible build environment.                   |
+| `Dockerfile`, `.dockerignore` | A `temurin:21-jdk` container that pre-fetches dependencies for a reproducible JVM build (no Android SDK or Xcode). |
 | `.gitattributes`              | Git LFS rules for binary assets (`.psd`, `.ai`, screenshot reference PNGs, store art). |
 | `LICENSE`, `cla.txt`          | The AGPLv3 license and the contributor license agreement.                            |
 
