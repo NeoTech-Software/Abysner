@@ -123,14 +123,16 @@ Here it provides the project's own plugins and task types, all under
 
 These appear after building and are git-ignored, so you will see them locally but not in the repo:
 
-- `build/` (in the root and in each module): build outputs. Compiled code, test results, the Android
-  APKs, Kover coverage reports under `build/reports/kover/`, and screenshot diffs under
-  `androidApp/build/reports/screenshotTest/`.
+- `build/` (in the root, in each module, and in `buildSrc/`): build outputs. Compiled code, test
+  results, the Android APKs, Kover coverage reports under `build/reports/kover/`, and screenshot
+  diffs under `androidApp/build/reports/screenshotTest/`.
 - `.gradle/` (root and `buildSrc/.gradle/`): Gradle's per-project cache and daemon state.
 - `iosApp/build/`: Xcode and iOS build output.
 
-All of these are safe to delete and will regenerate. `./gradlew clean` removes the modules' `build/`
-folders.
+Only these generated folders are safe to delete (they regenerate); `./gradlew clean` removes the
+modules' `build/` folders. This does not include `buildSrc/` itself: its `src/` and build scripts are
+version-controlled build logic the project needs, so deleting `buildSrc/` (as opposed to its
+generated `build/` and `.gradle/` subfolders) would break the build.
 
 
 ## Design patterns
