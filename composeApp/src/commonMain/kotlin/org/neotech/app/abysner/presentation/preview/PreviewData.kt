@@ -28,8 +28,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.toAssignedCylinders
 import org.neotech.app.abysner.domain.gasplanning.GasPlanner
 
 object PreviewData {
-
-    private val airCylinder = Cylinder.steel12Liter(gas = Gas.Air)
+    private val airCylinder = Cylinder.D10.fill(gas = Gas.Air)
     private val airCylinderImperial = Cylinder.AL100.fill(gas = Gas.Air)
     private val nitrox50Cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50)
     private val nitrox80Cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80)

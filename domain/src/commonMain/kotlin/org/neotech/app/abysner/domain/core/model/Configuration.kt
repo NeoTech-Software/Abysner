@@ -24,7 +24,23 @@ import kotlin.math.max
  */
 data class Configuration(
     val sacRate: Double = 20.0,
-    val sacRateOutOfAir: Double = 40.0,
+    /**
+     * A diver's gas usage rate while stressed (liters per minute at 1 atmosphere): sharing gas
+     * with an out-of-air buddy, being that out-of-air buddy, or bailing out from a rebreather
+     * failure. Must be at least [sacRate] and at least [sacRateDeco].
+     */
+    val sacRateStress: Double = 40.0,
+    /**
+     * Gas usage rate during decompression stops (liters per minute at 1 atmosphere), typically
+     * lower than [sacRate] since the diver is stationary, though a difficult stop (current, cold)
+     * can cost more. Must not exceed [sacRateStress]. A true panic scenario should still be worse.
+     */
+    val sacRateDeco: Double = 20.0,
+    /**
+     * Minutes [sacRateStress] applies during an emergency ascent, counted from when an emergency
+     * starts or a bailout happens. 0 disables it entirely.
+     */
+    val stressDurationMinutes: Int = 10,
     val maxPPO2Deco: Double = 1.6,
     val maxPPO2: Double = 1.4,
     /**

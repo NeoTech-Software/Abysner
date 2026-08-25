@@ -65,6 +65,8 @@ import org.neotech.app.abysner.presentation.utilities.formatDepth
 import org.neotech.app.abysner.presentation.utilities.depthPerMinuteUnitLabel
 import org.neotech.app.abysner.presentation.utilities.volumePerMinuteUnitLabel
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 
@@ -236,7 +238,7 @@ fun DiveConfigurationScreen(
 
                     DecimalNumberPreference(
                         label = "Gas usage",
-                        description = "The average amount of gas the diver is breathing per minute at 1 atmosphere during normal diving conditions. This is also known as SAC or RMV rate.",
+                        description = "The average gas usage of one diver (per minute at 1 atmosphere) during the normal/working part of a dive. This is also known as SAC or RMV rate.",
                         initialValue = when (unitSystem) {
                             UnitSystem.METRIC -> configuration.sacRate
                             UnitSystem.IMPERIAL -> configuration.sacRate.asLitersToCubicFeet()
@@ -251,17 +253,31 @@ fun DiveConfigurationScreen(
                             UnitSystem.METRIC -> sacRate
                             UnitSystem.IMPERIAL -> sacRate.asCubicFeetToLiters()
                         }
-                        updateConfiguration { it.copy(sacRate = liters) }
+                        // The stress rate can never be lower than the normal rate, so it is clamped
+                        // to the new normal value if it is lower.
+                        updateConfiguration { it.copy(sacRate = liters, sacRateStress = max(it.sacRateStress, liters)) }
                     }
 
                     DecimalNumberPreference(
-                        label = "Gas usage emergency",
-                        description = "The average amount of gas a diver is breathing per minute at 1 atmosphere during an emergency scenario. This is also known as the panic SAC or RMV rate.",
+                        label = "Gas usage stress",
+                        description = "The average gas usage of one diver (per minute at 1 atmosphere) during an emergency (stress) scenario. This is also known as the panic SAC or RMV rate.",
                         initialValue = when (unitSystem) {
-                            UnitSystem.METRIC -> configuration.sacRateOutOfAir
-                            UnitSystem.IMPERIAL -> configuration.sacRateOutOfAir.asLitersToCubicFeet()
+                            UnitSystem.METRIC -> configuration.sacRateStress
+                            UnitSystem.IMPERIAL -> configuration.sacRateStress.asLitersToCubicFeet()
                         },
-                        minValue = if (unitSystem == UnitSystem.IMPERIAL) { 0.3 } else { 5.0 },
+                        // Never lower than normal or deco gas usage, as a stressed diver cannot
+                        // use less gas than a calm one.
+                        minValue = maxOf(
+                            if (unitSystem == UnitSystem.IMPERIAL) { 0.3 } else { 5.0 },
+                            when (unitSystem) {
+                                UnitSystem.METRIC -> configuration.sacRate
+                                UnitSystem.IMPERIAL -> configuration.sacRate.asLitersToCubicFeet()
+                            },
+                            when (unitSystem) {
+                                UnitSystem.METRIC -> configuration.sacRateDeco
+                                UnitSystem.IMPERIAL -> configuration.sacRateDeco.asLitersToCubicFeet()
+                            },
+                        ),
                         maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 3.5 } else { 99.0 },
                         fractionDigits = if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0 },
                         valueFormatter = { "${DecimalFormat.format(if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0 }, it)} ${unitSystem.volumePerMinuteUnitLabel}"},
@@ -271,7 +287,49 @@ fun DiveConfigurationScreen(
                             UnitSystem.METRIC -> sacRate
                             UnitSystem.IMPERIAL -> sacRate.asCubicFeetToLiters()
                         }
-                        updateConfiguration { it.copy(sacRateOutOfAir = liters) }
+                        // The deco rate can never be higher than the stress rate, so it is clamped
+                        // to the new stress value if it is higher.
+                        updateConfiguration { it.copy(sacRateStress = liters, sacRateDeco = min(it.sacRateDeco, liters)) }
+                    }
+
+                    DecimalNumberPreference(
+                        label = "Gas usage deco",
+                        description = "The average gas usage of one diver (per minute at 1 atmosphere) during decompression stops, this is typically lower than during the working part of the dive since the diver is stationary.",
+                        initialValue = when (unitSystem) {
+                            UnitSystem.METRIC -> configuration.sacRateDeco
+                            UnitSystem.IMPERIAL -> configuration.sacRateDeco.asLitersToCubicFeet()
+                        },
+                        minValue = if (unitSystem == UnitSystem.IMPERIAL) { 0.3 } else { 5.0 },
+                        // Never higher than the stress rate, a true panic scenario should still be
+                        // worse than even a difficult deco stop.
+                        maxValue = minOf(
+                            if (unitSystem == UnitSystem.IMPERIAL) { 3.5 } else { 99.0 },
+                            when (unitSystem) {
+                                UnitSystem.METRIC -> configuration.sacRateStress
+                                UnitSystem.IMPERIAL -> configuration.sacRateStress.asLitersToCubicFeet()
+                            },
+                        ),
+                        fractionDigits = if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0 },
+                        valueFormatter = { "${DecimalFormat.format(if (unitSystem == UnitSystem.IMPERIAL) { 1 } else { 0 }, it)} ${unitSystem.volumePerMinuteUnitLabel}"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" ${unitSystem.volumePerMinuteUnitLabel}")
+                    ) { sacRateDeco ->
+                        val liters = when (unitSystem) {
+                            UnitSystem.METRIC -> sacRateDeco
+                            UnitSystem.IMPERIAL -> sacRateDeco.asCubicFeetToLiters()
+                        }
+                        updateConfiguration { it.copy(sacRateDeco = liters) }
+                    }
+
+                    NumberPreference(
+                        label = "Stress duration",
+                        description = "How long the stress gas usage rate applies, after this the normal or decompression rate applies. Set to 0 to never use the stress rate.",
+                        initialValue = configuration.stressDurationMinutes,
+                        minValue = 0,
+                        maxValue = 60,
+                        valueFormatter = { "$it min"},
+                        textFieldVisualTransformation = SuffixVisualTransformation(" min")
+                    ) { stressDurationMinutes ->
+                        updateConfiguration { it.copy(stressDurationMinutes = stressDurationMinutes) }
                     }
 
                     SettingsSubTitle(subTitle = "Decompression & Planing")

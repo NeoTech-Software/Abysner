@@ -31,7 +31,9 @@ import kotlin.time.toDuration
 
 fun Configuration.toResource() = ConfigurationResourceV1(
     sacRate = sacRate,
-    sacRateOutOfAir = sacRateOutOfAir,
+    sacRateStress = sacRateStress,
+    sacRateDeco = sacRateDeco,
+    stressDurationMinutes = stressDurationMinutes,
     maxPPO2Deco = maxPPO2Deco,
     maxPPO2 = maxPPO2,
     maxEND = maxEND,
@@ -59,7 +61,9 @@ fun Configuration.toResource() = ConfigurationResourceV1(
 
 fun ConfigurationResourceV1.toModel() = Configuration(
     sacRate = sacRate,
-    sacRateOutOfAir = sacRateOutOfAir,
+    sacRateStress = maxOf(sacRateStress, sacRate, sacRateDeco),
+    sacRateDeco = sacRateDeco,
+    stressDurationMinutes = stressDurationMinutes,
     maxPPO2Deco = maxPPO2Deco,
     maxPPO2 = maxPPO2,
     maxEND = maxEND,

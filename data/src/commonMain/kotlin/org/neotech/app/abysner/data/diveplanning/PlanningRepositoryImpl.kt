@@ -68,7 +68,7 @@ class PlanningRepositoryImpl(
         // Step 1: read old configuration
         val oldConfiguration = ConfigurationResourceV1(
             sacRate = get(PREFERENCE_KEY_DIVER_NORMAL_SAC, 20.0),
-            sacRateOutOfAir = get(PREFERENCE_KEY_DIVER_OUT_OF_AIR_SAC, 40.0),
+            sacRateStress = get(PREFERENCE_KEY_DIVER_OUT_OF_AIR_SAC, 40.0),
             maxPPO2Deco = get(PREFERENCE_KEY_MAX_PPO2_DECO, 1.6),
             maxPPO2 = get(PREFERENCE_KEY_MAX_PPO2, 1.4),
             maxAscentRate = get(PREFERENCE_KEY_DIVER_SPEED_ASCENT, 5.0),

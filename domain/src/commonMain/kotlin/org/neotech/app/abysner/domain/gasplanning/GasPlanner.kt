@@ -18,6 +18,7 @@ import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.decompression.model.DiveSegment
+import org.neotech.app.abysner.domain.diveplanning.DivePlanner.PlanningException
 import org.neotech.app.abysner.domain.diveplanning.model.AssignedCylinder
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlan
 import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
@@ -82,6 +83,13 @@ class GasPlanner {
         val configuration = divePlan.configuration
         val segments = divePlan.segmentsCollapsed
 
+        if (configuration.sacRateStress < configuration.sacRate || configuration.sacRateStress < configuration.sacRateDeco) {
+            throw PlanningException(
+                "sacRateStress (${configuration.sacRateStress}) must be at least as high as both " +
+                    "sacRate (${configuration.sacRate}) and sacRateDeco (${configuration.sacRateDeco})."
+            )
+        }
+
         val ccrSegments = segments.filter { it.breathingMode is BreathingMode.ClosedCircuit }
         val isCcr = ccrSegments.isNotEmpty()
 
@@ -99,16 +107,34 @@ class GasPlanner {
     ): GasPlan {
 
         val normalByGas = mutableMapOf<Gas, Double>()
-        segments.calculateOpenCircuitGasRequirements(configuration.sacRate).forEach { (cylinder, requirement) ->
+        segments.calculateOpenCircuitGasRequirements(
+            normalRate = configuration.sacRate,
+            decoRate = configuration.sacRateDeco,
+        ).forEach { (cylinder, requirement) ->
             normalByGas.updateOrInsert(cylinder.gas, requirement, Double::plus)
         }
 
-        // Calculate reserves for an out-of-air buddy using the panic SAC rate
+        // Both divers breathe from this supply for the whole ascent and both are stressed:
+        // 2 * sacRateStress in total. The donor's own normal consumption over that period is
+        // already counted in normalRequirement, so only the rest needs to be added here:
+        // 2 * sacRateStress - sacRate. Always positive, since sacRateStress can never be lower
+        // than sacRate here.
+        val stressRate = 2.0 * configuration.sacRateStress - configuration.sacRate
+
+        // Calculate reserves for an out-of-air buddy using the stress SAC rate, cooling down to the
+        // normal (or deco) rate once the stress window elapses.
         val reserveByGas = mutableMapOf<Gas, Double>()
         val outOfAirScenarios = findWorstCaseAscentCandidates(divePlan).map { maxTtsSegment ->
             val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
-            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRateOutOfAir)
-                ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
+            ascent?.calculateOpenCircuitGasRequirements(
+                normalRate = configuration.sacRate,
+                decoRate = configuration.sacRateDeco,
+                stressRate = stressRate,
+                stress = StressWindow(
+                    durationMinutes = configuration.stressDurationMinutes,
+                    originMinute = maxTtsSegment.end,
+                ),
+            ) ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
         }
 
         // Take the highest gas requirement per cylinder across all scenarios
@@ -127,23 +153,32 @@ class GasPlanner {
         ccrSegments: List<DiveSegment>,
     ): GasPlan {
 
-        // In closed-circuit gas mode no reserves are calculated for an out-of-air buddy. Generally
-        // speaking if your closed-circuit rebreather fails, you bail out to your own gas supply.
-        // Perhaps if your diluent tank is also your bailout (recreational rebreather setup) then
-        // you might need your buddies bailout, but if you assume that buddy dives the same setup,
-        // you should be just fine with that bailout? It would also be quite complex to account for
-        // all possible team setups etc.
-
-        // TODO choice: calculate bailout with panic mode?
-        //      a bailout is usually not as stressed as a true out-of-air? Since the loop
-        //      usually remains somewhat breathable for a short while? Unless it's a dramatic
-        //      flood perhaps?
-        // Bailout reserve: worst-case open-circuit ascent at normal SAC rate.
+        // In closed-circuit gas mode, no reserves are calculated for an out-of-air buddy. Instead,
+        // the bailout reserve is calculated based on a worst-case open-circuit ascent at the stress
+        // rate for one diver, cooling down after the stress timeout.
+        //
+        // Generally speaking, if your closed-circuit rebreather fails, you bail out to your own OC
+        // gas supply. If instead an OC buddy needs to borrow your bailout gas, this number is still
+        // sized for exactly one diver reaching the surface, not both of you at once, and it does not
+        // account for your own CCR then also failing on top of that. Modeling every team and gear
+        // combination is out of scope, so sizing for one diver is a reasonable default.
         val reserveByGas = mutableMapOf<Gas, Double>()
         val bailoutScenarios = findWorstCaseAscentCandidates(divePlan, bailout = true).map { maxTtsSegment ->
             val ascent = divePlan.alternativeAccents[maxTtsSegment.end]
-            ascent?.calculateOpenCircuitGasRequirements(configuration.sacRate)
                 ?: error("DivePlan does not have alternative ascent for T=${maxTtsSegment.end}, this should not happen and is a developer mistake.")
+            // The stress timeout starts at the loop-to-open-circuit transition, not at the moment
+            // the problem occurs, so problem-solving time on the loop does not consume it.
+            val stressOrigin = ascent.firstOrNull { it.breathingMode is BreathingMode.OpenCircuit }?.start
+                ?: maxTtsSegment.end
+            ascent.calculateOpenCircuitGasRequirements(
+                normalRate = configuration.sacRate,
+                decoRate = configuration.sacRateDeco,
+                stressRate = configuration.sacRateStress,
+                stress = StressWindow(
+                    durationMinutes = configuration.stressDurationMinutes,
+                    originMinute = stressOrigin,
+                ),
+            )
         }
 
         // Take the highest gas requirement per cylinder across all scenarios
@@ -236,20 +271,65 @@ class GasPlanner {
     }
 
     /**
-     * Calculates gas requirements (based on SAC) per cylinder for open-circuit segments.
-     * Closed-circuit segments are skipped.
+     * A window of [durationMinutes] minutes counted from [originMinute], during which the stress
+     * rate applies instead of the caller's normal/deco rate.
      */
-    private fun List<DiveSegment>.calculateOpenCircuitGasRequirements(sac: Double): Map<Cylinder, Double> {
+    private data class StressWindow(
+        val durationMinutes: Int,
+        val originMinute: Int,
+    )
+
+    /**
+     * Calculates gas requirements (based on SAC) per cylinder for open-circuit segments.
+     * Closed-circuit segments are skipped. [normalRate] applies outside decompression stops,
+     * [decoRate] applies to [DiveSegment.Type.DECO_STOP] segments, and both are overridden by
+     * [stressRate] for the minutes [stress]'s window covers.
+     */
+    private fun List<DiveSegment>.calculateOpenCircuitGasRequirements(
+        normalRate: Double,
+        decoRate: Double,
+        stressRate: Double = 0.0,
+        stress: StressWindow? = null,
+    ): Map<Cylinder, Double> {
         val requiredLitersByCylinder = mutableMapOf<Cylinder, Double>()
         forEach { segment ->
             if (segment.breathingMode is BreathingMode.OpenCircuit) {
-                val averagePressure = (segment.startPressure + segment.endPressure) / 2.0
-                val sacAtDepth = sac * averagePressure
-                val liters = segment.duration * sacAtDepth
+                val liters = segment.gasRequirement(normalRate, decoRate, stressRate, stress)
                 requiredLitersByCylinder.updateOrInsert(segment.cylinder, liters, Double::plus)
             }
         }
         return requiredLitersByCylinder
+    }
+
+    /**
+     * Calculates the required gas volume for this segment. The segment may use a combination of the
+     * normal/deco rate and the stress rate if [stress] is provided and overlaps with the segment.
+     */
+    private fun DiveSegment.gasRequirement(
+        normalRate: Double,
+        decoRate: Double,
+        stressRate: Double,
+        stress: StressWindow?,
+    ): Double {
+        val baseRate = if (isDecompressionStop) {
+            decoRate
+        } else {
+            normalRate
+        }
+        if (stress == null) return duration * baseRate * averagePressure
+
+        val stressMinutes = (stress.durationMinutes - (start - stress.originMinute)).coerceIn(0, duration)
+        return when(stressMinutes) {
+            0 -> duration * baseRate * averagePressure
+            duration -> duration * stressRate * averagePressure
+            else -> {
+                val boundaryPressure = startPressure - pressureRate * stressMinutes
+                // Stress usage for initial part of the segment
+                stressMinutes * stressRate * ((startPressure + boundaryPressure) / 2.0) +
+                    // Base usage for the rest of the segment
+                    (duration - stressMinutes) * baseRate * ((boundaryPressure + endPressure) / 2.0)
+            }
+        }
     }
 
     private fun List<CylinderGasRequirements>.merge(
