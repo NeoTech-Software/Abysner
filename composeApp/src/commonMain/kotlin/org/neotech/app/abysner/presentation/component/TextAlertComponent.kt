@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withAnnotation
@@ -47,16 +46,17 @@ enum class AlertSeverity {
     ERROR
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 fun TextAlert(
     modifier: Modifier = Modifier,
     text: String,
+    textStyle: TextStyle = LocalTextStyle.current,
     alertSeverity: AlertSeverity = AlertSeverity.NONE,
 ) {
     TextAlert(
         modifier = modifier,
         text = AnnotatedString(text),
+        textStyle = textStyle,
         alertSeverity = alertSeverity
     )
 }
@@ -69,7 +69,6 @@ fun TextAlert(
  * to extend this to support all kinds of custom spans. Currently it is quite limited, as it does
  * not properly support multiple lines (it forces a single line).
  */
-@OptIn(ExperimentalTextApi::class)
 @Composable
 fun TextAlert(
     modifier: Modifier = Modifier,

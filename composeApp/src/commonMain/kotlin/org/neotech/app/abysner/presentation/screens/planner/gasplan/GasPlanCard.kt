@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,12 +47,14 @@ import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.appendBoldLine
 import org.neotech.app.abysner.presentation.component.appendBulletPoint
 import org.neotech.app.abysner.presentation.component.textfield.ExpandableText
+import org.neotech.app.abysner.presentation.formatting.toPaddedMixString
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.LoadingBoxWithBlur
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconFont
 import org.neotech.app.abysner.presentation.theme.appendIcon
+import org.neotech.app.abysner.presentation.theme.withTabularFigures
 import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
 import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
 import org.neotech.app.abysner.presentation.utilities.formatPressure
@@ -373,18 +376,18 @@ fun GasLimitsTable(
     Table(
         modifier = modifier,
         header = {
-            Text(modifier = Modifier.weight(0.2f), maxLines = 1, text = "Mix")
-            Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = "Depth")
-            Text(modifier = Modifier.weight(0.35f), maxLines = 1, text = headerWithUnit("Density", "g/L"))
-            Text(modifier = Modifier.weight(0.2f), maxLines = 1, text = "PPO2")
+            Text(modifier = Modifier.weight(0.45f), maxLines = 1, text = "Mix")
+            Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = headerWithUnit("Density", "g/L"))
+            Text(modifier = Modifier.weight(0.25f), maxLines = 1, text = "PPO2")
         }
     ) {
         rows(
             divePlanSet.base.maximumGasDensities.distinct().sortedBy { it.gas.oxygenFraction },
             key = { it.gas },
         ) { gasAtDepth ->
-            Text(modifier = Modifier.weight(0.2f), text = gasAtDepth.gas.toString())
-            Text(modifier = Modifier.weight(0.25f), text = gasAtDepth.depth.formatDisplayDepth(unitSystem))
+
+            val mix = "${gasAtDepth.gas.toPaddedMixString()} @ ${gasAtDepth.depth.formatDisplayDepth(unitSystem)}"
+            Text(modifier = Modifier.weight(0.45f), text = mix, style = LocalTextStyle.current.withTabularFigures())
 
             val alertSeverityDensity = when {
                 gasAtDepth.density.greaterThanTolerant(Gas.MAX_GAS_DENSITY, DISPLAY_TOLERANCE) -> AlertSeverity.ERROR
@@ -392,9 +395,10 @@ fun GasLimitsTable(
                 else -> AlertSeverity.NONE
             }
             TextAlert(
-                modifier = Modifier.weight(0.35f),
+                modifier = Modifier.weight(0.3f),
                 alertSeverity = alertSeverityDensity,
                 text = DecimalFormat.format(2, gasAtDepth.density),
+                textStyle = LocalTextStyle.current.withTabularFigures(),
             )
 
             val alertSeverityPPO2 = if (gasAtDepth.ppo2.value.greaterThanTolerant(Gas.MAX_PPO2, DISPLAY_TOLERANCE)) {
@@ -403,9 +407,10 @@ fun GasLimitsTable(
                 AlertSeverity.NONE
             }
             TextAlert(
-                modifier = Modifier.weight(0.2f),
+                modifier = Modifier.weight(0.25f),
                 alertSeverity = alertSeverityPPO2,
                 text = DecimalFormat.format(2, gasAtDepth.ppo2.value),
+                textStyle = LocalTextStyle.current.withTabularFigures(),
             )
         }
     }
@@ -481,5 +486,3 @@ private fun GasPlanCardComponentCcrBailoutPreview() {
  * threshold.
  */
 private const val DISPLAY_TOLERANCE = 0.005
-
-

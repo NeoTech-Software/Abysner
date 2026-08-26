@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -98,3 +98,9 @@ data class CustomTypography(
 val Typography.bodyExtraLarge: TextStyle
     @Composable
     get() = LocalCustomTypography.current.bodyExtraLarge
+
+/**
+ * Enables tabular (fixed-width) figures, so digits line up across rows instead of shifting width
+ * with the number of characters. Useful in tables and diagrams that display columns of numbers.
+ */
+fun TextStyle.withTabularFigures(): TextStyle = copy(fontFeatureSettings = "tnum")
