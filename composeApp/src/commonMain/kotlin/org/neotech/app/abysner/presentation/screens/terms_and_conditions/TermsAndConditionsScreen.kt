@@ -50,7 +50,6 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownPadding
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.neotech.app.abysner.presentation.Destinations
 import org.neotech.app.abysner.presentation.component.core.ifTrue
@@ -63,6 +62,7 @@ import org.neotech.app.abysner.presentation.utilities.ConfigurePreviewContext
 import org.neotech.app.abysner.presentation.utilities.EventEffect
 import org.neotech.app.abysner.presentation.utilities.closeApp
 import org.neotech.app.abysner.presentation.utilities.consumed
+import org.neotech.app.abysner.presentation.utilities.runBlockingInPreview
 
 // Metro supports @Inject on top-level functions, but the generated types are not resolved by the
 // IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
@@ -216,14 +216,11 @@ fun TermsAndConditionsScreen(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 @Preview
 fun TermsAndConditionsScreenPreview() {
     ConfigurePreviewContext()
-    val terms = runBlocking {
-        Res.readBytes("files/terms-and-conditions.md").decodeToString()
-    }
+    val terms = runBlockingInPreview { Res.readBytes("files/terms-and-conditions.md") }.decodeToString()
 
     TermsAndConditionsScreen(
         navController = rememberNavController(),

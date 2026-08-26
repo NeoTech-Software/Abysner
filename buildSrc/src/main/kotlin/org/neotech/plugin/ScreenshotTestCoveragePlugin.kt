@@ -144,7 +144,7 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
             .findByName("_internal-screenshot-validation-junit-engine")
             ?.resolvedConfiguration
             ?.firstLevelModuleDependencies
-            ?.firstOrNull()
+            ?.firstOrNull { it.moduleName == "screenshot-validation-junit-engine" }
             ?.moduleVersion
 
         if (actualScreenshotVersion == null) {
