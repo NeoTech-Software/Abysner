@@ -50,7 +50,7 @@ supports:**
 - **Multi-gas:** Air, Nitrox, Oxygen, Trimix, Helitrox, Heliox
 - **Intuitive gas selector** showing MOD based on oxygen and gas density
 - **User configurable**:
-    - SAC rates
+    - SAC rates (normal, deco and stress) and stress duration
     - Environment (salinity, altitude)
     - Descent/ascent rates
     - Gradient factors
@@ -93,16 +93,19 @@ options is enabled. This means the contingency settings directly affect gas requ
 - **Used gas:** How much gas one diver needs to normally complete the profile.
 
 - **Reserve gas:** How much extra gas is required to safely bring up an out-of-air diver from the
-worst-possible point during the dive. It is calculated based on the worst TTS in terms of gas usage
-(See: [FAQ No. 5](#faq)), however during an out-of-gas scenario your buddy may have a completely
-different SAC rate than normal (a panic rate). To account for this, reserve gas is calculated using
-the emergency SAC rate, usually at least 2 times higher than your normal SAC rate.
+worst-possible point during the dive, sharing your own gas supply with them. It is calculated based
+on the worst TTS in terms of gas usage (See: [FAQ No. 5](#faq)), however during an out-of-gas
+scenario you and your buddy both breathe at a different rate than normal (a panic rate), not just
+your buddy. To account for this, reserve gas starts at the stress SAC rate for both of you, usually
+at least 2 times higher than your normal SAC rate, then drops back to your normal SAC rate after a
+configurable stress duration.
 
-For CCR dives, gas planning works differently. There is no reserve gas for an out-of-air buddy.
-Instead, the gas plan shows **loop gas** (diluent and oxygen consumed in the closed-loop) and
-**bailout gas**. Bailout tells you how much open-circuit gas you need if the loop fails at the
-worst-possible point. It is calculated at the normal SAC rate. CCR divers can adjust their SAC rate
-setting to account for the stress of a bailout scenario as they see fit.
+For CCR dives, gas planning works differently. Instead of reserve gas, the gas plan shows
+**loop gas** (diluent and oxygen consumed in the closed-loop) and **bailout gas**. Bailout tells you
+how much open-circuit gas you need if the loop fails at the worst-possible point, calculated the
+same way as reserve gas: the stress SAC rate first, then your normal SAC rate after the stress
+duration. Bailout covers for one diver, whether that is you after bailing out yourself, or a buddy
+while you stay on the loop.
 
 
 # Compared to other planners

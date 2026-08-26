@@ -161,6 +161,12 @@ data class DiveSegment(
      */
     val averageDepth: Double = (startDepth + endDepth) / 2.0
 
+    /**
+     * Average ambient pressure of this section (bar). This is an exact number since [pressureRate]
+     * (and therefore pressure over time) is constant within a segment.
+     */
+    val averagePressure: Double = (startPressure + endPressure) / 2.0
+
     val maxDepth = max(startDepth, endDepth)
 
     enum class Type {

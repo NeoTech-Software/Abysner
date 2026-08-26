@@ -33,7 +33,7 @@ class GasPlannerTest {
 
     private val ccrConfiguration = Configuration(
         sacRate = 20.0,
-        sacRateOutOfAir = 40.0,
+        sacRateStress = 40.0,
         maxPPO2 = 1.4,
         maxPPO2Deco = 1.6,
         maxEND = 30.0,
@@ -176,8 +176,8 @@ class GasPlannerTest {
 
         val gasPlan = GasPlanner().calculateGasPlan(divePlan)
 
-        assertEquals(3770.0, gasPlan[0].totalGasRequirement, 1.0)
-        assertEquals(4036.0, gasPlan[1].totalGasRequirement, 1.0)
+        assertEquals(4470.8, gasPlan[0].totalGasRequirement, 1.0)
+        assertEquals(3349.0, gasPlan[1].totalGasRequirement, 1.0)
     }
 
     /**
