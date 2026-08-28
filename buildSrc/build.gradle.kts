@@ -26,9 +26,3 @@ gradlePlugin {
         }
     }
 }
-
-dependencies {
-    // Required to compile the shadowed Renderer class.
-    compileOnly(libs.screenshot.validation.junit.engine)
-    compileOnly(libs.compose.preview.renderer)
-}

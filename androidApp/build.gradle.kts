@@ -10,6 +10,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
+import com.android.compose.screenshot.tasks.PreviewScreenshotValidationTask
 import java.util.Properties
 
 val abysnerVersion: String = providers.gradleProperty("abysnerVersion").get()
@@ -111,8 +112,8 @@ android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
-screenshotTests {
-    imageDifferenceThreshold = 0.001f // 0.1%
+tasks.withType<PreviewScreenshotValidationTask>().configureEach {
+    testEngineInput.threshold = 0.001f // 0.1%
 }
 
 dependencies {
