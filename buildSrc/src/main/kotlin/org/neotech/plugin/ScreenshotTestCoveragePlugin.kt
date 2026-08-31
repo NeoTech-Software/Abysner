@@ -18,21 +18,19 @@ import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.testing.Test
 import org.gradle.process.CommandLineArgumentProvider
+import org.neotech.plugin.agent.RenderClassLoaderPatchAgent
+import java.io.File
+import java.util.jar.Attributes
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
+import java.util.jar.Manifest
 
 /**
- * Attaches the Kover JVM agent to Android screenshot test tasks and registers the resulting
- * binary coverage reports with Kover's artifact generation tasks. This allows screenshot test
- * coverage to appear in Kover reports alongside regular unit test coverage.
- *
- * The screenshot plugin renders composables inside layoutlib, which uses an isolated classloader
- * that only sees layoutlib's own JARs. Kover's agent instruments classes by rewriting bytecode,
- * and during that process it needs to load .class files as resources to resolve type hierarchies.
- * The isolated classloader can't find the app's .class files, so Kover silently skips those
- * classes, resulting in zero coverage. To fix this, the plugin injects a shadowed copy of the
- * screenshot engine's `com.android.tools.screenshot.renderer.Renderer` class that replaces the
- * classloader with one that falls back to the SystemClassLoader for resource lookups. This shadowed
- * Renderer is compiled as part of buildSrc against the screenshot engine's dependencies, and its
- * .class files are extracted and prepended to the test classpath at runtime.
+ * Attaches the Kover JVM agent to Android screenshot test tasks, plus a second agent
+ * ([RenderClassLoaderPatchAgent]) that extends the render sandbox's classloader allowlist so Kover
+ * can run inside it. Registers the resulting binary coverage reports with Kover's artifact
+ * generation tasks, so screenshot test coverage appears in Kover reports alongside regular unit
+ * test coverage.
  *
  * Requires the Kover plugin and the Compose Screenshot plugin to be applied to the same project.
  */
@@ -52,7 +50,7 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
             return
         }
 
-        val rendererClassesDir = extractRendererClasses(project)
+        val patchAgentJar = buildPatchAgentJar(project)
 
         // Attach the Kover agent to all screenshot validation tasks.
         project.tasks.withType(Test::class.java)
@@ -65,12 +63,6 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
                     binReport.get().asFile.delete()
                 }
 
-                // Prepend the pre-compiled Renderer classes directory to the classpath so our
-                // shadowed Renderer takes precedence over the one in the engine JAR.
-                doFirst {
-                    classpath = project.files(rendererClassesDir, classpath)
-                }
-
                 val argsFile = temporaryDir.resolve("kover-agent.args")
                 doFirst {
                     argsFile.parentFile.mkdirs()
@@ -79,13 +71,21 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
                         writer.append("exclude=").appendLine("android.*")
                         writer.append("exclude=").appendLine("com.android.*")
                         writer.append("exclude=").appendLine("jdk.internal.*")
+                        // Layoutlib renames its bundled Kotlin runtime into this package as it
+                        // loads it. Instrumenting those copies breaks the rename.
+                        writer.append("exclude=").appendLine($$"_layoutlib_._internal_.*")
                     }
                 }
 
                 jvmArgumentProviders += CommandLineArgumentProvider {
                     val agentJar = agentConfiguration.singleFile
                     if (agentJar.exists()) {
-                        mutableListOf("-javaagent:${agentJar.canonicalPath}=file:${argsFile.canonicalPath}")
+                        mutableListOf(
+                            "-javaagent:${agentJar.canonicalPath}=file:${argsFile.canonicalPath}",
+                            "-javaagent:${patchAgentJar.canonicalPath}",
+                            // The patch agent swaps the backing array of a java.util list.
+                            "--add-opens=java.base/java.util=ALL-UNNAMED",
+                        )
                     } else {
                         mutableListOf()
                     }
@@ -95,15 +95,14 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
         // Make Kover artifact generation tasks depend on screenshot tests and include their binary reports.
         project.tasks.matching { it.name.startsWith("koverGenerateArtifact") }.configureEach {
             val variantName = name.removePrefix("koverGenerateArtifact")
-            // Not every variant has a corresponding screenshot test task so we skip variants that we don't find a task for.
+            // Skip variants without a matching screenshot test task.
             val screenshotTask = project.tasks.findByName("validate${variantName}ScreenshotTest")
                 ?: return@configureEach
 
             dependsOn(screenshotTask)
 
-            // Kover's ArtifactGenerationTask is internal, so we use reflection to access its report
-            // files property. There are two internal task types (one for aggregated reports, one
-            // for module-level reports?) with different accessor names.
+            // Kover's ArtifactGenerationTask is internal, so reach its report files via reflection.
+            // Two internal task types exist, with different accessor names.
             val reportFiles = (this::class.java.methods.firstOrNull { it.name == "getReportFiles" }
                 ?: this::class.java.methods.first { it.name == "getReports" })
                 .invoke(this) as ConfigurableFileCollection
@@ -112,31 +111,33 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
     }
 
     /**
-     * Extracts the pre-compiled Renderer .class files from the plugin's classloader into a build
-     * directory.
+     * Packages the pre-compiled [RenderClassLoaderPatchAgent] from this plugin's own classloader
+     * into a JAR with a `Premain-Class` manifest entry, so it can be attached with `-javaagent`.
      */
-    private fun extractRendererClasses(project: Project): java.io.File {
-        val classesDir = project.layout.buildDirectory
-            .dir("generated/screenshotTestCoverage/classes").get().asFile
+    private fun buildPatchAgentJar(project: Project): File {
+        val agentClassName = RenderClassLoaderPatchAgent::class.java.name
+        val agentClassResource = "${agentClassName.replace('.', '/')}.class"
 
-        val classFiles = listOf(
-            "com/android/tools/screenshot/renderer/Renderer.class",
-            $$"com/android/tools/screenshot/renderer/Renderer$copyObject$objectIn$1.class",
-            "com/android/tools/screenshot/renderer/RendererKt.class",
-            $$"com/android/tools/screenshot/renderer/RendererKt$createResourceEnhancedClassLoader$1.class",
-        )
+        val bytes = ScreenshotTestCoveragePlugin::class.java.classLoader
+            .getResourceAsStream(agentClassResource)
+            ?.readBytes()
+            ?: throw GradleException("Could not find pre-compiled class $agentClassResource in buildSrc, this is a plugin bug and should normally not happen.")
 
-        for (classFile in classFiles) {
-            val outputFile = classesDir.resolve(classFile)
-            val bytes = ScreenshotTestCoveragePlugin::class.java.classLoader
-                .getResourceAsStream(classFile)
-                ?.readBytes()
-                ?: throw GradleException("Could not find pre-compiled class $classFile in buildSrc, this is a plugin bug and should normally not happen.")
-            outputFile.parentFile.mkdirs()
-            outputFile.writeBytes(bytes)
+        val manifest = Manifest().apply {
+            mainAttributes[Attributes.Name.MANIFEST_VERSION] = "1.0"
+            mainAttributes[Attributes.Name("Premain-Class")] = agentClassName
         }
 
-        return classesDir
+        val jarFile = project.layout.buildDirectory
+            .file("generated/screenshotTestCoverage/render-classloader-patch-agent.jar").get().asFile
+        jarFile.parentFile.mkdirs()
+        JarOutputStream(jarFile.outputStream().buffered(), manifest).use { jar ->
+            jar.putNextEntry(JarEntry(agentClassResource))
+            jar.write(bytes)
+            jar.closeEntry()
+        }
+
+        return jarFile
     }
 
     private fun verifyScreenshotPluginVersion(project: Project) {
@@ -150,14 +151,14 @@ class ScreenshotTestCoveragePlugin : Plugin<Project> {
         if (actualScreenshotVersion == null) {
             throw GradleException("screenshot-test-coverage requires the Compose Screenshot plugin to be applied to the same project.")
         } else if (actualScreenshotVersion != expectedScreenshotPluginVersion) {
-            throw GradleException("screenshot-test-coverage plugin requires Compose Screenshot plugin $expectedScreenshotPluginVersion, but found $actualScreenshotVersion.")
+            project.logger.warn(
+                "Warning: screenshot-test-coverage was verified against Compose Screenshot plugin $expectedScreenshotPluginVersion, but found $actualScreenshotVersion."
+            )
         }
     }
 }
 
 /**
- * The screenshot plugin version that the pre-compiled Renderer shadow was built against. If the
- * project uses a different version, the plugin fails with a clear error rather than potentially
- * producing mysterious runtime failures from incompatible class files.
+ * The screenshot plugin version this plugin's classloader patch was verified against.
  */
-private const val expectedScreenshotPluginVersion = "0.0.1-alpha14"
+private const val expectedScreenshotPluginVersion = "0.0.1-alpha16"

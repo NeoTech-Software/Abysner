@@ -5,7 +5,7 @@ android-compileSdk = "37"
 android-minSdk = "26"
 android-targetSdk = "37"
 uiTooling = "1.12.0"
-screenshot = "0.0.1-alpha14"
+screenshot = "0.0.1-alpha16"
 startupRuntime = "1.2.0"
 androidx-activityCompose = "1.13.0"
 ####### END:   Android target specific #######
@@ -64,8 +64,6 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startupRuntime" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
-screenshot-validation-junit-engine = { group = "com.android.tools.screenshot", name = "screenshot-validation-junit-engine", version.ref = "screenshot" }
-compose-preview-renderer = { group = "com.android.tools.compose", name = "compose-preview-renderer", version.ref = "screenshot" }
 ####### END:   Android target specific #######
 
 # Graphs & Plots
