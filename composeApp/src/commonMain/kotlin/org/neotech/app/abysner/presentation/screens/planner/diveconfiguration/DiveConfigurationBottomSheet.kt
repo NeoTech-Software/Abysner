@@ -22,8 +22,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -44,6 +42,7 @@ import org.neotech.app.abysner.presentation.component.RadioCardItem
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpandedSheetState
+import org.neotech.app.abysner.presentation.component.bottomsheet.rememberModalBottomSheetState
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.component.textfield.DurationInputField
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
@@ -119,7 +118,7 @@ internal fun DiveConfigurationBottomSheetHost(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DiveConfigurationBottomSheet(
-    sheetState: SheetState = rememberStandardBottomSheetState(),
+    sheetState: SheetState,
     title: String,
     initialSurfaceInterval: Duration? = 60.minutes,
     initialDiveMode: DiveMode = DiveMode.OPEN_CIRCUIT,

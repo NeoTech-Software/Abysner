@@ -25,8 +25,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -59,6 +57,7 @@ import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpandedSheetState
+import org.neotech.app.abysner.presentation.component.bottomsheet.rememberModalBottomSheetState
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
@@ -129,7 +128,7 @@ private fun CylinderPickerBottomSheet(
     showBailoutToggle: Boolean = false,
     initialBailoutValue: Boolean = true,
     onBailoutToggled: (Boolean) -> Unit = {},
-    sheetState: SheetState = rememberStandardBottomSheetState(),
+    sheetState: SheetState,
     onAddOrUpdateCylinder: (cylinder: Cylinder) -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
@@ -169,7 +168,7 @@ private fun CylinderPickerBottomSheetContent(
     showBailoutToggle: Boolean = false,
     initialBailoutValue: Boolean = true,
     onBailoutToggled: (Boolean) -> Unit = {},
-    sheetState: SheetState = rememberStandardBottomSheetState(),
+    sheetState: SheetState,
     onAddOrUpdateCylinder: (cylinder: Cylinder) -> Unit = {},
     onDismissRequest: () -> Unit = {},
 ) {
