@@ -38,10 +38,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.koalaplot.core.Symbol
-import io.github.koalaplot.core.legend.FlowLegend2
+import io.github.koalaplot.core.legend.FlowLegend
 import io.github.koalaplot.core.line.AreaBaseline
-import io.github.koalaplot.core.line.AreaPlot2
-import io.github.koalaplot.core.line.LinePlot2
+import io.github.koalaplot.core.line.AreaPlot
+import io.github.koalaplot.core.line.LinePlot
 import io.github.koalaplot.core.style.AreaStyle
 import io.github.koalaplot.core.style.KoalaPlotTheme
 import io.github.koalaplot.core.style.LineStyle
@@ -117,7 +117,7 @@ fun DecoPlanGraph(
 
     Column {
 
-        FlowLegend2(
+        FlowLegend(
             modifier = Modifier.padding(horizontal = 16.dp).align(Alignment.CenterHorizontally),
             itemCount = 3,
             label = {
@@ -204,7 +204,7 @@ fun DecoPlanGraph(
             ),
         ) {
 
-            AreaPlot2(
+            AreaPlot(
                 // Offset the gradient graph ever so slightly to the top so it does not interfere
                 // visually too much with the depth line, 0.25f is essentially equal to 25cm.
                 data = buildGfCeilingPlotPoints(divePlan.segments).offset(y = 0.25f).coerceIn(yMax = 0f),
@@ -220,7 +220,7 @@ fun DecoPlanGraph(
                 animationSpec = if(LocalInspectionMode.current) { none() } else { KoalaPlotTheme.animationSpec }
             )
 
-            LinePlot2(
+            LinePlot(
                 data = buildDepthProfilePlotPoints(divePlan.segments),
                 lineStyle = LineStyle(
                     brush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -229,7 +229,7 @@ fun DecoPlanGraph(
                 animationSpec = if(LocalInspectionMode.current) { none() } else { KoalaPlotTheme.animationSpec }
             )
 
-            LinePlot2(
+            LinePlot(
                 data = buildAverageDepthPlotPoints(divePlan.segments),
                 lineStyle = LineStyle(
                     brush = SolidColor(MaterialTheme.colorScheme.outline),

@@ -27,8 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -69,6 +67,7 @@ import org.neotech.app.abysner.presentation.component.GasPropertiesComponent
 import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHeader
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpandedSheetState
+import org.neotech.app.abysner.presentation.component.bottomsheet.rememberModalBottomSheetState
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.core.pluralsStringBuilder
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
@@ -124,7 +123,7 @@ internal fun SegmentPickerBottomSheetHost(
 @Composable
 private fun SegmentPickerBottomSheet(
     isAdd: Boolean = true,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    sheetState: SheetState,
     initialValue: DiveProfileSection?,
     maxPPO2: Double,
     maxDensity: Double,
@@ -164,7 +163,7 @@ private fun SegmentPickerBottomSheet(
 @Composable
 private fun SegmentPickerBottomSheetContent(
     isAdd: Boolean = true,
-    sheetState: SheetState = rememberStandardBottomSheetState(),
+    sheetState: SheetState,
     initialValue: DiveProfileSection?,
     maxPPO2: Double,
     maxDensity: Double,
