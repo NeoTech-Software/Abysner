@@ -12,8 +12,8 @@
 
 import java.util.Properties
 
-val abysnerVersion: String by project.properties
-val abysnerBuildNumber: String by project.properties
+val abysnerVersion: String = providers.gradleProperty("abysnerVersion").get()
+val abysnerBuildNumber: String = providers.gradleProperty("abysnerBuildNumber").get()
 
 plugins {
     alias(libs.plugins.androidApplication)

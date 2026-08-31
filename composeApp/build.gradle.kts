@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.ByteArrayOutputStream
 
 // DMG distribution does not support "-beta", MSI requires at least MAJOR.MINOR.BUILD
-val abysnerVersionBase: String by project.properties
-val abysnerVersion: String by project.properties
+val abysnerVersionBase: String = providers.gradleProperty("abysnerVersionBase").get()
+val abysnerVersion: String = providers.gradleProperty("abysnerVersion").get()
 // iOS supports a String here, but Android only an integer
-val abysnerBuildNumber: String by project.properties
+val abysnerBuildNumber: String = providers.gradleProperty("abysnerBuildNumber").get()
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -70,7 +70,6 @@ kotlin {
     }
 
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -89,7 +88,7 @@ kotlin {
             implementation(libs.androidx.startup.runtime)
         }
 
-        val jvmMain by getting
+        val jvmMain = getByName("jvmMain")
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
