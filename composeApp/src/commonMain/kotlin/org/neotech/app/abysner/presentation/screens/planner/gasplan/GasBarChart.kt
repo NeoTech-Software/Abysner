@@ -12,87 +12,76 @@
 
 package org.neotech.app.abysner.presentation.screens.planner.gasplan
 
-import androidx.compose.ui.tooling.preview.Preview
-import org.neotech.app.abysner.presentation.utilities.PreviewWrapper
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.koalaplot.core.Symbol
 import io.github.koalaplot.core.legend.FlowLegend2
 import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
-import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.PSI_PER_BAR
-import org.neotech.app.abysner.domain.diveplanning.DivePlanner
-import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.diveplanning.model.assign
-import org.neotech.app.abysner.domain.gasplanning.GasPlanner
-import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
-import org.neotech.app.abysner.domain.utilities.DecimalFormat
-import org.neotech.app.abysner.presentation.component.AlertSeverity
-import org.neotech.app.abysner.presentation.component.TextAlert
-import org.neotech.app.abysner.presentation.component.core.contrastingOnColor
+import org.neotech.app.abysner.domain.gasplanning.model.GasPlan
 import org.neotech.app.abysner.presentation.component.core.getGradient
-import org.neotech.app.abysner.presentation.component.core.getShades
-import org.neotech.app.abysner.presentation.component.core.setSaturation
-import org.neotech.app.abysner.presentation.component.graphs.BarSection
-import org.neotech.app.abysner.presentation.component.graphs.GasBarChartLayout
-import org.neotech.app.abysner.presentation.component.graphs.HorizontalGraphAxis
-import org.neotech.app.abysner.presentation.component.graphs.StackedHorizontalBar
+import org.neotech.app.abysner.presentation.component.core.ifTrue
+import org.neotech.app.abysner.presentation.component.core.invisible
+import org.neotech.app.abysner.presentation.component.core.sampleGradientAt
+import org.neotech.app.abysner.presentation.component.core.uniformLabelWidth
+import org.neotech.app.abysner.presentation.component.graphs.LabeledTrack
+import org.neotech.app.abysner.presentation.component.graphs.TrackLabel
+import org.neotech.app.abysner.presentation.formatting.FIGURE_SPACE
+import org.neotech.app.abysner.presentation.formatting.formatCapacity
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconFont
 import org.neotech.app.abysner.presentation.theme.appendIcon
-import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
-import kotlin.math.max
-import kotlin.math.roundToInt
+import org.neotech.app.abysner.presentation.theme.onWarning
+import org.neotech.app.abysner.presentation.theme.warning
+import org.neotech.app.abysner.presentation.theme.withTabularFigures
+import org.neotech.app.abysner.presentation.utilities.PreviewWrapper
+import org.neotech.app.abysner.presentation.utilities.formatPressure
 
-@OptIn(ExperimentalKoalaPlotApi::class)
-@Preview
-@Composable
-fun GasBarChartPreview() = PreviewWrapper {
-    val plan = listOf(
-        DiveProfileSection(
-            duration = 25,
-            depthInMeters = 40.0,
-            Cylinder(gas = Gas.Air, pressure = 232.0, waterVolume = 12.0)
-        ),
-    )
-
-    val divePlan = DivePlanner().addDive(
-        plan,
-        listOf(Cylinder.aluminium80Cuft(Gas.Nitrox50), Cylinder.aluminium63Cuft(Gas.Nitrox80)).assign()
-    )
-
-    val gasPlan = GasPlanner().calculateGasPlan(divePlan)
-    AbysnerTheme(dynamicColor = false) {
-        GasPlanBarChart(gasPlan = gasPlan, unitSystem = UnitSystem.METRIC)
-    }
-}
-
-
+/**
+ * Shows every cylinder as a pressure track from 0 to its fill pressure, with the end pressure
+ * after a normal dive labeled above and the end pressure after the reserve (or bailout) is
+ * consumed labeled below. Tapping a track invokes [onGasBarClicked].
+ */
 @OptIn(ExperimentalKoalaPlotApi::class)
 @Composable
 fun GasPlanBarChart(
@@ -101,17 +90,13 @@ fun GasPlanBarChart(
     unitSystem: UnitSystem,
     emergencyLabel: String = "Reserve",
     usageLabel: String = "Used",
-    compact: Boolean = false,
-    balanceHorizontalLayout: Boolean = false,
+    emergencyIsError: Boolean = false,
     onGasBarClicked: (Int, CylinderGasRequirements) -> Unit = { _, _ -> },
 ) {
-    val legendSymbolSize = if (compact) { 16.dp } else { 20.dp }
-    val legendBottomPadding = if (compact) { 12.dp } else { 16.dp }
-    val barHeight = if (compact) { 30.dp } else { 36.dp }
-
     Column(modifier = modifier) {
         FlowLegend2(
-            modifier = Modifier.padding(bottom = legendBottomPadding).align(Alignment.CenterHorizontally),
+            modifier = Modifier.padding(bottom = 16.dp)
+                .align(Alignment.CenterHorizontally),
             itemCount = 3,
             label = {
                 val label = when (it) {
@@ -123,225 +108,329 @@ fun GasPlanBarChart(
                 Text(text = label, style = MaterialTheme.typography.bodySmall)
             },
             symbol = {
-                when (it) {
-                    0 -> {
-                        val blueShades = MaterialTheme.colorScheme.primary.getShades(
-                            2,
-                            minLightness = 0.2f,
-                            maxLightness = 0.4f
-                        )
-                        Symbol(
-                            shape = CircleShape,
-                            size = legendSymbolSize,
-                            fillBrush = Brush.horizontalGradient(colors = blueShades),
-                        )
-                    }
-
-                    1 -> {
-                        val redShades = MaterialTheme.colorScheme.error.getShades(
-                            2,
-                            minLightness = 0.4f,
-                            maxLightness = 0.8f
-                        )
-                        Symbol(
-                            shape = CircleShape,
-                            size = legendSymbolSize,
-                            fillBrush = Brush.horizontalGradient(redShades),
-                        )
-                    }
-
-                    2 -> Symbol(
-                        shape = CircleShape,
-                        size = legendSymbolSize,
-                        fillBrush = SolidColor(MaterialTheme.colorScheme.outlineVariant),
+                val brush = when (it) {
+                    0 -> Brush.horizontalGradient(
+                        MaterialTheme.colorScheme.primary.getGradient(difference = gradientDifference)
                     )
+                    1 -> Brush.horizontalGradient(
+                        MaterialTheme.colorScheme.primaryContainer.getGradient(difference = gradientDifference)
+                    )
+                    2 -> Brush.horizontalGradient(
+                        MaterialTheme.colorScheme.outlineVariant.getGradient(difference = gradientDifference)
+                    )
+                    else -> error("Unknown legend index")
                 }
+                Symbol(shape = CircleShape, size = 20.dp, fillBrush = brush)
             }
         )
 
-        val pressureScale = when (unitSystem) {
-            UnitSystem.METRIC -> 1.0f
-            UnitSystem.IMPERIAL -> PSI_PER_BAR.toFloat()
+        // Widest fill pressure in the plan, so every row can pad to the same digit count.
+        val fillPressureDigits = gasPlan.maxOf {
+            it.cylinder.pressure.formatPressure(unitSystem, includeUnit = false).length
         }
-        val max = max(gasPlan.maxOf { it.cylinder.pressure }.toFloat() * pressureScale, MINIMUM_AXIS_PRESSURE_BAR * pressureScale)
-        val min = 0f
-        val range = max - min
 
-        val strokeWidth = 2.dp
+        val mixLabelWidth = remember { mutableIntStateOf(0) }
 
-        GasBarChartLayout(
-            balanceHorizontalLayout = balanceHorizontalLayout,
-            horizontalAxis = {
-                Column {
-                    HorizontalGraphAxis(
-                        modifier = Modifier.padding(top = 8.dp),
-                        min = min,
-                        max = max,
-                        axisLineColor = Color.LightGray,
-                        tickCount = 6,
-                        label = {
-                            Text(
-                                style = MaterialTheme.typography.labelSmall,
-                                text = it.roundToInt().toString()
-                            )
-                        }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            gasPlan.forEachIndexed { index, cylinderGasRequirements ->
+                CylinderPressureRow(
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clickable { onGasBarClicked(index, cylinderGasRequirements) },
+                    cylinderGasRequirements = cylinderGasRequirements,
+                    unitSystem = unitSystem,
+                    emergencyLabel = emergencyLabel,
+                    emergencyIsError = emergencyIsError,
+                    fillPressureDigits = fillPressureDigits,
+                    mixLabelWidth = mixLabelWidth
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CylinderPressureRow(
+    modifier: Modifier = Modifier,
+    cylinderGasRequirements: CylinderGasRequirements,
+    unitSystem: UnitSystem,
+    emergencyLabel: String,
+    emergencyIsError: Boolean,
+    labelStyle: TextStyle = MaterialTheme.typography.labelSmall.withTabularFigures(),
+    warningColor: Color = MaterialTheme.colorScheme.warning,
+    errorColor: Color = MaterialTheme.colorScheme.error,
+    boundaryLineColor: Color = MaterialTheme.colorScheme.onSurface,
+    fillPressureDigits: Int,
+    mixLabelWidth: MutableIntState,
+) {
+    val pressureLeft = cylinderGasRequirements.pressureLeft
+    val pressureLeftWithEmergency = cylinderGasRequirements.pressureLeftWithEmergency
+
+    val reserveColors = MaterialTheme.colorScheme.primaryContainer.getGradient(difference = gradientDifference)
+    val usedColors = MaterialTheme.colorScheme.outlineVariant.getGradient(difference = gradientDifference)
+
+    val unusedBrush = Brush.horizontalGradient(MaterialTheme.colorScheme.primary.getGradient(difference = gradientDifference))
+    val reserveBrush = Brush.horizontalGradient(reserveColors)
+    val usedBrush = Brush.horizontalGradient(usedColors)
+
+    val showEmergencyPressure = pressureLeftWithEmergency != null && pressureLeftWithEmergency != pressureLeft
+
+    val cylinder = cylinderGasRequirements.cylinder
+    val aboveFraction = ((pressureLeft ?: cylinder.pressure) / cylinder.pressure).toFloat()
+    val belowFraction = ((pressureLeftWithEmergency ?: 0.0) / cylinder.pressure).toFloat()
+
+    val insufficientReserveColor = if (emergencyIsError) { errorColor } else { warningColor }
+
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            modifier = Modifier.uniformLabelWidth(mixLabelWidth).padding(end = 8.dp),
+            style = MaterialTheme.typography.labelMedium.withTabularFigures(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            text = buildAnnotatedString {
+                append(cylinder.gas.toString())
+                appendLine()
+                withStyle(
+                    SpanStyle(
+                        color = MaterialTheme.colorScheme.outline,
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize,
                     )
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        text = "Pressure in ${unitSystem.pressureUnitLabel}"
+                ) {
+                    append(cylinder.formatCapacity(unitSystem))
+                }
+            },
+        )
+
+        LabeledTrack(
+            modifier = Modifier.weight(1f),
+            // Above label always shows the pressure left after a normal dive (no emergency/bailout)
+            aboveLabel = TrackLabel(fraction = aboveFraction) {
+                PressureLabel(
+                    text = pressureLeft?.formatPressure(unitSystem, includeUnit = false).orEmpty(),
+                    isVisible = pressureLeft != null,
+                    // Match the label color to the bar color at the label's position.
+                    backgroundColor = usedColors.sampleGradientAt(aboveFraction),
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = labelStyle,
+                )
+            },
+            // Below label show the pressure left after an emergency/bailout, or a warning/error if there isn't enough gas for that.
+            belowLabel = TrackLabel(fraction = belowFraction) {
+                if (showEmergencyPressure) {
+                    PressureLabel(
+                        text = pressureLeftWithEmergency.formatPressure(unitSystem, includeUnit = false),
+                        isVisible = true,
+                        // Match the label color to the bar color at the label's position.
+                        backgroundColor = reserveColors.sampleGradientAt(belowFraction),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style = labelStyle,
+                    )
+                } else {
+                    PressureLabel(
+                        text = buildAnnotatedString {
+                            appendIcon(IconFont.WARNING, labelStyle)
+                            append(" ${emergencyLabel.lowercase()} < 0")
+                        },
+                        // At this point either we need to show a warning, or hide the label because:
+                        // 1. There is a critical gas shortage in the normal requirement to begin with,
+                        //    and an error will be shown over the whole track, no need to show a second warning.
+                        // 2. There is no emergency/bailout requirement, for example a CCR oxygen cylinder
+                        isVisible = !(pressureLeft == null || pressureLeftWithEmergency == pressureLeft),
+                        backgroundColor = insufficientReserveColor,
+                        contentColor = if (emergencyIsError) {
+                            MaterialTheme.colorScheme.onError
+                        } else {
+                            MaterialTheme.colorScheme.onWarning
+                        },
+                        style = labelStyle,
                     )
                 }
             },
-            verticalAxis = {
-                Column(
-                    modifier = Modifier.padding(end = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+
+            fun DrawScope.xPositionFor(pressure: Double) =
+                (size.width * (pressure / cylinder.pressure)).toFloat()
+
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Canvas(
+                    modifier = Modifier.matchParentSize()
+                        .clip(RoundedCornerShape(percent = 50))
                 ) {
-                    gasPlan.forEach { gas ->
-                        Text(
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(1f)
-                                .wrapContentHeight(align = Alignment.CenterVertically),
-                            style = MaterialTheme.typography.labelMedium,
-                            text = "${gas.cylinder.gas}"
+                    fun alertGradientBrush(alertColor: Color, naturalColor: Color, endX: Float) =
+                        Brush.horizontalGradient(
+                            listOf(alertColor, naturalColor),
+                            startX = 0f,
+                            endX = endX,
+                        )
+
+                    when {
+                        pressureLeft == null -> {
+                            drawRect(color = errorColor, size = size)
+                        }
+
+                        pressureLeftWithEmergency == null -> {
+                            drawRect(
+                                brush = alertGradientBrush(
+                                    alertColor = insufficientReserveColor,
+                                    naturalColor = reserveColors.sampleGradientAt(aboveFraction),
+                                    endX = xPositionFor(pressureLeft),
+                                ),
+                                size = Size(xPositionFor(pressureLeft), size.height),
+                            )
+                            drawRect(
+                                brush = usedBrush,
+                                topLeft = Offset(xPositionFor(pressureLeft), 0f),
+                                size = Size(
+                                    size.width - xPositionFor(pressureLeft),
+                                    size.height
+                                ),
+                            )
+                        }
+
+                        else -> {
+                            drawRect(
+                                brush = unusedBrush,
+                                size = Size(
+                                    xPositionFor(pressureLeftWithEmergency),
+                                    size.height)
+                            )
+                            drawRect(
+                                brush = reserveBrush,
+                                topLeft = Offset(xPositionFor(pressureLeftWithEmergency), 0f),
+                                size = Size(
+                                    xPositionFor(pressureLeft) - xPositionFor(pressureLeftWithEmergency),
+                                    size.height
+                                )
+                            )
+                            drawRect(
+                                brush = usedBrush,
+                                topLeft = Offset(xPositionFor(pressureLeft), 0f),
+                                size = Size(size.width - xPositionFor(pressureLeft), size.height)
+                            )
+                        }
+                    }
+                }
+
+                // Draw vertical lines, these are not clipped to the rounded corners
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    pressureLeft?.let {
+                        drawLine(
+                            color = boundaryLineColor,
+                            start = Offset(xPositionFor(it), 0f),
+                            end = Offset(xPositionFor(it), size.height),
+                            strokeWidth = lineWidth.toPx()
+                        )
+                    }
+                    if (showEmergencyPressure) {
+                        drawLine(
+                            color = boundaryLineColor,
+                            start = Offset(xPositionFor(pressureLeftWithEmergency), 0f),
+                            end = Offset(xPositionFor(pressureLeftWithEmergency), size.height),
+                            strokeWidth = lineWidth.toPx()
                         )
                     }
                 }
-            },
-            graph = {
-                Column(modifier = it.drawWithContent {
 
-                    drawContent()
-
-                    val negativeWidth = (size.width) * (RECOMMENDED_END_PRESSURE_BAR * pressureScale / range)
-
-                    drawLine(
-                        color = Color.Red.copy(alpha = 0.5f),
-                        strokeWidth = strokeWidth.toPx(),
-                        start = Offset(negativeWidth, 0f),
-                        end = Offset(negativeWidth, size.height)
-                    )
-
-                }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    gasPlan.forEachIndexed { index, it ->
-                        Box(contentAlignment = Alignment.Center) {
-                            GasUsageBar(
-                                modifier = Modifier.height(barHeight).clickable {
-                                    onGasBarClicked(index, it)
-                                },
-                                cylinderGasRequirements = it,
-                                unitSystem = unitSystem,
-                                maxValue = max,
-                                minValue = min
-                            )
-                            if (it.pressureLeft == null) {
-                                val alertMessage = buildAnnotatedString {
-                                    appendIcon(IconFont.WARNING)
-                                    append(" Critical gas shortage")
-                                }
-
-                                TextAlert(
-                                    textStyle = MaterialTheme.typography.labelLarge,
-                                    text = alertMessage,
-                                    alertSeverity = AlertSeverity.ERROR
-                                )
-                            } else if (it.pressureLeftWithEmergency == null) {
-                                val alertMessage = buildAnnotatedString {
-                                    appendIcon(IconFont.WARNING)
-                                    append(" Insufficient ${emergencyLabel.lowercase()}")
-                                }
-
-                                TextAlert(
-                                    textStyle = MaterialTheme.typography.labelLarge,
-                                    text = alertMessage,
-                                    alertSeverity = AlertSeverity.WARNING
-                                )
-                            }
-                        }
-                    }
-                }
+                // Added to ever row, but potentially invisible, to make sure they all remain the
+                // same height based on the text that can potentially show in them.
+                val criticalShortage = if (pressureLeft == null) { "Critical gas shortage" } else { null }
+                PressureLabel(
+                    text = criticalShortage.orEmpty(),
+                    isVisible = criticalShortage != null,
+                    backgroundColor = errorColor,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                    style = labelStyle,
+                )
             }
+        }
+
+        Text(
+            modifier = Modifier.padding(start = 8.dp),
+            style = labelStyle,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = cylinder.pressure.formatPressure(unitSystem, includeUnit = false)
+                .padStart(fillPressureDigits, FIGURE_SPACE),
         )
     }
+}
+
+@Composable
+private fun PressureLabel(
+    text: String,
+    backgroundColor: Color,
+    contentColor: Color,
+    style: TextStyle,
+    isVisible: Boolean = true,
+) = PressureLabel(
+    text = AnnotatedString(text),
+    backgroundColor = backgroundColor,
+    contentColor = contentColor,
+    style = style,
+    isVisible = isVisible,
+)
+
+@Composable
+private fun PressureLabel(
+    text: AnnotatedString,
+    backgroundColor: Color,
+    contentColor: Color,
+    style: TextStyle,
+    isVisible: Boolean = true,
+) {
+    Text(
+        modifier = Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .ifTrue(!isVisible) { invisible() }
+            .ifTrue(!isVisible) { clearAndSetSemantics {} }
+            .background(backgroundColor)
+            .padding(horizontal = 6.dp, vertical = 1.dp),
+        text = text,
+        // Trims the line's ascent/descent space so that text centers more natural in case of a single line label.
+        style = style.copy(
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center,
+                trim = LineHeightStyle.Trim.Both,
+            )
+        ),
+        color = contentColor,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 @Preview
 @Composable
-fun GasUsageBarPreview() = PreviewWrapper {
-    AbysnerTheme {
-        GasUsageBar(modifier = Modifier.fillMaxWidth().height(48.dp), unitSystem = UnitSystem.METRIC, maxValue = 230f, minValue = 0f)
-    }
-}
-
-@Composable
-fun GasUsageBar(
-    modifier: Modifier = Modifier,
-    cylinderGasRequirements: CylinderGasRequirements = CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 1000.0, 500.0),
-    unitSystem: UnitSystem,
-    maxValue: Float,
-    minValue: Float,
-) {
-    val pressureScale = when (unitSystem) {
-        UnitSystem.METRIC -> 1.0f
-        UnitSystem.IMPERIAL -> PSI_PER_BAR.toFloat()
-    }
-    val pressureLeftWithEmergency = (cylinderGasRequirements.pressureLeftWithEmergency?.toFloat() ?: 0f) * pressureScale
-    val pressureLeftWithoutEmergency = (cylinderGasRequirements.pressureLeft?.toFloat() ?: 0f) * pressureScale
-
-    val redShades =
-        MaterialTheme.colorScheme.error.setSaturation(0.7f).getGradient(lightnessMiddle = 0.65f, difference = 0.2f)
-    val blueShades =
-        MaterialTheme.colorScheme.primary.getGradient(lightnessMiddle = 0.35f, difference = 0.2f)
-
-    val redForeground = redShades[1].contrastingOnColor()
-    val blueForeground = blueShades[1].contrastingOnColor()
-
-    val values = persistentListOf(
-
-        // Unused gas
-        BarSection(
-            value = pressureLeftWithEmergency,
-            color = Brush.horizontalGradient(colors = blueShades),
-            textColor = SolidColor(blueForeground),
-            textStyle = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Left)
-        ),
-        // Reserve
-        BarSection(
-            value = pressureLeftWithoutEmergency - pressureLeftWithEmergency,
-            color = Brush.horizontalGradient(colors = redShades),
-            textColor = SolidColor(redForeground),
-            textStyle = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Center)
-        ),
-        // Usage
-        BarSection(
-            value = cylinderGasRequirements.cylinder.pressure.toFloat() * pressureScale - pressureLeftWithoutEmergency,
-            color = SolidColor(MaterialTheme.colorScheme.outlineVariant),
-            textColor = SolidColor(MaterialTheme.colorScheme.contentColorFor(MaterialTheme.colorScheme.outlineVariant)),
-            textStyle = MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Right)
-        )
+fun CylinderPressureRowStatesPreview() = PreviewWrapper {
+    val requirements = listOf(
+        // CCR: Bailout only cylinder
+        CylinderGasRequirements(Cylinder.aluminium80Cuft(Gas.Air), 0.0, 800.0),
+        // CCR: Loop only cylinder (oxygen)
+        CylinderGasRequirements(Cylinder.steel3LiterOxygen(), 200.0, 0.0),
+        // OC: Enough normal and reserve gas
+        CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 800.0, 1200.0),
+        // OC: Enough normal gas but not enough reserve
+        CylinderGasRequirements(Cylinder.steel12Liter(Gas.Nitrox50), 1900.0, 900.0),
+        // OC: Not enough normal gas
+        CylinderGasRequirements(Cylinder.steel12Liter(Gas.Air), 2800.0, 400.0),
     )
-
-    StackedHorizontalBar(
-        modifier = modifier,
-        values = values,
-        maxValue = maxValue,
-        minValue = minValue,
-        valueTransformation = { index, value ->
-            // Don't show numbers if we cannot show the whole bars that those numbers are supposed
-            // to represent
-            if (cylinderGasRequirements.pressureLeftWithEmergency == null && (index == 0 || index == 1)) {
-                ""
-            } else if(index == 2 && cylinderGasRequirements.pressureLeft == null) {
-                ""
-            } else {
-                DecimalFormat.format(0, value)
+    AbysnerTheme {
+        Surface {
+            Column {
+                GasPlanBarChart(
+                    modifier = Modifier.padding(16.dp),
+                    gasPlan = requirements.toImmutableList(),
+                    unitSystem = UnitSystem.METRIC,
+                    emergencyLabel = "Reserve",
+                    emergencyIsError = false,
+                )
             }
         }
-    )
+    }
 }
 
-private const val MINIMUM_AXIS_PRESSURE_BAR = 200f
-private const val RECOMMENDED_END_PRESSURE_BAR = 50f
+private val lineWidth = 2.dp
+
+private const val gradientDifference = 0.15f
