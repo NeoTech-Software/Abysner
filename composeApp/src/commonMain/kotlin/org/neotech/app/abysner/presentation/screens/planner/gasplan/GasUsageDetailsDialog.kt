@@ -28,14 +28,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +49,7 @@ import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.appendBoldLine
+import org.neotech.app.abysner.presentation.component.core.uniformLabelWidth
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
@@ -282,19 +280,6 @@ fun GasUsageDetailsDialog(
         }
     )
 }
-
-private fun Modifier.uniformLabelWidth(
-    state: MutableIntState,
-): Modifier = onSizeChanged { state.intValue = maxOf(state.intValue, it.width) }
-    .layout { measurable, constraints ->
-        val minWidthPx = state.intValue
-        val placeable = measurable.measure(
-            constraints.copy(minWidth = maxOf(constraints.minWidth, minWidthPx))
-        )
-        layout(placeable.width, placeable.height) {
-            placeable.placeRelative(0, 0)
-        }
-    }
 
 @Composable
 fun AlertCard(

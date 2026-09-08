@@ -15,26 +15,27 @@ package org.neotech.app.abysner.presentation.formatting
 import org.neotech.app.abysner.domain.core.model.Gas
 
 /**
- * Figure space (U+2007): renders at the same width as a tabular digit in fonts that support
+ * Figure space (U+2007) renders at the same width as a tabular digit in fonts that support
  * [tabular figures][org.neotech.app.abysner.presentation.theme.withTabularFigures], unlike a
- * regular space. Used to pad the oxygen and helium percentages so mixes like "21/0" and "21/35"
- * line up instead of one being a character shorter.
+ * regular space. Used for example to pad the oxygen and helium percentages so mixes like "21/0" and
+ * "21/35" to line up instead of one being a character shorter.
  */
-private const val FIGURE_SPACE = ' '
+internal const val FIGURE_SPACE = ' '
 
 /**
- * Formats this gas as "oxygen/helium" padded with [FIGURE_SPACE] so the combined string is always
- * the same width, regardless of how many digits the oxygen and helium percentages have. Intended
- * to be displayed with
+ * Formats this gas as "oxygen/helium" padded with [FIGURE_SPACE] at the end or start so the
+ * combined string is always the same width, regardless of how many digits the oxygen and helium
+ * percentages have. Intended to be displayed with
  * [tabular figures][org.neotech.app.abysner.presentation.theme.withTabularFigures] enabled, so
- * mixes line up across rows in a table or diagram.
+ * the strings actually take up the same width.
  */
-fun Gas.toPaddedMixString(): String {
-    return if (oxygenPercentage >= 100) {
-        "100/0"
-    } else if (oxygenPercentage >= 10) {
-        "$oxygenPercentage/${heliumPercentage.toString().padEnd(2, FIGURE_SPACE)}"
+fun Gas.toPaddedMixString(padEnd: Boolean = true): String {
+    val formatted = toString()
+    return if (padEnd) {
+        formatted.padEnd(PADDED_MIX_WIDTH, FIGURE_SPACE)
     } else {
-        "$oxygenPercentage/${heliumPercentage.toString().padEnd(3, FIGURE_SPACE)}"
+        formatted.padStart(PADDED_MIX_WIDTH, FIGURE_SPACE)
     }
 }
+
+private const val PADDED_MIX_WIDTH = 5

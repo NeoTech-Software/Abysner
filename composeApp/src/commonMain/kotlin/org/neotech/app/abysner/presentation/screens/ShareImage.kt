@@ -58,8 +58,8 @@ import org.neotech.app.abysner.presentation.formatting.toHHMM
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanOxygenToxicityDisplay
 import org.neotech.app.abysner.presentation.screens.planner.decoplan.DecoPlanTable
-import org.neotech.app.abysner.presentation.screens.planner.gasplan.CylindersTable
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasLimitsTable
+import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasPlanBarChart
 import org.neotech.app.abysner.presentation.screens.planner.gasplan.GasTotalsTable
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.platform
@@ -149,14 +149,14 @@ fun ShareImage(
                     val emergencyLabel = if (divePlan.isCcr) { "Bailout" } else { "Reserve" }
                     val usageLabel = if (divePlan.isCcr) { "Loop" } else { "Used" }
 
-                    // GasPlanBarChart(
-                    //     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                    //     gasPlan = divePlan.gasPlan,
-                    //     emergencyLabel = emergencyLabel,
-                    //     usageLabel = usageLabel,
-                    //     balanceHorizontalLayout = true,
-                    //     compact = true,
-                    // )
+                    GasPlanBarChart(
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        gasPlan = divePlan.gasPlan,
+                        unitSystem = settingsModel.unitSystem,
+                        emergencyLabel = emergencyLabel,
+                        usageLabel = usageLabel,
+                        emergencyIsError = divePlan.isCcr,
+                    )
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
@@ -170,14 +170,6 @@ fun ShareImage(
                         emergencyLabel = emergencyLabel,
                         usageLabel = usageLabel
                     )
-
-                    Text(
-                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
-                        text = "Cylinders",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-
-                    CylindersTable(divePlanSet = divePlan, unitSystem = settingsModel.unitSystem)
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),

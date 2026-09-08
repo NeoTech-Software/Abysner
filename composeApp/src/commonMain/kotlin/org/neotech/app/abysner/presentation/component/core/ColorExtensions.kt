@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2025 Neotech
+ * Copyright (C) 2025-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -13,13 +13,10 @@
 package org.neotech.app.abysner.presentation.component.core
 
 import androidx.annotation.Size
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isUnspecified
-import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
-import org.neotech.app.abysner.presentation.theme.LocalIsDarkTheme
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -43,25 +40,7 @@ fun Color.preMixedWith(color: Color): Color {
     return Color(rPreMixed, gPreMixed, bPreMixed, alpha = 1f, colorSpace)
 }
 
-/**
- * Retains the hue and saturation of this color and modifies the lightness value to return
- * [count] shades of this color. The shades are equally divided within the given range of min and
- * max lightness, for example 0.15 (15%) to 0.85 (85%) would yield:
- *
- * - For 2 shades: 15% and 85%.
- * - For 4 shades: 15%, 38.33%, 61.67%, 85%.
- */
-fun Color.getShades(count: Int, minLightness: Float = 0.3f, maxLightness: Float = 0.7f): List<Color> {
-    val hsl = toHsl()
-    val step = (maxLightness - minLightness) / (count - 1)
-
-    return (0 until count).map {
-        hsl[2] = minLightness + (step * it)
-        hsl.hslToColor()
-    }
-}
-
-fun Color.getGradient(lightnessMiddle: Float? = null, difference: Float = 0.2f): List<Color> {
+fun Color.getGradient(difference: Float = 0.2f, lightnessMiddle: Float? = null): List<Color> {
     val hsl = toHsl()
     val lightness = lightnessMiddle ?: hsl[2]
 
@@ -86,31 +65,6 @@ fun Color.getGradient(lightnessMiddle: Float? = null, difference: Float = 0.2f):
     val middleColor = hsl.hslToColor()
 
     return listOf(lowerColor, middleColor, upperColor)
-}
-
-@Composable
-fun Color.contrastingOnColor(): Color {
-    // Choose white for darker surfaces and black for lighter surfaces
-    val isDarkTheme = LocalIsDarkTheme.current
-    return if (this.luminance() > 0.73) {
-        if(isDarkTheme) {
-            MaterialTheme.colorScheme.inverseOnSurface
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
-    } else {
-        if(isDarkTheme) {
-            MaterialTheme.colorScheme.onSurface
-        } else {
-            MaterialTheme.colorScheme.inverseOnSurface
-        }
-    }
-}
-
-fun Color.setSaturation(saturation: Float): Color {
-    val hsl = toHsl()
-    hsl[1] = saturation
-    return hsl.hslToColor()
 }
 
 /**
@@ -239,4 +193,20 @@ private fun Int.constrain(low: Int, high: Int): Int {
  */
 private fun Float.constrain(low: Float, high: Float): Float {
     return if (this < low) { low } else if (this > high) {high } else { this }
+}
+
+/**
+ * Returns the color a Brush created with [androidx.compose.ui.graphics.Brush.horizontalGradient]
+ * would render at [fraction] given this list of colors.
+ */
+fun List<Color>.sampleGradientAt(fraction: Float): Color {
+    if (isEmpty()) {
+        return Color.Transparent
+    }
+    if (size == 1) {
+        return first()
+    }
+    val scaled = fraction.coerceIn(0f, 1f) * (size - 1)
+    val index = scaled.toInt().coerceAtMost(size - 2)
+    return lerp(this[index], this[index + 1], scaled - index)
 }

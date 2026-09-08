@@ -66,6 +66,7 @@ import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.invisible
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.formatPressure
+import org.neotech.app.abysner.presentation.formatting.formatCapacity
 import org.neotech.app.abysner.presentation.utilities.formatVolume
 import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
 import kotlin.math.roundToInt
@@ -255,13 +256,7 @@ fun CylinderListItemComponent(
     onChecked: (cylinder: Cylinder, isChecked: Boolean) -> Unit = { _, _ -> },
     onLockedClick: () -> Unit = {},
 ) {
-    val capacityDisplay = when (unitSystem) {
-        UnitSystem.METRIC -> cylinder.waterVolume.formatVolume(unitSystem, decimals = 1)
-        UnitSystem.IMPERIAL -> {
-            val ratedCapacityCuFt = cylinder.size.ratedCapacity().asLitersToCubicFeet()
-            "${ratedCapacityCuFt.roundToInt()} ${unitSystem.volumeUnitLabel}"
-        }
-    }
+    val capacityDisplay = cylinder.formatCapacity(unitSystem)
     val cylinderSuffix = " - ${cylinder.pressure.formatPressure(unitSystem)} ($capacityDisplay)"
 
     Row(

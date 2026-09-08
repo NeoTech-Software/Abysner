@@ -35,7 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
@@ -57,12 +56,9 @@ import org.neotech.app.abysner.presentation.theme.appendIcon
 import org.neotech.app.abysner.presentation.theme.withTabularFigures
 import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
 import org.neotech.app.abysner.presentation.utilities.formatDisplayDepth
-import org.neotech.app.abysner.presentation.utilities.formatPressure
 import org.neotech.app.abysner.presentation.utilities.formatVolume
 import org.neotech.app.abysner.presentation.utilities.noUnitLabel
-import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
 import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
-import kotlin.math.roundToInt
 
 @Composable
 fun GasPlanCardComponent(
@@ -146,6 +142,9 @@ fun GasPlanCardComponent(
                         unitSystem = unitSystem,
                         emergencyLabel = emergencyLabel,
                         usageLabel = usageLabel,
+                        // On CCR: Not enough bailout is a true error not a warning.
+                        // On OC: Not enough gas for an out-of-air buddy is warning
+                        emergencyIsError = divePlanSet.isCcr,
                     ) { index, _ ->
                         showCylinderDetails = index
                     }
@@ -163,22 +162,6 @@ fun GasPlanCardComponent(
                         unitSystem = unitSystem,
                         emergencyLabel = emergencyLabel,
                         usageLabel = usageLabel,
-                    )
-
-                    Text(
-                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
-                            .padding(horizontal = 16.dp),
-                        text = "Cylinders",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-
-                    CylindersTable(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        divePlanSet = divePlanSet,
-                        unitSystem = unitSystem,
-                        // On CCR: Not enough bailout is a true error not a warning.
-                        // On OC: Not enough gas for an out-of-air buddy is warning
-                        emergencyIsError = divePlanSet.isCcr,
                     )
 
                     Text(
@@ -260,64 +243,6 @@ private fun headerWithUnit(label: String, unit: String) = buildAnnotatedString {
 }
 
 @Composable
-fun CylindersTable(
-    modifier: Modifier = Modifier,
-    divePlanSet: DivePlanSet,
-    unitSystem: UnitSystem,
-    emergencyIsError: Boolean = false,
-) {
-    Table(
-        modifier = modifier,
-        header = {
-            Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = "Mix")
-            Text(modifier = Modifier.weight(0.3f), maxLines = 1, text = headerWithUnit("Size", unitSystem.volumeUnitLabel))
-            Text(modifier = Modifier.weight(0.4f), maxLines = 1, text = headerWithUnit("Pressure", unitSystem.pressureUnitLabel))
-        }
-    ) {
-        rows(divePlanSet.gasPlan, key = { it.cylinder.uniqueIdentifier }) { usage ->
-            Text(
-                modifier = Modifier.weight(0.3f),
-                text = usage.cylinder.gas.toString(),
-            )
-            Text(
-                modifier = Modifier.weight(0.3f),
-                text = when (unitSystem) {
-                    UnitSystem.METRIC -> usage.cylinder.waterVolume.formatVolume(unitSystem, decimals = 1, unit = noUnitLabel)
-                    UnitSystem.IMPERIAL -> usage.cylinder.size.ratedCapacity().asLitersToCubicFeet().roundToInt().toString()
-                },
-            )
-
-            val endPressure = usage.cylinder.pressureAfter(volumeUsage = usage.totalGasRequirement)
-            val startPressureFormatted = usage.cylinder.pressure.formatPressure(unitSystem, includeUnit = false)
-
-            val alertSeverity = if (endPressure == null) {
-                if (!emergencyIsError && usage.cylinder.pressureAfter(volumeUsage = usage.normalRequirement) != null) {
-                    // Baseline fits but reserve does not.
-                    AlertSeverity.WARNING
-                } else {
-                    // Not enough gas for baseline (OC/CCR) or not enough for bailout (CCR bailout).
-                    AlertSeverity.ERROR
-                }
-            } else {
-                AlertSeverity.NONE
-            }
-
-            val pressureText = if (endPressure == null) {
-                "$startPressureFormatted > empty"
-            } else {
-                "$startPressureFormatted > ${endPressure.formatPressure(unitSystem, includeUnit = false)}"
-            }
-
-            TextAlert(
-                modifier = Modifier.weight(0.4f),
-                alertSeverity = alertSeverity,
-                text = pressureText,
-            )
-        }
-    }
-}
-
-@Composable
 fun GasTotalsTable(
     modifier: Modifier = Modifier,
     gasPlan: List<CylinderGasRequirements>,
@@ -352,6 +277,7 @@ fun GasTotalsTable(
             }
 
             Text(modifier = Modifier.weight(0.17f), text = gas.toString())
+            // TODO add volume here?
             Text(modifier = Modifier.weight(0.32f), text = totalCapacity.formatVolume(unitSystem, unit = noUnitLabel))
             TextAlert(
                 modifier = Modifier.weight(0.26f),
@@ -457,7 +383,7 @@ private fun GasPlanCardComponentEmptyPreview() {
 
 @Preview
 @Composable
-private fun GasPlanCardComponentCcrPreview() {
+fun GasPlanCardComponentCcrPreview() {
     AbysnerTheme {
         GasPlanCardComponent(
             divePlanSet = PreviewData.divePlanCcr,
@@ -470,7 +396,7 @@ private fun GasPlanCardComponentCcrPreview() {
 
 @Preview
 @Composable
-private fun GasPlanCardComponentCcrBailoutPreview() {
+fun GasPlanCardComponentCcrBailoutPreview() {
     AbysnerTheme {
         GasPlanCardComponent(
             divePlanSet = PreviewData.divePlanCcrBailout,
