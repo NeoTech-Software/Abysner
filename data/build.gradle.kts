@@ -66,6 +66,7 @@ kotlin {
     sourceSets {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
 
         commonMain.dependencies {
@@ -73,6 +74,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.kotlinx.serialization)
+            implementation(libs.okio)
         }
     }
 }

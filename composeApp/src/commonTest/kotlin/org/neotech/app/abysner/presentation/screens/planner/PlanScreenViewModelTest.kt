@@ -36,6 +36,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -162,20 +163,43 @@ class PlanScreenViewModelTest {
         assertFalse(calculationTriggered)
         assertEquals(0, viewModel.uiState.value.selectedDiveIndex)
     }
+
+    @Test
+    fun uiState_isLoadingWhileInputIsNotYetLoaded() = runTest {
+        val planningRepo = FakePlanningRepository(loaded = false)
+        val viewModel = createViewModel(planningRepository = planningRepo)
+
+        collectForTest(viewModel.uiState)
+
+        assertTrue(viewModel.uiState.value.isLoading)
+    }
 }
 
 private class FakePlanningRepository(
     initialConfig: Configuration = Configuration(),
+    loaded: Boolean = true,
 ) : PlanningRepository {
     override val configuration = MutableStateFlow(initialConfig)
+    override val multiDivePlanInput = MutableStateFlow(
+        if (loaded) {
+            MultiDivePlanInputModel.Default
+        } else {
+            null
+        }
+    )
 
-    override fun updateConfiguration(updateBlock: (Configuration) -> Configuration) {
-        configuration.value = updateBlock(configuration.value)
+    override fun updateConfiguration(updateBlock: (Configuration) -> Configuration): Configuration {
+        val updated = updateBlock(configuration.value)
+        configuration.value = updated
+        return updated
     }
 
-    override fun setMultiDivePlanInput(model: MultiDivePlanInputModel) {}
-
-    override suspend fun getMultiDivePlanInput(): MultiDivePlanInputModel? = null
+    override fun updateMultiDivePlanInput(updateBlock: (MultiDivePlanInputModel) -> MultiDivePlanInputModel): MultiDivePlanInputModel? {
+        val current = multiDivePlanInput.value ?: return null
+        val updated = updateBlock(current)
+        multiDivePlanInput.value = updated
+        return updated
+    }
 }
 
 private class FakeSettingsRepository : SettingsRepository {
@@ -195,7 +219,6 @@ private fun TestScope.createViewModel(
 ) = PlanScreenViewModel(
     planningRepository = planningRepository,
     settingsRepository = settingsRepository,
-    ioDispatcher = UnconfinedTestDispatcher(testScheduler),
     calculationDispatcher = UnconfinedTestDispatcher(testScheduler),
 )
 
