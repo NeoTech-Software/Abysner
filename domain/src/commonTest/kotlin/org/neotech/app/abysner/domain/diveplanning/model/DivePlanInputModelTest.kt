@@ -28,6 +28,7 @@ class DivePlanInputModelTest {
     private val airCylinder = Cylinder.steel12Liter(Gas.Air)
     private val nitroxCylinder = Cylinder.aluminium80Cuft(Gas.Nitrox50)
     private val trimixCylinder = Cylinder.steel12Liter(Gas(0.21, 0.35))
+    private val airSegment = DiveProfileSection(duration = 30, depthInMeters = 25.0, cylinder = airCylinder)
 
     @Test
     fun hasGas_trueWhenGasPresent() {
@@ -182,6 +183,405 @@ class DivePlanInputModelTest {
         assertTrue(updated.dives[1].deeper)
     }
 
+    @Test
+    fun addSegment_referencedCylinderIsLocked() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = false),
+            ),
+            segments = listOf(airSegment)
+        )
+
+        val result = dive.addSegment(airSegment)
+
+        assertTrue(result.cylinders[0].isLocked)
+    }
+
+    @Test
+    fun removeCylinder_lockedCylinderThrows() {
+        val dive = createDive()
+        assertFailsWith<IllegalStateException> {
+            dive.removeCylinder(airCylinder)
+        }
+    }
+
+    @Test
+    fun removeCylinder_unlockedCylinderIsRemoved() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = false),
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = true, isLocked = false),
+            ),
+            segments = emptyList(),
+        )
+
+        val result = dive.removeCylinder(nitroxCylinder)
+
+        assertEquals(1, result.cylinders.size)
+        assertEquals(airCylinder, result.cylinders[0].cylinder)
+    }
+
+    @Test
+    fun removeCylinder_segmentsReferencingRemovedCylinderAreReassigned() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(
+                    cylinder = airCylinder,
+                    isChecked = true,
+                    isLocked = false,
+                    role = CylinderRole.CCR_DILUENT_AND_BAILOUT
+                ),
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = true, isLocked = false),
+            ),
+            segments = listOf(
+                airSegment,
+                DiveProfileSection(duration = 10, depthInMeters = 6.0, cylinder = nitroxCylinder),
+            ),
+        ).copy(diveMode = DiveMode.CLOSED_CIRCUIT)
+
+        val result = dive.removeCylinder(nitroxCylinder)
+
+        assertEquals(2, result.plannedProfile.size)
+        assertEquals(airCylinder, result.plannedProfile[1].cylinder)
+    }
+
+    @Test
+    fun removeCylinder_lastUnusedCylinderIsRemoved() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = false),
+            ),
+            segments = emptyList(),
+        )
+
+        val result = dive.removeCylinder(airCylinder)
+
+        assertTrue(result.cylinders.isEmpty())
+    }
+
+    @Test
+    fun toggleCylinder_uncheckedCylinderIsEnabled() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = true),
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = false, isLocked = false),
+            ),
+            segments = listOf(airSegment)
+        )
+
+        val result = dive.toggleCylinder(nitroxCylinder, enabled = true)
+
+        assertTrue(result.cylinders.first { it.cylinder == nitroxCylinder }.isChecked)
+    }
+
+    @Test
+    fun toggleCylinder_lockedCylinderThrows() {
+        val dive = createDive()
+        assertFailsWith<IllegalStateException> {
+            dive.toggleCylinder(airCylinder, enabled = false)
+        }
+    }
+
+    @Test
+    fun toggleCylinder_checkedUnlockedCylinderIsDisabled() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = false),
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = true, isLocked = false),
+            ),
+            segments = emptyList()
+        )
+
+        val result = dive.toggleCylinder(nitroxCylinder, enabled = false)
+
+        assertFalse(result.cylinders.first { it.cylinder == nitroxCylinder }.isChecked)
+    }
+
+    @Test
+    fun recomputeCylinderState_referencedCylinderIsLockedAndUnreferencedIsUnlocked() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = false),
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = true, isLocked = true),
+            ),
+            segments = listOf(airSegment)
+        )
+        val result = dive.recomputeCylinderState()
+
+        assertTrue(result.cylinders[0].isLocked)
+        assertFalse(result.cylinders[1].isLocked)
+    }
+
+    @Test
+    fun recomputeCylinderState_ccrOxygenCylinderIsAutoCheckedAndLocked() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(
+                    cylinder = Cylinder(
+                        gas = Gas.Oxygen,
+                        pressure = 200.0,
+                        waterVolume = 3.0
+                    ),
+                    isChecked = false,
+                    isLocked = false,
+                    role = CylinderRole.CCR_OXYGEN,
+                ),
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = false),
+            ),
+        ).copy(diveMode = DiveMode.CLOSED_CIRCUIT)
+
+        val result = dive.recomputeCylinderState()
+
+        val oxygenCylinder = result.cylinders.first { it.isCcrOxygen }
+        assertTrue(oxygenCylinder.isChecked)
+        assertTrue(oxygenCylinder.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_ccrSwitchAddsNewCcrOxygenCylinderIfRoleMissing() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = true),
+                PlannedCylinderModel(
+                    cylinder = Cylinder.aluminium63Cuft(Gas.Oxygen),
+                    isChecked = false,
+                    isLocked = false,
+                ),
+            )
+        )
+
+        val result = dive.setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        assertEquals(2, result.cylinders.countGas(Gas.Oxygen))
+        val oxygen = result.cylinders.first { it.isCcrOxygen }
+        assertEquals(CylinderRole.CCR_OXYGEN, oxygen.role)
+        assertTrue(oxygen.isChecked)
+        assertTrue(oxygen.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_ccrOxygenCylinderIsCheckedAndLocked() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = true),
+                PlannedCylinderModel(
+                    cylinder = Cylinder(gas = Gas.Oxygen, 200.0, 3.0),
+                    isChecked = false,
+                    isLocked = false,
+                    role = CylinderRole.CCR_OXYGEN,
+                ),
+            ),
+        )
+
+        val result = dive.setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        val oxygen = result.cylinders.first { it.isCcrOxygen }
+        assertTrue(oxygen.isChecked)
+        assertTrue(oxygen.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_ccrSwitchUpdatesDiveMode() {
+        val dive = createDive()
+
+        val result = dive.setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        assertEquals(DiveMode.CLOSED_CIRCUIT, result.diveMode)
+    }
+
+    @Test
+    fun setDiveMode_ccrSwitchAssignsDiluentRole() {
+        val dive = createDive()
+
+        val result = dive.setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        val diluent = result.cylinders.firstOrNull { it.isCcrDiluent }
+        assertNotNull(diluent)
+        assertTrue(diluent.isChecked)
+        assertTrue(diluent.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_ccrSwitchCreatesDefaultAirDiluentWhenNoSegments() {
+        val dive = createDive(
+            segments = emptyList(),
+            cylinders = listOf(
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = true, isLocked = false),
+                PlannedCylinderModel(
+                    cylinder = Cylinder.steel3LiterOxygen(),
+                    isChecked = false,
+                    isLocked = false,
+                    role = CylinderRole.CCR_OXYGEN,
+                ),
+            ),
+        )
+
+        val result = dive.setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        assertEquals(3, result.cylinders.size)
+        val diluent = result.cylinders.first { it.isCcrDiluent }
+        assertEquals(Gas.Air, diluent.cylinder.gas)
+        assertEquals(CylinderRole.CCR_DILUENT_AND_BAILOUT, diluent.role)
+        assertTrue(diluent.isChecked)
+        assertTrue(diluent.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_ccrSwitchReusesExistingDiluentRole() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(
+                    cylinder = airCylinder,
+                    isChecked = true,
+                    isLocked = true,
+                    role = CylinderRole.CCR_DILUENT
+                ),
+                PlannedCylinderModel(
+                    cylinder = Cylinder.steel3LiterOxygen(),
+                    isChecked = false,
+                    isLocked = false,
+                    role = CylinderRole.CCR_OXYGEN,
+                ),
+            ),
+        )
+
+        val result = dive.setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        val diluent = result.cylinders.first { it.cylinder == airCylinder }
+        assertEquals(CylinderRole.CCR_DILUENT, diluent.role)
+    }
+
+    @Test
+    fun setDiveMode_ocSwitchPreservesOxygenCylinderAndKeepsRole() {
+        val dive = createDive().setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        val result = dive.setDiveMode(DiveMode.OPEN_CIRCUIT)
+
+        val oxygen = result.cylinders.first { it.cylinder.gas == Gas.Oxygen }
+        assertEquals(CylinderRole.CCR_OXYGEN, oxygen.role)
+        assertFalse(oxygen.isChecked)
+        assertFalse(oxygen.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_ocSwitchPreservesDiluentCylinderAndKeepsRole() {
+        val dive = createDive().setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        val result = dive.setDiveMode(DiveMode.OPEN_CIRCUIT)
+
+        val diluent = result.cylinders.first { it.cylinder == airCylinder }
+        assertEquals(CylinderRole.CCR_DILUENT_AND_BAILOUT, diluent.role)
+        // These are true since the diluent was used in the segment
+        assertTrue(diluent.isChecked)
+        assertTrue(diluent.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_roundTripPreservesDiluentRole() {
+        val dive = createDive()
+            .setDiveMode(DiveMode.CLOSED_CIRCUIT)
+            .setDiveMode(DiveMode.OPEN_CIRCUIT)
+
+        val result = dive.setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        val diluent = result.cylinders.first { it.cylinder == airCylinder }
+        assertEquals(CylinderRole.CCR_DILUENT_AND_BAILOUT, diluent.role)
+        assertTrue(diluent.isChecked)
+        assertTrue(diluent.isLocked)
+    }
+
+    @Test
+    fun setDiveMode_ocSwitchUpdatesDiveMode() {
+        val dive = createDive().setDiveMode(DiveMode.CLOSED_CIRCUIT)
+
+        val result = dive.setDiveMode(DiveMode.OPEN_CIRCUIT)
+
+        assertEquals(DiveMode.OPEN_CIRCUIT, result.diveMode)
+    }
+
+    @Test
+    fun setDiveMode_ocSwitchResetsBailout() {
+        val dive = createDive()
+            .setDiveMode(DiveMode.CLOSED_CIRCUIT)
+            .setContingency(deeper = false, longer = false, bailout = true)
+
+        val result = dive.setDiveMode(DiveMode.OPEN_CIRCUIT)
+
+        assertFalse(result.bailout)
+    }
+
+    @Test
+    fun setDiveMode_sameModeIsNoOp() {
+        val dive = createDive()
+
+        val result = dive.setDiveMode(DiveMode.OPEN_CIRCUIT)
+
+        assertEquals(dive, result)
+    }
+
+    @Test
+    fun setContingency_setsAllFlags() {
+        val result = createDive().setContingency(deeper = true, longer = true, bailout = true)
+
+        assertTrue(result.deeper)
+        assertTrue(result.longer)
+        assertTrue(result.bailout)
+    }
+
+    @Test
+    fun setContingency_clearsAllFlags() {
+        val dive = createDive().copy(deeper = true, longer = true, bailout = true)
+
+        val result = dive.setContingency(deeper = false, longer = false, bailout = false)
+
+        assertFalse(result.deeper)
+        assertFalse(result.longer)
+        assertFalse(result.bailout)
+    }
+
+    @Test
+    fun toggleAvailableForBailout_removeBailoutPreservesDiluentRole() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(
+                    cylinder = airCylinder,
+                    isChecked = true,
+                    isLocked = true,
+                    role = CylinderRole.CCR_DILUENT_AND_BAILOUT
+                ),
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = true, isLocked = false),
+            ),
+        ).copy(diveMode = DiveMode.CLOSED_CIRCUIT)
+
+        val result = dive.toggleAvailableForBailout(airCylinder, false)
+
+        assertEquals(CylinderRole.CCR_DILUENT, result.cylinders.first { it.cylinder == airCylinder }.role)
+        assertNull(result.cylinders.first { it.cylinder == nitroxCylinder }.role)
+    }
+
+    @Test
+    fun toggleAvailableForBailout_addBailoutPreservesDiluentRole() {
+        val dive = createDive(
+            cylinders = listOf(
+                PlannedCylinderModel(
+                    cylinder = airCylinder,
+                    isChecked = true,
+                    isLocked = true,
+                    role = CylinderRole.CCR_DILUENT
+                ),
+                PlannedCylinderModel(cylinder = nitroxCylinder, isChecked = true, isLocked = false),
+            ),
+        ).copy(diveMode = DiveMode.CLOSED_CIRCUIT)
+
+        val result = dive.toggleAvailableForBailout(airCylinder, true)
+
+        assertEquals(
+            CylinderRole.CCR_DILUENT_AND_BAILOUT,
+            result.cylinders.first { it.cylinder == airCylinder }.role
+        )
+        assertTrue(result.cylinders.first { it.cylinder == airCylinder }.isAvailableForBailout)
+    }
+
     private fun plannedCylinder(
         cylinder: Cylinder,
         isChecked: Boolean = true,
@@ -204,5 +604,20 @@ class DivePlanInputModelTest {
         ),
         cylinders = listOf(plannedCylinder(airCylinder)),
         surfaceIntervalBefore = null,
+    )
+
+    private fun createDive(
+        segments: List<DiveProfileSection> = listOf(airSegment),
+        cylinders: List<PlannedCylinderModel> = listOf(
+            PlannedCylinderModel(cylinder = airCylinder, isChecked = true, isLocked = true),
+        ),
+    ) = DivePlanInputModel(
+        diveMode = DiveMode.OPEN_CIRCUIT,
+        deeper = false,
+        longer = false,
+        bailout = false,
+        plannedProfile = segments,
+        cylinders = cylinders,
+        surfaceIntervalBefore = null
     )
 }
