@@ -21,4 +21,8 @@ data class MultiDivePlanInputModel(
 
     fun updateDive(index: Int, block: DivePlanInputModel.() -> DivePlanInputModel) =
         copy(dives = dives.toMutableList().also { it[index] = it[index].block() })
+
+    companion object {
+        val Default: MultiDivePlanInputModel = MultiDivePlanInputModel(dives = listOf(DivePlanInputModel.Default))
+    }
 }

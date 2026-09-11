@@ -35,9 +35,7 @@ import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
-import org.neotech.app.abysner.domain.core.model.Gas
-import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.diveplanning.DivePlanner
+import org.neotech.app.abysner.domain.diveplanning.MultiDivePlanner
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
@@ -45,9 +43,7 @@ import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
-import org.neotech.app.abysner.domain.diveplanning.model.toAssignedCylinder
-import org.neotech.app.abysner.domain.diveplanning.model.truncateAtRuntime
-import org.neotech.app.abysner.domain.gasplanning.GasPlanner
+import org.neotech.app.abysner.domain.diveplanning.model.toggleAvailableForBailout
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.presentation.utilities.combine
@@ -64,7 +60,7 @@ class PlanScreenViewModel(
 ) : ViewModel() {
 
     private data class PlanInput(
-        val model: MultiDivePlanInputModel = defaultMultiDivePlanInputModel,
+        val model: MultiDivePlanInputModel = MultiDivePlanInputModel.Default,
         val selectedDiveIndex: Int = 0,
     )
 
@@ -74,9 +70,9 @@ class PlanScreenViewModel(
 
     init {
         viewModelScope.launch(ioDispatcher) {
-            val loaded = planningRepository.getMultiDivePlanInput() ?: defaultMultiDivePlanInputModel
+            val loaded = planningRepository.getMultiDivePlanInput() ?: MultiDivePlanInputModel.Default
             // Recompute cylinder lock state for every dive after loading persisted data.
-            val recomputed = loaded.copy(dives = loaded.dives.map(DiveEditorViewModelDelegate::recomputeCylinderState))
+            val recomputed = loaded.copy(dives = loaded.dives.map { it.recomputeCylinderState() })
             planInput.update { it.copy(model = recomputed) }
             isLoading.value = false
 
@@ -93,22 +89,22 @@ class PlanScreenViewModel(
         }
     }
 
-    private fun mutateDive(mutation: (DivePlanInputModel) -> DivePlanInputModel) {
+    private fun mutateDive(mutation: DivePlanInputModel.() -> DivePlanInputModel) {
         planInput.update { state ->
             state.copy(model = state.model.updateDive(state.selectedDiveIndex, mutation))
         }
     }
 
-    fun addSegment(section: DiveProfileSection) = mutateDive { DiveEditorViewModelDelegate.addSegment(it, section) }
-    fun updateSegment(index: Int, section: DiveProfileSection) = mutateDive { DiveEditorViewModelDelegate.updateSegment(it, index, section) }
-    fun removeSegment(index: Int) = mutateDive { DiveEditorViewModelDelegate.removeSegment(it, index) }
-    fun addCylinder(cylinder: Cylinder) = mutateDive { DiveEditorViewModelDelegate.addCylinder(it, cylinder) }
-    fun updateCylinder(cylinder: Cylinder) = mutateDive { DiveEditorViewModelDelegate.updateCylinder(it, cylinder) }
-    fun removeCylinder(cylinder: Cylinder) = mutateDive { DiveEditorViewModelDelegate.removeCylinder(it, cylinder) }
-    fun toggleCylinder(cylinder: Cylinder, enabled: Boolean) = mutateDive { DiveEditorViewModelDelegate.toggleCylinder(it, cylinder, enabled) }
-    fun setContingency(deeper: Boolean, longer: Boolean, bailout: Boolean) = mutateDive { DiveEditorViewModelDelegate.setContingency(it, deeper, longer, bailout) }
-    fun setDiveMode(mode: DiveMode) = mutateDive { DiveEditorViewModelDelegate.setDiveMode(it, mode) }
-    fun toggleAvailableForBailout(cylinder: Cylinder, availableForBailout: Boolean) = mutateDive { DiveEditorViewModelDelegate.toggleAvailableForBailout(it, cylinder, availableForBailout) }
+    fun addSegment(section: DiveProfileSection) = mutateDive { addSegment(section) }
+    fun updateSegment(index: Int, section: DiveProfileSection) = mutateDive { updateSegment(index, section) }
+    fun removeSegment(index: Int) = mutateDive { removeSegment(index) }
+    fun addCylinder(cylinder: Cylinder) = mutateDive { addCylinder(cylinder) }
+    fun updateCylinder(cylinder: Cylinder) = mutateDive { updateCylinder(cylinder) }
+    fun removeCylinder(cylinder: Cylinder) = mutateDive { removeCylinder(cylinder) }
+    fun toggleCylinder(cylinder: Cylinder, enabled: Boolean) = mutateDive { toggleCylinder(cylinder, enabled) }
+    fun setContingency(deeper: Boolean, longer: Boolean, bailout: Boolean) = mutateDive { setContingency(deeper, longer, bailout) }
+    fun setDiveMode(mode: DiveMode) = mutateDive { setDiveMode(mode) }
+    fun toggleAvailableForBailout(cylinder: Cylinder, availableForBailout: Boolean) = mutateDive { toggleAvailableForBailout(cylinder, availableForBailout) }
 
     fun onEditDive() {
         if (settingsRepository.settings.value.showDiveEditTooltip) {
@@ -122,7 +118,7 @@ class PlanScreenViewModel(
 
     fun addDive(surfaceInterval: Duration) {
         planInput.update { state ->
-            val newDive = defaultDivePlanInputModel.copy(surfaceIntervalBefore = surfaceInterval)
+            val newDive = DivePlanInputModel.Default.copy(surfaceIntervalBefore = surfaceInterval)
             state.copy(
                 model = state.model.copy(dives = state.model.dives + newDive),
                 // Switch to the newly added dive as the selected dive
@@ -167,8 +163,10 @@ class PlanScreenViewModel(
         settingsRepository.settings.map { it.unitSystem }.distinctUntilChanged(),
     ) { model, config, unitSystem ->
         isCalculatingDivePlan.value = true
-        val result = measureTimedValue { calculateMultiDivePlan(model, config, unitSystem) }
-            .also { isCalculatingDivePlan.value = false }
+        val result = measureTimedValue {
+            runCatching { MultiDivePlanner(config, unitSystem).plan(model) }
+                .onFailure { it.printStackTrace() }
+        }.also { isCalculatingDivePlan.value = false }
         println("Duration: Calculating dive plan took ${result.duration}")
         result.value
     }.flowOn(calculationDispatcher).stateIn(
@@ -211,103 +209,12 @@ class PlanScreenViewModel(
         initialValue = UiState()
     )
 
-    private fun calculateMultiDivePlan(
-        model: MultiDivePlanInputModel,
-        configuration: Configuration,
-        unitSystem: UnitSystem,
-    ): Result<MultiDivePlanSet?> = try {
-        val planner = DivePlanner(configuration, unitSystem)
-        val gasPlanner = GasPlanner()
-
-        val sets = model.dives.mapIndexed { index, diveInput ->
-            // Apply surface interval before this dive.
-            // index == 0 is skipped — surfaceIntervalBefore of the first dive is ignored in planning.
-            if (index > 0) {
-                diveInput.surfaceIntervalBefore?.let { planner.addSurfaceInterval(it) }
-            }
-
-            val segments = diveInput.plannedProfile.toMutableList()
-            val deepestIdx = segments.indices.maxByOrNull { segments[it].depthInMeters }
-            val deeper = configuration.contingencyDeeper.takeIf { diveInput.deeper }
-            val longer = configuration.contingencyLonger.takeIf { diveInput.longer }
-
-            if (deepestIdx != null) {
-                segments[deepestIdx] = segments[deepestIdx].let {
-                    it.copy(
-                        depthInMeters = it.depthInMeters + (deeper ?: 0.0),
-                        duration = it.duration + (longer ?: 0),
-                    )
-                }
-            }
-
-            val cylinders = diveInput.cylinders.filter { it.isChecked }.map { it.toAssignedCylinder() }
-
-            // For a CCR dive with bailout enabled, we need two separate plans:
-            // - A normal CCR plan (no OC ascent) for accurate gas planning
-            // - A bailout plan (OC ascent) for the graph and tissue loading
-            // We snapshot the tissues before the normal plan, restore them, then run
-            // the bailout plan so the post-bailout tissues carry over to the next dive.
-            val (divePlan, gasPlan) = if (diveInput.diveMode.isCcr && diveInput.bailout) {
-                val preDiveSnapshot = planner.snapshotTissues()
-                val normalPlan = planner.addDive(
-                    plan = segments,
-                    cylinders = cylinders,
-                    diveMode = diveInput.diveMode,
-                    bailout = false,
-                )
-
-                // Find the worst-case bailout point from the normal CCR plan (longest bailout TTS)
-                // and truncate the input profile at that point so the bailout graph shows the
-                // ascent from the point with the longest TTS.
-                val worstBailoutCandidate = normalPlan.segments.maxByOrNull { it.ttsBailoutAfter ?: 0 }
-                val bailoutSegments = if (worstBailoutCandidate != null) {
-                    segments.truncateAtRuntime(worstBailoutCandidate.end)
-                } else {
-                    segments
-                }
-
-                planner.restoreTissues(preDiveSnapshot)
-                val bailoutPlan = planner.addDive(
-                    plan = bailoutSegments,
-                    cylinders = cylinders,
-                    diveMode = diveInput.diveMode,
-                    bailout = true,
-                )
-                bailoutPlan to gasPlanner.calculateGasPlan(normalPlan)
-            } else {
-                val plan = planner.addDive(
-                    plan = segments,
-                    cylinders = cylinders,
-                    diveMode = diveInput.diveMode,
-                    bailout = diveInput.bailout,
-                )
-                plan to gasPlanner.calculateGasPlan(plan)
-            }
-
-            val deeperDisplay = deeper?.let { unitSystem.metersToDisplayDepth(it).toInt() }
-
-            DivePlanSet(
-                base = divePlan,
-                deeper = deeperDisplay,
-                longer = longer,
-                bailout = diveInput.bailout,
-                diveMode = diveInput.diveMode,
-                gasPlan = gasPlan,
-            )
-        }
-
-        Result.success(MultiDivePlanSet(divePlanSets = sets))
-    } catch (e: Exception) {
-        e.printStackTrace()
-        Result.failure(e)
-    }
-
     @Immutable
     data class UiState(
         val selectedDiveIndex: Int = 0,
-        val dives: List<DivePlanInputModel> = listOf(defaultDivePlanInputModel),
-        val segments: List<DiveProfileSection> = defaultProfile,
-        val availableGas: List<PlannedCylinderModel> = defaultCylinders,
+        val dives: List<DivePlanInputModel> = listOf(DivePlanInputModel.Default),
+        val segments: List<DiveProfileSection> = DivePlanInputModel.Default.plannedProfile,
+        val availableGas: List<PlannedCylinderModel> = DivePlanInputModel.Default.cylinders,
         val diveMode: DiveMode = DiveMode.OPEN_CIRCUIT,
         val multiDivePlanSet: Result<MultiDivePlanSet?> = Result.success(null),
         val selectedDivePlanSet: Result<DivePlanSet?> = Result.success(null),
@@ -317,46 +224,5 @@ class PlanScreenViewModel(
         val configuration: Configuration = Configuration(),
     )
 }
-private val defaultCylinderAir = Cylinder.steel12Liter(gas = Gas.Air, pressure = 232.0)
-
-private val defaultCylinders: List<PlannedCylinderModel> = listOf(
-    PlannedCylinderModel(
-        cylinder = defaultCylinderAir,
-        isLocked = true,
-        isChecked = true
-    ),
-    PlannedCylinderModel(
-        cylinder = Cylinder.aluminium80Cuft(gas = Gas.Nitrox50, pressure = 207.0),
-        isLocked = false,
-        isChecked = true
-    ),
-    PlannedCylinderModel(
-        cylinder = Cylinder.aluminium63Cuft(gas = Gas.Nitrox80, pressure = 207.0),
-        isLocked = false,
-        isChecked = false
-    )
-)
-
-private val defaultProfile = listOf(
-    DiveProfileSection(
-        30,
-        25.0,
-        defaultCylinderAir
-    )
-)
-
-private val defaultDivePlanInputModel = DivePlanInputModel(
-    diveMode = DiveMode.OPEN_CIRCUIT,
-    deeper = false,
-    longer = false,
-    bailout = false,
-    plannedProfile = defaultProfile,
-    cylinders = defaultCylinders,
-    surfaceIntervalBefore = null,
-)
-
-private val defaultMultiDivePlanInputModel = MultiDivePlanInputModel(
-    dives = listOf(defaultDivePlanInputModel),
-)
 
 private const val SUBSCRIPTION_TIME_OUT: Long = 5 * 60 * 1000
