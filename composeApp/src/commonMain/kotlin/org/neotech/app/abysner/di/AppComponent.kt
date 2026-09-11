@@ -16,6 +16,8 @@ import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import org.neotech.app.abysner.data.PersistenceRepositoryImpl
+import org.neotech.app.abysner.data.diveplanning.PlanningDataSource
+import org.neotech.app.abysner.data.diveplanning.PlanningFileDataSource
 import org.neotech.app.abysner.data.diveplanning.PlanningRepositoryImpl
 import org.neotech.app.abysner.data.PlatformFileDataSource
 import org.neotech.app.abysner.data.settings.SettingsRepositoryImpl
@@ -35,6 +37,11 @@ abstract class AppComponent {
     @SingleIn(AppScope::class)
     @Provides
     fun providesPlanningRepository(planningRepository: PlanningRepositoryImpl): PlanningRepository = planningRepository
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun providesPlanningDataSource(platformFileDataSource: PlatformFileDataSource): PlanningDataSource =
+        PlanningFileDataSource(platformFileDataSource.getPrivateFileStoragePath())
 
     @SingleIn(AppScope::class)
     @Provides

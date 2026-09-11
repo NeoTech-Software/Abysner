@@ -12,189 +12,110 @@
 
 package org.neotech.app.abysner.data.diveplanning
 
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.doublePreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.data.diveplanning.resources.ConfigurationResourceV1
-import org.neotech.app.abysner.data.diveplanning.resources.DivePlanInputResourceV1
 import org.neotech.app.abysner.data.diveplanning.resources.MultiDivePlanInputResourceV1
 import org.neotech.app.abysner.data.getJson
-import org.neotech.app.abysner.data.setJson
 import org.neotech.app.abysner.domain.core.model.Configuration
-import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.persistence.PersistenceRepository
-import org.neotech.app.abysner.domain.persistence.get
+import kotlin.time.Duration.Companion.milliseconds
 
-@Inject
-class PlanningRepositoryImpl(
+@OptIn(FlowPreview::class)
+class PlanningRepositoryImpl @Inject constructor(
+    private val dataSource: PlanningDataSource,
     private val persistenceRepository: PersistenceRepository,
+    dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : PlanningRepository {
 
     override val configuration: MutableStateFlow<Configuration> = MutableStateFlow(Configuration())
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    override val multiDivePlanInput = MutableStateFlow<MultiDivePlanInputModel?>(null)
+
+    private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
     init {
         scope.launch {
-            persistenceRepository.getPreferences().collect { preferences ->
-                @Suppress("DEPRECATION")
-                if (preferences.contains(PREFERENCE_KEY_ALGORITHM_TYPE)) {
-                    preferences.migrateConfigurationFromBuild9AndBefore()
+            loadInitialState()
+        }
+
+        scope.launch {
+            configuration
+                .debounce(PERSIST_DEBOUNCE_MILLIS.milliseconds)
+                .collectLatest { config ->
+                    runCatching {
+                        dataSource.saveConfiguration(config.toResource())
+                    }.onFailure { it.printStackTrace() }
                 }
-                @Suppress("DEPRECATION")
-                if (preferences.contains(PREFERENCE_KEY_INPUT_DIVE_PLAN)) {
-                    preferences.migrateConfigurationFromBuild10()
+        }
+
+        scope.launch {
+            multiDivePlanInput.filterNotNull()
+                .distinctUntilChanged()
+                .debounce(PERSIST_DEBOUNCE_MILLIS.milliseconds)
+                .collectLatest { model ->
+                    runCatching {
+                        dataSource.savePlan(model.toResource())
+                    }.onFailure { it.printStackTrace() }
                 }
-                configuration.emit(preferences.getJson<ConfigurationResourceV1>(PREFERENCE_KEY_GLOBAL_CONFIGURATION)?.toModel() ?: Configuration())
-            }
         }
     }
 
-    @Suppress("DEPRECATION")
-    private suspend fun Preferences.migrateConfigurationFromBuild9AndBefore() {
-        // Step 1: read old configuration
-        val oldConfiguration = ConfigurationResourceV1(
-            sacRate = get(PREFERENCE_KEY_DIVER_NORMAL_SAC, 20.0),
-            sacRateStress = get(PREFERENCE_KEY_DIVER_OUT_OF_AIR_SAC, 40.0),
-            maxPPO2Deco = get(PREFERENCE_KEY_MAX_PPO2_DECO, 1.6),
-            maxPPO2 = get(PREFERENCE_KEY_MAX_PPO2, 1.4),
-            maxAscentRate = get(PREFERENCE_KEY_DIVER_SPEED_ASCENT, 5.0),
-            maxDescentRate = get(PREFERENCE_KEY_DIVER_SPEED_DESCENT, 20.0),
-            gfLow = get(PREFERENCE_KEY_ALGORITHM_GF_LOW, 0.6),
-            gfHigh = get(PREFERENCE_KEY_ALGORITHM_GF_HIGH, 0.7),
-            forceMinimalDecoStopTime = get(PREFERENCE_KEY_FORCE_MINIMAL_STOP_TIME, true),
-            useDecoGasBetweenSections = get(PREFERENCE_KEY_USE_DECO_GAS_BETWEEN_SECTIONS, false),
-            decoStepSize = get(PREFERENCE_KEY_DECO_STEP_SIZE, 3).toDouble(),
-            lastDecoStopDepth = get(PREFERENCE_KEY_LAST_DECO_STOP, 3).toDouble(),
-            salinity = get(PREFERENCE_KEY_ENVIRONMENT_SALINITY, Salinity.WATER_FRESH).preferenceValue,
-            algorithm = get(PREFERENCE_KEY_ALGORITHM_TYPE, Configuration.Algorithm.BUHLMANN_ZH16C).preferenceValue,
-            contingencyDeeper = get(PREFERENCE_KEY_CONTINGENCY_DEEPER, 3).toDouble(),
-            contingencyLonger = get(PREFERENCE_KEY_CONTINGENCY_LONGER, 3),
-            maxEND = 30.0,
-            altitude = 0.0
-        )
+    private suspend fun loadInitialState() {
+        val loadedConfiguration = dataSource.loadConfiguration() ?: migrateConfigurationFromPreferences()
+        configuration.value = loadedConfiguration?.toModel() ?: Configuration()
 
-        persistenceRepository.updatePreferences {
-
-            // Step 2: update new configuration
-            it.setJson(PREFERENCE_KEY_GLOBAL_CONFIGURATION, oldConfiguration)
-
-            // Step 3: remove old key configuration
-            it.remove(PREFERENCE_KEY_ALGORITHM_TYPE)
-            it.remove(PREFERENCE_KEY_ALGORITHM_GF_LOW)
-            it.remove(PREFERENCE_KEY_ALGORITHM_GF_HIGH)
-            it.remove(PREFERENCE_KEY_ENVIRONMENT_SALINITY)
-            it.remove(PREFERENCE_KEY_DIVER_SPEED_ASCENT)
-            it.remove(PREFERENCE_KEY_DIVER_SPEED_DESCENT)
-            it.remove(PREFERENCE_KEY_DIVER_NORMAL_SAC)
-            it.remove(PREFERENCE_KEY_DIVER_OUT_OF_AIR_SAC)
-            it.remove(PREFERENCE_KEY_FORCE_MINIMAL_STOP_TIME)
-            it.remove(PREFERENCE_KEY_DECO_STEP_SIZE)
-            it.remove(PREFERENCE_KEY_LAST_DECO_STOP)
-            it.remove(PREFERENCE_KEY_MAX_PPO2_DECO)
-            it.remove(PREFERENCE_KEY_MAX_PPO2)
-            it.remove(PREFERENCE_KEY_USE_DECO_GAS_BETWEEN_SECTIONS)
-            it.remove(PREFERENCE_KEY_CONTINGENCY_DEEPER)
-            it.remove(PREFERENCE_KEY_CONTINGENCY_LONGER)
-        }
+        val loadedPlan = dataSource.loadPlan() ?: migrateActivePlanFromPreferences()
+        val model = loadedPlan?.toModel() ?: MultiDivePlanInputModel.Default
+        multiDivePlanInput.value = model.copy(dives = model.dives.map { it.recomputeCylinderState() })
     }
 
-    @Suppress("DEPRECATION")
-    private suspend fun Preferences.migrateConfigurationFromBuild10() {
-        // Step 1: read old configuration
-        val singleDive = getJson<DivePlanInputResourceV1>(PREFERENCE_KEY_INPUT_DIVE_PLAN)
-        persistenceRepository.updatePreferences {
-
-            // Step 2: update new configuration
-            if (singleDive != null) {
-                it.setJson(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN, MultiDivePlanInputResourceV1(dives = listOf(singleDive)))
-            }
-
-            // Step 3: remove old key configuration
-            it.remove(PREFERENCE_KEY_INPUT_DIVE_PLAN)
-        }
+    private suspend fun migrateConfigurationFromPreferences(): ConfigurationResourceV1? {
+        val preferences = persistenceRepository.getPreferences().firstOrNull() ?: return null
+        val legacy = preferences.getJson<ConfigurationResourceV1>(PREFERENCE_KEY_GLOBAL_CONFIGURATION) ?: return null
+        dataSource.saveConfiguration(legacy)
+        persistenceRepository.updatePreferences { it.remove(PREFERENCE_KEY_GLOBAL_CONFIGURATION) }
+        return legacy
     }
 
-    override fun updateConfiguration(updateBlock: (Configuration) -> Configuration) {
+    private suspend fun migrateActivePlanFromPreferences(): MultiDivePlanInputResourceV1? {
+        val preferences = persistenceRepository.getPreferences().firstOrNull() ?: return null
+        val legacy = preferences.getJson<MultiDivePlanInputResourceV1>(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN) ?: return null
+        dataSource.savePlan(legacy)
+        persistenceRepository.updatePreferences { it.remove(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN) }
+        return legacy
+    }
+
+    override fun updateConfiguration(updateBlock: (Configuration) -> Configuration): Configuration {
         val newConfiguration = updateBlock(configuration.value)
-        configuration.update {
-            newConfiguration
-        }
-        scope.launch {
-            persistenceRepository.updatePreferences {
-                it.setJson(PREFERENCE_KEY_GLOBAL_CONFIGURATION, newConfiguration.toResource())
-            }
-        }
+        configuration.value = newConfiguration
+        return newConfiguration
     }
 
-    override fun setMultiDivePlanInput(model: MultiDivePlanInputModel) {
-        scope.launch {
-            persistenceRepository.updatePreferences {
-                it.setJson(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN, model.toResource())
-            }
-        }
+    override fun updateMultiDivePlanInput(updateBlock: (MultiDivePlanInputModel) -> MultiDivePlanInputModel): MultiDivePlanInputModel? {
+        val current = multiDivePlanInput.value ?: return null
+        val updated = updateBlock(current)
+        multiDivePlanInput.value = updated
+        return updated
     }
-
-    override suspend fun getMultiDivePlanInput(): MultiDivePlanInputModel? =
-        persistenceRepository.getPreferences().first().getJson<MultiDivePlanInputResourceV1>(PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN)?.toModel()
 }
 
 private val PREFERENCE_KEY_GLOBAL_CONFIGURATION = stringPreferencesKey("global.configuration")
 private val PREFERENCE_KEY_INPUT_MULTI_DIVE_PLAN = stringPreferencesKey("input.diveplan.multi.v1")
 
-@Deprecated("Will be removed in future version when most users have migrated to the multi-dive format.")
-private val PREFERENCE_KEY_INPUT_DIVE_PLAN = stringPreferencesKey("input.diveplan")
-
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_ALGORITHM_TYPE = stringPreferencesKey("algorithm.type")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_ALGORITHM_GF_LOW = doublePreferencesKey("algorithm.buhlmann.gradientFactor.low")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_ALGORITHM_GF_HIGH = doublePreferencesKey("algorithm.buhlmann.gradientFactor.high")
-
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_ENVIRONMENT_SALINITY = stringPreferencesKey("environment.salinity")
-
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_DIVER_SPEED_ASCENT = doublePreferencesKey("diver.speed.ascent")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_DIVER_SPEED_DESCENT = doublePreferencesKey("diver.speed.descent")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_DIVER_NORMAL_SAC = doublePreferencesKey("diver.sac.normal")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_DIVER_OUT_OF_AIR_SAC = doublePreferencesKey("diver.sac.outOfAir")
-
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_FORCE_MINIMAL_STOP_TIME = booleanPreferencesKey("deco.minimalStopTime")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_LAST_DECO_STOP = intPreferencesKey("deco.lastStop")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_DECO_STEP_SIZE = intPreferencesKey("deco.stepSize")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_MAX_PPO2 = doublePreferencesKey("deco.ppo2.normal")
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_MAX_PPO2_DECO = doublePreferencesKey("deco.ppo2.deco")
-
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_CONTINGENCY_DEEPER = intPreferencesKey("contingency.deeper")
-
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_CONTINGENCY_LONGER = intPreferencesKey("contingency.longer")
-
-@Deprecated(PREFERENCE_DEPRECATION_WARNING)
-private val PREFERENCE_KEY_USE_DECO_GAS_BETWEEN_SECTIONS = booleanPreferencesKey("multiLevel.useDecoGasBetweenSections")
-
-private const val PREFERENCE_DEPRECATION_WARNING = "Will be removed in future version when most users have migrated to the JSON format stored configuration."
+private const val PERSIST_DEBOUNCE_MILLIS = 1000L

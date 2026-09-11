@@ -17,20 +17,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import dev.zacsweers.metro.Inject
 import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
@@ -40,7 +35,6 @@ import org.neotech.app.abysner.domain.diveplanning.PlanningRepository
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
-import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanInputModel
 import org.neotech.app.abysner.domain.diveplanning.model.MultiDivePlanSet
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.domain.diveplanning.model.toggleAvailableForBailout
@@ -50,49 +44,18 @@ import org.neotech.app.abysner.presentation.utilities.combine
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
-@OptIn(FlowPreview::class)
 @Inject
 class PlanScreenViewModel(
     private val planningRepository: PlanningRepository,
     private val settingsRepository: SettingsRepository,
-    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     calculationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
 
-    private data class PlanInput(
-        val model: MultiDivePlanInputModel = MultiDivePlanInputModel.Default,
-        val selectedDiveIndex: Int = 0,
-    )
-
-    private val planInput = MutableStateFlow(PlanInput())
+    private val selectedDiveIndex = MutableStateFlow(0)
     private val isCalculatingDivePlan = MutableStateFlow(false)
-    private val isLoading = MutableStateFlow(true)
-
-    init {
-        viewModelScope.launch(ioDispatcher) {
-            val loaded = planningRepository.getMultiDivePlanInput() ?: MultiDivePlanInputModel.Default
-            // Recompute cylinder lock state for every dive after loading persisted data.
-            val recomputed = loaded.copy(dives = loaded.dives.map { it.recomputeCylinderState() })
-            planInput.update { it.copy(model = recomputed) }
-            isLoading.value = false
-
-            planInput.map { it.model }
-                .distinctUntilChanged()
-                .debounce(1000)
-                .collectLatest { model ->
-                    runCatching {
-                        planningRepository.setMultiDivePlanInput(model)
-                    }.onFailure {
-                        it.printStackTrace()
-                    }
-                }
-        }
-    }
 
     private fun mutateDive(mutation: DivePlanInputModel.() -> DivePlanInputModel) {
-        planInput.update { state ->
-            state.copy(model = state.model.updateDive(state.selectedDiveIndex, mutation))
-        }
+        planningRepository.updateMultiDivePlanInput { it.updateDive(selectedDiveIndex.value, mutation) }
     }
 
     fun addSegment(section: DiveProfileSection) = mutateDive { addSegment(section) }
@@ -113,43 +76,42 @@ class PlanScreenViewModel(
     }
 
     fun selectDive(index: Int) {
-        planInput.update { it.copy(selectedDiveIndex = index) }
+        selectedDiveIndex.value = index
     }
 
     fun addDive(surfaceInterval: Duration) {
-        planInput.update { state ->
+        planningRepository.updateMultiDivePlanInput {
             val newDive = DivePlanInputModel.Default.copy(surfaceIntervalBefore = surfaceInterval)
-            state.copy(
-                model = state.model.copy(dives = state.model.dives + newDive),
-                // Switch to the newly added dive as the selected dive
-                selectedDiveIndex = state.model.dives.size,
-            )
+            it.copy(dives = it.dives + newDive)
+        }?.let {
+            // Switch to the newly added dive as the selected dive
+            selectedDiveIndex.value = it.dives.lastIndex
         }
     }
 
     fun removeDive(index: Int) {
-        if (planInput.value.model.dives.size <= 1) {
+        val model = planningRepository.multiDivePlanInput.value ?: return
+        if (model.dives.size <= 1) {
             return
         }
-        planInput.update { state ->
-            val newDives = state.model.dives.toMutableList().apply { removeAt(index) }
+        // Keep the selected dive index the same (usually the dive that is selected will be
+        // removed), if that index is no longer valid, we set it to the last dive. This is set
+        // before the model itself shrinks, so the index always remains valid.
+        selectedDiveIndex.value = selectedDiveIndex.value.coerceAtMost(model.dives.size - 2)
+        planningRepository.updateMultiDivePlanInput { state ->
+            val newDives = state.dives.toMutableList().apply { removeAt(index) }
             if (index == 0) {
                 // If the first dive got removed, set the surface interval of the new first dive to null
                 newDives[0] = newDives[0].copy(surfaceIntervalBefore = null)
             }
-            state.copy(
-                model = state.model.copy(dives = newDives),
-                // Keep the selected dive index the same (usually the dive that is selected will be
-                // removed), if that index is no longer valid, we set it to the last dive.
-                selectedDiveIndex = state.selectedDiveIndex.coerceAtMost(newDives.lastIndex),
-            )
+            state.copy(dives = newDives)
         }
     }
 
     fun updateSurfaceInterval(index: Int, duration: Duration) {
         require(index >= 1) { "The first dive cannot have a surface interval before it." }
-        planInput.update { state ->
-            state.copy(model = state.model.updateDive(index) { copy(surfaceIntervalBefore = duration) })
+        planningRepository.updateMultiDivePlanInput { state ->
+            state.updateDive(index) { copy(surfaceIntervalBefore = duration) }
         }
     }
 
@@ -158,13 +120,13 @@ class PlanScreenViewModel(
      * does not retrigger a potentially expensive recalculation.
      */
     private val divePlanSet: StateFlow<Result<MultiDivePlanSet?>> = combine(
-        planInput.map { it.model }.distinctUntilChanged(),
+        planningRepository.multiDivePlanInput.filterNotNull().distinctUntilChanged(),
         planningRepository.configuration,
         settingsRepository.settings.map { it.unitSystem }.distinctUntilChanged(),
-    ) { model, config, unitSystem ->
+    ) { model, configuration, unitSystem ->
         isCalculatingDivePlan.value = true
         val result = measureTimedValue {
-            runCatching { MultiDivePlanner(config, unitSystem).plan(model) }
+            runCatching { MultiDivePlanner(configuration, unitSystem).plan(model) }
                 .onFailure { it.printStackTrace() }
         }.also { isCalculatingDivePlan.value = false }
         println("Duration: Calculating dive plan took ${result.duration}")
@@ -181,25 +143,28 @@ class PlanScreenViewModel(
     )
 
     val uiState: StateFlow<UiState> = combine(
-        planInput,
+        planningRepository.multiDivePlanInput,
+        selectedDiveIndex,
         divePlanSet,
-        isLoading,
         isCalculatingDivePlan,
         settingsRepository.settings,
         // In theory, we can read this directly from the repository, since divePlanSet which this combine depends on already observes it.
         planningRepository.configuration,
-    ) { input, plan, loading, isCalc, settings, configuration ->
-        val selectedDive = input.model.dives[input.selectedDiveIndex]
+    ) { input, selectedIndex, plan, isCalc, settings, configuration ->
+        if (input == null) {
+            return@combine UiState(isLoading = true)
+        }
+        val selectedDive = input.dives[selectedIndex]
         UiState(
-            selectedDiveIndex = input.selectedDiveIndex,
-            dives = input.model.dives,
+            selectedDiveIndex = selectedIndex,
+            dives = input.dives,
             segments = selectedDive.plannedProfile,
             availableGas = selectedDive.cylinders,
             diveMode = selectedDive.diveMode,
             isCalculatingDivePlan = isCalc,
             multiDivePlanSet = plan,
-            selectedDivePlanSet = plan.map { it?.divePlanSets?.getOrNull(input.selectedDiveIndex) },
-            isLoading = loading,
+            selectedDivePlanSet = plan.map { it?.divePlanSets?.getOrNull(selectedIndex) },
+            isLoading = false,
             settingsModel = settings,
             configuration = configuration,
         )

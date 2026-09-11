@@ -20,9 +20,9 @@ interface PlanningRepository {
 
     val configuration: StateFlow<Configuration>
 
-    fun updateConfiguration(updateBlock: (Configuration) -> Configuration)
+    fun updateConfiguration(updateBlock: (Configuration) -> Configuration): Configuration
 
-    fun setMultiDivePlanInput(model: MultiDivePlanInputModel)
+    val multiDivePlanInput: StateFlow<MultiDivePlanInputModel?>
 
-    suspend fun getMultiDivePlanInput(): MultiDivePlanInputModel?
+    fun updateMultiDivePlanInput(updateBlock: (MultiDivePlanInputModel) -> MultiDivePlanInputModel): MultiDivePlanInputModel?
 }
