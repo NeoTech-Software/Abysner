@@ -22,10 +22,39 @@ import kotlin.math.floor
 class GasTest {
 
     @Test
-    fun init_rejectsGasWhenCombinedOxygenAndHeliumFractionsExceedOneHundredPercent() {
-        assertFailsWith<IllegalStateException> {
+    fun init_rejectsWhenOxygenAndHeliumSumExceedsOne() {
+        assertFailsWith<IllegalArgumentException> {
             Gas(oxygenFraction = 0.8, heliumFraction = 0.3)
         }
+    }
+
+    @Test
+    fun init_rejectsNegativeOxygenFraction() {
+        assertFailsWith<IllegalArgumentException> {
+            Gas(oxygenFraction = -0.1, heliumFraction = 0.0)
+        }
+    }
+
+    @Test
+    fun init_rejectsNegativeHeliumFraction() {
+        assertFailsWith<IllegalArgumentException> {
+            Gas(oxygenFraction = 0.21, heliumFraction = -0.1)
+        }
+    }
+
+    @Test
+    fun init_acceptsPureOxygen() {
+        Gas(oxygenFraction = 1.0, heliumFraction = 0.0)
+    }
+
+    @Test
+    fun init_acceptsPureHelium() {
+        Gas(oxygenFraction = 0.0, heliumFraction = 1.0)
+    }
+
+    @Test
+    fun init_acceptsGasMixThatSumsToOne() {
+        Gas(oxygenFraction = 0.89, heliumFraction = 0.11)
     }
 
     @Test

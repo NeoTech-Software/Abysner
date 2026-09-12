@@ -227,10 +227,15 @@ data class TissueCompartment(
             "Invalid duration `$timeInMinutes` for on/off-gassing tissues. The minimum duration must be higher than 0."
         }
 
-        // Calculate nitrogen fraction (by just subtracting oxygen and helium)
-        val fN2 = (1.0 - fO2) - fHe
+        require(fO2 >= 0.0) {
+            "Invalid oxygen fraction `$fO2`. Must not be negative."
+        }
+        require(fHe >= 0.0) {
+            "Invalid helium fraction `$fHe`. Must not be negative."
+        }
+        val fN2 = 1.0 - (fO2 + fHe)
         require(fN2 >= 0.0) {
-            "Invalid gas mix `$fO2/$fHe` for on/off-gassing tissues, oxygen and helium should together never exceed 1.0 (100% of the gas mix)."
+            "Invalid gas mix `$fO2/$fHe`. Oxygen and helium fractions should together not exceed 1.0."
         }
 
         val depthChangeInBarsPerMinute = pressureChangeInBarsPerMinute(startPressure, endPressure, timeInMinutes)
