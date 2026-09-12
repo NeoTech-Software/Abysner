@@ -20,8 +20,14 @@ import kotlin.math.round
 data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
 
     init {
-        if((oxygenFraction + heliumFraction) > 1.0) {
-            error("Oxygen ($oxygenFraction) and helium ($heliumFraction) fraction add up to more then 1.0!")
+        require(oxygenFraction >= 0.0) {
+            "Invalid oxygen fraction `$oxygenFraction`. Must not be negative."
+        }
+        require(heliumFraction >= 0.0) {
+            "Invalid helium fraction `$heliumFraction`. Must not be negative."
+        }
+        require((oxygenFraction + heliumFraction) <= 1.0) {
+            "Invalid gas mix `$oxygenFraction/$heliumFraction`. Oxygen and helium fractions should together not exceed 1.0."
         }
     }
 

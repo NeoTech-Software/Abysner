@@ -20,7 +20,6 @@ class BuhlmannTest {
         // These settings kinda mimic the US Navy/PADI tables. What we use doesn't really matter for
         // this test, but this gives us something to compare against that is relatively well known.
         // There is no real comparing between Buhlmann and Navy tables, but this will make it close.
-        val environment = Environment.SeaLevelSalt
         val model = Buhlmann(
             version = Buhlmann.Version.ZH16C,
             environment = environment,
@@ -53,7 +52,6 @@ class BuhlmannTest {
         // interpolation. Because the ratchet is monotonic and is applied before the return value
         // is computed within the same call, the result must be identical on every subsequent call
         // as long as no tissue loading has changed.
-        val environment = Environment.SeaLevelSalt
         val model = Buhlmann(
             version = Buhlmann.Version.ZH16C,
             environment = environment,
@@ -72,7 +70,6 @@ class BuhlmannTest {
 
     @Test
     fun reset_snapshotIsNotMutatedByLaterTissueLoading() {
-        val environment = Environment.SeaLevelSalt
         val model = Buhlmann(
             version = Buhlmann.Version.ZH16C,
             environment = environment,
@@ -96,7 +93,6 @@ class BuhlmannTest {
 
     @Test
     fun addPressureChange_throwsForZeroDuration() {
-        val environment = Environment.SeaLevelSalt
         val model = Buhlmann(
             version = Buhlmann.Version.ZH16C,
             environment = environment,
@@ -104,10 +100,79 @@ class BuhlmannTest {
             gfHigh = 0.7,
         )
         val depth = metersToAmbientPressure(21.0, environment)
-        assertFailsWith<IllegalArgumentException>(
-            message = "Expected IllegalArgumentException for timeInMinutes=0"
-        ) {
+        assertFailsWith<IllegalArgumentException> {
             model.addPressureChange(depth, depth, Gas.Nitrox50, timeInMinutes = 0)
         }
+    }
+
+    @Test
+    fun addPressureChange_throwsForOxygenFractionAboveOne() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(21.0, environment)
+        assertFailsWith<IllegalArgumentException> {
+            compartment.addPressureChange(depth.value, depth.value, fO2 = 1.1, fHe = 0.0, timeInMinutes = 1.0)
+        }
+    }
+
+    @Test
+    fun addPressureChange_throwsForOxygenFractionBelowZero() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(21.0, environment)
+        assertFailsWith<IllegalArgumentException> {
+            compartment.addPressureChange(depth.value, depth.value, fO2 = -0.01, fHe = 0.0, timeInMinutes = 1.0)
+        }
+    }
+
+    @Test
+    fun addPressureChange_throwsForHeliumFractionAboveOne() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(21.0, environment)
+        assertFailsWith<IllegalArgumentException> {
+            compartment.addPressureChange(depth.value, depth.value, fO2 = 0.0, fHe = 1.1, timeInMinutes = 1.0)
+        }
+    }
+
+    @Test
+    fun addPressureChange_throwsForHeliumFractionBelowZero() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(21.0, environment)
+        assertFailsWith<IllegalArgumentException> {
+            compartment.addPressureChange(depth.value, depth.value, fO2 = 0.0, fHe = -0.01, timeInMinutes = 1.0)
+        }
+    }
+
+    @Test
+    fun addPressureChange_throwsWhenOxygenAndHeliumSumExceedsOne() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(21.0, environment)
+        assertFailsWith<IllegalArgumentException> {
+            compartment.addPressureChange(depth.value, depth.value, fO2 = 0.7, fHe = 0.5, timeInMinutes = 1.0)
+        }
+    }
+
+    @Test
+    fun addPressureChange_acceptsPureOxygen() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(3.0, environment)
+        compartment.addPressureChange(depth.value, depth.value, fO2 = 1.0, fHe = 0.0, timeInMinutes = 1.0)
+    }
+
+    @Test
+    fun addPressureChange_acceptsPureHelium() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(40.0, environment)
+        compartment.addPressureChange(depth.value, depth.value, fO2 = 0.0, fHe = 1.0, timeInMinutes = 1.0)
+    }
+
+    @Test
+    fun addPressureChange_acceptsHeliox() {
+        val compartment = TissueCompartment(parameters = compartmentParameters, environment = environment)
+        val depth = metersToAmbientPressure(3.0, environment)
+        compartment.addPressureChange(depth.value, depth.value, fO2 = 0.89, fHe = 0.11, timeInMinutes = 1.0)
+    }
+
+    companion object {
+        private val compartmentParameters = CompartmentParameters(5.0, 1.1696, 0.5578, 1.88, 1.6189, 0.4770)
+        private val environment = Environment.SeaLevelSalt
     }
 }
