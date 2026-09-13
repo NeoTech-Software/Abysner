@@ -60,6 +60,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.domain.core.model.BreathingMode
+import org.neotech.app.abysner.domain.core.model.Configuration
 import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
@@ -80,8 +81,11 @@ import org.neotech.app.abysner.presentation.component.InfoPill
 import org.neotech.app.abysner.presentation.component.InfoPillSize
 import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
+import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
+import org.neotech.app.abysner.presentation.formatting.ALERT_DISPLAY_TOLERANCE_TWO_DECIMAL_PLACES
+import org.neotech.app.abysner.presentation.formatting.ppo2AlertSeverity
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
@@ -403,6 +407,7 @@ fun DecoPlanTable(
                 gas = displayGas,
                 isBailoutSwitch = isBailoutSwitch,
                 unitSystem = settings.unitSystem,
+                configuration = divePlan.configuration
             )
         }
     }
@@ -434,6 +439,7 @@ private fun RowScope.DecoPlanRow(
     gas: Gas,
     isBailoutSwitch: Boolean = false,
     unitSystem: UnitSystem,
+    configuration: Configuration
 ) {
     val typeIcon = when (diveSegment.type) {
         DiveSegment.Type.DECO_STOP -> Res.drawable.ic_baseline_stop_square_24
@@ -464,37 +470,15 @@ private fun RowScope.DecoPlanRow(
 
     val endAmbientPressure = diveSegment.endPressure
 
-    val ppO2Text = when (val mode = diveSegment.breathingMode) {
-        is BreathingMode.ClosedCircuit -> {
-            val endMode = diveSegment.breathingModeAtEnd ?: mode
-            val startAmbientPressure = diveSegment.startPressure
-            val ppO2Start = mode.effectivePpO2(startAmbientPressure)
-            val ppO2End = endMode.effectivePpO2(endAmbientPressure)
-
-            formatPpO2Range(ppO2Start, ppO2End)
-        }
-        is BreathingMode.OpenCircuit -> {
-            DecimalFormat.format(1, gas.oxygenFraction * endAmbientPressure)
-        }
+    val ppO2 = when (val mode = diveSegment.breathingMode) {
+        is BreathingMode.ClosedCircuit -> (diveSegment.breathingModeAtEnd ?: mode).effectivePpO2(endAmbientPressure)
+        is BreathingMode.OpenCircuit -> gas.oxygenFraction * endAmbientPressure
     }
-    Text(
+    TextAlert(
         modifier = Modifier.weight(0.22f),
-        text = ppO2Text,
+        alertSeverity = ppo2AlertSeverity(ppO2, configuration, ALERT_DISPLAY_TOLERANCE_TWO_DECIMAL_PLACES),
+        text = DecimalFormat.format(2, ppO2),
     )
-}
-
-private fun formatPpO2Range(ppO2Start: Double, ppO2End: Double): String {
-    if (ppO2Start == ppO2End) {
-        return DecimalFormat.format(1, ppO2Start)
-    }
-    val formattedStart = DecimalFormat.format(1, ppO2Start)
-    val formattedEnd = DecimalFormat.format(1, ppO2End)
-    // Format first before comparing as rounding might make the range unnecessary after all
-    return if (formattedStart == formattedEnd) {
-        formattedStart
-    } else {
-        "$formattedStart\u2026$formattedEnd"
-    }
 }
 
 @Preview
