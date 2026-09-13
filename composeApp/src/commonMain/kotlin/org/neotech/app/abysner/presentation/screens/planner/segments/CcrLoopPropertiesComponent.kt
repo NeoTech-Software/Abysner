@@ -30,9 +30,11 @@ import org.neotech.app.abysner.domain.core.physics.ATMOSPHERIC_PRESSURE_AT_SEA_L
 import org.neotech.app.abysner.domain.core.physics.Pressure
 import org.neotech.app.abysner.domain.core.physics.metersToAmbientPressure
 import org.neotech.app.abysner.domain.utilities.format
+import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.BigNumberDisplay
 import org.neotech.app.abysner.presentation.component.BigNumberSize
 import org.neotech.app.abysner.presentation.component.InfoPill
+import org.neotech.app.abysner.presentation.formatting.densityAlertSeverity
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
@@ -47,10 +49,10 @@ fun CcrLoopPropertiesComponent(
     val inspiredGas = diluent.inspiredGas(ambientPressure, setpoint)
     val inspiredDensity = inspiredGas.densityAtAmbientPressure(ambientPressure)
 
-    val (densityContainerColor, densityValueColor) = when {
-        inspiredDensity > Gas.MAX_GAS_DENSITY -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
-        inspiredDensity > Gas.MAX_RECOMMENDED_GAS_DENSITY -> MaterialTheme.colorScheme.warning to MaterialTheme.colorScheme.onWarning
-        else -> Color.Unspecified to Color.Unspecified
+    val (densityContainerColor, densityValueColor) = when (densityAlertSeverity(inspiredDensity)) {
+        AlertSeverity.ERROR -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
+        AlertSeverity.WARNING -> MaterialTheme.colorScheme.warning to MaterialTheme.colorScheme.onWarning
+        AlertSeverity.NONE, AlertSeverity.POSITIVE -> Color.Unspecified to Color.Unspecified
     }
 
     Column(

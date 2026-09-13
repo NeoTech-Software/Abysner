@@ -80,8 +80,11 @@ import org.neotech.app.abysner.presentation.component.InfoPill
 import org.neotech.app.abysner.presentation.component.InfoPillSize
 import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.Table
+import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
+import org.neotech.app.abysner.presentation.formatting.ALERT_DISPLAY_TOLERANCE_ONE_DECIMAL_PLACE
+import org.neotech.app.abysner.presentation.formatting.ppo2AlertSeverity
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
@@ -464,24 +467,32 @@ private fun RowScope.DecoPlanRow(
 
     val endAmbientPressure = diveSegment.endPressure
 
-    val ppO2Text = when (val mode = diveSegment.breathingMode) {
+    val (ppO2Text, ppO2Severity) = when (val mode = diveSegment.breathingMode) {
         is BreathingMode.ClosedCircuit -> {
             val endMode = diveSegment.breathingModeAtEnd ?: mode
             val startAmbientPressure = diveSegment.startPressure
             val ppO2Start = mode.effectivePpO2(startAmbientPressure)
             val ppO2End = endMode.effectivePpO2(endAmbientPressure)
 
-            formatPpO2Range(ppO2Start, ppO2End)
+            formatPpO2Range(ppO2Start, ppO2End) to
+                maxOf(
+                    ppo2AlertSeverity(ppO2Start, ALERT_DISPLAY_TOLERANCE_ONE_DECIMAL_PLACE),
+                    ppo2AlertSeverity(ppO2End, ALERT_DISPLAY_TOLERANCE_ONE_DECIMAL_PLACE)
+                )
         }
         is BreathingMode.OpenCircuit -> {
-            DecimalFormat.format(1, gas.oxygenFraction * endAmbientPressure)
+            val ppO2 = gas.oxygenFraction * endAmbientPressure
+            DecimalFormat.format(1, ppO2) to ppo2AlertSeverity(ppO2, ALERT_DISPLAY_TOLERANCE_ONE_DECIMAL_PLACE)
         }
     }
-    Text(
+    TextAlert(
         modifier = Modifier.weight(0.22f),
+        alertSeverity = ppO2Severity,
         text = ppO2Text,
     )
 }
+
+
 
 private fun formatPpO2Range(ppO2Start: Double, ppO2End: Double): String {
     if (ppO2Start == ppO2End) {

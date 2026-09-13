@@ -38,7 +38,6 @@ import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
-import org.neotech.app.abysner.domain.utilities.greaterThanTolerant
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextAlert
@@ -46,6 +45,9 @@ import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.appendBoldLine
 import org.neotech.app.abysner.presentation.component.appendBulletPoint
 import org.neotech.app.abysner.presentation.component.textfield.ExpandableText
+import org.neotech.app.abysner.presentation.formatting.ALERT_DISPLAY_TOLERANCE_TWO_DECIMAL_PLACES
+import org.neotech.app.abysner.presentation.formatting.densityAlertSeverity
+import org.neotech.app.abysner.presentation.formatting.ppo2AlertSeverity
 import org.neotech.app.abysner.presentation.formatting.toPaddedMixString
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.preview.PreviewData
@@ -315,11 +317,7 @@ fun GasLimitsTable(
             val mix = "${gasAtDepth.gas.toPaddedMixString()} @ ${gasAtDepth.depth.formatDisplayDepth(unitSystem)}"
             Text(modifier = Modifier.weight(0.45f), text = mix, style = LocalTextStyle.current.withTabularFigures())
 
-            val alertSeverityDensity = when {
-                gasAtDepth.density.greaterThanTolerant(Gas.MAX_GAS_DENSITY, DISPLAY_TOLERANCE) -> AlertSeverity.ERROR
-                gasAtDepth.density.greaterThanTolerant(Gas.MAX_RECOMMENDED_GAS_DENSITY, DISPLAY_TOLERANCE) -> AlertSeverity.WARNING
-                else -> AlertSeverity.NONE
-            }
+            val alertSeverityDensity = densityAlertSeverity(gasAtDepth.density)
             TextAlert(
                 modifier = Modifier.weight(0.3f),
                 alertSeverity = alertSeverityDensity,
@@ -327,11 +325,7 @@ fun GasLimitsTable(
                 textStyle = LocalTextStyle.current.withTabularFigures(),
             )
 
-            val alertSeverityPPO2 = if (gasAtDepth.ppo2.value.greaterThanTolerant(Gas.MAX_PPO2, DISPLAY_TOLERANCE)) {
-                AlertSeverity.ERROR
-            } else {
-                AlertSeverity.NONE
-            }
+            val alertSeverityPPO2 = ppo2AlertSeverity(gasAtDepth.ppo2.value, ALERT_DISPLAY_TOLERANCE_TWO_DECIMAL_PLACES)
             TextAlert(
                 modifier = Modifier.weight(0.25f),
                 alertSeverity = alertSeverityPPO2,
@@ -406,9 +400,3 @@ fun GasPlanCardComponentCcrBailoutPreview() {
         )
     }
 }
-
-/**
- * Half-unit at 2 decimal places: prevents alerts when the displayed value rounds to exactly the
- * threshold.
- */
-private const val DISPLAY_TOLERANCE = 0.005
