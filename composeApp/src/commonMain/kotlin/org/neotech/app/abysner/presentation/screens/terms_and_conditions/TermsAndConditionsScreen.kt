@@ -49,6 +49,7 @@ import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownPadding
+import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.Inject
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.neotech.app.abysner.presentation.Destinations
@@ -64,27 +65,13 @@ import org.neotech.app.abysner.presentation.utilities.closeApp
 import org.neotech.app.abysner.presentation.utilities.consumed
 import org.neotech.app.abysner.presentation.utilities.runBlockingInPreview
 
-// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
-// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
-// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
 @Inject
-class TermsAndConditionsScreen(
-    private val viewModelCreator: () -> TermsAndConditionsViewModel,
-) {
-    @Composable
-    operator fun invoke(navController: NavHostController = rememberNavController()) {
-        TermsAndConditionsScreen(
-            navController = navController,
-            viewModel = viewModel { viewModelCreator() }
-        )
-    }
-}
-
 @Composable
-private fun TermsAndConditionsScreen(
-    navController: NavHostController,
-    viewModel: TermsAndConditionsViewModel
+fun TermsAndConditionsScreen(
+    viewModelCreator: () -> TermsAndConditionsViewModel,
+    @Assisted navController: NavHostController = rememberNavController(),
 ) {
+    val viewModel = viewModel { viewModelCreator() }
     val uiState: UiState = viewModel.uiState.collectAsState().value
     TermsAndConditionsScreen(
         navController = navController,
