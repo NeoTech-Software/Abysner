@@ -1,0 +1,158 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../koalaplot-core/0.12.1-animation-fix/koalaplot-core-0.12.1-animation-fix.module",
+    "group": "io.github.koalaplot",
+    "module": "koalaplot-core",
+    "version": "0.12.1-animation-fix",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.4.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "desktopApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.compose.ui",
+          "module": "ui",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.animation",
+          "module": "animation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "koalaplot-core-desktop-0.12.1-animation-fix.jar",
+          "url": "koalaplot-core-desktop-0.12.1-animation-fix.jar",
+          "size": 993329,
+          "sha512": "59d35f219d3454b872a6f47a3c9b725210082fd3c2eeaf9ed892a3bf7892044bd98b81fda912f60423ee010821814f31335cd3ae38ee508223733bbc1f5738c4",
+          "sha256": "283bbc204a525d34aa5715dc2378c0d992bf85536fd11769516935800f6a4e1a",
+          "sha1": "f5fee7b14fc95365a565cdaf0b27f4bf365b9eeb",
+          "md5": "2adf5eb21c5ed4ee1d98e143413b5f08"
+        }
+      ]
+    },
+    {
+      "name": "desktopRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.compose.ui",
+          "module": "ui",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.animation",
+          "module": "animation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.runtime",
+          "module": "runtime",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.material3",
+          "module": "material3",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-core",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "koalaplot-core-desktop-0.12.1-animation-fix.jar",
+          "url": "koalaplot-core-desktop-0.12.1-animation-fix.jar",
+          "size": 993329,
+          "sha512": "59d35f219d3454b872a6f47a3c9b725210082fd3c2eeaf9ed892a3bf7892044bd98b81fda912f60423ee010821814f31335cd3ae38ee508223733bbc1f5738c4",
+          "sha256": "283bbc204a525d34aa5715dc2378c0d992bf85536fd11769516935800f6a4e1a",
+          "sha1": "f5fee7b14fc95365a565cdaf0b27f4bf365b9eeb",
+          "md5": "2adf5eb21c5ed4ee1d98e143413b5f08"
+        }
+      ]
+    },
+    {
+      "name": "desktopSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "koalaplot-core-desktop-0.12.1-animation-fix-sources.jar",
+          "url": "koalaplot-core-desktop-0.12.1-animation-fix-sources.jar",
+          "size": 147470,
+          "sha512": "bf0e104ebac8c207dcb561d4562cbcc25ea73727ca8ded5cb7d0ffee8e9cba6655f551b9bd4c04156905c79c8ff84f15970513d59a0c08385112049311a12f02",
+          "sha256": "b9e486052f9e5db90f6180545876c77b244ca129779a7abf6e31db8ab4fda61f",
+          "sha1": "71fc12380ed7dcbb0a659f0ed417f400bb0d03bd",
+          "md5": "141a7ef787de135c8c6e011c7dc5ce56"
+        }
+      ]
+    }
+  ]
+}
