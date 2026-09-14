@@ -1,0 +1,260 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../koalaplot-core/0.12.1-animation-fix/koalaplot-core-0.12.1-animation-fix.module",
+    "group": "io.github.koalaplot",
+    "module": "koalaplot-core",
+    "version": "0.12.1-animation-fix",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.4.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.compose.ui",
+          "module": "ui",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.animation",
+          "module": "animation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.runtime",
+          "module": "runtime",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.material3",
+          "module": "material3",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-core",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "koalaplot-core-iosArm64Main-0.12.1-animation-fix.klib",
+          "url": "koalaplot-core-iosarm64-0.12.1-animation-fix.klib",
+          "size": 849392,
+          "sha512": "4bd51902260d56d6fb652fb7c5f98090610c975869c705b81f3271128dc039f5d918c0e716cf2606483159f9d99f4b16752b3e6d608f82da3708c88f3050fd12",
+          "sha256": "bcbaa77f21ae764f0250fea99c92cb1bbae3cc496e7aa2bd43219f052eb3c8b0",
+          "sha1": "d104815df2c6e67d03532c3e2825bca81eaa37f1",
+          "md5": "f55e3019229151b8f21ff0d9f4b6c73b"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "koalaplot-core-iosarm64-0.12.1-animation-fix-sources.jar",
+          "url": "koalaplot-core-iosarm64-0.12.1-animation-fix-sources.jar",
+          "size": 146883,
+          "sha512": "a714a07aec6d2a3bfe8182ade3e8d650e9b3d1b9a705b0f64802c17c17c7386d1c08940543dd8ba02f22069c9392f012512c3d43cf763e4326b4672b65754709",
+          "sha256": "5ab5422e4c63bc30392fb15493b5a7feecc7af5a16fca9577a60fe49e3e8ae9e",
+          "sha1": "45cf234618d6d75fc483e5bfd577cf890cd24baf",
+          "md5": "76fcb5c3ef2935d5fb45e64299ea1186"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.compose.ui",
+          "module": "ui",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.animation",
+          "module": "animation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.runtime",
+          "module": "runtime",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.material3",
+          "module": "material3",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-core",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "koalaplot-core-0.12.1-animation-fix.kotlin_resources.zip",
+          "url": "koalaplot-core-iosarm64-0.12.1-animation-fix-kotlin_resources.kotlin_resources.zip",
+          "size": 356,
+          "sha512": "52110a78ebd272692335a801ac8b826d4827bc865d0a97ad37eea201891369872d2dbe43b50fc6532ccec3f75a5f2887c3b239a961645c07dc9509d8655c5113",
+          "sha256": "f1d5d46d22302ed655ad242fd81902e8ef9b329caa62bf8af0c3160cdb319473",
+          "sha1": "ea70a8f8c4865a95ab33f7290e2643808e3d1c06",
+          "md5": "797cab48c4cdcf0886d452e8f01f858d"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.compose.ui",
+          "module": "ui",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.animation",
+          "module": "animation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.runtime",
+          "module": "runtime",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.material3",
+          "module": "material3",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-core",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "koalaplot-core-iosarm64-0.12.1-animation-fix-metadata.jar",
+          "url": "koalaplot-core-iosarm64-0.12.1-animation-fix-metadata.jar",
+          "size": 2765,
+          "sha512": "78356d1063e331f3eff4ff10de336d7052d37a96cfff280308fcfcba495a75c2442fad90227e52865510d74956403b63eff1339639f0b22ebcb195dda628e4a0",
+          "sha256": "2587e4a6e71e2c897d40d22e49b3dd88743d8f85bb024ef6fd9441505b24b745",
+          "sha1": "9742d5545dfeec6f70cc36ae070e851988404f01",
+          "md5": "7e154876a6db1e9c7cae269fd98ec07a"
+        }
+      ]
+    }
+  ]
+}

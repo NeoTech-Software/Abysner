@@ -67,7 +67,7 @@ screenshot-validation-api = { group = "com.android.tools.screenshot", name = "sc
 ####### END:   Android target specific #######
 
 # Graphs & Plots
-koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.12.1" }
+koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version = "0.12.1-animation-fix" }
 
 # Local storage
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
