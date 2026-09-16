@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -135,7 +134,6 @@ fun GasPlanBarChart(
             gasPlan.forEachIndexed { index, cylinderGasRequirements ->
                 CylinderPressureRow(
                     modifier = Modifier
-                        .defaultMinSize(minHeight = 48.dp)
                         .clickable { onGasBarClicked(index, cylinderGasRequirements) },
                     cylinderGasRequirements = cylinderGasRequirements,
                     unitSystem = unitSystem,
@@ -156,7 +154,8 @@ private fun CylinderPressureRow(
     unitSystem: UnitSystem,
     emergencyLabel: String,
     emergencyIsError: Boolean,
-    labelStyle: TextStyle = MaterialTheme.typography.labelSmall.withTabularFigures(),
+    labelStyle: TextStyle = MaterialTheme.typography.labelLarge.withTabularFigures(),
+    sideLabelStyle: TextStyle = MaterialTheme.typography.bodySmall.withTabularFigures(),
     warningColor: Color = MaterialTheme.colorScheme.warning,
     errorColor: Color = MaterialTheme.colorScheme.error,
     boundaryLineColor: Color = MaterialTheme.colorScheme.onSurface,
@@ -184,7 +183,7 @@ private fun CylinderPressureRow(
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             modifier = Modifier.uniformLabelWidth(mixLabelWidth).padding(end = 8.dp),
-            style = MaterialTheme.typography.labelMedium.withTabularFigures(),
+            style = sideLabelStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             text = buildAnnotatedString {
@@ -336,7 +335,7 @@ private fun CylinderPressureRow(
 
                 // Added to ever row, but potentially invisible, to make sure they all remain the
                 // same height based on the text that can potentially show in them.
-                val criticalShortage = if (pressureLeft == null) { "Critical gas shortage" } else { null }
+                val criticalShortage = if (pressureLeft == null) { "critical gas shortage" } else { null }
                 PressureLabel(
                     text = criticalShortage.orEmpty(),
                     isVisible = criticalShortage != null,
@@ -349,7 +348,7 @@ private fun CylinderPressureRow(
 
         Text(
             modifier = Modifier.padding(start = 8.dp),
-            style = labelStyle,
+            style = sideLabelStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             text = cylinder.pressure.formatPressure(unitSystem, includeUnit = false)
                 .padStart(fillPressureDigits, FIGURE_SPACE),
