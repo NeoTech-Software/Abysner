@@ -21,9 +21,9 @@ mobile solution to date), available on both Android and iOS, and free to inspect
 
 > **Disclaimer:** 
 > Diving is a potentially dangerous activity. Do not use this application without proper training in
-> diving and decompression techniques. This application is in an early development stage, and we
-> cannot guarantee that it is free of bugs. Always cross-validate any information presented by the
-> application with reliable sources.
+> diving and decompression techniques. Despite careful development, review, and cross-checks by
+> instructors and experienced divers, we cannot guarantee that this application is free of bugs.
+> Always cross-validate any information presented by the application with other reliable sources.
 >
 > No one associated with this project (including authors, contributors, advisors, or any other
 > affiliates) can be held responsible for the outcomes of your use of the information provided by
@@ -41,12 +41,12 @@ no laptop required.
 
 
 # Features
-**Abysner is under active development (imperial units are not available yet), but it already
-supports:**
+**Abysner is under active development, but it already supports:**
 
 - **Full open-circuit (OC) dive planning**
 - **Full closed-circuit rebreather (CCR) dive planning** with configurable setpoints and bailout
 - **Buhlmann ZHL-16 A, B and C** with gradient factors
+- **Metric and imperial** 10 feet is 10 feet, no awkward conversions or rounding
 - **Multi-gas:** Air, Nitrox, Oxygen, Trimix, Helitrox, Heliox
 - **Intuitive gas selector** showing MOD based on oxygen and gas density
 - **User configurable**:
