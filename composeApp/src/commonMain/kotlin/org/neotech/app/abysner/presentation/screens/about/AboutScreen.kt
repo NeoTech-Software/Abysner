@@ -29,8 +29,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -63,6 +60,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.zacsweers.metro.Inject
 import org.jetbrains.compose.resources.painterResource
 import org.neotech.app.abysner.presentation.Destinations
+import org.neotech.app.abysner.presentation.component.appbar.DetailScreenTopAppBar
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.version.VersionInfo
 
@@ -86,35 +84,22 @@ fun AboutScreen(navController: NavHostController = rememberNavController()) {
     AbysnerTheme {
         Scaffold(
             topBar = {
-                Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.background) {
-                    TopAppBar(
-                        title = { Text("About") },
-                        navigationIcon = {
-
-                            val currentBackStackEntry by navController.currentBackStackEntryAsState()
-                            if (currentBackStackEntry != null || LocalInspectionMode.current) {
-                                IconButton(onClick = {
-                                    navController.navigateUp()
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                                        contentDescription = "Back"
-                                    )
-                                }
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = {
-                                uriHandler.openUri("https://github.com/NeoTech-Software/Abysner")
-                            }) {
-                                Icon(
-                                    painter = painterResource(Res.drawable.ic_github),
-                                    contentDescription = "GitHub"
-                                )
-                            }
+                val currentBackStackEntry by navController.currentBackStackEntryAsState()
+                DetailScreenTopAppBar(
+                    title = "About",
+                    showBackButton = currentBackStackEntry != null || LocalInspectionMode.current,
+                    onNavigateUp = { navController.navigateUp() },
+                    actions = {
+                        IconButton(onClick = {
+                            uriHandler.openUri("https://github.com/NeoTech-Software/Abysner")
+                        }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_github),
+                                contentDescription = "GitHub"
+                            )
                         }
-                    )
-                }
+                    }
+                )
             }
         ) { insets ->
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {

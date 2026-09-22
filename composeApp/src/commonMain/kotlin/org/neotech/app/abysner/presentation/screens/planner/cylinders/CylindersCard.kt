@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Lock
 import com.mikepenz.markdown.compose.Markdown
@@ -55,7 +54,6 @@ import org.neotech.app.abysner.domain.core.model.Cylinder
 import org.neotech.app.abysner.domain.core.model.DiveMode
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
-import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.diveplanning.model.CylinderRole
 import org.neotech.app.abysner.domain.diveplanning.model.PlannedCylinderModel
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
@@ -64,12 +62,11 @@ import org.neotech.app.abysner.presentation.component.InfoPillSize
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.invisible
+import org.neotech.app.abysner.presentation.component.core.withoutInteractiveSizeInset
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.theme.IconSet
 import org.neotech.app.abysner.presentation.utilities.formatPressure
 import org.neotech.app.abysner.presentation.formatting.formatCapacity
-import org.neotech.app.abysner.presentation.utilities.formatVolume
-import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
-import kotlin.math.roundToInt
 
 @Composable
 fun CylinderSelectionCardComponent(
@@ -260,7 +257,7 @@ fun CylinderListItemComponent(
     val cylinderSuffix = " - ${cylinder.pressure.formatPressure(unitSystem)} ($capacityDisplay)"
 
     Row(
-        modifier = modifier.padding(start = 16.dp),
+        modifier = modifier.padding(start = 16.dp, end = 16.dp.withoutInteractiveSizeInset(actualComponentSize = 20.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
@@ -308,7 +305,7 @@ fun CylinderListItemComponent(
             modifier = Modifier.ifTrue(isLocked) { invisible() },
             onClick = { onDelete(cylinder) }
         ) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove cylinder", modifier = Modifier.size(20.dp))
+            Icon(imageVector = IconSet.delete, contentDescription = "Remove cylinder", modifier = Modifier.size(20.dp))
         }
     }
 }
