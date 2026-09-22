@@ -1,6 +1,6 @@
 # Terms and Conditions for Abysner
 
-**Last Updated:** 5 April 2026
+**Last Updated:** 17 September 2026
 
 ## Introduction
 Welcome to Abysner! Before you can use the App, you must review and agree to the following Terms and Conditions. By clicking the "Accept" button, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree, please click "Decline" and do not use the App. Please read the Terms and Conditions carefully.
@@ -27,7 +27,7 @@ By using Abysner, you agree to be bound by these Terms and Conditions and the te
 Abysner is a tool designed for diving-related activities. You are solely responsible for how you use the app. The Owner and Contributors/Maintainers are not liable for any consequences resulting from its use during diving or any other activities.
 
 ### 3.2. Disclaimer and Limitation of Liability
-Diving is a potentially dangerous activity. Do not use this application without proper training in diving and decompression techniques. This application is in an early development stage, and we cannot guarantee that it is free of bugs. Always cross-validate any information presented by the application with reliable sources.
+Diving is a potentially dangerous activity. Do not use this application without proper training in diving and decompression techniques. Despite careful development, review, and cross-checks by instructors and experienced divers, we cannot guarantee that this application is free of bugs. Always cross-validate any information presented by the application with other reliable sources.
 
 To the fullest extent permitted by law, the Owner and Contributors/Maintainers disclaim all liability for any direct, indirect, incidental, punitive, or consequential damages arising from your use of the app. Use of the app is entirely at your own risk.
 

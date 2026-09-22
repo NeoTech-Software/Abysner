@@ -36,4 +36,4 @@ update the "Last Updated" date at the top of this document. Your continued use o
 such changes constitutes your acceptance of the updated policy.
 
 *If you have any questions or concerns about this Privacy Policy, please feel free to contact the
-Owner at info@abysner.app**
+Owner at info@abysner.app*
