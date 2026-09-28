@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -44,7 +43,9 @@ import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.diveplanning.model.DiveProfileSection
 import org.neotech.app.abysner.presentation.component.IconAndTextButton
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
+import org.neotech.app.abysner.presentation.component.core.withoutInteractiveSizeInset
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.theme.IconSet
 import org.neotech.app.abysner.presentation.utilities.formatDepth
 
 @Composable
@@ -120,7 +121,7 @@ private fun SegmentListItemComponent(
     onDelete: (diveProfileSection: DiveProfileSection) -> Unit = {},
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.padding(end = 16.dp.withoutInteractiveSizeInset(actualComponentSize = 20.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextWithStartIcon(
@@ -143,7 +144,7 @@ private fun SegmentListItemComponent(
         IconButton(
             onClick = { onDelete(diveProfileSection) }
         ) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove segment", modifier = Modifier.size(20.dp))
+            Icon(imageVector = IconSet.delete, contentDescription = "Remove segment", modifier = Modifier.size(20.dp))
         }
     }
 }

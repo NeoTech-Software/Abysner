@@ -13,14 +13,10 @@
 package org.neotech.app.abysner.presentation.screens.planner
 
 import abysner.composeapp.generated.resources.Res
-import abysner.composeapp.generated.resources.ic_outline_settings_24
 import abysner.composeapp.generated.resources.ic_outline_tune_24
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -141,7 +137,7 @@ private fun RowScope.AppBarActions(
             },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(resource = Res.drawable.ic_outline_settings_24),
+                    imageVector = IconSet.settings,
                     contentDescription = "Preferences"
                 )
             }
@@ -154,7 +150,7 @@ private fun RowScope.AppBarActions(
             },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Outlined.Info,
+                    imageVector = IconSet.info,
                     contentDescription = "About"
                 )
             }
@@ -162,7 +158,7 @@ private fun RowScope.AppBarActions(
     }
     IconButton(onClick = { showMenu = true }) {
         Icon(
-            imageVector = Icons.Outlined.MoreVert,
+            imageVector = IconSet.more,
             contentDescription = "More"
         )
     }

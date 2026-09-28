@@ -21,19 +21,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -50,8 +45,8 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownPadding
 import dev.zacsweers.metro.Inject
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.neotech.app.abysner.presentation.Destinations
+import org.neotech.app.abysner.presentation.component.appbar.DetailScreenTopAppBar
 import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.onlyBottom
 import org.neotech.app.abysner.presentation.component.core.onlyHorizontal
@@ -105,25 +100,12 @@ fun TermsAndConditionsScreen(
     AbysnerTheme {
         Scaffold(
             topBar = {
-                Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.background) {
-                    TopAppBar(
-                        title = { Text("Terms & Conditions") },
-                        navigationIcon = {
-
-                            val previousBackStackEntry = navController.previousBackStackEntry
-                            if (previousBackStackEntry != null || LocalInspectionMode.current) {
-                                IconButton(onClick = {
-                                    navController.navigateUp()
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                                        contentDescription = "Back"
-                                    )
-                                }
-                            }
-                        }
-                    )
-                }
+                val previousBackStackEntry = navController.previousBackStackEntry
+                DetailScreenTopAppBar(
+                    title = "Terms & Conditions",
+                    showBackButton = previousBackStackEntry != null || LocalInspectionMode.current,
+                    onNavigateUp = { navController.navigateUp() },
+                )
             }
         ) { insets ->
 

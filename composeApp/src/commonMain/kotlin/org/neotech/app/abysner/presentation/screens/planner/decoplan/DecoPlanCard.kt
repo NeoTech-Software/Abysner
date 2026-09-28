@@ -31,8 +31,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -83,12 +81,14 @@ import org.neotech.app.abysner.presentation.component.MultiChoiceSegmentedButton
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.TextWithStartIcon
+import org.neotech.app.abysner.presentation.component.core.withoutInteractiveSizeInset
 import org.neotech.app.abysner.presentation.component.rememberMultiChoiceSegmentedButtonRowState
 import org.neotech.app.abysner.presentation.formatting.ALERT_DISPLAY_TOLERANCE_TWO_DECIMAL_PLACES
 import org.neotech.app.abysner.presentation.formatting.ppo2AlertSeverity
 import org.neotech.app.abysner.presentation.getUserReadableMessage
 import org.neotech.app.abysner.presentation.preview.PreviewData
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
+import org.neotech.app.abysner.presentation.theme.IconSet
 import org.neotech.app.abysner.presentation.theme.onWarning
 import org.neotech.app.abysner.presentation.theme.warning
 import org.neotech.app.abysner.presentation.utilities.depthUnitLabel
@@ -116,7 +116,7 @@ fun DecoPlanCardComponent(
 
                 Row(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
+                        .padding(start = 16.dp, end = 16.dp.withoutInteractiveSizeInset(actualComponentSize = 24.dp))
                         .padding(bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -141,7 +141,7 @@ fun DecoPlanCardComponent(
                             onClick = { showConfigurationInfo = true },
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Info,
+                                imageVector = IconSet.info,
                                 contentDescription = "Deco-plan information"
                             )
                         }
