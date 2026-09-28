@@ -181,7 +181,7 @@ fun DecoPlanCardComponent(
                 } else {
 
                     val items = buildList {
-                        add("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper.formatDepth(settings.unitSystem)}")
+                        add("Deeper\u202F+${divePlanSet.configuration.contingencyDeeper.formatDepth(settings.unitSystem, includeUnit = false)}")
                         add("Longer\u202F+${divePlanSet.configuration.contingencyLonger}")
                         if (divePlanSet.isCcr) { add("Bail-out") }
                     }.toImmutableList()
