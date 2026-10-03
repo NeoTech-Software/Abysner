@@ -67,7 +67,9 @@ import org.neotech.app.abysner.presentation.component.DefaultPathwayButtonItem
 import org.neotech.app.abysner.presentation.component.LocalBitmapRenderController
 import org.neotech.app.abysner.presentation.component.PathwayButtonsComponent
 import org.neotech.app.abysner.presentation.component.appbar.UnboundedBox
+import org.neotech.app.abysner.presentation.component.core.ifTrue
 import org.neotech.app.abysner.presentation.component.core.toPx
+import org.neotech.app.abysner.presentation.isScreenshotMode
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import org.neotech.app.abysner.presentation.utilities.rememberModalTarget
 import org.neotech.app.abysner.presentation.formatting.toHHMM
@@ -226,7 +228,9 @@ fun PlannerScreen(
                 }
             } else {
                 Scaffold(
-                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                    modifier = Modifier.ifTrue(!isScreenshotMode()) {
+                        nestedScroll(scrollBehavior.nestedScrollConnection)
+                    },
                     topBar = {
                         PlannerTopAppBar(uiState, navController) {
                             val height = 64.dp.toPx()

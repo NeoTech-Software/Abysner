@@ -12,8 +12,23 @@
 
 package org.neotech.app.abysner.presentation.theme
 
+import abysner.composeapp.generated.resources.Res
+import abysner.composeapp.generated.resources.ic_outline_chevron_back_24_ios
+import abysner.composeapp.generated.resources.ic_outline_delete_24_ios
+import abysner.composeapp.generated.resources.ic_outline_info_24_ios
+import abysner.composeapp.generated.resources.ic_outline_more_horiz_24_ios
+import abysner.composeapp.generated.resources.ic_outline_settings_24_ios
+import abysner.composeapp.generated.resources.ic_outline_share_24_android
+import abysner.composeapp.generated.resources.ic_outline_share_24_ios
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import org.jetbrains.compose.resources.vectorResource
 
 object IconSet {
 
@@ -31,19 +46,43 @@ object IconSet {
 }
 
 @Composable
-internal expect fun backIcon(): ImageVector
+private fun backIcon(): ImageVector = if (platform() == Platform.IOS) {
+    vectorResource(Res.drawable.ic_outline_chevron_back_24_ios)
+} else {
+    Icons.AutoMirrored.Outlined.ArrowBack
+}
 
 @Composable
-internal expect fun moreIcon(): ImageVector
+private fun moreIcon(): ImageVector = if (platform() == Platform.IOS) {
+    vectorResource(Res.drawable.ic_outline_more_horiz_24_ios)
+} else {
+    Icons.Outlined.MoreVert
+}
 
 @Composable
-internal expect fun shareIcon(): ImageVector
+private fun shareIcon(): ImageVector = if (platform() == Platform.IOS) {
+    vectorResource(Res.drawable.ic_outline_share_24_ios)
+} else {
+    vectorResource(Res.drawable.ic_outline_share_24_android)
+}
 
 @Composable
-internal expect fun settingsIcon(): ImageVector
+private fun settingsIcon(): ImageVector = if (platform() == Platform.IOS) {
+    vectorResource(Res.drawable.ic_outline_settings_24_ios)
+} else {
+    Icons.Outlined.Settings
+}
 
 @Composable
-internal expect fun deleteIcon(): ImageVector
+private fun deleteIcon(): ImageVector = if (platform() == Platform.IOS) {
+    vectorResource(Res.drawable.ic_outline_delete_24_ios)
+} else {
+    Icons.Outlined.Delete
+}
 
 @Composable
-internal expect fun infoIcon(): ImageVector
+private fun infoIcon(): ImageVector = if (platform() == Platform.IOS) {
+    vectorResource(Res.drawable.ic_outline_info_24_ios)
+} else {
+    Icons.Outlined.Info
+}

@@ -34,6 +34,10 @@ abstract class AppComponent {
 
     abstract val mainNavController: MainNavController
 
+    abstract val settingsRepository: SettingsRepository
+
+    abstract val planningRepository: PlanningRepository
+
     @SingleIn(AppScope::class)
     @Provides
     fun providesPlanningRepository(planningRepository: PlanningRepositoryImpl): PlanningRepository = planningRepository

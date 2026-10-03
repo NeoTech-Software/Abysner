@@ -10,6 +10,9 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
+import org.neotech.plugin.store.DrawDeviceFrameTask
+import org.neotech.plugin.store.ScreenshotVariant
+
 plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidKmpLibrary) apply false
@@ -78,50 +81,37 @@ tasks.register<org.neotech.plugin.IosExportTask>("exportIosApp") {
     outputDirectory = layout.projectDirectory.dir("iosApp/build/export")
 }
 
-tasks.register<org.neotech.plugin.FrameScreenshotsTask>("frameAndroidScreenshots") {
+val createScreenshotsTask = tasks.register("createStoreScreenshots") {
     group = "store"
-    description = "Frames Nothing Phone screenshots into device bezels."
-
-    val nothingPhone = layout.projectDirectory.dir("store-art/Nothing Phone 1")
-
-    bezelFile = nothingPhone.file("bezel-58-59-1524-3386.png")
-    maskFile = nothingPhone.file("mask.png")
-    screenshotFiles = listOf(
-        "screenshot-1.png",
-        "screenshot-2.png",
-        "screenshot-3.png",
-        "screenshot-4.png",
-    ).map { nothingPhone.file(it).asFile }
+    description = "Captures the generic store screenshots for every platform and theme, and frames them in a device bezel."
 }
 
-tasks.register<org.neotech.plugin.FrameScreenshotsTask>("frameIosSmallScreenshots") {
-    group = "store"
-    description = "Frames iPhone 6s screenshots into device bezels."
+ScreenshotVariant.entries.forEach { variant ->
 
-    val nothingPhone = layout.projectDirectory.dir("store-art/iPhone 6s Plus (5.5)")
+    val theme = if (variant.isDarkTheme) {
+        "dark"
+    } else {
+        "light"
+    }
+    val taskNameSuffix = variant.platform.lowercase().replaceFirstChar(Char::uppercase) + theme.replaceFirstChar(Char::uppercase)
+    val directoryName = "${variant.platform.lowercase()}-$theme"
 
-    bezelFile = nothingPhone.file("bezel-102-379-1242-2210.png")
-    maskFile = nothingPhone.file("mask.png")
-    screenshotFiles = listOf(
-        "screenshot-1.png",
-        "screenshot-2.png",
-        "screenshot-3.png",
-        "screenshot-4.png",
-    ).map { nothingPhone.file(it).asFile }
-}
+    val task = tasks.register<DrawDeviceFrameTask>("createStore${taskNameSuffix}Screenshots") {
+        group = "store"
+        description = "Captures ${variant.platform} screenshots in $theme-mode, and frames them in a device bezel."
 
-tasks.register<org.neotech.plugin.FrameScreenshotsTask>("frameIosLargeScreenshots") {
-    group = "store"
-    description = "Frames iPhone 15 screenshots into device bezels."
+        val captures = project(":androidApp").layout.buildDirectory
+            .dir("outputs/managed_device_android_test_additional_output/debug/storeDevice/${directoryName}")
 
-    val nothingPhone = layout.projectDirectory.dir("store-art/iPhone 15 Pro Max (6.7)")
+        dependsOn(":androidApp:storeDeviceDebugAndroidTest")
 
-    bezelFile = nothingPhone.file("bezel-120-120-1290-2796.png")
-    maskFile = nothingPhone.file("mask.png")
-    screenshotFiles = listOf(
-        "screenshot-1.png",
-        "screenshot-2.png",
-        "screenshot-3.png",
-        "screenshot-4.png",
-    ).map { nothingPhone.file(it).asFile }
+        outputDirectory = layout.projectDirectory.dir("store-art/${directoryName}")
+        this.variant = variant
+        screenshotFiles = provider {
+            captures.get().asFile.listFiles { file -> file.extension == "png" }
+                ?.sortedBy { it.name }
+                .orEmpty()
+        }
+    }
+    createScreenshotsTask.configure { dependsOn(task) }
 }
