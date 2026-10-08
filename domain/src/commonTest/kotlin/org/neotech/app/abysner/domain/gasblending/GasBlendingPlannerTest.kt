@@ -22,9 +22,9 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
- * Reference values come from realblender (https://github.com/atdotde/realblender), which reports its
- * results per liter of cylinder volume. Using a 1 liter cylinder here makes the numbers directly
- * comparable.
+ * Reference values were taken from realblender (https://github.com/atdotde/realblender) by
+ * Robert C. Helling, which reports its results per liter of cylinder volume. Using a 1 liter
+ * cylinder here makes the numbers directly comparable.
  *
  * Volumes and gas fractions are closed-form and reproduce to machine precision. Pressures go through
  * the equation of state model's iterative solver, which converges on a volume residual of 1e-6, so
