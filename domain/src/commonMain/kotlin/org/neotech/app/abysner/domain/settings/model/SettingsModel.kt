@@ -20,4 +20,5 @@ data class SettingsModel(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val showDiveEditTooltip: Boolean = true,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
+    val gasBlending: GasBlendingSettings = GasBlendingSettings(),
 )

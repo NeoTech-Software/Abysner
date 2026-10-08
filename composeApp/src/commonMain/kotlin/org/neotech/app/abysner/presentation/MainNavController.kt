@@ -24,6 +24,7 @@ import org.neotech.app.abysner.presentation.component.BitmapRenderRoot
 import org.neotech.app.abysner.presentation.screens.DiveConfigurationScreen
 import org.neotech.app.abysner.presentation.screens.SettingsScreen
 import org.neotech.app.abysner.presentation.screens.about.AboutScreen
+import org.neotech.app.abysner.presentation.screens.blending.GasBlendingScreen
 import org.neotech.app.abysner.presentation.screens.planner.PlannerScreen
 import org.neotech.app.abysner.presentation.screens.terms_and_conditions.TermsAndConditionsScreen
 import org.neotech.app.abysner.presentation.theme.LocalThemeMode
@@ -37,6 +38,7 @@ enum class Destinations(override val destinationName: String) : DestinationDefin
     PLANNER("planner"),
     DIVE_CONFIGURATION("dive-configuration"),
     APP_CONFIGURATION("app-configuration"),
+    GAS_BLENDING("gas-blending"),
     ABOUT("about"),
     TERMS_AND_CONDITIONS("terms-and-conditions"),
     TERMS_AND_CONDITIONS_INITIAL("terms-and-conditions-initial")
@@ -51,6 +53,7 @@ class MainNavController(
     private val plannerScreen: PlannerScreen,
     private val diveConfigurationScreen: DiveConfigurationScreen,
     private val settingsScreen: SettingsScreen,
+    private val gasBlendingScreen: GasBlendingScreen,
     private val termsAndConditionsScreen: TermsAndConditionsScreen,
     private val aboutScreen: AboutScreen,
 ) {
@@ -61,6 +64,7 @@ class MainNavController(
             plannerScreen = plannerScreen,
             diveConfigurationScreen = diveConfigurationScreen,
             settingsScreen = settingsScreen,
+            gasBlendingScreen = gasBlendingScreen,
             termsAndConditionsScreen = termsAndConditionsScreen,
             aboutScreen = aboutScreen,
         )
@@ -73,6 +77,7 @@ fun MainNavController(
     plannerScreen: PlannerScreen,
     diveConfigurationScreen: DiveConfigurationScreen,
     settingsScreen: SettingsScreen,
+    gasBlendingScreen: GasBlendingScreen,
     termsAndConditionsScreen: TermsAndConditionsScreen,
     aboutScreen: AboutScreen,
 ) {
@@ -94,6 +99,7 @@ fun MainNavController(
 
                     slideComposable(Destinations.DIVE_CONFIGURATION) { diveConfigurationScreen(navController) }
                     slideComposable(Destinations.APP_CONFIGURATION) { settingsScreen(navController) }
+                    slideComposable(Destinations.GAS_BLENDING) { gasBlendingScreen(navController) }
                     slideComposable(Destinations.ABOUT) { aboutScreen(navController) }
                     slideComposable(Destinations.TERMS_AND_CONDITIONS) { termsAndConditionsScreen(navController) }
 
