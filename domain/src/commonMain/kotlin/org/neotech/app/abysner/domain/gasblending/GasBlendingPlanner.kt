@@ -30,8 +30,15 @@ import kotlin.math.min
  * normal volume and cylinder pressure is non-linear, and that is exactly what the equation of state
  * model handles.
  *
- * This is a port of the approach used by realblender (https://github.com/atdotde/realblender), which
- * builds on the same polynomial real-gas fit Abysner already uses, so results agree with it.
+ * Both the balance equations and the real-gas correction are standard. The correction is the same
+ * polynomial fit Abysner already applies elsewhere, credited to Lubomir I. Ivanov in
+ * [org.neotech.app.abysner.domain.core.physics.PolynomialRealGasModel].
+ *
+ * Results were validated against realblender (https://github.com/atdotde/realblender) by
+ * Robert C. Helling, which solves the same problem on the same fit, and the two agree to every
+ * digit realblender reports. Two things here go further than it does: a blend that cannot be
+ * reached by topping up alone reports how far to drain first rather than simply failing, and a
+ * helium imbalance is detected instead of being silently ignored.
  */
 class GasBlendingPlanner(
     private val gasModel: GasEquationOfStateModel = GasEquationOfStateModel.Default,

@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
+import org.neotech.app.abysner.domain.gasblending.GasBlendingPlanner
+import org.neotech.app.abysner.domain.gasblending.blendCost
 import org.neotech.app.abysner.domain.settings.model.GasBlendingSettings
 import org.neotech.app.abysner.domain.core.physics.asBarToPsi
 import org.neotech.app.abysner.domain.core.physics.asPsiToBar
@@ -54,6 +56,8 @@ internal fun GasBlendingInputCard(
     // has no place in any of the mixes while that mode is selected.
     val allowHelium = blending.trimixMode
     val mode = if (blending.trimixMode) BlendingMode.TRIMIX else BlendingMode.NITROX
+
+    val planner = remember { GasBlendingPlanner() }
 
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth()) {
@@ -137,6 +141,7 @@ internal fun GasBlendingInputCard(
                     label = "First",
                     gas = blending.firstTopUpGas,
                     allowHelium = allowHelium,
+                    candidateCost = { blending.withTopUpGas(TopUpSlot.FIRST, it).blendCost(planner) },
                     onGasSelected = { callbacks.onTopUpGasChanged(TopUpSlot.FIRST, it) },
                 )
                 AnimatedVisibility(visible = blending.trimixMode) {
@@ -144,6 +149,7 @@ internal fun GasBlendingInputCard(
                         modifier = Modifier.fillMaxWidth(),
                         label = "Second",
                         gas = blending.secondTopUpGas,
+                        candidateCost = { blending.withTopUpGas(TopUpSlot.SECOND, it).blendCost(planner) },
                         onGasSelected = { callbacks.onTopUpGasChanged(TopUpSlot.SECOND, it) },
                     )
                 }
@@ -152,12 +158,20 @@ internal fun GasBlendingInputCard(
                     label = "Final",
                     gas = blending.finalTopUpGas,
                     allowHelium = allowHelium,
+                    candidateCost = { blending.withTopUpGas(TopUpSlot.FINAL, it).blendCost(planner) },
                     onGasSelected = { callbacks.onTopUpGasChanged(TopUpSlot.FINAL, it) },
                 )
             }
         }
     }
 }
+
+private fun GasBlendingSettings.withTopUpGas(slot: TopUpSlot, gas: Gas): GasBlendingSettings =
+    when (slot) {
+        TopUpSlot.FIRST -> copy(firstTopUpGas = gas)
+        TopUpSlot.SECOND -> copy(secondTopUpGas = gas)
+        TopUpSlot.FINAL -> copy(finalTopUpGas = gas)
+    }
 
 /**
  * Pressure input that shows and accepts the unit the user has configured, while reporting bar.

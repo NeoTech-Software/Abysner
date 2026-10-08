@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.domain.gasblending
 
 import org.neotech.app.abysner.domain.gasblending.model.GasBlendingInput
+import org.neotech.app.abysner.domain.gasblending.model.GasBlendingPlan
 import org.neotech.app.abysner.domain.settings.model.GasBlendingSettings
 
 /**
@@ -26,3 +27,36 @@ fun GasBlendingSettings.toBlendingInput(): GasBlendingInput = GasBlendingInput(
     targetPressure = targetPressure,
     topUpGases = topUpGases,
 )
+
+/**
+ * What blending a set of inputs costs, given the gas prices those inputs carry.
+ */
+sealed interface BlendCost {
+
+    /** The blend works out and every gas it needs has a price, so it can be compared on cost. */
+    data class Known(val total: Double) : BlendCost
+
+    /** The blend works out, but at least one gas it needs has no price filled in yet. */
+    data object PriceMissing : BlendCost
+
+    /** The target mix cannot be blended from these gases at all. */
+    data object NotBlendable : BlendCost
+}
+
+/**
+ * Prices the blend these inputs describe. Only reports a total when every gas involved has a known
+ * price, since a partial sum is not something two options can be compared on.
+ */
+fun GasBlendingSettings.blendCost(planner: GasBlendingPlanner = GasBlendingPlanner()): BlendCost {
+    val plan = planner.plan(toBlendingInput())
+    if (plan !is GasBlendingPlan.Success) {
+        return BlendCost.NotBlendable
+    }
+    val volumePerGas = plan.volumePerGas
+    if (volumePerGas.keys.any { gasPrices[it] == null }) {
+        return BlendCost.PriceMissing
+    }
+    return BlendCost.Known(
+        total = volumePerGas.entries.sumOf { (gas, volume) -> gasPrices.getValue(gas) * volume }
+    )
+}

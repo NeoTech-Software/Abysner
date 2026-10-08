@@ -47,6 +47,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,6 +55,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.neotech.app.abysner.domain.core.model.Gas
+import org.neotech.app.abysner.domain.gasblending.BlendCost
+import org.neotech.app.abysner.domain.utilities.DecimalFormat
+import org.neotech.app.abysner.presentation.component.InfoPill
+import org.neotech.app.abysner.presentation.component.InfoPillSize
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
@@ -80,6 +85,11 @@ fun GasMixField(
     gas: Gas,
     /** When false only helium free gases can be picked, as is the case when blending nitrox. */
     allowHelium: Boolean = true,
+    /**
+     * Asked, per option in the picker, what choosing that gas would do to the blend. Null leaves the
+     * options unannotated, which is what the start and target mixes want.
+     */
+    candidateCost: ((Gas) -> BlendCost)? = null,
     onGasSelected: (Gas) -> Unit,
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -109,6 +119,7 @@ fun GasMixField(
         GasMixDialog(
             currentGas = gas,
             allowHelium = allowHelium,
+            candidateCost = candidateCost,
             onDismiss = { showDialog = false },
             onGasSelected = {
                 showDialog = false
@@ -141,6 +152,7 @@ private val blendingGases: List<Gas> = buildList {
 private fun GasMixDialog(
     currentGas: Gas,
     allowHelium: Boolean = true,
+    candidateCost: ((Gas) -> BlendCost)? = null,
     onDismiss: () -> Unit,
     onGasSelected: (Gas) -> Unit,
 ) {
@@ -221,6 +233,7 @@ private fun GasMixDialog(
                         TAB_PRESETS -> PresetGasTab(
                             presets = presets,
                             currentGas = currentGas,
+                            candidateCost = candidateCost,
                             onGasSelected = onGasSelected,
                         )
 
@@ -250,34 +263,90 @@ private fun GasMixDialog(
 private fun PresetGasTab(
     presets: List<Gas>,
     currentGas: Gas,
+    candidateCost: ((Gas) -> BlendCost)?,
     onGasSelected: (Gas) -> Unit,
 ) {
-    LazyColumnWithScrollIndicators {
-        items(presets) { preset ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 56.dp)
-                    .clickable { onGasSelected(preset) }
-                    .padding(vertical = 8.dp, horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
-                    RadioButton(
-                        selected = preset == currentGas,
-                        onClick = { onGasSelected(preset) },
+    Column {
+        if (candidateCost != null) {
+            Text(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                text = "Cost shown is for the whole blend with that gas.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        LazyColumnWithScrollIndicators(modifier = Modifier.weight(1f)) {
+            items(presets) { preset ->
+                // Solving is microseconds, so re-running it per visible option as the list scrolls
+                // is cheaper than caching it and risking a stale answer.
+                val cost = candidateCost?.invoke(preset)
+                // An option that cannot reach the target is dimmed rather than flagged in the error
+                // colour: it is not a mistake, just a choice that does not apply here. It stays
+                // selectable so the target can be explored from the other direction.
+                val unusable = cost == BlendCost.NotBlendable
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 56.dp)
+                        .clickable { onGasSelected(preset) }
+                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+                        RadioButton(
+                            selected = preset == currentGas,
+                            onClick = { onGasSelected(preset) },
+                        )
+                    }
+                    Text(
+                        // Same "Name (oxygen/helium)" form the dive planner's standard gas picker
+                        // uses, which is what tells the various nitrox and trimix presets apart.
+                        text = "${preset.diveIndustryName()} ($preset)",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (unusable) {
+                            MaterialTheme.colorScheme.outline
+                        } else {
+                            Color.Unspecified
+                        },
+                        modifier = Modifier.padding(start = 8.dp).weight(1f),
                     )
+                    when (cost) {
+                        // An actual price is the one thing here worth acting on, so it gets the
+                        // same pill treatment values get elsewhere in the app, while the two "no
+                        // number available" cases stay as quiet grey text.
+                        is BlendCost.Known -> InfoPill(
+                            label = null,
+                            value = DecimalFormat.format(2, cost.total),
+                            size = InfoPillSize.SMALL,
+                        )
+
+                        BlendCost.NotBlendable -> CostAnnotation(
+                            text = "not possible",
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+
+                        BlendCost.PriceMissing -> CostAnnotation(
+                            text = "price unknown",
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+
+                        null -> Unit
+                    }
                 }
-                Text(
-                    // Same "Name (oxygen/helium)" form the dive planner's standard gas picker uses,
-                    // which is what tells the various nitrox and trimix presets apart.
-                    text = "${preset.diveIndustryName()} ($preset)",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 8.dp).weight(1f),
-                )
             }
         }
     }
+}
+
+@Composable
+private fun CostAnnotation(text: String, color: Color) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = color,
+        textAlign = TextAlign.End,
+        maxLines = 1,
+    )
 }
 
 @Composable
