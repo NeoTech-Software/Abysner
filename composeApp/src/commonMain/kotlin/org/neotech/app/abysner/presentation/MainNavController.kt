@@ -42,40 +42,17 @@ enum class Destinations(override val destinationName: String) : DestinationDefin
     TERMS_AND_CONDITIONS_INITIAL("terms-and-conditions-initial")
 }
 
-// Metro supports @Inject on top-level functions, but the generated types are not resolved by the
-// IDE, causing "Unresolved reference" errors. This wrapper class avoids those IDE errors.
-// See: https://zacsweers.github.io/metro/latest/installation/#ide-support
 @Inject
-class MainNavController(
-    private val viewModelCreator: () -> MainNavControllerViewModel,
-    private val plannerScreen: PlannerScreen,
-    private val diveConfigurationScreen: DiveConfigurationScreen,
-    private val settingsScreen: SettingsScreen,
-    private val termsAndConditionsScreen: TermsAndConditionsScreen,
-    private val aboutScreen: AboutScreen,
-) {
-    @Composable
-    operator fun invoke() {
-        MainNavController(
-            viewModel = viewModel { viewModelCreator() },
-            plannerScreen = plannerScreen,
-            diveConfigurationScreen = diveConfigurationScreen,
-            settingsScreen = settingsScreen,
-            termsAndConditionsScreen = termsAndConditionsScreen,
-            aboutScreen = aboutScreen,
-        )
-    }
-}
-
 @Composable
 fun MainNavController(
-    viewModel: MainNavControllerViewModel,
+    viewModelCreator: () -> MainNavControllerViewModel,
     plannerScreen: PlannerScreen,
     diveConfigurationScreen: DiveConfigurationScreen,
     settingsScreen: SettingsScreen,
     termsAndConditionsScreen: TermsAndConditionsScreen,
     aboutScreen: AboutScreen,
 ) {
+    val viewModel = viewModel { viewModelCreator() }
 
     val startDestination = when (viewModel.settings.value.termsAndConditionsAccepted) {
         false -> Destinations.TERMS_AND_CONDITIONS_INITIAL
