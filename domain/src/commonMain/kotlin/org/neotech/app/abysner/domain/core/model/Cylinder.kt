@@ -127,6 +127,7 @@ data class Cylinder(
         // Common (EU) metric twinset configurations (doubles)
 
         val D7 = Size(name = "D7", waterVolume = 14.0, workingPressure = 232.0)
+        val D8 = Size(name = "D8", waterVolume = 16.0, workingPressure = 300.0)
         val D8_5 = Size(name = "D8.5", waterVolume = 17.0, workingPressure = 232.0)
         val D10 = Size(name = "D10", waterVolume = 20.0, workingPressure = 232.0)
         val D12 = Size(name = "D12", waterVolume = 24.0, workingPressure = 232.0)
@@ -161,7 +162,7 @@ data class Cylinder(
 
         val StandardMetricSizes = listOf(
             STEEL_3L, STEEL_7L, STEEL_8_5L, STEEL_10L, STEEL_12L, STEEL_15L,
-            D7, D8_5, D10, D12,
+            D7, D8, D8_5, D10, D12,
         )
 
         val StandardImperialSizes = listOf(

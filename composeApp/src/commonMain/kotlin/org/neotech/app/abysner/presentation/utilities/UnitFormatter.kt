@@ -70,12 +70,17 @@ fun Double.formatDepth(unitSystem: UnitSystem, includeUnit: Boolean = true): Str
  * Formats a pressure value in bar to a display string. In imperial mode the value is converted
  * to psi.
  */
-fun Double.formatPressure(unitSystem: UnitSystem, includeUnit: Boolean = true): String {
-    val value = when (unitSystem) {
-        UnitSystem.METRIC -> roundToInt()
-        UnitSystem.IMPERIAL -> this.asBarToPsi().roundToInt()
+fun Double.formatPressure(unitSystem: UnitSystem, includeUnit: Boolean = true, decimals: Int = 0): String {
+    val converted = when (unitSystem) {
+        UnitSystem.METRIC -> this
+        UnitSystem.IMPERIAL -> this.asBarToPsi()
     }
-    return if (includeUnit) { "$value ${unitSystem.pressureUnitLabel}" } else { value.toString() }
+    val value = if (decimals == 0) {
+        converted.roundToInt().toString()
+    } else {
+        DecimalFormat.format(decimals, converted)
+    }
+    return if (includeUnit) { "$value ${unitSystem.pressureUnitLabel}" } else { value }
 }
 
 /**

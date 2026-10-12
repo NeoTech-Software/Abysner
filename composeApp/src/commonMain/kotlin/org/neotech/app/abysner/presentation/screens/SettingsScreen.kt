@@ -35,6 +35,8 @@ import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.domain.settings.model.SettingsModel
 import org.neotech.app.abysner.domain.settings.model.ThemeMode
 import org.neotech.app.abysner.presentation.component.appbar.DetailScreenTopAppBar
+import org.neotech.app.abysner.presentation.Destinations
+import org.neotech.app.abysner.presentation.component.preferences.BaseTextPreference
 import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTitle
 import org.neotech.app.abysner.presentation.component.preferences.SingleChoicePreference
 import org.neotech.app.abysner.presentation.component.preferences.SwitchPreference
@@ -77,6 +79,7 @@ fun SettingsScreen(
     settings: SettingsModel,
     updateSettings: ((SettingsModel) -> SettingsModel) -> Unit,
 ) {
+    val gasPriceCount = settings.gasBlending.gasPrices.size
     AbysnerTheme {
         Scaffold(
             topBar = {
@@ -123,6 +126,15 @@ fun SettingsScreen(
                         onItemPicked = { picked ->
                             updateSettings { it.copy(unitSystem = picked) }
                         },
+                    )
+
+                    SettingsSubTitle(subTitle = "Gas blending")
+
+                    BaseTextPreference(
+                        label = "Gas prices",
+                        description = "What you pay per unit of each gas, used to price a blend.",
+                        value = if (gasPriceCount == 0) null else "$gasPriceCount",
+                        onClick = { navController.navigate(Destinations.GAS_PRICES.destinationName) },
                     )
 
                     SettingsSubTitle(subTitle = "Deco plan")

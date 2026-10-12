@@ -267,6 +267,13 @@ class GasTest {
     }
 
     @Test
+    fun diveIndustryName_returnsHeliumForPureHelium() {
+        // Heliox is a helium and oxygen mixture, so it is the wrong name for pure helium.
+        assertEquals("Helium", Gas.Helium.diveIndustryName())
+        assertEquals("Helium", Gas(oxygenFraction = 0.0, heliumFraction = 1.0).diveIndustryName())
+    }
+
+    @Test
     fun diveIndustryName_returnsHelioxForAnyZeroNitrogenHeliumBlend() {
         // Any gas with He > 0 and N2 = 0 (and not pure O2) is Heliox
         for (oxygenPercentage in 1..99) {
