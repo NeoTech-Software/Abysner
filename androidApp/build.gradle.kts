@@ -66,6 +66,20 @@ android {
     }
 
     signingConfigs {
+        // Checked into the repository on purpose. Without a fixed key every machine (and every
+        // fresh checkout) signs with its own automatically generated debug key, and Android then
+        // refuses to update an already installed build with
+        // INSTALL_FAILED_UPDATE_INCOMPATIBLE, forcing an uninstall that takes the app's data with
+        // it. The credentials are the well-known Android debug ones and protect nothing: this key
+        // can only sign debug and development builds, never a release.
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storeType = "PKCS12"
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+
         create("release") {
             keyAlias = keystoreProperties.getProperty("keyAlias")
             keyPassword = keystoreProperties.getProperty("keyPassword")
@@ -91,8 +105,11 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         create("development") {
-            applicationIdSuffix = ".development"
+            // initWith copies every property from the debug build type, including its
+            // applicationIdSuffix, so the suffix has to be set afterwards or development builds end
+            // up sharing the ".debug" application id and replacing the debug app on install.
             initWith(getByName("debug"))
+            applicationIdSuffix = ".development"
             matchingFallbacks += listOf("release")
             isMinifyEnabled = true
             isShrinkResources = true

@@ -61,6 +61,7 @@ import org.neotech.app.abysner.presentation.component.InfoPill
 import org.neotech.app.abysner.presentation.component.InfoPillSize
 import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.TextAlert
+import org.neotech.app.abysner.presentation.component.list.SelectionListDefaults
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
@@ -135,7 +136,7 @@ fun GasMixField(
  * includes pure helium, which is not a breathing gas but is the usual helium source when blending
  * trimix.
  */
-private val blendingGases: List<Gas> = buildList {
+internal val blendingGases: List<Gas> = buildList {
     add(Gas.Air)
     add(Gas.Oxygen)
     add(Gas.Helium)
@@ -149,7 +150,7 @@ private val blendingGases: List<Gas> = buildList {
 }
 
 @Composable
-private fun GasMixDialog(
+internal fun GasMixDialog(
     currentGas: Gas,
     allowHelium: Boolean = true,
     candidateCost: ((Gas) -> BlendCost)? = null,
@@ -204,7 +205,7 @@ private fun GasMixDialog(
             }
         },
         content = {
-            Column(modifier = Modifier.heightIn(max = 400.dp)) {
+            Column(modifier = Modifier.heightIn(max = SelectionListDefaults.dialogContentMaxHeight)) {
                 PrimaryTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -287,9 +288,9 @@ private fun PresetGasTab(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = 56.dp)
+                        .defaultMinSize(minHeight = SelectionListDefaults.rowMinHeight)
                         .clickable { onGasSelected(preset) }
-                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                        .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
@@ -444,6 +445,19 @@ fun GasMixDialogPresetsPreview() {
 fun GasMixDialogCustomPreview() {
     AbysnerTheme {
         GasMixDialog(currentGas = Gas(0.27, 0.13), onDismiss = {}, onGasSelected = {})
+    }
+}
+
+/**
+ * The dialog has to pick up whatever theme it is composed in. It only does so while it is created
+ * inside [AbysnerTheme]: a Dialog starts its own composition, and one placed outside the theme
+ * silently falls back to the default Material colours.
+ */
+@Preview
+@Composable
+fun GasMixDialogDarkPreview() {
+    AbysnerTheme(darkTheme = true) {
+        GasMixDialog(currentGas = Gas.Oxygen, onDismiss = {}, onGasSelected = {})
     }
 }
 

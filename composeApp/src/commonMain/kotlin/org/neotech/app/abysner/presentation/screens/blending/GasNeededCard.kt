@@ -208,40 +208,6 @@ private fun GasPriceRow(
     }
 }
 
-/**
- * The denominator prices are entered and shown in. Gas is sold by the cubic meter in metric
- * countries and by the cubic foot in imperial ones, and both give numbers of a sensible size, unlike
- * a price per liter which would come out as something like 0.045.
- */
-private val UnitSystem.priceVolumeUnitLabel: String
-    get() = when (this) {
-        UnitSystem.METRIC -> "m³"
-        UnitSystem.IMPERIAL -> "ft³"
-    }
-
-/** Cubic meter prices are whole currency units, cubic foot prices are an order of magnitude smaller. */
-private val UnitSystem.priceFractionDigits: Int
-    get() = when (this) {
-        UnitSystem.METRIC -> 2
-        UnitSystem.IMPERIAL -> 3
-    }
-
-/** Liters of gas at 1 bar in the volume prices are quoted per. */
-private val UnitSystem.litersPerPriceUnit: Double
-    get() = when (this) {
-        UnitSystem.METRIC -> LITERS_PER_CUBIC_METER
-        UnitSystem.IMPERIAL -> LITERS_PER_CUBIC_FOOT
-    }
-
-/**
- * Prices are stored per liter, the same way pressures are stored in bar, and converted to the
- * denominator the user actually enters them in.
- */
-private fun Double.toDisplayPrice(unitSystem: UnitSystem): Double = this * unitSystem.litersPerPriceUnit
-
-private fun Double.toPricePerLiter(unitSystem: UnitSystem): Double = this / unitSystem.litersPerPriceUnit
-
-private const val LITERS_PER_CUBIC_METER = 1000.0
 
 private fun previewPlan(
     startGas: Gas = Gas.Air,

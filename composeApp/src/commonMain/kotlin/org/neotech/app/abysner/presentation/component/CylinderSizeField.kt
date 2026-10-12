@@ -64,6 +64,7 @@ import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.core.physics.asPsiToBar
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
+import org.neotech.app.abysner.presentation.component.list.SelectionListDefaults
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.component.textfield.defaultInputFieldLabel
@@ -196,7 +197,7 @@ private fun CylinderSizeDialog(
             }
         },
         content = {
-            Column(modifier = Modifier.heightIn(max = 400.dp)) {
+            Column(modifier = Modifier.heightIn(max = SelectionListDefaults.dialogContentMaxHeight)) {
                 PrimaryTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -282,9 +283,9 @@ private fun PresetsTankSizeTab(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .defaultMinSize(minHeight = 56.dp)
+                    .defaultMinSize(minHeight = SelectionListDefaults.rowMinHeight)
                     .clickable { onPresetSelected(preset) }
-                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
