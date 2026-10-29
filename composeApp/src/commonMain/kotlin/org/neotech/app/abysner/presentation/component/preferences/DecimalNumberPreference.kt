@@ -19,7 +19,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,7 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberDecimalInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
@@ -90,15 +90,14 @@ fun DecimalNumberPreferenceDialog(
     maxValue: Double = Double.MAX_VALUE,
     initialValue: Double = 0.0,
 ) {
-    val numberValue: MutableState<Double> = remember(initialValue) { mutableStateOf(initialValue) }
-    val isValid = remember { mutableStateOf(false) }
+    val numberInput = rememberDecimalInputState(initialValue, fractionDigits, minValue, maxValue)
 
     AlertDialogCustomContent(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
-                enabled = isValid.value,
-                onClick = { onConfirmButtonClicked(numberValue.value) }
+                enabled = numberInput.isValid,
+                onClick = { onConfirmButtonClicked(numberInput.value) }
             ) {
                 Text(text = confirmButtonText)
             }
@@ -110,19 +109,11 @@ fun DecimalNumberPreferenceDialog(
         },
         title = { Text(title) },
         content = {
-            OutlinedDecimalInputField(
+            OutlinedInputField(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                minValue = minValue,
-                maxValue = maxValue,
-                fractionDigits = fractionDigits,
-                initialValue = initialValue,
-                isValid = isValid,
+                state = numberInput,
                 visualTransformation = visualTransformation,
-            ) {
-                if (it != null) {
-                    numberValue.value = it
-                }
-            }
+            )
         }
     )
 }

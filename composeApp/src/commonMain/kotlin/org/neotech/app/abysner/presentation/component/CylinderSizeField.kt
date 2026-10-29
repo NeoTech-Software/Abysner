@@ -40,7 +40,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,7 +63,9 @@ import org.neotech.app.abysner.domain.core.physics.asLitersToCubicFeet
 import org.neotech.app.abysner.domain.core.physics.asPsiToBar
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.NumberInputState
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberDecimalInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.component.textfield.defaultInputFieldLabel
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
@@ -141,24 +142,36 @@ private fun CylinderSizeDialog(
     val pagerState = rememberPagerState(initialPage = initialTab) { 2 }
     val coroutineScope = rememberCoroutineScope()
 
-    var customVolume: Double? by remember {
-        mutableStateOf(
-            when (unitSystem) {
-                UnitSystem.METRIC -> currentCylinderSize.waterVolume
-                UnitSystem.IMPERIAL -> currentCylinderSize.ratedCapacity().asLitersToCubicFeet()
-            }
-        )
+    val volumeRange = when (unitSystem) {
+        UnitSystem.METRIC -> 0.1 to 50.0
+        UnitSystem.IMPERIAL -> 6.0 to 160.0
     }
-    var customPressure: Double? by remember {
-        mutableStateOf(
-            when (unitSystem) {
-                UnitSystem.METRIC -> currentCylinderSize.workingPressure
-                UnitSystem.IMPERIAL -> currentCylinderSize.workingPressure.asBarToPsi()
-            }
-        )
+    val volumeFractionDigits = when (unitSystem) {
+        UnitSystem.METRIC -> 1
+        UnitSystem.IMPERIAL -> 0
     }
-    val isVolumeValid = remember { mutableStateOf(true) }
-    val isPressureValid = remember { mutableStateOf(true) }
+    val pressureRange = when (unitSystem) {
+        UnitSystem.METRIC -> 10.0 to 300.0
+        UnitSystem.IMPERIAL -> 1800.0 to 4500.0
+    }
+    val volumeInput = rememberDecimalInputState(
+        initialValue = when (unitSystem) {
+            UnitSystem.METRIC -> currentCylinderSize.waterVolume
+            UnitSystem.IMPERIAL -> currentCylinderSize.ratedCapacity().asLitersToCubicFeet()
+        },
+        fractionDigits = volumeFractionDigits,
+        minValue = volumeRange.first,
+        maxValue = volumeRange.second,
+    )
+    val pressureInput = rememberDecimalInputState(
+        initialValue = when (unitSystem) {
+            UnitSystem.METRIC -> currentCylinderSize.workingPressure
+            UnitSystem.IMPERIAL -> currentCylinderSize.workingPressure.asBarToPsi()
+        },
+        fractionDigits = 0,
+        minValue = pressureRange.first,
+        maxValue = pressureRange.second,
+    )
 
     AlertDialogCustomContent(
         onDismissRequest = onDismiss,
@@ -171,16 +184,18 @@ private fun CylinderSizeDialog(
         confirmButton = {
             if (pagerState.currentPage == TAB_CUSTOM) {
                 TextButton(
-                    enabled = isVolumeValid.value && isPressureValid.value,
+                    enabled = volumeInput.isValid && pressureInput.isValid,
                     onClick = {
+                        val customVolume = volumeInput.value
+                        val customPressure = pressureInput.value
                         val size = when (unitSystem) {
                             UnitSystem.METRIC -> Cylinder.Size(
-                                waterVolume = customVolume!!,
-                                workingPressure = customPressure!!,
+                                waterVolume = customVolume,
+                                workingPressure = customPressure,
                             )
                             UnitSystem.IMPERIAL -> {
-                                val pressureBar = customPressure!!.asPsiToBar()
-                                val targetCapacityLiters = customVolume!!.asCubicFeetToLiters()
+                                val pressureBar = customPressure.asPsiToBar()
+                                val targetCapacityLiters = customVolume.asCubicFeetToLiters()
                                 val gasVolumePerLiter = GasEquationOfStateModel.Default.getGasVolume(Gas.Air, 1.0, pressureBar)
                                 Cylinder.Size(
                                     waterVolume = targetCapacityLiters / gasVolumePerLiter,
@@ -239,12 +254,8 @@ private fun CylinderSizeDialog(
                         TAB_CUSTOM -> {
                             CustomTankSizeTab(
                                 unitSystem = unitSystem,
-                                volume = customVolume,
-                                pressure = customPressure,
-                                isVolumeValid = isVolumeValid,
-                                isPressureValid = isPressureValid,
-                                onVolumeChanged = { customVolume = it },
-                                onPressureChanged = { customPressure = it },
+                                volumeInput = volumeInput,
+                                pressureInput = pressureInput,
                             )
                         }
                     }
@@ -323,28 +334,12 @@ private fun PresetsTankSizeTab(
 @Composable
 private fun CustomTankSizeTab(
     unitSystem: UnitSystem,
-    volume: Double?,
-    pressure: Double?,
-    isVolumeValid: MutableState<Boolean>,
-    isPressureValid: MutableState<Boolean>,
-    onVolumeChanged: (Double?) -> Unit,
-    onPressureChanged: (Double?) -> Unit,
+    volumeInput: NumberInputState<Double>,
+    pressureInput: NumberInputState<Double>,
 ) {
     val volumeLabel = when (unitSystem) {
         UnitSystem.METRIC -> "Volume"
         UnitSystem.IMPERIAL -> "True capacity"
-    }
-    val volumeRange = when (unitSystem) {
-        UnitSystem.METRIC -> 0.1 to 50.0
-        UnitSystem.IMPERIAL -> 6.0 to 160.0
-    }
-    val volumeFractionDigits = when (unitSystem) {
-        UnitSystem.METRIC -> 1
-        UnitSystem.IMPERIAL -> 0
-    }
-    val pressureRange = when (unitSystem) {
-        UnitSystem.METRIC -> 10.0 to 300.0
-        UnitSystem.IMPERIAL -> 1800.0 to 4500.0
     }
 
     Column(
@@ -354,28 +349,18 @@ private fun CustomTankSizeTab(
             .padding(start = 16.dp, end = 16.dp, top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        OutlinedDecimalInputField(
+        OutlinedInputField(
             modifier = Modifier.fillMaxWidth(),
-            initialValue = volume,
+            state = volumeInput,
             label = volumeLabel,
-            fractionDigits = volumeFractionDigits,
-            minValue = volumeRange.first,
-            maxValue = volumeRange.second,
-            isValid = isVolumeValid,
             visualTransformation = SuffixVisualTransformation(" ${unitSystem.volumeUnitLabel}"),
-            onNumberChanged = onVolumeChanged,
             supportingText = null,
         )
-        OutlinedDecimalInputField(
+        OutlinedInputField(
             modifier = Modifier.fillMaxWidth(),
-            initialValue = pressure,
+            state = pressureInput,
             label = "Working pressure",
-            fractionDigits = 0,
-            minValue = pressureRange.first,
-            maxValue = pressureRange.second,
-            isValid = isPressureValid,
             visualTransformation = SuffixVisualTransformation(" ${unitSystem.pressureUnitLabel}"),
-            onNumberChanged = onPressureChanged,
             supportingText = null,
         )
         if (unitSystem == UnitSystem.IMPERIAL) {

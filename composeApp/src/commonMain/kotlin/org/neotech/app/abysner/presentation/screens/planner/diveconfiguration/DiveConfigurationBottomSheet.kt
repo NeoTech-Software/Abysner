@@ -25,14 +25,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import org.neotech.app.abysner.domain.core.model.DiveMode
@@ -43,8 +44,9 @@ import org.neotech.app.abysner.presentation.component.bottomsheet.BottomSheetHea
 import org.neotech.app.abysner.presentation.component.bottomsheet.ModalBottomSheetScaffold
 import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpandedSheetState
 import org.neotech.app.abysner.presentation.component.bottomsheet.rememberModalBottomSheetState
+import org.neotech.app.abysner.presentation.component.textfield.duration.rememberDurationInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
-import org.neotech.app.abysner.presentation.component.textfield.DurationInputField
 import org.neotech.app.abysner.presentation.utilities.ModalTarget
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -155,8 +157,7 @@ private fun DiveConfigurationBottomSheetContent(
     onDelete: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
-    var surfaceInterval: Duration? by remember(initialSurfaceInterval) { mutableStateOf(initialSurfaceInterval) }
-    val isConfirmEnabled = remember(initialSurfaceInterval) { mutableStateOf(true) }
+    val surfaceIntervalInput = rememberDurationInputState(initialSurfaceInterval ?: Duration.ZERO)
     var selectedDiveModeIndex by remember(initialDiveMode) { mutableIntStateOf(initialDiveMode.toSelectionIndex()) }
 
     val dismiss: () -> Unit = {
@@ -171,11 +172,11 @@ private fun DiveConfigurationBottomSheetContent(
             BottomSheetHeader(
                 title = title,
                 primaryLabel = "Confirm",
-                primaryEnabled = isConfirmEnabled.value,
+                primaryEnabled = initialSurfaceInterval == null || surfaceIntervalInput.isValid,
                 onClose = dismiss,
                 onPrimary = {
                     val effectiveDuration = if (initialSurfaceInterval != null) {
-                        surfaceInterval ?: initialSurfaceInterval
+                        surfaceIntervalInput.value
                     } else {
                         null
                     }
@@ -207,12 +208,15 @@ private fun DiveConfigurationBottomSheetContent(
                     style = MaterialTheme.typography.bodyLarge
                 )
             } else {
-                DurationInputField(
+                OutlinedInputField(
                     modifier = Modifier.fillMaxWidth(),
-                    initialValue = initialSurfaceInterval,
+                    state = surfaceIntervalInput,
                     label = "Surface interval",
-                    isValid = isConfirmEnabled,
-                    onChanged = { surfaceInterval = it },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                    ),
                 )
             }
 

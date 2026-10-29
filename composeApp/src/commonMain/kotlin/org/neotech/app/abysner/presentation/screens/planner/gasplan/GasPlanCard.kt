@@ -39,12 +39,12 @@ import org.neotech.app.abysner.domain.diveplanning.model.DivePlanSet
 import org.neotech.app.abysner.domain.gasplanning.model.CylinderGasRequirements
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.AlertSeverity
+import org.neotech.app.abysner.presentation.component.ExpandableText
 import org.neotech.app.abysner.presentation.component.Table
 import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.appendBold
 import org.neotech.app.abysner.presentation.component.appendBoldLine
 import org.neotech.app.abysner.presentation.component.appendBulletPoint
-import org.neotech.app.abysner.presentation.component.textfield.ExpandableText
 import org.neotech.app.abysner.presentation.formatting.ALERT_DISPLAY_TOLERANCE_TWO_DECIMAL_PLACES
 import org.neotech.app.abysner.presentation.formatting.densityAlertSeverity
 import org.neotech.app.abysner.presentation.formatting.ppo2AlertSeverity

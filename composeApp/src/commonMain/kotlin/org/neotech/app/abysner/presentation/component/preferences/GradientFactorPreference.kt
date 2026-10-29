@@ -19,7 +19,6 @@ import androidx.compose.material3.AlertDialogCustomContent
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,7 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberIntegerInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
@@ -79,19 +79,16 @@ private fun GradientFactorPreferenceDialog(
     gfLow: Int,
     gfHigh: Int,
 ) {
-    val gfLowValue: MutableState<Int?> = remember(gfLow) { mutableStateOf(gfLow) }
-    val gfHighValue: MutableState<Int?> = remember(gfHigh) { mutableStateOf(gfHigh) }
-
-    val isGfLowValid = remember { mutableStateOf(false) }
-    val isGfHighValid = remember { mutableStateOf(false) }
+    val gfLowInput = rememberIntegerInputState(gfLow, minValue = 10, maxValue = 100)
+    val gfHighInput = rememberIntegerInputState(gfHigh, minValue = 10, maxValue = 100)
 
     AlertDialogCustomContent(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
-                enabled = isGfLowValid.value && isGfHighValid.value,
+                enabled = gfLowInput.isValid && gfHighInput.isValid,
                 onClick = {
-                    onConfirmButtonClicked(gfLowValue.value!!, gfHighValue.value!!)
+                    onConfirmButtonClicked(gfLowInput.value, gfHighInput.value)
                 }) {
                 Text(text = confirmButtonText)
             }
@@ -104,26 +101,16 @@ private fun GradientFactorPreferenceDialog(
         title = { Text(title) },
         content = {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedNumberInputField(
+                OutlinedInputField(
                     modifier = Modifier.padding(start = 24.dp).weight(1f),
-                    minValue = 10,
-                    maxValue = 100,
-                    initialValue = gfLow,
-                    isValid = isGfLowValid,
-                    visualTransformation = SuffixVisualTransformation(" low")
-                ) {
-                    gfLowValue.value = it
-                }
-                OutlinedNumberInputField(
+                    state = gfLowInput,
+                    visualTransformation = SuffixVisualTransformation(" low"),
+                )
+                OutlinedInputField(
                     modifier = Modifier.padding(end = 24.dp).weight(1f),
-                    minValue = 10,
-                    maxValue = 100,
-                    initialValue = gfHigh,
-                    isValid = isGfHighValid,
-                    visualTransformation = SuffixVisualTransformation(" high")
-                ) {
-                    gfHighValue.value = it
-                }
+                    state = gfHighInput,
+                    visualTransformation = SuffixVisualTransformation(" high"),
+                )
             }
         }
     )
