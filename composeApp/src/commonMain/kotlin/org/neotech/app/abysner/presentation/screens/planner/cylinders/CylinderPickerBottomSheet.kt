@@ -60,7 +60,8 @@ import org.neotech.app.abysner.presentation.component.bottomsheet.rememberExpand
 import org.neotech.app.abysner.presentation.component.bottomsheet.rememberModalBottomSheetState
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberDecimalInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.component.CylinderSizeField
 import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
@@ -183,7 +184,7 @@ private fun CylinderPickerBottomSheetContent(
         mutableIntStateOf(initialValue.gas.heliumPercentage)
     }
 
-    var volume: Double? by remember(initialValue) {
+    var volume: Double by remember(initialValue) {
         mutableStateOf(initialValue.waterVolume)
     }
 
@@ -191,13 +192,16 @@ private fun CylinderPickerBottomSheetContent(
         mutableStateOf(initialValue.workingPressure)
     }
 
-    var startPressure: Double? by remember(initialValue) {
-        mutableStateOf(when (unitSystem) {
+    val startPressureLabel = "Start pressure"
+    val startPressureInput = rememberDecimalInputState(
+        initialValue = when (unitSystem) {
             UnitSystem.METRIC -> initialValue.pressure
             UnitSystem.IMPERIAL -> initialValue.pressure.asBarToPsi()
-        })
-    }
-    val isStartPressureValid = remember { mutableStateOf(true) }
+        },
+        fractionDigits = 0,
+        minValue = if (unitSystem == UnitSystem.IMPERIAL) { 150.0 } else { 10.0 },
+        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 4500.0 } else { 300.0 },
+    )
 
     val textFieldPositions = mutableStateMapOf<String, LayoutCoordinates>()
 
@@ -216,12 +220,12 @@ private fun CylinderPickerBottomSheetContent(
             BottomSheetHeader(
                 title = if (lockGas) { "Cylinder" } else { "Gas & cylinder" },
                 primaryLabel = if (isAdd) { "Add" } else { "Update" },
-                primaryEnabled = isStartPressureValid.value,
+                primaryEnabled = startPressureInput.isValid,
                 onClose = dismiss,
                 onPrimary = {
                     val pressureBar = when (unitSystem) {
-                        UnitSystem.METRIC -> startPressure!!
-                        UnitSystem.IMPERIAL -> startPressure!!.asPsiToBar()
+                        UnitSystem.METRIC -> startPressureInput.value
+                        UnitSystem.IMPERIAL -> startPressureInput.value.asPsiToBar()
                     }
                     onAddOrUpdateCylinder(
                         // Copy since we want to maintain the uniqueIdentifier
@@ -232,7 +236,7 @@ private fun CylinderPickerBottomSheetContent(
                             ),
                             pressure = pressureBar,
                             size = Cylinder.Size(
-                                waterVolume = volume!!,
+                                waterVolume = volume,
                                 workingPressure = workingPressure,
                             ),
                         )
@@ -245,8 +249,6 @@ private fun CylinderPickerBottomSheetContent(
         Column(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
-            val errorMessagePressure = remember { mutableStateOf<String?>(null) }
-
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -254,41 +256,31 @@ private fun CylinderPickerBottomSheetContent(
                 CylinderSizeField(
                     modifier = Modifier.weight(1f),
                     cylinderSize = Cylinder.Size(
-                        waterVolume = volume ?: initialValue.waterVolume,
+                        waterVolume = volume,
                         workingPressure = workingPressure,
                     ),
                     unitSystem = unitSystem,
                     onCylinderSizeSelected = { selectedSize ->
                         volume = selectedSize.waterVolume
                         workingPressure = selectedSize.workingPressure
-                        startPressure = when (unitSystem) {
+                        startPressureInput.value = when (unitSystem) {
                             UnitSystem.METRIC -> selectedSize.workingPressure
                             UnitSystem.IMPERIAL -> selectedSize.workingPressure.asBarToPsi()
                         }
                     },
                 )
 
-                OutlinedDecimalInputField(
+                OutlinedInputField(
                     modifier = Modifier.weight(1f)
                         .recordLayoutCoordinates("pressure", textFieldPositions),
-                    initialValue = startPressure!!,
-                    label = "Start pressure",
-                    minValue = if (unitSystem == UnitSystem.IMPERIAL)  {150.0 } else { 10.0 },
-                    maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 4500.0 } else { 300.0 },
-                    fractionDigits = 0,
-                    isValid = isStartPressureValid,
+                    state = startPressureInput,
+                    label = startPressureLabel,
                     visualTransformation = SuffixVisualTransformation(" ${unitSystem.pressureUnitLabel}"),
-                    errorMessage = errorMessagePressure,
-                    onNumberChanged = {
-                        if (it != null) {
-                            startPressure = it
-                        }
-                    },
                     supportingText = null
                 )
             }
 
-            val anyErrorMessage = errorMessagePressure.value
+            val anyErrorMessage = startPressureInput.errorMessage(startPressureLabel)
             if(anyErrorMessage != null) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),

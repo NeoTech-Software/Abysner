@@ -29,7 +29,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,7 +70,8 @@ import org.neotech.app.abysner.presentation.component.bottomsheet.rememberModalB
 import org.neotech.app.abysner.presentation.component.clearFocusOutside
 import org.neotech.app.abysner.presentation.component.core.pluralsStringBuilder
 import org.neotech.app.abysner.presentation.component.recordLayoutCoordinates
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberIntegerInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.bodyExtraLarge
@@ -201,22 +201,21 @@ private fun SegmentPickerBottomSheetContent(
     }
 
     var selectedCylinder: Cylinder by remember { mutableStateOf(initialCylinder ?: availableCylinders.first()) }
-    var depthInDisplayUnit by remember {
-        mutableIntStateOf(
-            initialValue?.depthInMeters?.let { meters ->
-                unitSystem.metersToDisplayDepth(meters).roundToInt()
-            } ?: when (unitSystem) {
-                UnitSystem.METRIC -> 10
-                UnitSystem.IMPERIAL -> 30
-            }
-        )
-    }
-    var time by remember { mutableIntStateOf(initialValue?.duration ?: 15) }
-
-    val errorMessageDepth = remember { mutableStateOf<String?>(null) }
-    val errorMessageTime = remember { mutableStateOf<String?>(null) }
-    val isDepthValid = remember { mutableStateOf(true) }
-    val isTimeValid = remember { mutableStateOf(true) }
+    val depthLabel = "Depth"
+    val durationLabel = "Duration"
+    val depthInput = rememberIntegerInputState(
+        initialValue = initialValue?.depthInMeters?.let { meters ->
+            unitSystem.metersToDisplayDepth(meters).roundToInt()
+        } ?: when (unitSystem) {
+            UnitSystem.METRIC -> 10
+            UnitSystem.IMPERIAL -> 30
+        },
+        minValue = 1,
+        maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 500 } else { 150 },
+    )
+    val durationInput = rememberIntegerInputState(initialValue = initialValue?.duration ?: 15, minValue = 1, maxValue = 999)
+    val depthInDisplayUnit = depthInput.value
+    val duration = durationInput.value
 
     val dismiss: () -> Unit = {
         scope.launch {
@@ -231,13 +230,13 @@ private fun SegmentPickerBottomSheetContent(
             BottomSheetHeader(
                 title = "Dive segment",
                 primaryLabel = if (isAdd) { "Add" } else { "Update" },
-                primaryEnabled = isTimeValid.value && isDepthValid.value,
+                primaryEnabled = durationInput.isValid && depthInput.isValid,
                 onClose = dismiss,
                 onPrimary = {
                     val depthMeters = unitSystem.displayDepthToMeters(depthInDisplayUnit.toDouble())
                     onAddOrUpdateDiveSegment(
                         DiveProfileSection(
-                            duration = time,
+                            duration = duration,
                             depthInMeters = depthMeters,
                             cylinder = selectedCylinder
                         )
@@ -301,38 +300,20 @@ private fun SegmentPickerBottomSheetContent(
                 modifier = Modifier.padding(top = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                OutlinedNumberInputField(
+                OutlinedInputField(
                     modifier = Modifier.weight(1f)
                         .recordLayoutCoordinates("depth", textFieldPositions),
-                    label = "Depth",
-                    minValue = 1,
-                    maxValue = if (unitSystem == UnitSystem.IMPERIAL) { 500 } else { 150 },
+                    state = depthInput,
+                    label = depthLabel,
                     visualTransformation = SuffixVisualTransformation(" ${unitSystem.depthUnitLabel}"),
-                    initialValue = depthInDisplayUnit,
-                    errorMessage = errorMessageDepth,
-                    isValid = isDepthValid,
-                    onNumberChanged = {
-                        if (it != null) {
-                            depthInDisplayUnit = it
-                        }
-                    },
                     supportingText = null,
                 )
-                OutlinedNumberInputField(
+                OutlinedInputField(
                     modifier = Modifier.weight(1f)
                         .recordLayoutCoordinates("duration", textFieldPositions),
-                    label = "Duration",
-                    minValue = 1,
-                    maxValue = 999,
+                    state = durationInput,
+                    label = durationLabel,
                     visualTransformation = SuffixVisualTransformation(" min"),
-                    initialValue = initialValue?.duration ?: 15,
-                    errorMessage = errorMessageTime,
-                    isValid = isTimeValid,
-                    onNumberChanged = {
-                        if (it != null) {
-                            time = it
-                        }
-                    },
                     supportingText = null,
                 )
             }
@@ -340,7 +321,7 @@ private fun SegmentPickerBottomSheetContent(
             val gas = selectedCylinder.gas
 
             // Collect input error messages (invalid number, no number etc.)
-            var anyErrorMessage = errorMessageDepth.value ?: errorMessageTime.value
+            var anyErrorMessage = depthInput.errorMessage(depthLabel) ?: durationInput.errorMessage(durationLabel)
 
             // OC-specific warnings: MOD and density limits apply to the breathed gas directly.
             // On a rebreather the setpoint controls O2, so these do not apply.
@@ -372,7 +353,7 @@ private fun SegmentPickerBottomSheetContent(
             val depthMetersForTravel = unitSystem.displayDepthToMeters(depthInDisplayUnit.toDouble())
             val distance = (previousDepth - depthMetersForTravel)
             val travelTime = configuration.travelTime(distance)
-            val bottomTime = time - travelTime
+            val bottomTime = duration - travelTime
 
             val depthUnitPlural = when (unitSystem) {
                 UnitSystem.METRIC -> Res.plurals.unit_meter

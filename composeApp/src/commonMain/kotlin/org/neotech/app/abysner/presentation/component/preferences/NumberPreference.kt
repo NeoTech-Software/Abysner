@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -19,9 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,7 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberIntegerInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
@@ -91,15 +90,14 @@ fun NumberPreferenceDialog(
     minValue: Int = Int.MIN_VALUE,
     initialValue: Int = 0,
 ) {
-    val numberValue: MutableState<Int> = remember(initialValue) { mutableIntStateOf(initialValue) }
-    val isValid = remember { mutableStateOf(false) }
+    val numberInput = rememberIntegerInputState(initialValue, minValue, maxValue)
 
     AlertDialogCustomContent(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
-                enabled = isValid.value,
-                onClick = { onConfirmButtonClicked(numberValue.value) }
+                enabled = numberInput.isValid,
+                onClick = { onConfirmButtonClicked(numberInput.value) }
             ) {
                 Text(text = confirmButtonText)
             }
@@ -111,18 +109,11 @@ fun NumberPreferenceDialog(
         },
         title = { Text(title) },
         content = {
-            OutlinedNumberInputField(
+            OutlinedInputField(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                minValue = minValue,
-                maxValue = maxValue,
-                initialValue = initialValue,
-                isValid = isValid,
-                visualTransformation = visualTransformation
-            ) {
-                if(it != null) {
-                    numberValue.value = it
-                }
-            }
+                state = numberInput,
+                visualTransformation = visualTransformation,
+            )
         }
 
     )

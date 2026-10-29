@@ -24,9 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,8 +32,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedNumberInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberDecimalInputState
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberIntegerInputState
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
@@ -96,22 +95,20 @@ private fun CcrSetpointPreferenceDialog(
     switchDepth: Int?,
     switchDepthDescription: String = "",
 ) {
-    val setpointValue: MutableState<Double> = remember(setpoint) { mutableStateOf(setpoint) }
-    val switchDepthValue: MutableState<Int?> = remember(switchDepth) { mutableStateOf(switchDepth) }
-    var switchEnabled by remember(switchDepth) { mutableStateOf(switchDepth != null) }
     val initialSwitchDepth = switchDepth ?: 6
+    var switchEnabled by remember(switchDepth) { mutableStateOf(switchDepth != null) }
 
-    val isSetpointValid = remember { mutableStateOf(false) }
-    val isSwitchDepthValid = remember { mutableStateOf(true) }
+    val setpointInput = rememberDecimalInputState(setpoint, fractionDigits = 1, minValue = 0.1, maxValue = 1.6)
+    val switchDepthInput = rememberIntegerInputState(initialSwitchDepth, minValue = 1, maxValue = 150)
 
     AlertDialogCustomContent(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
-                enabled = isSetpointValid.value && (!switchEnabled || isSwitchDepthValid.value),
+                enabled = setpointInput.isValid && (!switchEnabled || switchDepthInput.isValid),
                 onClick = {
-                    val effectiveSwitchDepth = if (switchEnabled) switchDepthValue.value else null
-                    onConfirmButtonClicked(setpointValue.value, effectiveSwitchDepth)
+                    val effectiveSwitchDepth = if (switchEnabled) { switchDepthInput.value } else { null }
+                    onConfirmButtonClicked(setpointInput.value, effectiveSwitchDepth)
                 }
             ) {
                 Text(text = confirmButtonText)
@@ -128,21 +125,13 @@ private fun CcrSetpointPreferenceDialog(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedDecimalInputField(
+                OutlinedInputField(
                     modifier = Modifier.fillMaxWidth(),
+                    state = setpointInput,
                     label = "Setpoint",
-                    minValue = 0.1,
-                    maxValue = 1.6,
-                    fractionDigits = 1,
-                    initialValue = setpoint,
-                    isValid = isSetpointValid,
                     visualTransformation = SuffixVisualTransformation(" bar"),
                     supportingText = null
-                ) {
-                    if (it != null) {
-                        setpointValue.value = it
-                    }
-                }
+                )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -153,28 +142,19 @@ private fun CcrSetpointPreferenceDialog(
                         onCheckedChange = { checked ->
                             switchEnabled = checked
                             if (checked) {
-                                switchDepthValue.value = initialSwitchDepth
+                                switchDepthInput.value = initialSwitchDepth
                             }
                         }
                     )
 
-                    key(switchEnabled) {
-                        OutlinedNumberInputField(
-                            modifier = Modifier.weight(1f),
-                            label = "Auto-switch depth",
-                            enabled = switchEnabled,
-                            minValue = 1,
-                            maxValue = 150,
-                            initialValue = initialSwitchDepth,
-                            isValid = isSwitchDepthValid,
-                            visualTransformation = SuffixVisualTransformation(" m"),
-                            supportingText = null,
-                        ) {
-                            if (it != null && switchEnabled) {
-                                switchDepthValue.value = it
-                            }
-                        }
-                    }
+                    OutlinedInputField(
+                        modifier = Modifier.weight(1f),
+                        enabled = switchEnabled,
+                        state = switchDepthInput,
+                        label = "Auto-switch depth",
+                        visualTransformation = SuffixVisualTransformation(" m"),
+                        supportingText = null,
+                    )
                 }
 
                 if (switchDepthDescription.isNotEmpty()) {
