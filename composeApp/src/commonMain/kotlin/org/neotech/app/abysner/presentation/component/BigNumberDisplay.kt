@@ -24,8 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import org.neotech.app.abysner.presentation.component.core.ifUnspecified
+import org.neotech.app.abysner.presentation.theme.IconSet
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -134,7 +133,7 @@ fun BigNumberDisplay(
             if(showDropDown) {
                 Icon(
                     modifier = Modifier.size(24.dp).align(Alignment.CenterEnd),
-                    imageVector = Icons.Default.ArrowDropDown,
+                    imageVector = IconSet.dropDown,
                     contentDescription = null
                 )
             }

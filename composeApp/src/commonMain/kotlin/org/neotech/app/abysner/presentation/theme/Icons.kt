@@ -14,6 +14,7 @@ package org.neotech.app.abysner.presentation.theme
 
 import abysner.composeapp.generated.resources.Res
 import abysner.composeapp.generated.resources.ic_outline_chevron_back_24_ios
+import abysner.composeapp.generated.resources.ic_outline_chevron_up_down_24_ios
 import abysner.composeapp.generated.resources.ic_outline_delete_24_ios
 import abysner.composeapp.generated.resources.ic_outline_info_24_ios
 import abysner.composeapp.generated.resources.ic_outline_more_horiz_24_ios
@@ -22,6 +23,7 @@ import abysner.composeapp.generated.resources.ic_outline_share_24_android
 import abysner.composeapp.generated.resources.ic_outline_share_24_ios
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
@@ -43,6 +45,8 @@ object IconSet {
     val delete: ImageVector @Composable get() = deleteIcon()
 
     val info: ImageVector @Composable get() = infoIcon()
+
+    val dropDown: ImageVector @Composable get() = dropDownIcon()
 }
 
 @Composable
@@ -85,4 +89,11 @@ private fun infoIcon(): ImageVector = if (platform() == Platform.IOS) {
     vectorResource(Res.drawable.ic_outline_info_24_ios)
 } else {
     Icons.Outlined.Info
+}
+
+@Composable
+private fun dropDownIcon(): ImageVector = if (platform() == Platform.IOS) {
+    vectorResource(Res.drawable.ic_outline_chevron_up_down_24_ios)
+} else {
+    Icons.Default.ArrowDropDown
 }
