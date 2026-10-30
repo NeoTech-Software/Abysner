@@ -1,6 +1,6 @@
 /*
  * Abysner - Dive planner
- * Copyright (C) 2024 Neotech
+ * Copyright (C) 2024-2026 Neotech
  *
  * Abysner is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License version 3,
@@ -19,10 +19,18 @@ expect object DecimalFormat {
     fun format(fractionDigits: Int, number: Number): String
 }
 
-expect class DecimalFormatter(format: String) {
+expect class DecimalFormatter(format: String, locale: FormatLocale = FormatLocale.Default) {
     fun format(number: Number): String
     fun setFractionDigits(digits: Int)
     fun decimalSeparator(): Char
+}
+
+expect class FormatLocale {
+    companion object {
+        val Default: FormatLocale
+
+        fun forLanguageTag(languageTag: String): FormatLocale
+    }
 }
 
 expect fun generateUUID(): String
