@@ -23,11 +23,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +40,7 @@ import org.neotech.app.abysner.domain.gasblending.model.GasBlendingPlan
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.CylinderSizeField
 import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTitle
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
+import org.neotech.app.abysner.presentation.component.textfield.LiveDecimalInputField
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.formatVolume
 import org.neotech.app.abysner.presentation.utilities.volumeUnitLabel
@@ -158,13 +154,6 @@ private fun GasPriceRow(
     unitSystem: UnitSystem,
     onGasPriceChanged: (Gas, Double?) -> Unit,
 ) {
-    // Held locally and only pushed outwards: OutlinedDecimalInputField re-keys its text state
-    // whenever initialValue changes, so feeding the stored price straight back in would discard
-    // partial input on every keystroke.
-    var displayPrice: Double? by remember(unitSystem) {
-        mutableStateOf(pricePerLiter?.toDisplayPrice(unitSystem))
-    }
-
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -184,18 +173,19 @@ private fun GasPriceRow(
             )
         }
 
-        OutlinedDecimalInputField(
+        // A gas without a price starts at zero rather than empty, as the field always holds a
+        // number. Nothing is stored until the price is actually edited, so the cost column keeps
+        // showing that the price is still missing.
+        LiveDecimalInputField(
             modifier = Modifier.weight(1f),
-            initialValue = displayPrice,
+            initialValue = pricePerLiter?.toDisplayPrice(unitSystem) ?: 0.0,
+            resetKey = unitSystem,
             label = "Price / ${unitSystem.priceVolumeUnitLabel}",
             fractionDigits = unitSystem.priceFractionDigits,
             minValue = 0.0,
             maxValue = 9999.0,
-            onNumberChanged = { value ->
-                displayPrice = value
-                onGasPriceChanged(gas, value?.toPricePerLiter(unitSystem))
-            },
             supportingText = null,
+            onValueChanged = { price -> onGasPriceChanged(gas, price.toPricePerLiter(unitSystem)) },
         )
 
         Text(

@@ -22,10 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,7 +37,7 @@ import org.neotech.app.abysner.domain.core.physics.asPsiToBar
 import org.neotech.app.abysner.presentation.component.SingleChoiceSegmentedButtonRow
 import org.neotech.app.abysner.presentation.component.preferences.SettingsSubTitle
 import org.neotech.app.abysner.presentation.component.rememberSingleChoiceSegmentedButtonRowState
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
+import org.neotech.app.abysner.presentation.component.textfield.LiveDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.utilities.pressureUnitLabel
@@ -176,9 +173,9 @@ private fun GasBlendingSettings.withTopUpGas(slot: TopUpSlot, gas: Gas): GasBlen
 /**
  * Pressure input that shows and accepts the unit the user has configured, while reporting bar.
  *
- * The displayed value is kept in local state and only pushed outwards, never fed back in:
- * [OutlinedDecimalInputField] re-keys its internal text state whenever `initialValue` changes, so
- * round-tripping every keystroke through the view model would discard partial input.
+ * The value is pushed outwards on every keystroke that leaves a valid number, but never fed back
+ * in: re-reading the stored pressure while typing would replace the text being edited. Switching
+ * unit system does replace it, with the same pressure in the other unit.
  */
 @Composable
 private fun PressureField(
@@ -188,18 +185,13 @@ private fun PressureField(
     unitSystem: UnitSystem,
     onPressureChanged: (Double) -> Unit,
 ) {
-    var displayValue: Double? by remember(unitSystem) {
-        mutableStateOf(
-            when (unitSystem) {
-                UnitSystem.METRIC -> pressureInBar
-                UnitSystem.IMPERIAL -> pressureInBar.asBarToPsi()
-            }
-        )
-    }
-
-    OutlinedDecimalInputField(
+    LiveDecimalInputField(
         modifier = modifier,
-        initialValue = displayValue,
+        initialValue = when (unitSystem) {
+            UnitSystem.METRIC -> pressureInBar
+            UnitSystem.IMPERIAL -> pressureInBar.asBarToPsi()
+        },
+        resetKey = unitSystem,
         label = label,
         fractionDigits = 0,
         minValue = 0.0,
@@ -208,18 +200,15 @@ private fun PressureField(
             UnitSystem.IMPERIAL -> MAX_PRESSURE_PSI
         },
         visualTransformation = SuffixVisualTransformation(" ${unitSystem.pressureUnitLabel}"),
-        onNumberChanged = { value ->
-            displayValue = value
-            if (value != null) {
-                onPressureChanged(
-                    when (unitSystem) {
-                        UnitSystem.METRIC -> value
-                        UnitSystem.IMPERIAL -> value.asPsiToBar()
-                    }
-                )
-            }
-        },
         supportingText = null,
+        onValueChanged = { value ->
+            onPressureChanged(
+                when (unitSystem) {
+                    UnitSystem.METRIC -> value
+                    UnitSystem.IMPERIAL -> value.asPsiToBar()
+                }
+            )
+        },
     )
 }
 

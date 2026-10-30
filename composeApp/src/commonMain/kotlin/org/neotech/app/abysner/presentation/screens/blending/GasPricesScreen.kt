@@ -52,7 +52,7 @@ import org.neotech.app.abysner.domain.core.model.Gas
 import org.neotech.app.abysner.domain.core.model.UnitSystem
 import org.neotech.app.abysner.domain.settings.SettingsRepository
 import org.neotech.app.abysner.presentation.component.appbar.DetailScreenTopAppBar
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
+import org.neotech.app.abysner.presentation.component.textfield.LiveDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 import org.neotech.app.abysner.presentation.theme.IconSet
@@ -188,13 +188,6 @@ private fun GasPriceEntry(
     onPriceChanged: (Double) -> Unit,
     onDelete: () -> Unit,
 ) {
-    // Held locally and only pushed outwards: OutlinedDecimalInputField re-keys its text state
-    // whenever initialValue changes, so feeding the stored price straight back in would discard
-    // partial input on every keystroke.
-    var displayPrice: Double? by remember(unitSystem) {
-        mutableStateOf(pricePerLiter.toDisplayPrice(unitSystem))
-    }
-
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp).padding(top = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -214,24 +207,19 @@ private fun GasPriceEntry(
             )
         }
 
-        OutlinedDecimalInputField(
+        // Clearing the text reports nothing, so a price being retyped never makes the row
+        // disappear mid-edit. Removing a gas is what the delete button is for.
+        LiveDecimalInputField(
             modifier = Modifier.weight(1f),
-            initialValue = displayPrice,
+            initialValue = pricePerLiter.toDisplayPrice(unitSystem),
+            resetKey = unitSystem,
             label = null,
             fractionDigits = unitSystem.priceFractionDigits,
             minValue = 0.0,
             maxValue = 9999.0,
             visualTransformation = SuffixVisualTransformation(" /${unitSystem.priceVolumeUnitLabel}"),
-            onNumberChanged = { value ->
-                displayPrice = value
-                // An emptied field is left alone rather than treated as a removal: clearing the
-                // text to retype a price must not make the whole row disappear mid-edit. Removing a
-                // gas is what the delete button is for.
-                if (value != null) {
-                    onPriceChanged(value.toPricePerLiter(unitSystem))
-                }
-            },
             supportingText = null,
+            onValueChanged = { price -> onPriceChanged(price.toPricePerLiter(unitSystem)) },
         )
 
         IconButton(onClick = onDelete) {

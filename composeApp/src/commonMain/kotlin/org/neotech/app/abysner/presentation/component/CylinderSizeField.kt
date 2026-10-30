@@ -64,7 +64,6 @@ import org.neotech.app.abysner.domain.core.physics.asPsiToBar
 import org.neotech.app.abysner.domain.utilities.DecimalFormat
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
 import org.neotech.app.abysner.presentation.component.list.SelectionListDefaults
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
 import org.neotech.app.abysner.presentation.component.textfield.number.NumberInputState
 import org.neotech.app.abysner.presentation.component.textfield.number.rememberDecimalInputState
 import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField

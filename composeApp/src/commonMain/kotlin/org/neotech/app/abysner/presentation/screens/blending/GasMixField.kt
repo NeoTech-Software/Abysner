@@ -38,7 +38,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +62,9 @@ import org.neotech.app.abysner.presentation.component.AlertSeverity
 import org.neotech.app.abysner.presentation.component.TextAlert
 import org.neotech.app.abysner.presentation.component.list.SelectionListDefaults
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
-import org.neotech.app.abysner.presentation.component.textfield.OutlinedDecimalInputField
+import org.neotech.app.abysner.presentation.component.textfield.OutlinedInputField
+import org.neotech.app.abysner.presentation.component.textfield.number.NumberInputState
+import org.neotech.app.abysner.presentation.component.textfield.number.rememberDecimalInputState
 import org.neotech.app.abysner.presentation.component.textfield.SuffixVisualTransformation
 import org.neotech.app.abysner.presentation.component.textfield.defaultInputFieldLabel
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
@@ -166,21 +167,25 @@ internal fun GasMixDialog(
     val pagerState = rememberPagerState(initialPage = if (isPreset) TAB_PRESETS else TAB_CUSTOM) { 2 }
     val coroutineScope = rememberCoroutineScope()
 
-    var oxygenPercentage: Double? by remember {
-        mutableStateOf((currentGas.oxygenFraction * 100.0).roundToInt().toDouble())
-    }
-    var heliumPercentage: Double? by remember {
-        mutableStateOf((currentGas.heliumFraction * 100.0).roundToInt().toDouble())
-    }
-    val isOxygenValid = remember { mutableStateOf(true) }
-    val isHeliumValid = remember { mutableStateOf(true) }
+    val oxygenInput = rememberDecimalInputState(
+        initialValue = (currentGas.oxygenFraction * 100.0).roundToInt().toDouble(),
+        fractionDigits = 0,
+        minValue = 0.0,
+        maxValue = 100.0,
+    )
+    val heliumInput = rememberDecimalInputState(
+        initialValue = (currentGas.heliumFraction * 100.0).roundToInt().toDouble(),
+        fractionDigits = 0,
+        minValue = 0.0,
+        maxValue = 100.0,
+    )
 
-    val oxygen = oxygenPercentage ?: 0.0
+    val oxygen = oxygenInput.value
     // A gas carried over from trimix mode may still hold helium while the helium field is hidden,
     // so the value has to be dropped rather than merely left out of the UI.
-    val helium = if (allowHelium) heliumPercentage ?: 0.0 else 0.0
+    val helium = if (allowHelium) heliumInput.value else 0.0
     val exceedsHundred = oxygen + helium > 100.0
-    val isCustomValid = isOxygenValid.value && (!allowHelium || isHeliumValid.value) && !exceedsHundred
+    val isCustomValid = oxygenInput.isValid && (!allowHelium || heliumInput.isValid) && !exceedsHundred
 
     AlertDialogCustomContent(
         onDismissRequest = onDismiss,
@@ -240,18 +245,14 @@ internal fun GasMixDialog(
 
                         TAB_CUSTOM -> CustomGasTab(
                             allowHelium = allowHelium,
-                            oxygenPercentage = oxygenPercentage,
-                            heliumPercentage = heliumPercentage,
-                            isOxygenValid = isOxygenValid,
-                            isHeliumValid = isHeliumValid,
+                            oxygenInput = oxygenInput,
+                            heliumInput = heliumInput,
                             exceedsHundred = exceedsHundred,
                             resultingGas = if (isCustomValid) {
                                 Gas(oxygen / 100.0, helium / 100.0)
                             } else {
                                 null
                             },
-                            onOxygenChanged = { oxygenPercentage = it },
-                            onHeliumChanged = { heliumPercentage = it },
                         )
                     }
                 }
@@ -353,14 +354,10 @@ private fun CostAnnotation(text: String, color: Color) {
 @Composable
 private fun CustomGasTab(
     allowHelium: Boolean,
-    oxygenPercentage: Double?,
-    heliumPercentage: Double?,
-    isOxygenValid: MutableState<Boolean>,
-    isHeliumValid: MutableState<Boolean>,
+    oxygenInput: NumberInputState<Double>,
+    heliumInput: NumberInputState<Double>,
     exceedsHundred: Boolean,
     resultingGas: Gas?,
-    onOxygenChanged: (Double?) -> Unit,
-    onHeliumChanged: (Double?) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -370,29 +367,19 @@ private fun CustomGasTab(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            OutlinedDecimalInputField(
+            OutlinedInputField(
                 modifier = Modifier.weight(1f),
-                initialValue = oxygenPercentage,
+                state = oxygenInput,
                 label = "Oxygen",
-                fractionDigits = 0,
-                minValue = 0.0,
-                maxValue = 100.0,
-                isValid = isOxygenValid,
                 visualTransformation = SuffixVisualTransformation(" %"),
-                onNumberChanged = onOxygenChanged,
                 supportingText = null,
             )
             if (allowHelium) {
-                OutlinedDecimalInputField(
+                OutlinedInputField(
                     modifier = Modifier.weight(1f),
-                    initialValue = heliumPercentage,
+                    state = heliumInput,
                     label = "Helium",
-                    fractionDigits = 0,
-                    minValue = 0.0,
-                    maxValue = 100.0,
-                    isValid = isHeliumValid,
                     visualTransformation = SuffixVisualTransformation(" %"),
-                    onNumberChanged = onHeliumChanged,
                     supportingText = null,
                 )
             } else {
