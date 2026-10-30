@@ -38,6 +38,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import org.neotech.app.abysner.domain.core.model.Salinity
 import org.neotech.app.abysner.presentation.component.list.LazyColumnWithScrollIndicators
+import org.neotech.app.abysner.presentation.component.list.SelectionListDefaults
 import org.neotech.app.abysner.presentation.component.toAnnotatedString
 import org.neotech.app.abysner.presentation.theme.AbysnerTheme
 
@@ -154,7 +155,7 @@ fun <T> SingleChoicePreferenceDialog(
                     Row(
                         modifier = Modifier
                             .fillParentMaxWidth()
-                            .defaultMinSize(minHeight = 56.dp)
+                            .defaultMinSize(minHeight = SelectionListDefaults.rowMinHeight)
                             .clickable {
                                 if(confirmButtonText == null) {
                                     onItemSelected(items[index], index)

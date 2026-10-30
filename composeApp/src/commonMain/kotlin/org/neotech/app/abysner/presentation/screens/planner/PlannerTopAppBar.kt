@@ -13,6 +13,7 @@
 package org.neotech.app.abysner.presentation.screens.planner
 
 import abysner.composeapp.generated.resources.Res
+import abysner.composeapp.generated.resources.ic_outline_scuba_tank_24
 import abysner.composeapp.generated.resources.ic_outline_tune_24
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -129,6 +130,19 @@ private fun RowScope.AppBarActions(
         expanded = showMenu,
         onDismissRequest = { showMenu = false }
     ) {
+        DropdownMenuItem(
+            text = { Text("Gas blending") },
+            onClick = {
+                showMenu = false
+                navController.navigate(Destinations.GAS_BLENDING.destinationName)
+            },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(resource = Res.drawable.ic_outline_scuba_tank_24),
+                    contentDescription = "Gas blending"
+                )
+            }
+        )
         DropdownMenuItem(
             text = { Text("Preferences") },
             onClick = {

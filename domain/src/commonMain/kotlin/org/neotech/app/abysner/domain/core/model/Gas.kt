@@ -107,6 +107,11 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
             // One gas types (no helium/nitrogen)
             heliumFraction == 0.0 && nitrogenFraction == 0.0 -> "Oxygen" // Divox
 
+            // One gas types (no oxygen/nitrogen). Not a breathing gas, but it is the usual helium
+            // source when blending trimix. Calling it Heliox would be wrong, that is a helium and
+            // oxygen mixture.
+            oxygenFraction == 0.0 && nitrogenFraction == 0.0 -> "Helium"
+
             // Two gas types (no helium)
             heliumFraction == 0.0 && oxygenFraction == 0.21 -> "Air"
             heliumFraction == 0.0 && oxygenFraction > 0.21 -> "Nitrox"
@@ -155,6 +160,12 @@ data class Gas(val oxygenFraction: Double, val heliumFraction: Double) {
         val Nitrox50 = Gas(oxygenFraction = 0.5, heliumFraction = 0.0)
         val Nitrox80= Gas(oxygenFraction = 0.8, heliumFraction = 0.0)
         val Oxygen = Gas(oxygenFraction = 1.0, heliumFraction = 0.0)
+
+        /**
+         * Pure helium. Not a breathing gas, so deliberately absent from [StandardGases], but
+         * required as a top-up gas when blending trimix.
+         */
+        val Helium = Gas(oxygenFraction = 0.0, heliumFraction = 1.0)
 
         // "Recreational Trimix"
         val Trimix3030 = Gas(oxygenFraction = 0.30, heliumFraction = 0.30)
